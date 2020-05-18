@@ -175,7 +175,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             // }
             // else {
             result = modelingAssessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
-            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            if (compassService.isSupported(modelingExercise)) {
                 compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
             }
             // }
@@ -238,7 +238,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
 
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
         }
 
