@@ -35,6 +35,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
     constructor(private router: Router) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
         const exerciseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
@@ -47,12 +50,20 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         this.calculatePercentageComplaintsProgress();
     }
 
+    /**
+     * Function wrapping router.navigate safely by checking for null and empty string
+     */
     navigate() {
         if (this.routerLink && this.routerLink.length > 0) {
             this.router.navigate([this.routerLink]);
         }
     }
 
+    /**
+     * A lifecycle hook called by Angular when any data-bound property of a component changes
+     *
+     * @param changes Changes made
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.tutorParticipation) {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
@@ -62,11 +73,19 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         this.calculatePercentageComplaintsProgress();
     }
 
+    /**
+     * Function to calculate the percentage of the number of assessments divided by the number of participations
+     */
     calculatePercentageAssessmentProgress() {
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
     }
+
+    /**
+     * Function to calculate the percentage of responded complaints
+     * This is calculated adding the number of not evaluated complaints and feedback requests and dividing by the total number of complaints and feedbacks.
+     */
     calculatePercentageComplaintsProgress() {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
             this.percentageComplaintsProgress = Math.round(
@@ -78,6 +97,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             );
         }
     }
+
     /**
      * Calculates the classes for the steps (circles) in the tutor participation graph
      * @param step for which the class should be calculated for (NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED)
@@ -110,6 +130,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         return '';
     }
+
+    /**
+     * Returns a string representation of the progress bar class based on the current status
+     */
     calculateClassProgressBar() {
         if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
             return 'opaque';
@@ -125,10 +149,17 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         return 'orange';
     }
-    // returns the total nr of evaluated complaints and feedback requests
+
+    /**
+     * Returns the total number of evaluated complaints and feedback requests
+     */
     calculateComplaintsNumerator() {
         return this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests);
     }
+
+    /**
+     * Returns the total number of complaints and feedback requests
+     */
     calculateComplaintsDenominator() {
         return this.numberOfComplaints + this.numberOfMoreFeedbackRequests;
     }

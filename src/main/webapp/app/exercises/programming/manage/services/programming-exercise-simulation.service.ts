@@ -35,7 +35,10 @@ export class ProgrammingExerciseSimulationService {
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * It should prevent developers from misusing methods, which should be only used for testing
      */
-    failsIfInProduction() {
-        // TODO Adrian Loher: properly reimplement this functionality
+    failsIfInProduction(isInProduction: boolean) {
+        if (isInProduction) {
+            alert('This action is NOT supported on production and should NOT be visible. Please contact a developer immediately!');
+            throw new Error('This action is NOT supported on production and should NOT be visible. Please contact a developer immediately!');
+        }
     }
 }

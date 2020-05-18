@@ -11,12 +11,18 @@ export class LectureDetailComponent implements OnInit {
 
     constructor(private activatedRoute: ActivatedRoute) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
         });
     }
 
+    /**
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     */
     previousState() {
         window.history.back();
     }

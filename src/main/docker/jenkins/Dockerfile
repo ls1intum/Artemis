@@ -6,6 +6,12 @@ USER root
 
 RUN apt update
 RUN apt-get install -y maven
+ # Install Python dependecies
+RUN apt install -y python3 python3-pip
+ # Install C dependencies
+RUN apt install -y gcc-6 gdb make libubsan0 liblsan0 libtsan0
+ # Install pytest for python exercises
+RUN pip3 install -U pytest
 RUN cd /usr/lib/jvm && \
     wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz && \
     tar -zxf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz \

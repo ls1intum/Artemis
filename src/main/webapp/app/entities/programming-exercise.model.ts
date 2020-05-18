@@ -32,6 +32,7 @@ export class ProgrammingExercise extends Exercise {
      * This functionality is only for testing purposes
      */
     public noVersionControlAndContinuousIntegrationAvailable = false; // default value
+    public isLocalSimulation?: boolean;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);

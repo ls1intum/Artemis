@@ -224,6 +224,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
         this.aceEditorContainer.getEditor().setAutoScrollEditorIntoView(true);
+        this.aceEditorContainer.getEditor().setOptions({ wrap: true });
     }
 
     /**

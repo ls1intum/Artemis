@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
@@ -21,6 +21,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
 
     constructor(private modalService: NgbModal, private instructionService: ProgrammingExerciseInstructionService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that changes are detected.
+     * @param changes - change that is detected.
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
             this.steps = this.tasks.map(({ taskName, tests }) => ({
@@ -32,10 +36,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     }
 
     /**
-     * @function showDetailsForTests
-     * @desc Opens the ResultDetailComponent as popup; displays test results
-     * @param result {Result} Result object, mostly latestResult
-     * @param tests {string} Identifies the testcase
+     * Opens the ResultDetailComponent as popup; displays test results
+     * @param {string[]} tests - Identifies the testcase
      */
     public showDetailsForTests(tests: string[]) {
         if (!this.latestResult || !this.latestResult.feedbacks) {

@@ -41,10 +41,9 @@ export class CodeEditorGridComponent implements AfterViewInit {
     constructor(private $window: WindowRef, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     * After the view was initialized, we create an interact.js resizable object,
+     * designate the edges which can be used to resize the target element and set min and max values.
+     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.resizableMinHeightMain = this.$window.nativeWindow.screen.height / 3;
@@ -159,14 +158,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
     }
 
     /**
-     * @function toggleCollapse
-     * @desc Collapse parts of the editor (file browser, build output...)
+     * Collapse parts of the editor (file browser, build output...)
      * @param $event {object} Click event object; contains target information
      * @param horizontal {boolean} Used to decide which height to use for the collapsed element
      * @param interactResizable {Interactable} The interactjs element, used to en-/disable resizing
      * @param minWidth {number} Width to set the element to after toggling the collapse
      * @param minHeight {number} Height to set the element to after toggling the collapse
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();

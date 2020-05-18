@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -19,12 +19,18 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
 
     constructor(private exerciseService: ExerciseService) {}
 
+    /**
+     * Sets the status badge and categories of the exercise on init
+     */
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
+    /**
+     * Sets the status badge and categories of the exercise on changes
+     */
+    ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }

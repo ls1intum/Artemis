@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../mocks/mock-account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
@@ -74,14 +74,6 @@ describe('StudentQuestionRowComponent', () => {
         component.ngOnInit();
         componentFixture.detectChanges();
         expect(component.studentQuestions).to.deep.equal([studentQuestion1, studentQuestion2]);
-    });
-
-    it('should toggle edit mode', () => {
-        component.lecture = lectureDefault;
-        componentFixture.detectChanges();
-        component.toggleEditMode();
-        componentFixture.detectChanges();
-        expect(component.isEditMode).to.be.true;
     });
 
     it('should delete studentQuestion from list', () => {

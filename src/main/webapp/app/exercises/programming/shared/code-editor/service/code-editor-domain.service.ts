@@ -13,11 +13,18 @@ export class DomainService {
 
     constructor() {}
 
+    /**
+     * Sets domain and subject.next according to parameter.
+     * @param domain - defines new domain of the service.
+     */
     public setDomain(domain: DomainChange) {
         this.domain = domain;
         this.subject.next(domain);
     }
 
+    /**
+     * Subscribes to current subject.
+     */
     public subscribeDomainChange(): Observable<DomainChange | null> {
         return this.subject;
     }

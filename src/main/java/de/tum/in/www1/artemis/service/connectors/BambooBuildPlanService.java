@@ -123,34 +123,35 @@ public class BambooBuildPlanService {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         switch (programmingLanguage) {
-        case JAVA: {
-            // Do not run the builds in extra docker containers if the dev-profile is active
-            if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
+            case JAVA: {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
+                }
+                if (!sequentialBuildRuns) {
+                    return defaultStage
+                            .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                }
+                else {
+                    return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
+                                    .hasTests(true),
+                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                }
             }
-            if (!sequentialBuildRuns) {
-                return defaultStage
-                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+            case PYTHON:
+            case C: {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
+                }
+                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                tasks.add(0, checkoutTask);
+                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
-            else {
-                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
-            }
-        }
-        case PYTHON:
-        case C: {
-            // Do not run the builds in extra docker containers if the dev-profile is active
-            if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
-            }
-            final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-            var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
-            tasks.add(0, checkoutTask);
-            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
-        }
-        default:
-            throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+            default:
+                throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
 

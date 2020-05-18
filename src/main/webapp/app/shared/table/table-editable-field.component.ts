@@ -39,8 +39,11 @@ export class TableEditableFieldComponent<T> implements OnChanges {
     @Output() onValueUpdate = new EventEmitter<T>();
     @Output() onCancel = new EventEmitter();
 
+    /**
+     * If the field is now being edited, wait for the template to re-render and focus the field.
+     * @param changes The hashtable of occurred changes represented as SimpleChanges object.
+     */
     ngOnChanges(changes: SimpleChanges): void {
-        // If the field is now being edited, wait for the template to re-render and focus the field.
         if (changes.isEditing && changes.isEditing.currentValue && !changes.isEditing.previousValue) {
             setTimeout(() => {
                 if (this.editingInput) {
@@ -50,15 +53,28 @@ export class TableEditableFieldComponent<T> implements OnChanges {
         }
     }
 
+    /**
+     * Sends the signal to start editing. Cancels the default event operation
+     * and delegates the task to method specified in the Output decorator.
+     * @param event The event that occurred.
+     */
     sendEditStart(event: any) {
         event.preventDefault();
         this.onEditStart.emit();
     }
 
+    /**
+     * Triggers a value update signal and delegates the task to method specified in the Output decorator,
+     * sending in also the updated value of the object.
+     * @param event The event that occurred.
+     */
     sendValueUpdate(event: any) {
         this.onValueUpdate.emit(event.target.value);
     }
 
+    /**
+     * Sends the signal to cancel the editing.
+     */
     sendCancelEvent() {
         this.onCancel.emit();
     }

@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute } from '@angular/router';
@@ -47,14 +46,23 @@ export class TeamsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {
         this.loadAll();
     }
 
+    /**
+     * Life cycle hook to indicate component destruction is done
+     */
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Load all team components
+     */
     loadAll() {
         this.route.params.subscribe((params) => {
             this.isLoading = true;

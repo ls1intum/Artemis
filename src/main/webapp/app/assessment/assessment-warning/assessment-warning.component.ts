@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 
@@ -22,7 +22,10 @@ export class AssessmentWarningComponent implements OnChanges {
     currentDate: moment.MomentInput;
     isBeforeDueDate = false;
 
-    ngOnChanges(changes: SimpleChanges): void {
+    /**
+     * Checks if the due date of the exercise is over
+     */
+    ngOnChanges(): void {
         const dueDate = this.exercise.dueDate;
         if (dueDate != null) {
             this.isBeforeDueDate = dueDate.isAfter(this.currentDate);

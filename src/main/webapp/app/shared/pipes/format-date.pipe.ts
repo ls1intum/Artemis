@@ -5,7 +5,11 @@ import * as moment from 'moment';
     name: 'formatDate',
 })
 export class DatePipe implements PipeTransform {
-    transform(date: any, args?: any): any {
+    /**
+     * Displays the date in a readable format.
+     * @param date The date expression (number or string)
+     */
+    transform(date: any): any {
         if (date == null) {
             return 'DD MMMM YYYY, hh:mm:ss PM';
         }

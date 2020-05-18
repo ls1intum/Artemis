@@ -13,6 +13,9 @@ export abstract class DomainDependentService implements OnDestroy {
 
     constructor(private domainService: DomainService) {}
 
+    /**
+     * Initializes a domain subscription.
+     */
     initDomainSubscription() {
         this.domainChangeSubscription = this.domainService
             .subscribeDomainChange()
@@ -25,10 +28,17 @@ export abstract class DomainDependentService implements OnDestroy {
             .subscribe();
     }
 
+    /**
+     * Sets domain according to the parameter.
+     * @param domain - enum that defines the type of the domain.
+     */
     setDomain(domain: DomainChange) {
         this.domain = domain;
     }
 
+    /**
+     * Unsubscribe from current subscription.
+     */
     ngOnDestroy() {
         if (this.domainChangeSubscription) {
             this.domainChangeSubscription.unsubscribe();

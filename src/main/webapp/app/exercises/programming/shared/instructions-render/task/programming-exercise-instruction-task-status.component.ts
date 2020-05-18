@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
-import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
@@ -54,10 +54,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     }
 
     /**
-     * @function showDetailsForTests
-     * @desc Opens the ResultDetailComponent as popup; displays test results
-     * @param result {Result} Result object, mostly latestResult
-     * @param tests {string} Identifies the testcase
+     * Opens the ResultDetailComponent as popup. Displays test results.
      */
     public showDetailsForTests() {
         if (!this.latestResult) {
@@ -69,6 +66,9 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
     }
 
+    /**
+     * Opens the hint modal.
+     */
     public openHintsModal() {
         // Open hint modal.
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { keyboard: true, size: 'lg' });

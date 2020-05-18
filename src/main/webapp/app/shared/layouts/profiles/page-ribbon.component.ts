@@ -23,12 +23,12 @@ export class PageRibbonComponent implements OnInit {
                 if (profileInfo) {
                     this.profileInfo = profileInfo;
                     this.ribbonEnv = profileInfo.ribbonEnv;
-                    if (profileInfo.inProduction && window.location.host === 'artemistest.ase.in.tum.de') {
+                    if (profileInfo.inProduction && profileInfo.testServer) {
                         this.ribbonEnv = 'test';
                     }
                 }
             },
-            (reason) => {},
+            () => {},
         );
     }
 }
