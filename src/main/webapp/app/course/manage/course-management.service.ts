@@ -28,7 +28,7 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    private readonly courses: Map<number, SubjectObservablePair<EntityResponseType>> = new Map();
+    private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
 
     constructor(
         private http: HttpClient,
@@ -109,10 +109,20 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
             .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
-            .pipe(tap((res: EntityResponseType) => this.courses.get(courseId)?.subject.next(res)));
+            .pipe(
+                tap((res: EntityResponseType) => {
+                    if (res.body) {
+                        this.courses.get(courseId)?.subject.next(res.body);
+                    }
+                }),
+            );
     }
 
-    getCourseUpdates(courseId: number): Observable<EntityResponseType> {
+    courseWasUpdated(course: Course): void {
+        this.courses.get(course.id)?.subject.next(course);
+    }
+
+    getCourseUpdates(courseId: number): Observable<Course> {
         if (!this.courses.has(courseId)) {
             this.courses.set(courseId, new SubjectObservablePair());
         }
