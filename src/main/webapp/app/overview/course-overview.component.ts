@@ -24,6 +24,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     private courseId: number;
     private subscription: Subscription;
     public course: Course | null;
+    public refreshingCourse = false;
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
@@ -43,14 +44,20 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
-            this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.adjustCourseDescription();
-            });
+            this.loadCourse();
         }
         this.adjustCourseDescription();
         await this.subscribeToTeamAssignmentUpdates();
+    }
+
+    loadCourse(refresh = false) {
+        this.refreshingCourse = refresh;
+        this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
+            this.courseCalculationService.updateCourse(res.body!);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.adjustCourseDescription();
+            setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
+        });
     }
 
     ngOnDestroy() {
