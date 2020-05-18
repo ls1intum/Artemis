@@ -378,8 +378,13 @@ public class TeamResource {
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
         Map<Long, Team> exerciseTeamMap = teams.stream().collect(Collectors.toMap(team -> team.getExercise().getId(), team -> team));
 
-        // Filter course exercises by: 1. released, 2. team needs to exist for exercise
-        exercises = exercises.stream().filter(exercise -> exercise.isVisibleToStudents() && exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
+        // Filter course exercises by: team needs to exist for exercise
+        exercises = exercises.stream().filter(exercise -> exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
+
+        // For students: Filter course exercises by their visibility to students
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+        }
 
         // Set teams on exercises
         exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
