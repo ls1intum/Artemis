@@ -113,9 +113,9 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         if (this.long && !this.showSeconds) {
             format = 'LT';
         } else if (!this.long && this.showSeconds) {
-            format = 'HH:mm:ss';
+            format = 'H:m:s';
         } else if (!this.long && !this.showSeconds) {
-            format = 'HH:mm';
+            format = 'H:m';
         }
         return format;
     }
