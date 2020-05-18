@@ -8,10 +8,19 @@
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor"
+            *ngIf="!isAssessor && !isComplaint"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
+            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
+        >
+            Assessment locked by another user!
+        </span>
+        <span
+            *ngIf="!isAssessor && isComplaint"
+            class="ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Assessment locked by another user!
