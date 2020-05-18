@@ -23,7 +23,6 @@
             [(ngModel)]="feedback.credits"
             id="score-{{ textBlock.id }}"
             (keydown.escape)="escKeyup()"
-            (keydown.backspace)="$event.preventDefault()"
             (click)="onScoreClick($event)"
             (focus)="inFocus()"
             (ngModelChange)="didChange()"
