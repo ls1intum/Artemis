@@ -146,7 +146,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            this.numberOfSubmissions.total === this.numberOfAssessments.total ||
+            this.numberOfSubmissions.inTime === this.numberOfAssessments.inTime ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';
