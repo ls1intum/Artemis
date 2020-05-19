@@ -247,7 +247,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
     }
 
-    get nextRelevantExercise(): Exercise {
+    get nextRelevantExercise(): Exercise | undefined {
         return this.exerciseService.getNextExerciseForHours(this.course!.exercises);
     }
 }

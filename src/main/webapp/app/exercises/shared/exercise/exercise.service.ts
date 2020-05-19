@@ -127,28 +127,19 @@ export class ExerciseService {
      * @param { Exercise[] } exercises - Considered exercises
      * @param { number} delayInHours - If set, amount of hours that are considered
      */
-    getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
+    getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise | undefined {
         // check for quiz exercise in order to prioritize before other exercise types
-        const nextQuizExercises:Exercise[] = exercises
-            .filter((exercise: QuizExercise) =>
-                exercise.type === ExerciseType.QUIZ && !exercise.ended)
+        const nextQuizExercises: Exercise[] = exercises.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
         return (
-            (
-                nextQuizExercises
-                .find((exercise: QuizExercise) => {
-                    return exercise.isActiveQuiz;
-                })
-                ||
-                nextQuizExercises
-                    .find((exercise: QuizExercise) => {
-                        return exercise.isVisibleBeforeStart;
-                    })
-            )
-            ||
+            // 1st priority is an active quiz
+            nextQuizExercises.find((exercise: QuizExercise) => exercise.isActiveQuiz) ||
+            // 2nd priority is a visible quiz
+            nextQuizExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+            // 3rd priority is the next due exercise
             exercises.find((exercise) => {
                 const dueDate = exercise.dueDate!;
                 return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
-            })!
+            })
         );
     }
 
