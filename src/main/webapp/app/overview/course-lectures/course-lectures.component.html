@@ -25,7 +25,13 @@
                     (click)="weeklyLecturesGrouped[weekKey]!.isCollapsed = !weeklyLecturesGrouped[weekKey]!.isCollapsed"
                 >
                     <fa-icon class="pr-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
-                    <span [innerHtml]="weeklyLecturesGrouped[weekKey]!.label"></span>
+                    <span *ngIf="weeklyLecturesGrouped[weekKey].start && weeklyLecturesGrouped[weekKey].end">
+                        <strong>{{ weeklyLecturesGrouped[weekKey].start | artemisDate: 'short-date' }}</strong> -
+                        <strong>{{ weeklyLecturesGrouped[weekKey].end | artemisDate: 'short-date' }}</strong>
+                    </span>
+                    <span *ngIf="!weeklyLecturesGrouped[weekKey].start || !weeklyLecturesGrouped[weekKey].end">
+                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | translate }}
+                    </span>
                     <span
                         class="ml-2"
                         jhiTranslate="artemisApp.courseOverview.lectureList.lectureGroupHeader"
