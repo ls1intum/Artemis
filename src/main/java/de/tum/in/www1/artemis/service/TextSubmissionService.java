@@ -91,7 +91,7 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            textSubmission = save(textSubmission, participation, principal);
+            textSubmission = save(textSubmission, participation, textExercise, principal);
         }
         return textSubmission;
     }
@@ -104,7 +104,7 @@ public class TextSubmissionService extends SubmissionService {
      * @param principal      the principal of the user
      * @return the textSubmission entity that was saved to the database
      */
-    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, Principal principal) {
+    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, Principal principal) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
@@ -113,7 +113,9 @@ public class TextSubmissionService extends SubmissionService {
 
         // versioning of submission
         try {
-            submissionVersionService.save(textSubmission, principal.getName());
+            if (textExercise.isTeamMode()) {
+                submissionVersionService.save(textSubmission, principal.getName());
+            }
         }
         catch (Exception ex) {
             log.error("Text submission version could not be saved: " + ex);

@@ -212,7 +212,9 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // versioning of submission
         try {
-            submissionVersionService.save(modelingSubmission, username);
+            if (modelingExercise.isTeamMode()) {
+                submissionVersionService.save(modelingSubmission, username);
+            }
         }
         catch (Exception ex) {
             log.error("Modeling submission version could not be saved: " + ex);
