@@ -69,6 +69,7 @@
                     [(text)]="questionEditorText"
                     [mode]="editorMode"
                     [autoUpdateContent]="editorAutoUpdate"
+                    (textChanged)="onQuestionChange($event)"
                     style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
                 >
@@ -91,6 +92,7 @@
                     [(text)]="answerEditorText[i]"
                     [mode]="editorMode"
                     [autoUpdateContent]="editorAutoUpdate"
+                    (textChanged)="onAnswerChange($event, i)"
                     style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
                     class="form-control"
                 >
@@ -109,7 +111,7 @@
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
                     ></button
                     >&nbsp;
-                    <span class="re-evaluate-button" (click)="resetAnswer(answer)">
+                    <span class="re-evaluate-button" (click)="resetAnswer(answer, i)">
                         <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                     </span>
                     <span class="re-evaluate-button" (click)="deleteAnswer(answer)">

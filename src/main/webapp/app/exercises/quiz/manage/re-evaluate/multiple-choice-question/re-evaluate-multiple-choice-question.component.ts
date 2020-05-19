@@ -5,6 +5,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
+import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -52,18 +53,17 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Do nothing
      */
     ngOnInit(): void {
-        this.setupQuestionEditor();
+        /** Setup editor **/
+        this.backupQuestion = Object.assign({}, this.question);
+        this.setQuestionText();
+        this.setAnswerTexts();
     }
 
     /**
      * Setup editor after view init
      */
     ngAfterViewInit(): void {
-        /** Setup editor **/
-        this.backupQuestion = Object.assign({}, this.question);
         this.setupQuestionEditor();
-        this.setQuestionText();
-        this.setAnswerTexts();
     }
 
     setQuestionText(): void {
@@ -166,8 +166,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param text
      */
     private splitByCorrectIncorrectTag(text: string): string[] {
-        const correctIncorrectRegex = new RegExp(CorrectOptionCommand.identifier + '|' + IncorrectOptionCommand.identifier);
-        return text.split(correctIncorrectRegex);
+        const stringForSplit = escapeStringForUseInRegex(`${CorrectOptionCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${IncorrectOptionCommand.identifier}`);
+        const splitRegExp = new RegExp(stringForSplit, 'g');
+        return text.split(splitRegExp);
     }
 
     /**
@@ -227,13 +228,12 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Resets the whole answer
      * @param answer {AnswerOption} the answer, which will be reset
      */
-    resetAnswer(answer: AnswerOption) {
+    resetAnswer(answer: AnswerOption, index: number) {
+        console.log('reset a');
         // Find correct answer if they have another order
         const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
-        // Find current index of our AnswerOption
-        const answerIndex = this.question.answerOptions!.indexOf(answer);
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex] = backupAnswer;
+        this.question.answerOptions![index] = backupAnswer;
         this.setAnswerTexts();
     }
 
@@ -263,5 +263,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     isAnswerInvalid(answer: AnswerOption) {
         return answer.invalid;
+    }
+
+    onQuestionChange($event: any): void {
+        this.parseQuestionMarkdown($event);
+    }
+
+    onAnswerChange($event: any, index: number): void {
+        this.parseAnswerMarkdown($event, this.question.answerOptions![index]);
     }
 }
