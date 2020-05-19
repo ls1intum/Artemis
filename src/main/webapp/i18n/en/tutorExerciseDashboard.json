@@ -70,8 +70,8 @@
                 "GERMAN": "German",
                 "UNKNOWN": "Unknown"
             },
-            "complaintHint": "Shows all Complaints about assessments except for your own complaints.",
-            "moreFeedbackRequestHint": "Shows all More Feedback Requests for assessments that you have created."
+            "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
+            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments."
         }
     }
 }

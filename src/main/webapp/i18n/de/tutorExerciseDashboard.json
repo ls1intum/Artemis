@@ -70,8 +70,8 @@
                 "GERMAN": "Deutsch",
                 "UNKNOWN": "Unbekannt"
             },
-            "complaintHint": "Zeigt alle Beschwerden über Bewertungen mit Ausnahme deiner eigenen Beschwerden.",
-            "moreFeedbackRequestHint": "Zeigt alle Anfragen für weiteres Feedback zu Bewertungen an, die von dir bearbeitet wurden."
+            "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
+            "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an."
         }
     }
 }
