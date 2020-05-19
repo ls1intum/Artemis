@@ -100,7 +100,8 @@ public class TextSubmissionService extends SubmissionService {
      * Saves the given submission. Is used for creating and updating text submissions.
      *
      * @param textSubmission the submission that should be saved
-     * @param participation  the participation the participation the submission belongs to
+     * @param participation  the participation the submission belongs to
+     * @param textExercise   the exercise the submission belongs to
      * @param principal      the principal of the user
      * @return the textSubmission entity that was saved to the database
      */
