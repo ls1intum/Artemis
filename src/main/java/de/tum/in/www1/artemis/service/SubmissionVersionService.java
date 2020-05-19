@@ -38,7 +38,9 @@ public class SubmissionVersionService {
     public SubmissionVersion save(Submission submission, String username) {
         User user = userService.getUserByLogin(username).orElseThrow();
 
-        return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
+        long start = System.currentTimeMillis();
+
+        SubmissionVersion version = submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
             if (latestVersion.getAuthor().equals(user)) {
                 return updateExistingVersion(latestVersion, submission);
             }
@@ -46,6 +48,10 @@ public class SubmissionVersionService {
                 return createNewVersion(submission, user);
             }
         }).orElseGet(() -> createNewVersion(submission, user));
+
+        log.info("Saving submission version took " + (System.currentTimeMillis() - start) + "ms for submission with id " + submission.getId());
+
+        return version;
     }
 
     private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
