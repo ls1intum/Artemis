@@ -46,7 +46,7 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get all submissions for an exercise
+     * Get all submissions for an modeling exercise
      * @param {number} exerciseId - Id of the exercise
      * @param {any?} req - Request option
      */
@@ -74,7 +74,7 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get a submission with given Id
+     * Get a modeling exercise submission with given Id
      * @param {number} submissionId - Id of the submission
      */
     getSubmission(submissionId: number): Observable<ModelingSubmission> {
@@ -82,7 +82,7 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get latest submission for a given participation
+     * Get latest modeling exercise submission for a given participation
      * @param {number} participationId - Id of the participation
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
