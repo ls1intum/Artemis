@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -438,9 +439,9 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String shortNamePrefix1 = "team";
         String shortNamePrefix2 = "otherTeam";
 
-        Team team1a = database.addTeamsForExercise(programmingExercise, shortNamePrefix1, "team1astudent", 1, null).get(0);
-        Team team1b = database.addTeamsForExercise(textExercise, shortNamePrefix1, "team1bstudent", 1, null).get(0);
-        Team team1c = database.addTeamsForExercise(modelingExercise, shortNamePrefix1, "team1cstudent", 1, null).get(0);
+        Team team1a = database.addTeamsForExercise(programmingExercise, shortNamePrefix1, "team1astudent", 1, tutor).get(0);
+        Team team1b = database.addTeamsForExercise(textExercise, shortNamePrefix1, "team1bstudent", 1, tutor).get(0);
+        Team team1c = database.addTeamsForExercise(modelingExercise, shortNamePrefix1, "team1cstudent", 1, tutor).get(0);
 
         Team team2a = database.addTeamsForExercise(programmingExercise, shortNamePrefix2, "team2astudent", 1, null).get(0);
         Team team2b = database.addTeamsForExercise(textExercise, shortNamePrefix2, "team2bstudent", 1, null).get(0);
@@ -466,6 +467,27 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         StudentParticipation studentParticipation = course2.getExercises().iterator().next().getStudentParticipations().iterator().next();
         assertThat(studentParticipation.getSubmissionCount()).as("Participation includes submission count").isNotNull();
+
+        // Submission and Result should be present for Team of which the user is the Team Owner
+        final String submissionText = "Hello World";
+        TextSubmission submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        database.addTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
+
+        Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
+        StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
+                .iterator().next();
+        assertThat(participation.getSubmissions()).as("Latest submission is present").hasSize(1);
+        assertThat(((TextSubmission) participation.getSubmissions().iterator().next()).getText()).as("Latest submission is present").isEqualTo(submissionText);
+        assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
+
+        // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
+        submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        database.addTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), "tutor2");
+
+        Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
+        participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();
+        assertThat(participation.getSubmissions()).as("Latest submission is not present").isEmpty();
+        assertThat(participation.getResults()).as("Latest result is not present").isEmpty();
     }
 
     @Test
