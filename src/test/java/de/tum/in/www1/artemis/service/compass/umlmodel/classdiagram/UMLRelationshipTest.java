@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,22 +56,19 @@ class UMLRelationshipTest {
     @Test
     void similarity_null() {
         double similarity = relationship.similarity(null);
-
         assertThat(similarity).isEqualTo(0);
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = relationship.similarity(mock(UMLClass.class));
-
         assertThat(similarity).isEqualTo(0);
     }
 
     @Test
     void similarity_sameRelationship() {
         double similarity = relationship.similarity(referenceRelationship);
-
-        assertThat(similarity).isEqualTo(1);
+        assertThat(similarity).isEqualTo(1.0);
     }
 
     @Test
@@ -85,7 +83,7 @@ class UMLRelationshipTest {
         double similarity = relationship.similarity(referenceRelationship);
 
         similarity = Math.round(similarity * 1000000) / 1000000.0;
-        assertThat(similarity).isEqualTo(1);
+        assertThat(similarity).isEqualTo(1.0);
     }
 
     @Test
@@ -98,13 +96,12 @@ class UMLRelationshipTest {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "*");
         when(referenceRelationship.getSource()).thenReturn(target2);
         when(referenceRelationship.getTarget()).thenReturn(source2);
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = RELATION_TYPE_WEIGHT / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
         assertThat(similarity).isNotEqualTo(1);
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
@@ -113,9 +110,8 @@ class UMLRelationshipTest {
         when(source2.similarity(source1)).thenReturn(0.12);
         when(target1.similarity(target2)).thenReturn(0.34);
         when(target2.similarity(target1)).thenReturn(0.34);
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 0.12 * RELATION_ELEMENT_WEIGHT + 0.34 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT
-                + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 0.12 * RELATION_ELEMENT_WEIGHT + 0.34 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT
+                + 2 * RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -125,61 +121,52 @@ class UMLRelationshipTest {
     @Test
     void similarity_differentRelationshipType() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("type"), UMLRelationshipType.CLASS_UNIDIRECTIONAL);
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
         expectedSimilarity = Math.round(expectedSimilarity * 1000000) / 1000000.0;
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
     void similarity_differentSourceRole() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "differentRole");
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
-                / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
     void similarity_differentTargetRole() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "differentRole");
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
-                / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
     void similarity_differentSourceMultiplicity() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "differentMultiplicity");
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
-                / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
     void similarity_differentTargetMultiplicity() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "differentMultiplicity");
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
-                / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
@@ -188,8 +175,7 @@ class UMLRelationshipTest {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), null);
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), null);
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), null);
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT) / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -202,8 +188,7 @@ class UMLRelationshipTest {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "");
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "");
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "");
-        double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT) / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -217,11 +202,11 @@ class UMLRelationshipTest {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "");
         when(target1.similarity(target2)).thenReturn(0.42);
         when(target2.similarity(target1)).thenReturn(0.42);
-        double expectedWeight = 1 + RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + RELATION_ELEMENT_WEIGHT + 0.42 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = RELATION_TYPE_WEIGHT + RELATION_ELEMENT_WEIGHT + 0.42 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT
+                + RELATION_MULTIPLICITY_WEIGHT;
 
         double similarity = relationship.similarity(referenceRelationship);
 
-        assertThat(similarity).isEqualTo(expectedSimilarity);
+        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 }

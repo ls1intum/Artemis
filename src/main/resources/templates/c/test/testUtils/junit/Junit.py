@@ -14,8 +14,8 @@ class Junit:
         suiteXml: Et.Element = self.suite.toXml()
         tree: Et.ElementTree = Et.ElementTree(suiteXml)
         self.createOutputPath(outputPath)
-        tree.write(outputPath, xml_declaration=True, encoding="utf-8")
-
+        tree.write(outputPath, xml_declaration=True)
+    
     def createOutputPath(self, outputPath: str):
         paths: Tuple[str, str] = path.split(outputPath)
         if paths[0] and not path.exists(paths[0]):
