@@ -137,7 +137,7 @@ describe('Course Service', () => {
                 returnedFromService,
             );
             service
-                .findAll(expected)
+                .findAllForDashboard(expected)
                 .pipe(
                     take(1),
                     map((resp) => resp.body),

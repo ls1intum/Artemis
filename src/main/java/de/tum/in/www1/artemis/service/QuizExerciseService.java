@@ -325,13 +325,21 @@ public class QuizExerciseService {
     /**
      * Sends a QuizExercise to all subscribed clients
      * @param quizExercise the QuizExercise which will be sent
+     * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
      */
-    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
+    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, String quizChange) {
         try {
             long start = System.currentTimeMillis();
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
-            messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
+            if (quizChange.equals("set-visible")) {
+                // the quiz id is not yet known to the client, we need to use a more generic topic
+                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
+                // TODO: start-now would also be interesting to be supported in the client, but needs to be handled differently in the client
+            }
+            else {
+                messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
+            }
             log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {

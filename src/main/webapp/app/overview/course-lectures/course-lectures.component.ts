@@ -4,7 +4,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -20,6 +19,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
     private paramSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     public course: Course | null;
     public weeklyIndexKeys: string[];
@@ -44,28 +44,28 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course === undefined) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-            });
-        }
-        this.groupLectures(this.DUE_DATE_DESC);
+        this.onCourseLoad();
+
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseCalculationService.updateCourse(course);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.onCourseLoad();
+        });
 
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
-
-        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     ngOnDestroy(): void {
-        if (this.translateService) {
-            this.translateSubscription.unsubscribe();
-        }
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
-        }
+        this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
+    }
+
+    private onCourseLoad() {
+        this.groupLectures(this.DUE_DATE_DESC);
+        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     public groupLectures(selectedOrder: number): void {
@@ -120,8 +120,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
     }
 
-    private sortLectures(exercises: Lecture[], selectedOrder: number): Lecture[] {
-        return exercises.sort((a, b) => {
+    private sortLectures(lectures: Lecture[], selectedOrder: number): Lecture[] {
+        return lectures.sort((a, b) => {
             const aValue = a.startDate ? a.startDate.valueOf() : moment().valueOf();
             const bValue = b.startDate ? b.startDate.valueOf() : moment().valueOf();
 
