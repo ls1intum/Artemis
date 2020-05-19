@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class TextSubmissionService extends SubmissionService {
 
+    private final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final TextClusterRepository textClusterRepository;
@@ -48,9 +52,11 @@ public class TextSubmissionService extends SubmissionService {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
+    private final SubmissionVersionService submissionVersionService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService) {
         super(submissionRepository, userService, authCheckService, resultRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
@@ -58,6 +64,7 @@ public class TextSubmissionService extends SubmissionService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
+        this.submissionVersionService = submissionVersionService;
     }
 
     /**
@@ -84,7 +91,7 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            textSubmission = save(textSubmission, participation);
+            textSubmission = save(textSubmission, participation, textExercise, principal);
         }
         return textSubmission;
     }
@@ -93,15 +100,27 @@ public class TextSubmissionService extends SubmissionService {
      * Saves the given submission. Is used for creating and updating text submissions.
      *
      * @param textSubmission the submission that should be saved
-     * @param participation  the participation the participation the submission belongs to
+     * @param participation  the participation the submission belongs to
+     * @param textExercise   the exercise the submission belongs to
+     * @param principal      the principal of the user
      * @return the textSubmission entity that was saved to the database
      */
-    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
+    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, Principal principal) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
         textSubmission = textSubmissionRepository.save(textSubmission);
+
+        // versioning of submission
+        try {
+            if (textExercise.isTeamMode()) {
+                submissionVersionService.save(textSubmission, principal.getName());
+            }
+        }
+        catch (Exception ex) {
+            log.error("Text submission version could not be saved: " + ex);
+        }
 
         participation.addSubmissions(textSubmission);
 

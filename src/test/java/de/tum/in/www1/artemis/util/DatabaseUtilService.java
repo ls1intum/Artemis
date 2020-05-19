@@ -123,6 +123,9 @@ public class DatabaseUtilService {
     SubmissionRepository submissionRepository;
 
     @Autowired
+    SubmissionVersionRepository submissionVersionRepository;
+
+    @Autowired
     ProgrammingSubmissionRepository programmingSubmissionRepo;
 
     @Autowired
@@ -193,6 +196,7 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
+        submissionVersionRepository.deleteAll();
         studentQuestionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
