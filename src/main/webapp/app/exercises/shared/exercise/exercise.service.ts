@@ -128,12 +128,23 @@ export class ExerciseService {
      * @param { number} delayInHours - If set, amount of hours that are considered
      */
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
+        // check for quiz exercise in order to prioritize before other exercise types
+        const nextQuizExercises:Exercise[] = exercises
+            .filter((exercise: QuizExercise) =>
+                exercise.type === ExerciseType.QUIZ && !exercise.ended)
         return (
-            exercises
-                .filter((exercise) => exercise.type === ExerciseType.QUIZ)
+            (
+                nextQuizExercises
                 .find((exercise: QuizExercise) => {
-                    return exercise.isVisibleBeforeStart && !exercise.ended;
-                }) ||
+                    return exercise.isActiveQuiz;
+                })
+                ||
+                nextQuizExercises
+                    .find((exercise: QuizExercise) => {
+                        return exercise.isVisibleBeforeStart;
+                    })
+            )
+            ||
             exercises.find((exercise) => {
                 const dueDate = exercise.dueDate!;
                 return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
