@@ -334,6 +334,11 @@ public class DatabaseUtilService {
         return lecture;
     }
 
+    public Course createCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        return courseRepo.save(course);
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -1033,8 +1038,9 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+    private TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
+        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> addParticipationForExercise(exercise, login))
+                .orElseGet(() -> addTeamParticipationForExercise(exercise, teamId));
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1049,6 +1055,14 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
+        return addTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
+    }
+
+    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
+        return addTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
     public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
@@ -1212,6 +1226,69 @@ public class DatabaseUtilService {
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }
 
+    /**
+     * Generates a submitted answer for a given question.
+     * @param question given question, the answer is for
+     * @param correct boolean whether the answer should be correct or not
+     * @return created SubmittedAnswer
+     */
+    public SubmittedAnswer generateSubmittedAnswerFor(QuizQuestion question, boolean correct) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                if (answerOption.isIsCorrect().equals(correct)) {
+                    submittedAnswer.addSelectedOptions(answerOption);
+                }
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+
+            if (correct) {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+            }
+            else {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+            }
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                if (correct) {
+                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                }
+                else {
+                    submittedText.setText("wrong short answer");
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);
@@ -1219,6 +1296,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
 
@@ -1240,12 +1318,13 @@ public class DatabaseUtilService {
         sa.getSolutions().add(shortAnswerSolution2);
         sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0)));
         sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1)));
+        sa.setExplanation("Explanation");
         return sa;
     }
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestion() {
-        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
@@ -1261,6 +1340,7 @@ public class DatabaseUtilService {
         dnd.getDragItems().add(dragItem2);
         dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
         dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+        dnd.setExplanation("Explanation");
         return dnd;
     }
 
@@ -1270,10 +1350,66 @@ public class DatabaseUtilService {
 
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestion() {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(1).text("Q1");
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.setExplanation("Explanation");
         return mc;
+    }
+
+    /**
+     * Generate submissions for a student for an exercise. Results are mixed.
+     * @param quizExercise QuizExercise th submissions are for
+     * @param studentID ID of the student
+     * @param submitted Boolean if it is submitted or not
+     * @param submissionDate Submission date
+     */
+    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
+        QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
+        QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion1, studentID % 2 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion2, studentID % 3 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion3, studentID % 4 == 0));
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+
+        return quizSubmission;
+    }
+
+    /**
+     * Generate a submission with all or none options of a MultipleChoiceQuestion selected, if there is one in the exercise
+     * @param quizExercise Exercise the submission is for
+     * @param submitted Boolean whether it is submitted or not
+     * @param submissionDate Submission date
+     * @param selectEverything Boolean whether every answer option should be selected or none
+     */
+    public QuizSubmission generateSpecialSubmissionWithResult(QuizExercise quizExercise, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.setQuizQuestion(question);
+                if (selectEverything) {
+                    for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                        submittedAnswer.addSelectedOptions(answerOption);
+                    }
+                }
+                quizSubmission.addSubmittedAnswers(submittedAnswer);
+
+            }
+            else {
+                quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+            }
+            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+        }
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+
+        return quizSubmission;
     }
 }

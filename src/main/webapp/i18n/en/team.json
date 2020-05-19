@@ -20,7 +20,13 @@
                     "name": "Name",
                     "email": "E-Mail"
                 },
-                "noOwner": "No tutor"
+                "noOwner": "No tutor",
+                "participationsTable": {
+                    "title": "Participations in \"{{ courseTitle }}\" for",
+                    "columns": {
+                        "assessment": "Assessment"
+                    }
+                }
             },
             "team": "Team",
             "name": {
@@ -41,6 +47,10 @@
             "image": "Image",
             "students": "Students",
             "tutor": "Tutor",
+            "filters": {
+                "all": "All teams",
+                "own": "Own teams"
+            },
             "noStudentsAddedYet": "No students added yet.",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",
             "studentSearch": {
@@ -57,6 +67,7 @@
                 "failed": "Search failed. Please try again.",
                 "noResults": "No tutors found in course for search:"
             },
+            "ownerChangeWarning": "<strong>Important:</strong> This will change the tutor for team <strong>{{ shortName }}</strong> in the whole course!",
             "teamSizeNote": "Recommended team size:",
             "teamSizeUnit": "students",
             "ignoreTeamSizeRecommendation": "Proceed against recommendation",
