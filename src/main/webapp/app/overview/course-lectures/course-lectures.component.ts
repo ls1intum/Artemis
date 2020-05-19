@@ -120,8 +120,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
     }
 
-    private sortLectures(exercises: Lecture[], selectedOrder: number): Lecture[] {
-        return exercises.sort((a, b) => {
+    private sortLectures(lectures: Lecture[], selectedOrder: number): Lecture[] {
+        return lectures.sort((a, b) => {
             const aValue = a.startDate ? a.startDate.valueOf() : moment().valueOf();
             const bValue = b.startDate ? b.startDate.valueOf() : moment().valueOf();
 

@@ -123,7 +123,7 @@ export class ExerciseService {
     }
 
     /**
-     * Returns a visible  due in delayInHours or 12 hours if not specified
+     * Returns an active quiz, a visible quiz or an exercise due in delayInHours or 12 hours if not specified
      * @param { Exercise[] } exercises - Considered exercises
      * @param { number} delayInHours - If set, amount of hours that are considered
      */
