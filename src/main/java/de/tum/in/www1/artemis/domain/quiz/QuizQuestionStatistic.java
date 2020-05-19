@@ -109,5 +109,4 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
     public abstract void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated);
 
     public abstract void resetStatistic();
-
 }

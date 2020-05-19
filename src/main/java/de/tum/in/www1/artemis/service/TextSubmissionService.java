@@ -68,11 +68,10 @@ public class TextSubmissionService extends SubmissionService {
      * @param principal      the user principal
      * @return the saved text submission
      */
-    @Transactional
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var dueDate = textExercise.getDueDate();
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(textExercise, principal.getName());
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
         }
@@ -91,13 +90,12 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Saves the given submission. Is used for creating and updating text submissions. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
+     * Saves the given submission. Is used for creating and updating text submissions.
      *
      * @param textSubmission the submission that should be saved
      * @param participation  the participation the participation the submission belongs to
      * @return the textSubmission entity that was saved to the database
      */
-    @Transactional(rollbackFor = Exception.class)
     public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -127,7 +125,6 @@ public class TextSubmissionService extends SubmissionService {
      * @param textSubmission the submission to notifyCompass
      * @return the textSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public TextSubmission save(TextSubmission textSubmission) {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
