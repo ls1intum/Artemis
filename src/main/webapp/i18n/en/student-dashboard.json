@@ -3,6 +3,7 @@
         "studentDashboard": {
             "title": "Your current courses",
             "exerciseTitle": "Current exercise of \"{{ course }}\" active till {{ date }}:",
+            "exerciseTitleWithoutDueDate": "Current exercise of \"{{ course }}\":",
             "cardTitle": "Your current score:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
