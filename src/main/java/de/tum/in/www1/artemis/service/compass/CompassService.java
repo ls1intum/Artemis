@@ -75,10 +75,21 @@ public class CompassService {
     /**
      * Indicates if the given diagram type is supported by Compass. At the moment Compass only support class diagrams.
      *
-     * @param diagramType the diagram that should be checked
+     * @param modelingExercise the modelingExercise that should be checked if automatic assessment is supported
      * @return true if the given diagram type is supported by Compass, false otherwise
      */
-    public boolean isSupported(DiagramType diagramType) {
+    public boolean isSupported(ModelingExercise modelingExercise) {
+        // In case the instructor specifies in the UI whether the semi-automatic assessment is possible or not.
+        // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
+        DiagramType diagramType = modelingExercise.getDiagramType();
+        if (modelingExercise.getAssessmentType() != null) {
+            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC)
+                    && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
+        }
+        // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
+        if (modelingExercise.isTeamMode()) {
+            return false;
+        }
         return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
     }
 
@@ -90,7 +101,7 @@ public class CompassService {
      */
     private boolean isSupported(long exerciseId) {
         ModelingExercise modelingExercise = findModelingExerciseById(exerciseId);
-        return modelingExercise != null && isSupported(modelingExercise.getDiagramType());
+        return modelingExercise != null && isSupported(modelingExercise);
     }
 
     /**
@@ -173,7 +184,7 @@ public class CompassService {
      * @param modelSubmissionId the id of the model submission which should be marked as unassessed
      */
     public void cancelAssessmentForSubmission(ModelingExercise modelingExercise, long modelSubmissionId) {
-        if (!isSupported(modelingExercise.getDiagramType()) || !loadExerciseIfSuspended(modelingExercise.getId())) {
+        if (!isSupported(modelingExercise) || !loadExerciseIfSuspended(modelingExercise.getId())) {
             return;
         }
 

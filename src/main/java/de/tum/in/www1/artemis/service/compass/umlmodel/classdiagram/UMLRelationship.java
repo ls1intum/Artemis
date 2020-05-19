@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity.nameEqualsSimilarity;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
 
 import java.util.Objects;
 
@@ -82,36 +81,31 @@ public class UMLRelationship extends UMLElement {
         UMLRelationship referenceRelationship = (UMLRelationship) reference;
 
         double similarity = 0;
-        double weight = 1;
 
         similarity += referenceRelationship.getSource().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
         similarity += referenceRelationship.getTarget().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        if (isNotEmpty(referenceRelationship.sourceRole) || isNotEmpty(sourceRole)) {
-            similarity += nameEqualsSimilarity(referenceRelationship.sourceRole, sourceRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
-            weight += RELATION_ROLE_OPTIONAL_WEIGHT;
-        }
-        if (isNotEmpty(referenceRelationship.targetRole) || isNotEmpty(targetRole)) {
-            similarity += nameEqualsSimilarity(referenceRelationship.targetRole, targetRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
-            weight += RELATION_ROLE_OPTIONAL_WEIGHT;
-        }
-        if (isNotEmpty(referenceRelationship.sourceMultiplicity) || isNotEmpty(sourceMultiplicity)) {
-            similarity += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            weight += RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        }
-        if (isNotEmpty(referenceRelationship.targetMultiplicity) || isNotEmpty(targetMultiplicity)) {
-            similarity += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            weight += RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        }
+        // if (isNotEmpty(referenceRelationship.sourceRole) || isNotEmpty(sourceRole)) {
+        similarity += nameEqualsSimilarity(referenceRelationship.sourceRole, sourceRole) * RELATION_ROLE_WEIGHT;
+        // }
+        // if (isNotEmpty(referenceRelationship.targetRole) || isNotEmpty(targetRole)) {
+        similarity += nameEqualsSimilarity(referenceRelationship.targetRole, targetRole) * RELATION_ROLE_WEIGHT;
+        // }
+        // if (isNotEmpty(referenceRelationship.sourceMultiplicity) || isNotEmpty(sourceMultiplicity)) {
+        similarity += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_WEIGHT;
+        // }
+        // if (isNotEmpty(referenceRelationship.targetMultiplicity) || isNotEmpty(targetMultiplicity)) {
+        similarity += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_WEIGHT;
+        // }
 
         // bidirectional associations can be swapped
         if (type == UMLRelationshipType.CLASS_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
-            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetRole, sourceRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
-            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceRole, targetRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
-            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetRole, sourceRole) * RELATION_ROLE_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceRole, targetRole) * RELATION_ROLE_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_WEIGHT;
 
             similarityReverse += referenceRelationship.getSource().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
             similarityReverse += referenceRelationship.getTarget().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
@@ -123,7 +117,7 @@ public class UMLRelationship extends UMLElement {
             similarity += CompassConfiguration.RELATION_TYPE_WEIGHT;
         }
 
-        return ensureSimilarityRange(similarity / weight);
+        return ensureSimilarityRange(similarity);
     }
 
     @Override

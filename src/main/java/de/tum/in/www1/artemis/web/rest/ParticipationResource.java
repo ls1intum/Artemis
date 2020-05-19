@@ -475,6 +475,9 @@ public class ParticipationResource {
         else {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
+            // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
+            // The best would be a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // avoid problems due to bidirectional associations between submission and result during serialization
             if (participation == null) {
