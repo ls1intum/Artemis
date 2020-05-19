@@ -3,13 +3,12 @@ import './vendor.ts';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ArtemisSystemNotificationModule } from 'app/core/system-notification/system-notification.module';
+import { ArtemisSystemNotificationModule } from 'app/shared/notification/system-notification/system-notification.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
-import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
-import { NotificationSidebarComponent } from 'app/shared/layouts/notification-sidebar/notification-sidebar.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { SystemNotificationComponent } from 'app/shared/layouts/system-notification/system-notification.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -42,7 +41,6 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         ArtemisCoursesModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
-        ArtemisNotificationModule,
         ArtemisHeaderExercisePageWithDetailsModule,
     ],
     declarations: [
