@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextSubmissionService extends SubmissionService {
+
+    private final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -107,7 +111,14 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
         textSubmission = textSubmissionRepository.save(textSubmission);
-        submissionVersionService.save(textSubmission, principal.getName());
+
+        // versioning of submission
+        try {
+            submissionVersionService.save(textSubmission, principal.getName());
+        }
+        catch (Exception ex) {
+            log.error("Text submission version could not be saved: " + ex);
+        }
 
         participation.addSubmissions(textSubmission);
 

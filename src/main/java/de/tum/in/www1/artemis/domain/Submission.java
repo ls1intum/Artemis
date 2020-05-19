@@ -66,8 +66,8 @@ public abstract class Submission implements Serializable {
     @ManyToOne
     private Participation participation;
 
-    @OrderColumn
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<SubmissionVersion> versions = new ArrayList<>();
 
