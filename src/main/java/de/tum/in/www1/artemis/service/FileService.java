@@ -294,10 +294,10 @@ public class FileService {
 
         for (Resource resource : resources) {
 
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            String filePath = resource.getFile().getAbsolutePath();
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = fileUrl.indexOf(prefix);
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
+            int index = filePath.indexOf(prefix);
+            String targetFilePath = keepParentFolder ? filePath.substring(index + prefix.length()) : "/" + resource.getFilename();
             // special case for '.git.ignore.file' file which would not be included in build otherwise
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
@@ -408,7 +408,9 @@ public class FileService {
 
                 line = reader.readLine();
             }
-
+            // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
+            reader.close();
+            writer.close();
             Files.delete(file.toPath());
             FileUtils.moveFile(tempFile, new File(filePath));
         }
