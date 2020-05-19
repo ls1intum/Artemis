@@ -111,7 +111,6 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
         PointCounter pointCounter = new PointCounter();
         pointCounter.setPoints(score);
         addPointCounters(pointCounter);
-
     }
 
     /**
