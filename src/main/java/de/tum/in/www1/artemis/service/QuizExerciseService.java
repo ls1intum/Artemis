@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.support.MessageBuilder;
@@ -20,11 +21,14 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @Service
 public class QuizExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
+
+    private final QuizStatisticService quizStatisticService;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
@@ -44,9 +48,11 @@ public class QuizExerciseService {
 
     private final ObjectMapper objectMapper;
 
+    private QuizScheduleService quizScheduleService;
+
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate, QuizStatisticService quizStatisticService,
             MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -57,6 +63,12 @@ public class QuizExerciseService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
+        this.quizStatisticService = quizStatisticService;
+    }
+
+    @Autowired
+    public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -68,7 +80,18 @@ public class QuizExerciseService {
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
-        // fix references in all drag and drop and short answer questions (step 1/2)
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+
+        // create a quizPointStatistic if it does not yet exist
+        if (quizExercise.getQuizPointStatistic() == null) {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
+        }
+        // make sure the pointers in the statistics are correct
+        quizExercise.recalculatePointCounters();
+
+        // fix references in all questions (step 1/2)
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof MultipleChoiceQuestion) {
                 var multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
@@ -152,7 +175,7 @@ public class QuizExerciseService {
 
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
-        quizExercise = quizExerciseRepository.save(quizExercise);
+        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
@@ -167,6 +190,9 @@ public class QuizExerciseService {
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
+
+        quizScheduleService.scheduleQuizStart(quizExercise);
+
         return quizExercise;
     }
 
@@ -266,7 +292,7 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
-    public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
+    private void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
@@ -483,5 +509,63 @@ public class QuizExerciseService {
             // save mapping
             shortAnswerMappingRepository.save(mapping);
         }
+    }
+
+    /**
+     *
+     * @param quizExercise the changed quiz exercise from the client
+     * @param originalQuizExercise the original quiz exercise (with statistics)
+     * @return the updated quiz exercise with the changed statistics
+     */
+    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise) {
+
+        quizExercise.undoUnallowedChanges(originalQuizExercise);
+        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
+
+        // update QuizExercise
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.reconnectJSONIgnoreAttributes();
+
+        // adjust existing results if an answer or a question was deleted and recalculate them
+        adjustResultsOnQuizChanges(quizExercise);
+
+        quizExercise = save(quizExercise);
+
+        if (updateOfResultsAndStatisticsNecessary) {
+            // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
+            quizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExercise.getId()).get();
+            quizStatisticService.recalculateStatistics(quizExercise);
+        }
+        return quizExercise;
+    }
+
+    /**
+     * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     * @param exerciseId Id of the exercise to reset
+     */
+    public void resetExercise(Long exerciseId) {
+        // refetch exercise to make sure we have an updated version
+        QuizExercise quizExercise = findOneWithQuestionsAndStatistics(exerciseId);
+
+        // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+        quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
+        quizExercise.setIsPlannedToStart(Boolean.FALSE);
+        quizExercise.setAllowedNumberOfAttempts(null);
+        quizExercise.setIsOpenForPractice(Boolean.FALSE);
+        quizExercise.setReleaseDate(null);
+
+        quizExercise = save(quizExercise);
+
+        // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+        quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+        quizScheduleService.clearQuizData(quizExercise.getId());
+
+        // clean up the statistics
+        quizStatisticService.recalculateStatistics(quizExercise);
+    }
+
+    public void cancelScheduledQuiz(Long quizExerciseId) {
+        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
+        quizScheduleService.clearQuizData(quizExerciseId);
     }
 }
