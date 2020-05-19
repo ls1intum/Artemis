@@ -72,6 +72,6 @@ public class AnswerCounter extends QuizStatisticCounter implements Serializable 
 
     @Override
     public String toString() {
-        return "AnswerCounter{" + "id=" + getId() + "}";
+        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
     }
 }

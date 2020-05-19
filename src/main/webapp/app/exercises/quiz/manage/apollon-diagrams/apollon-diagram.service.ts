@@ -10,7 +10,7 @@ export type EntityResponseType = HttpResponse<ApollonDiagram>;
 
 @Injectable({ providedIn: 'root' })
 export class ApollonDiagramService {
-    private resourceUrl = SERVER_API_URL + 'api/apollon-diagrams';
+    private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
@@ -18,10 +18,10 @@ export class ApollonDiagramService {
      * Creates diagram.
      * @param apollonDiagram - apollonDiagram to be created.
      */
-    create(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
+    create(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
         return this.http
-            .post<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' })
+            .post<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
@@ -29,10 +29,10 @@ export class ApollonDiagramService {
      * Updates diagram.
      * @param apollonDiagram - apollonDiagram to be updated.
      */
-    update(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
+    update(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
         return this.http
-            .put<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' })
+            .put<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
@@ -40,9 +40,9 @@ export class ApollonDiagramService {
      * Finds diagram.
      * @param id - id of diagram to be found.
      */
-    find(id: number): Observable<EntityResponseType> {
+    find(id: number, courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ApollonDiagram>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
@@ -61,8 +61,18 @@ export class ApollonDiagramService {
      * Deletes diagram with that id.
      * @param id - id of diagram to be deleted.
      */
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(id: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' });
+    }
+
+    /**
+     * Gets all apollon diagrams that belong to the course with the id courseId.
+     */
+    getDiagramsByCourse(courseId: number): Observable<HttpResponse<ApollonDiagram[]>> {
+        const options = createRequestOption(courseId);
+        return this.http
+            .get<ApollonDiagram[]>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
