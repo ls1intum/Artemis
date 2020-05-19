@@ -5,7 +5,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
-import { Exercise, ExerciseCategory } from '../../../entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -122,15 +123,22 @@ export class ExerciseService {
     }
 
     /**
-     * Return all exercises of input exercises that are due in delayInHours or 12 hours if not specified
+     * Returns a visible  due in delayInHours or 12 hours if not specified
      * @param { Exercise[] } exercises - Considered exercises
      * @param { number} delayInHours - If set, amount of hours that are considered
      */
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
-        return exercises.find((exercise) => {
-            const dueDate = exercise.dueDate!;
-            return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
-        })!;
+        return (
+            exercises
+                .filter((exercise) => exercise.type === ExerciseType.QUIZ)
+                .find((exercise: QuizExercise) => {
+                    return exercise.isVisibleBeforeStart && !exercise.ended;
+                }) ||
+            exercises.find((exercise) => {
+                const dueDate = exercise.dueDate!;
+                return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
+            })!
+        );
     }
 
     /**
