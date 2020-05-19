@@ -25,6 +25,16 @@ public class SubmissionVersionService {
         this.userService = userService;
     }
 
+    /**
+     * Saves a version for the given submission to track its current content and author
+     *
+     * If the last version for this submission was made by the same user, update this version.
+     * Otherwise, create a new version. This drastically reduces the number of versions that need to be created.
+     *
+     * @param submission Submission for which to save a version
+     * @param username Username of the author of the submission update
+     * @return created/updated submission version
+     */
     public SubmissionVersion save(Submission submission, String username) {
         User user = userService.getUserByLogin(username).orElseThrow();
 
