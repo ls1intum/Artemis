@@ -5,8 +5,7 @@ export class UnorderedListCommand extends Command {
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.unorderedList';
 
     /**
-     * @function execute
-     * @desc Use the markdown language for creating an unordered list
+     * Use the markdown language for creating an unordered list
      */
     execute(): void {
         const selectedText = this.getSelectedText();
@@ -14,10 +13,9 @@ export class UnorderedListCommand extends Command {
     }
 
     /**
-     * @function splitText
-     * @desc 1. Split the text at the line break into an array
-     *       2. Call for each textline the replaceText method
-     * @param {string} the selected text by the cursor
+     * 1. Split the text at the line break into an array
+     * 2. Call the replaceText method for each textline
+     * @param {string} selectedText - Text selected by the cursor
      */
     splitText(selectedText: string): void {
         const parseArray = selectedText.split('\n');
@@ -25,12 +23,11 @@ export class UnorderedListCommand extends Command {
     }
 
     /**
-     * @function replaceText
-     * @desc 1. Check if the selected text includes (-)
-     *       2. If included reduce the selected text by 2 (-, whitespace) and replace the selected text by textToAdd
-     *       3. If not included combine (-) with the selected text and insert into the editor
-     *       4. An unordered list in markdown appears
-     * @param element {string} extracted textLine from the {array} selectedText
+     * 1. Check if the selected text includes (-)
+     * 2. If included, reduce the selected text by 2 (-, whitespace) and replace the selected text by textToAdd
+     * 3. If not included combine (-) with the selected text and insert it into the editor
+     * 4. An unordered list in markdown appears
+     * @param {string} element - Extracted textLine from the {array} selectedText
      */
     replaceText(element: string): void {
         /** case 1: text is formed in as an unordered list and the list should be unformed by deleting (-) + whitespace */

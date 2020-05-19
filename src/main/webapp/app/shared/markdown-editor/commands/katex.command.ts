@@ -8,6 +8,8 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 export class KatexCommand extends DomainTagCommand {
     buttonIcon = 'equals';
     buttonTranslationString = 'artemisApp.markdownEditor.commands.katex';
+
+    /** Insert a katex formula, denoted by opening and closing '$$', into the code editor */
     execute(): void {
         const text = `${this.getOpeningIdentifier()}e^{\\frac{1}{4} y^2}${this.getClosingIdentifier()}`;
         addTextAtCursor(text, this.aceEditor);

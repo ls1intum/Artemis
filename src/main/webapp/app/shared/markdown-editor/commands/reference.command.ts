@@ -5,12 +5,11 @@ export class ReferenceCommand extends Command {
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.quote';
 
     /**
-     * @function execute
-     * @desc Add/Remove a reference in markdown language
-     *       1. Check if the selected text includes ('>') and/or ('Reference')
-     *       2. If included reduce the selected text by this elements and add replace the selected text by textToAdd
-     *       3. If not included add ('>') before the selected text and insert into editor
-     *       4. Reference in markdown appears
+     * Add/Remove a reference in markdown language
+     * 1. Check if the selected text includes ('>') and/or ('Reference')
+     * 2. If included, reduce the selected text by this elements and replace the selected text by textToAdd
+     * 3. If not included, add ('>') before the selected text and insert it into the editor
+     * 4. Reference in markdown appears
      */
     execute(): void {
         let selectedText = this.getSelectedText();

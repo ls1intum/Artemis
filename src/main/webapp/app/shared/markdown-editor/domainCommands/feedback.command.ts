@@ -9,26 +9,17 @@ export class FeedbackCommand extends DomainTagCommand {
     displayCommandButton = false;
 
     /**
-     * @function execute
-     * @desc Add a new feedback for he corresponding instruction in the editor at the location of the cursor
+     * Add new feedback for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.text;
         addTextAtCursor(text, this.aceEditor);
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the feedback
-     */
     getOpeningIdentifier(): string {
         return FeedbackCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the feedback
-     */
     getClosingIdentifier(): string {
         return '[/feedback]';
     }

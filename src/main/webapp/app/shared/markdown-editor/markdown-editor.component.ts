@@ -30,12 +30,20 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 
+/**
+ * Enum for heights of the markdown editor
+ * @enum {number}
+ */
 export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
 }
 
+/**
+ * Enum for editor modes
+ * @enum {string}
+ */
 export enum EditorMode {
     NONE = 'none',
     LATEX = 'latex',
@@ -163,23 +171,30 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
-     * @function addCommand
-     * @param command
-     * @desc customize the user interface of the markdown editor by adding a command
+     * Customize the user interface of the markdown editor by adding a command
+     * @param {Command} command - Command to add
      */
     addCommand(command: Command) {
         this.defaultCommands.push(command);
     }
 
     /**
-     * @function removeCommand
-     * @param classRef Command
-     * @desc customize the user interface of the markdown editor by removing a command
+     * Customize the user interface of the markdown editor by removing a command
+     * @param {Command} classRef - Command to remove
      */
     removeCommand(classRef: typeof Command) {
         setTimeout(() => (this.defaultCommands = this.defaultCommands.filter((element) => !(element instanceof classRef))));
     }
 
+    /**
+     * Configures the ace editor
+     * 1. Enable basic and live autocompletion
+     * 2. Remove standard completers
+     * 3. Register the code editor with the commands
+     * 4. Calls setupMarkdownEditor() for basic configurations
+     * 5. Sets the editor mode for the session
+     * 6. Calls setupResizable() to enable a resizable editor, if this option is enabled
+     */
     ngAfterViewInit(): void {
         // Commands may want to add custom completers - remove standard completers of the ace editor.
         this.aceEditorContainer.getEditor().setOptions({
@@ -212,8 +227,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
-     * @function setupQuestionEditor
-     * @desc Initializes the ace editor
+     * Initializes the ace editor with basic configurations
      */
     setupMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
@@ -228,8 +242,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
-     * @function setupResizable
-     * @desc Sets up resizable to enable resizing for the user
+     * Sets up resizable to enable resizing of the code editor for the user
      */
     setupResizable(): void {
         this.interactResizable = interact('.markdown-editor')
@@ -344,8 +357,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     };
 
     /**
-     * @function togglePreview
-     * @desc Toggle the preview in the template and parse the text
+     * Toggle the preview in the template and parse the text
+     * @param {Event} event - Event containing state of the active tab
      */
     togglePreview(event: any): void {
         this.previewMode = !this.previewMode;

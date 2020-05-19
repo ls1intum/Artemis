@@ -11,26 +11,17 @@ export class UsageCountCommand extends DomainTagCommand {
     displayCommandButton = false;
 
     /**
-     * @function execute
-     * @desc Add a new usage count for the corresponding instruction in the editor at the location of the cursor
+     * Add a new usage count for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + UsageCountCommand.text;
         addTextAtCursor(text, this.aceEditor);
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the usage count
-     */
     getOpeningIdentifier(): string {
         return UsageCountCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the usage count
-     */
     getClosingIdentifier(): string {
         return '[/maxCountInScore]';
     }

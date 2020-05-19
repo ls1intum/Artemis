@@ -30,6 +30,11 @@ export class OrionConnectorService implements ArtemisOrionConnector {
 
     constructor(private window: WindowRef, private injector: Injector) {}
 
+    /**
+     * Initialize the orion connector
+     * @param {OrionConnectorService} connector - Interface between IDE and webapp
+     * @param {WindowRef} win - References the native window object
+     */
     static initConnector(connector: OrionConnectorService, win: WindowRef) {
         win.nativeWindow.artemisClientConnector = connector;
         connector.orionState = { opened: -1, inInstructorView: false, cloning: false, building: false };

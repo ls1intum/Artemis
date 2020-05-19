@@ -18,6 +18,11 @@ export class GradingInstructionCommand extends DomainTagCommand {
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
 
+    /**
+     * Creates the grading instructions text. The text contains elements for credits,
+     * grading scale, grading description, student feedback and usage count.
+     * @returns {string} Grading instructions text
+     */
     instructionText(): string {
         return (
             this.getOpeningIdentifier() +
@@ -44,28 +49,19 @@ export class GradingInstructionCommand extends DomainTagCommand {
             '\n'
         );
     }
+
     /**
-     * @function execute
-     * @desc Add a new grading instruction in the editor at the location of the cursor
+     * Add a new grading instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = this.instructionText();
-
         addTextAtCursor(text, this.aceEditor);
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the grading instruction
-     */
     getOpeningIdentifier(): string {
         return GradingInstructionCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the grading instruction
-     */
     getClosingIdentifier(): string {
         return '[/gradingInstruction]';
     }

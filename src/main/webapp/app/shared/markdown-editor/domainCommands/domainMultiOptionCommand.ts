@@ -10,9 +10,11 @@ export type ValueItem = {
  */
 export abstract class DomainMultiOptionCommand extends DomainCommand {
     protected values: ValueItem[] = [];
+
     setValues(values: ValueItem[]) {
         this.values = values;
     }
+
     getValues() {
         return this.values;
     }

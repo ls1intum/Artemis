@@ -7,18 +7,10 @@ export class TestCaseCommand extends DomainMultiOptionListCommand {
         return 'testCase';
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the task
-     */
     getOpeningIdentifier(): string {
         return '(';
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the explanation
-     */
     getClosingIdentifier(): string {
         return ')';
     }

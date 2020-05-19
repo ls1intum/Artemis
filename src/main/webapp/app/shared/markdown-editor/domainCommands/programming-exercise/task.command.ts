@@ -9,6 +9,10 @@ export class TaskCommand extends DomainTagCommand {
 
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
+    /**
+     * Set the editor object and initialize a new task autocompleter. The autocompleter is registered at the editor.
+     * @param aceEditor - Code editor object
+     */
     setEditor(aceEditor: any) {
         super.setEditor(aceEditor);
 
@@ -24,14 +28,20 @@ export class TaskCommand extends DomainTagCommand {
         return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder}){${TaskCommand.hintsPlaceholder}}`;
     }
 
+    /**
+     * Returns a regular expression, matching the task opening element.
+     *
+     * @param {string} flags - Configuration flags for the returned {RegExp} regular expression. Defaults to ''.
+     * @returns {RegExp} Regular expression matching the task opening identifier
+     */
     public getTagRegex(flags = ''): RegExp {
         const escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier());
         return new RegExp(`${escapedOpeningIdentifier}(.*)`, flags);
     }
 
     /**
-     * @function execute
-     * @desc add a new task. doesn't use the closing identifier for legacy reasons.
+     * Add a new task, preceded by the the current line number, to the code editor.
+     * Doesn't use the closing identifier for legacy reasons.
      */
     execute(): void {
         const currentLine = this.getCurrentLine();
@@ -43,18 +53,10 @@ export class TaskCommand extends DomainTagCommand {
         this.focus();
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the task
-     */
     getOpeningIdentifier(): string {
         return TaskCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the explanation
-     */
     getClosingIdentifier(): string {
         return '[/task]';
     }

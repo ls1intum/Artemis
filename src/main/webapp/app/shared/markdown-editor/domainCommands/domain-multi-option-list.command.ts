@@ -8,6 +8,10 @@ import { removeTextRange } from 'app/shared/util/markdown-util';
 export abstract class DomainMultiOptionListCommand extends DomainMultiOptionCommand {
     protected abstract getValueMeta(): string;
 
+    /**
+     * Sets the editor and initializes a new completer, which is registered with the editor
+     * @param aceEditor - Code Editor object
+     */
     setEditor(aceEditor: any) {
         super.setEditor(aceEditor);
 

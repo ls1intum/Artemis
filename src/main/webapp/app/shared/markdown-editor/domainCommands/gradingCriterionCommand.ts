@@ -11,26 +11,17 @@ export class GradingCriterionCommand extends DomainTagCommand {
     gradingInstructionCommand = new GradingInstructionCommand();
 
     /**
-     * @function execute
-     * @desc Add a new criterion for the corresponding exercise in the editor at the location of the cursor
+     * Add a new criterion for the corresponding exercise in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + GradingCriterionCommand.text + '\n' + this.gradingInstructionCommand.instructionText();
         addTextAtCursor(text, this.aceEditor);
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the criterion
-     */
     getOpeningIdentifier(): string {
         return GradingCriterionCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the criterion
-     */
     getClosingIdentifier(): string {
         return '[/gradingCriterion]';
     }

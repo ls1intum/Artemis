@@ -5,12 +5,11 @@ export class HeadingThreeCommand extends Command {
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.headingThree';
 
     /**
-     * @function execute
-     * @desc Create/Remove heading three language
-     *       1. check if the selected text includes (###) and/or ('Heading 3')
-     *       2. If included reduce the selected text by this elements and add replace the selected text by textToAdd
-     *       3. If not included  add (###) before the selected text and insert them into the editor
-     *       4. Heading three in markdown language appears
+     * Create/Remove heading three language
+     * 1. Check if the selected text includes (###) and/or ('Heading 3')
+     * 2. If included, reduce the selected text by this elements and replace the selected text by textToAdd
+     * 3. If not included, add (###) before the selected text and insert it into the editor
+     * 4. Heading three in markdown language appears
      */
     execute(): void {
         let selectedText = this.getSelectedText();

@@ -5,12 +5,12 @@ export class ColorPickerCommand extends Command {
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.color';
 
     /**
-     * @function execute
-     * @desc Set/ Remove color
-     *       1. Check if the selected text includes (<span)
-     *       2. If included reduce the selected text by the html elements for setting the color and replace the selected text by textToAdd
-     *       3. If not included insert the html element that change the style of the selectedText by setting the chosen color
-     *       4. Color changes occure
+     * Set/Remove color
+     * 1. Check if the selected text includes (<span)
+     * 2. If included, reduce the selected text by the html elements for setting the color and replace the selected text by textToAdd
+     * 3. If not included, insert the html element that changes the style of the selectedText by setting the chosen color
+     * 4. Color changes occur
+     * @param {string} color - Chosen color
      */
     execute(color: string): void {
         const selectedText = this.getSelectedText();
@@ -33,9 +33,10 @@ export class ColorPickerCommand extends Command {
     }
 
     /**
-     * @function insertHTMLForColorChange
-     * @desc Insert a html span with the color changes
+     * Insert a html span with the color changes
      * Note: Markdown does not support color changes - this is why html injection is used
+     * @param selectedText {string} Text to be inserted
+     * @param {string} color - Chosen color
      */
     insertHTMLForColorChange(selectedText: string, color: string) {
         let textToAdd = '';

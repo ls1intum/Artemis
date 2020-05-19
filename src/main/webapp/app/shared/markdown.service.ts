@@ -126,6 +126,11 @@ export class ArtemisMarkdownService {
         return this.sanitizer.bypassSecurityTrustHtml(sanitized);
     }
 
+    /**
+     * Creates a new Converter, which transforms the given html string into a markdown string
+     * @param {string} htmlText - HTML text to be converted to markdown
+     * @returns {string} Markdown
+     */
     markdownForHtml(htmlText: string): string {
         const converter = new showdown.Converter({
             parseImgDimensions: true,

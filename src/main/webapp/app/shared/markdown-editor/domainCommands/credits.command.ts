@@ -10,26 +10,17 @@ export class CreditsCommand extends DomainTagCommand {
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCredits';
 
     /**
-     * @function execute
-     * @desc Add a credits for the corresponding instruction in the editor at the location of the cursor
+     * Add credits for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + CreditsCommand.text;
         addTextAtCursor(text, this.aceEditor);
     }
 
-    /**
-     * @function getOpeningIdentifier
-     * @desc identify the start of the credits
-     */
     getOpeningIdentifier(): string {
         return CreditsCommand.identifier;
     }
 
-    /**
-     * @function getClosingIdentifier
-     * @desc identify the end of the credits
-     */
     getClosingIdentifier(): string {
         return '[/credits]';
     }
