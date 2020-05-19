@@ -70,6 +70,22 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         return this.localizedDateTime;
     }
 
+    /**
+     * Returns a localized moment.js format string.
+     * WARNING: As this method is static it cannot listen to changes of the current locale itself. It also does not take into account the device width.
+     * @param locale The locale string of the desired language. Defaults to 'en'.
+     * @param format Format of the localized date time. Defaults to 'long'.
+     * @param seconds Should seconds be displayed? Defaults to false.
+     */
+    static format(locale = 'en', format: 'short' | 'long' | 'short-date' | 'long-date' | 'short-time' | 'long-time' = 'long', seconds = false): string {
+        const long = format === 'long' || format === 'long-date' || format === 'long-time';
+        const showDate = format !== 'short-time' && format !== 'long-time';
+        const showTime = format !== 'short-date' && format !== 'long-date';
+        const dateFormat = ArtemisDatePipe.dateFormat(long, showDate, locale);
+        const timeFormat = ArtemisDatePipe.timeFormat(long, showTime, seconds);
+        return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
+    }
+
     private updateLocale(lang: string): void {
         if (lang !== this.locale) {
             this.locale = lang;
@@ -83,18 +99,18 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     }
 
     private format(): string {
-        const dateFormat = this.dateFormat();
-        const timeFormat = this.timeFormat();
+        const dateFormat = ArtemisDatePipe.dateFormat(this.long, this.showDate, this.locale);
+        const timeFormat = ArtemisDatePipe.timeFormat(this.long, this.showTime, this.showSeconds);
         return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
     }
 
-    private dateFormat(): string {
-        if (!this.showDate) {
+    private static dateFormat(long: boolean, showDate: boolean, locale: string): string {
+        if (!showDate) {
             return '';
         }
         let format = 'll';
-        if (!this.long) {
-            switch (this.locale) {
+        if (!long) {
+            switch (locale) {
                 case 'de':
                     format = 'D.M.YY';
                     break;
@@ -105,16 +121,16 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         return format;
     }
 
-    private timeFormat(): string {
-        if (!this.showTime) {
+    private static timeFormat(long: boolean, showTime: boolean, showSeconds: boolean): string {
+        if (!showTime) {
             return '';
         }
         let format = 'LTS';
-        if (this.long && !this.showSeconds) {
+        if (long && !showSeconds) {
             format = 'LT';
-        } else if (!this.long && this.showSeconds) {
+        } else if (!long && showSeconds) {
             format = 'H:m:s';
-        } else if (!this.long && !this.showSeconds) {
+        } else if (!long && !showSeconds) {
             format = 'H:m';
         }
         return format;
