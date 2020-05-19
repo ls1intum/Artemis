@@ -11,6 +11,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/entities/course.model';
+import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 
 @Component({
     selector: 'jhi-courses',
@@ -18,6 +19,8 @@ import { Course } from 'app/entities/course.model';
     providers: [CourseManagementService],
 })
 export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
+    readonly TeamFilterProp = TeamFilterProp;
+
     course: Course;
     courseId: number;
     unfinishedExercises: Exercise[] = [];
