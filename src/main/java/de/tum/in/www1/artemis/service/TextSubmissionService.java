@@ -102,6 +102,7 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textSubmission the submission that should be saved
      * @param participation  the participation the participation the submission belongs to
+     * @param principal      the principal of the user
      * @return the textSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
