@@ -11,7 +11,7 @@
     <!-- Preview -->
     <ng-container #preview>
         <div class="pt-1 background-editor-high markdown-preview">
-            <p *ngIf="exercise.gradingInstructions" class="markdown-preview" [innerHTML]="exercise.gradingInstructions"></p>
+            <p *ngIf="exercise.gradingInstructions" class="markdown-preview" [innerHTML]="exercise!.gradingInstructions! | htmlForMarkdown"></p>
             <div *ngFor="let criterion of exercise.gradingCriteria">
                 <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
                 <table class="table table-bordered">
