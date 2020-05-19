@@ -68,7 +68,7 @@ export class CoursesComponent implements OnInit {
             if (relevantExercises.length === 0) {
                 return undefined;
             } else if (relevantExercises.length === 1) {
-                relevantExercise = relevantExercises[1];
+                relevantExercise = relevantExercises[0];
             } else {
                 relevantExercise =
                     // 1st priority is an active quiz
