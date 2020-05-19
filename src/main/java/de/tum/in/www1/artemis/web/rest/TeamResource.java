@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,11 +61,13 @@ public class TeamResource {
 
     private final ParticipationService participationService;
 
+    private final SubmissionService submissionService;
+
     private final AuditEventRepository auditEventRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
             ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            AuditEventRepository auditEventRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -77,6 +76,7 @@ public class TeamResource {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
+        this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -102,6 +102,9 @@ public class TeamResource {
         }
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
+        }
+        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourse().getId(), team.getShortName())) {
+            throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -158,12 +161,20 @@ public class TeamResource {
         }
 
         // The team owner can only be changed by instructors
-        if (!isAtLeastInstructor && !existingTeam.get().getOwner().equals(team.getOwner())) {
+        final boolean ownerWasChanged = !Objects.equals(existingTeam.get().getOwner(), team.getOwner());
+        if (!isAtLeastInstructor && ownerWasChanged) {
             return forbidden();
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
         Team savedTeam = teamService.save(exercise, team);
+
+        // Propagate team owner change to other instances of this team in the course
+        if (ownerWasChanged) {
+            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourse().getId(), savedTeam.getShortName());
+            teamInstances.forEach(teamInstance -> teamInstance.setOwner(savedTeam.getOwner()));
+            teamRepository.saveAll(teamInstances);
+        }
 
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
@@ -208,18 +219,19 @@ public class TeamResource {
      * GET /exercises/:exerciseId/teams : get all the teams of an exercise for the exercise administration page
      *
      * @param exerciseId the exerciseId of the exercise for which all teams should be returned
+     * @param teamOwnerId the user id of the team owner for which to filter the teams by (optional)
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
     @GetMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId) {
+    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId);
+        List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         return ResponseEntity.ok().body(teams);
     }
@@ -357,11 +369,11 @@ public class TeamResource {
 
     /**
      * GET /courses/:courseId/teams/:teamShortName/with-exercises-and-participations : get course "id" with all released exercises in which the team "teamShortName" exists
-     * together with its participations for those exercises
+     * together with its participations for those exercises (and the latest submission for those if the user is an instructor or the team tutor)
      *
      * @param courseId id of the course
      * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
-     * @return Course with exercises and participations for the team
+     * @return Course with exercises and participations (and latest submissions) for the team
      */
     @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -389,18 +401,28 @@ public class TeamResource {
         // Set teams on exercises
         exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
 
-        // Fetch participations for team and set the submission count for each participation
-        List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
+        // Fetch participations for team
+        List<StudentParticipation> participations;
+        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
+            // fetch including submissions and results for team tutor and instructors
+            participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
+            submissionService.reduceParticipationSubmissionsToLatest(participations, true);
+        }
+        else {
+            // for other tutors and for students: submissions not needed, hide results
+            participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
+            participations.forEach(participation -> participation.setResults(null));
+        }
+
+        // Set the submission count for all participations
         Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises
+        List<StudentParticipation> finalParticipations = participations;
         exercises.forEach(exercise -> {
-            Optional<StudentParticipation> studentParticipation = participations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
-            studentParticipation.ifPresent(participation -> {
-                participation.setResults(null);
-                exercise.setStudentParticipations(Set.of(participation));
-            });
+            Optional<StudentParticipation> studentParticipation = finalParticipations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
+            studentParticipation.ifPresent(participation -> exercise.setStudentParticipations(Set.of(participation)));
         });
 
         // Filter sensitive information

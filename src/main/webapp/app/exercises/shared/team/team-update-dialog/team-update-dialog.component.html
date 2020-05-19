@@ -61,15 +61,23 @@
                     <jhi-help-icon placement="right" text="artemisApp.team.owner.tooltip" class="mr-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingOwner"></fa-icon>
-                <span *ngIf="searchingOwnerQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort">
+                <span *ngIf="searchingOwnerQueryTooShort" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort">
                     Please enter at least 3 characters.
                 </span>
-                <span *ngIf="searchingOwnerNoResultsForQuery" class="search-error-message text-danger">
+                <span *ngIf="searchingOwnerNoResultsForQuery" class="label-inline-message text-danger">
                     <span jhiTranslate="artemisApp.team.ownerSearch.noResults">No tutors found in course for search:</span>
                     <strong>{{ searchingOwnerNoResultsForQuery }}</strong>
                 </span>
-                <span *ngIf="searchingOwnerFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed">
+                <span *ngIf="searchingOwnerFailed" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed">
                     Search failed. Please try again.
+                </span>
+                <span
+                    *ngIf="team.id && team.owner?.id !== pendingTeam.owner?.id"
+                    jhiTranslate="artemisApp.team.ownerChangeWarning"
+                    [translateValues]="{ shortName: team.shortName }"
+                    class="label-inline-message text-danger"
+                >
+                    This will change the tutor for the team {{ team.shortName }} in the whole course!
                 </span>
             </div>
             <jhi-team-owner-search
@@ -90,14 +98,14 @@
             <div class="d-flex align-items-end">
                 <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
                 <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
-                <span *ngIf="searchingStudentsQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
+                <span *ngIf="searchingStudentsQueryTooShort" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
                     Please enter at least 3 characters.
                 </span>
-                <span *ngIf="searchingStudentsNoResultsForQuery" class="search-error-message text-danger">
+                <span *ngIf="searchingStudentsNoResultsForQuery" class="label-inline-message text-danger">
                     <span jhiTranslate="artemisApp.team.studentSearch.noResults">No students found in course for search:</span>
                     <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
                 </span>
-                <span *ngIf="searchingStudentsFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
+                <span *ngIf="searchingStudentsFailed" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
                     Search failed. Please try again.
                 </span>
             </div>

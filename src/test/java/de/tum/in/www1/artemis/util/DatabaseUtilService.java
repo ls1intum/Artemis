@@ -1033,8 +1033,9 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+    private TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
+        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> addParticipationForExercise(exercise, login))
+                .orElseGet(() -> addTeamParticipationForExercise(exercise, teamId));
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1049,6 +1050,14 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
+        return addTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
+    }
+
+    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
+        return addTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
     public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
