@@ -50,9 +50,9 @@ export const allSuccessfulContentC = {
                 'char rotX(char in, unsigned rot) {\n' +
                 '\tif(isalpha(in)) { // We only want to convert alphabet characters\n' +
                 '\t\tif(isupper(in)) {\n' +
-                '\t\t\treturn \'A\' + ((in - \'A\') + rot) % 26;\n' +
+                "\t\t\treturn 'A' + ((in - 'A') + rot) % 26;\n" +
                 '\t\t}\n' +
-                '\t\treturn \'a\' + ((in - \'a\') + rot) % 26;\n' +
+                "\t\treturn 'a' + ((in - 'a') + rot) % 26;\n" +
                 '\t}\n' +
                 '\treturn in;\n' +
                 '}\n' +
@@ -66,7 +66,7 @@ export const allSuccessfulContentC = {
                 '\t\tif(!scanf("%i", &rot)) {\n' +
                 '\t\t\t// Clear input if user did not enter a valid int:\n' +
                 '\t\t\tint c;\n' +
-                '\t\t\twhile ((c = getchar()) != \'\\n\' && c != EOF);\n' +
+                "\t\t\twhile ((c = getchar()) != '\\n' && c != EOF);\n" +
                 '\t\t}\n' +
                 '\t} while (rot < 0);\n' +
                 '\treturn (unsigned)rot;\n' +
@@ -77,7 +77,7 @@ export const allSuccessfulContentC = {
                 '\tchar buff[MAX_BUFFER_SIZE];\n' +
                 '\n' +
                 '\tprintf("Enter text:\\n");\n' +
-                '\t// Read MAX_BUFFER_SIZE - 1 chars. Don\'t forget about the \'\0\' at the end!\n' +
+                "\t// Read MAX_BUFFER_SIZE - 1 chars. Don't forget about the '\0' at the end!\n" +
                 '\tsize_t n = read(STDIN_FILENO, buff, MAX_BUFFER_SIZE - 1);\n' +
                 '\tfor (size_t i = 0; i < n && buff[i]; i++)\n' +
                 '\t{\n' +
