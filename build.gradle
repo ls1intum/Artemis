@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.30.0"
+    id "com.diffplug.gradle.spotless" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.1.0"
+version = "4.1.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -158,7 +158,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.14.29'
+    implementation 'org.gitlab4j:gitlab4j-api:4.14.30'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -311,7 +311,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.4"
+    gradleVersion = "6.4.1"
 }
 
 task stage(dependsOn: "bootWar") {
