@@ -334,7 +334,7 @@ public class QuizExerciseService {
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             if (quizChange.equals("set-visible")) {
                 // the quiz id is not yet known to the client, we need to use a more generic topic
-                messagingTemplate.send("/topic/quizExercises", MessageBuilder.withPayload(payload).build());
+                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
                 // TODO: start-now would also be interesting to be supported in the client, but needs to be handled differently in the client
             }
             else {
