@@ -75,6 +75,6 @@ public class PointCounter extends QuizStatisticCounter implements Serializable {
 
     @Override
     public String toString() {
-        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + "}";
+        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
     }
 }
