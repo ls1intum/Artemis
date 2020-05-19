@@ -6,8 +6,10 @@ export class ApollonDiagram implements BaseEntity {
     public title: string;
     public jsonRepresentation: string;
     public diagramType: DiagramType;
+    public courseId: number;
 
-    constructor(diagramType: DiagramType) {
+    constructor(diagramType: DiagramType, courseId: number) {
         this.diagramType = diagramType;
+        this.courseId = courseId;
     }
 }

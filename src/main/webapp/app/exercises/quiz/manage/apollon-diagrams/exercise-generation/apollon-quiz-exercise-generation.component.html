@@ -4,10 +4,9 @@
     </div>
 
     <div class="modal-body">
-        <label for="generate-quiz-exercise-course" class="form-control-label" jhiTranslate="artemisApp.exercise.course">Course</label>
-        <select id="generate-quiz-exercise-course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
-            <option *ngFor="let course of courses" [ngValue]="course">{{ course.title }}</option>
-        </select>
+        <label jhiTranslate="artemisApp.apollonDiagram.detail.quizExercise" [translateValues]="{ title: courseTitle }">
+            Generate a quiz exercise for course: {{ courseTitle }}.
+        </label>
     </div>
 
     <div class="modal-footer">
