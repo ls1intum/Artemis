@@ -34,6 +34,7 @@ public class SubmissionVersion {
     @Column(name = "created_date", updatable = false)
     private Instant createdDate = Instant.now();
 
+    // automatically set on changes
     @LastModifiedDate
     @Column(name = "last_modified_date")
     private Instant lastModifiedDate = Instant.now();
