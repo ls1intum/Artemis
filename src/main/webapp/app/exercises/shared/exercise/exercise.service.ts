@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
-import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -132,7 +132,7 @@ export class ExerciseService {
         const nextQuizExercises: Exercise[] = exercises.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
         return (
             // 1st priority is an active quiz
-            nextQuizExercises.find((exercise: QuizExercise) => exercise.isActiveQuiz) ||
+            nextQuizExercises.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
             // 2nd priority is a visible quiz
             nextQuizExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
             // 3rd priority is the next due exercise
@@ -140,6 +140,14 @@ export class ExerciseService {
                 const dueDate = exercise.dueDate!;
                 return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
+        );
+    }
+
+    isActiveQuiz(exercise: Exercise) {
+        return (
+            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
+            exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
+            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
         );
     }
 
