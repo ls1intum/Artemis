@@ -35,7 +35,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
-    private translationSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
+    private translateSubscription: Subscription;
     course: Course | null;
 
     // absolute score
@@ -186,13 +187,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
             this.onCourseLoad();
         });
 
-        this.translationSubscription = this.translateService.onLangChange.subscribe(() => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.exerciseTitles = {
                 quiz: {
                     name: this.translateService.instant('artemisApp.course.quizExercises'),
@@ -220,12 +221,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
-        }
-        if (this.translationSubscription) {
-            this.translationSubscription.unsubscribe();
-        }
+        this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
     }
 
     private onCourseLoad() {

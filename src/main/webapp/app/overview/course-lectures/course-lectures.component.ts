@@ -19,6 +19,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
     private paramSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     public course: Course | null;
     public weeklyIndexKeys: string[];
@@ -45,7 +46,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
             this.onCourseLoad();
@@ -57,12 +58,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.translateService) {
-            this.translateSubscription.unsubscribe();
-        }
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
-        }
+        this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
     }
 
     private onCourseLoad() {

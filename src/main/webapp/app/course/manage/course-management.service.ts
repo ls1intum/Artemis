@@ -20,6 +20,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { NotificationService } from 'app/overview/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -100,6 +101,7 @@ export class CourseManagementService {
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -108,6 +110,7 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)))
             .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
             .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
@@ -322,6 +325,22 @@ export class CourseManagementService {
             res.body.forEach((course: Course) => {
                 course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
                 course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+            });
+        }
+        return res;
+    }
+
+    private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
+        }
+        return res;
+    }
+
+    private setParticipationStatusForExercisesInCourses(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                course.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
             });
         }
         return res;

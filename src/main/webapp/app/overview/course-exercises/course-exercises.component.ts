@@ -39,6 +39,7 @@ enum SortFilterStorageKey {
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     public course: Course | null;
     public weeklyIndexKeys: string[];
@@ -88,7 +89,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
             this.onCourseLoad();
@@ -103,6 +104,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
     }
 
