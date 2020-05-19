@@ -63,6 +63,7 @@
                 "userNotParticipatedShort": "Not participated.",
                 "userParticipatingShort": "Currently participating.",
                 "userSubmittedShort": "Already submitted.",
+                "noDateAssociated": "No date associated",
                 "details": {
                     "courseInformation": "Course Information:",
                     "totalExercises": "Total Exercises:",
