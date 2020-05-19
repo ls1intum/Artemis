@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -29,7 +28,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         SlideToggleComponent,
         JhiConnectionStatusComponent,
     ],
-    providers: [DatePipe],
     entryComponents: [DeleteDialogComponent],
     exports: [
         ArtemisDatePipe,
