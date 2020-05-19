@@ -34,6 +34,7 @@
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
+                "currentExerciseGroupHeaderWithoutDueDate": "Aktuelle Übung:",
                 "sortExercises": "Aufgaben sortieren",
                 "newFirst": "Neueste zuerst",
                 "oldFirst": "Älteste zuerst",

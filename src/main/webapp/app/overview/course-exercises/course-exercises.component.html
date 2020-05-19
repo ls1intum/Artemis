@@ -19,7 +19,12 @@
             </div>
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
                 <h3 class="text-primary">
-                    {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | translate: { date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm' } }}
+                    <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | translate: { date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm' } }}
+                    </span>
+                    <ng-template #noDueDate>
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | translate }}
+                    </ng-template>
                 </h3>
                 <jhi-course-exercise-row
                     class="pb-1"

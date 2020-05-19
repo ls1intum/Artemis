@@ -34,6 +34,7 @@
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
                 "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
+                "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
                 "newFirst": "Newest first",
                 "oldFirst": "Oldest first",
