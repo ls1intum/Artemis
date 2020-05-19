@@ -6,6 +6,6 @@ export class SubjectObservablePair<T> {
 
     constructor() {
         this.subject = new Subject<T>();
-        this.observable = this.subject.asObservable().shareReplay();
+        this.observable = this.subject.asObservable();
     }
 }

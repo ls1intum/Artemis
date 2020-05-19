@@ -67,20 +67,23 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                 this.exercise.participationStatus = participationStatus(this.exercise);
             }
         });
-        this.exercise.participationStatus = participationStatus(this.exercise);
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = this.exercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
+        setTimeout(() => {
+            // Execute in next cycle to prevent ExpressionChangedAfterItHasBeenCheckedError after course refresh
+            this.exercise.participationStatus = participationStatus(this.exercise);
+            if (this.exercise.type === ExerciseType.QUIZ) {
+                const quizExercise = this.exercise as QuizExercise;
+                quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
 
-            quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
-            this.exercise = quizExercise;
-        }
+                quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
+                this.exercise = quizExercise;
+            }
+        });
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
