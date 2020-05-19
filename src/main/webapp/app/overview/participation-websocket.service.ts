@@ -160,7 +160,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private openResultWebsocketSubscriptionIfNotExisting() {
         if (!this.openResultWebsocketSubscription) {
-            const participationResultTopic = `/topic/newResults`;
+            const participationResultTopic = `/user/topic/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             this.openResultWebsocketSubscription = participationResultTopic;
             this.jhiWebsocketService
