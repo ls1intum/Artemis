@@ -86,9 +86,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
                     if (this.course) {
                         this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
                         this.course.exercises.push(quizExercise);
+                        // this lines makes sure the quiz is sorted correctly
                         this.courseService.courseWasUpdated(this.course);
                     }
-                    // TODO: make sure to display the visible quiz exercise at the top
                 },
                 () => {},
             );
