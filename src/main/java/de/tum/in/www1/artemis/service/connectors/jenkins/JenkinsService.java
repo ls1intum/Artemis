@@ -393,7 +393,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                 // For timestamps, parse the <b> tag containing the time as hh:mm:ss
                 if (node.attributes().get("class").contains("timestamp")) {
                     final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                    final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+                    final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
                     log = reduceToText(iterator.next());
                     buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
                 }
