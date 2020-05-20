@@ -25,6 +25,7 @@ export namespace HighlightColors {
      * Get highlight color at a specified index
      * @param {number} index - Index to get the color at
      */
+    // tslint:disable-next-line:completed-docs
     export function forIndex(index: number): Color {
         const colors = Object.values(Color);
         return colors[index % colors.length];

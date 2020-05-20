@@ -143,6 +143,10 @@ export class ExerciseService {
         );
     }
 
+    /**
+     * Checks if the quiz is active by evaluating the participation status of the corresponding quiz exercise object.
+     * @param exercise of type {Exercise}
+     */
     isActiveQuiz(exercise: Exercise) {
         return (
             exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||

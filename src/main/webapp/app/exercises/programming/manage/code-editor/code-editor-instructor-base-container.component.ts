@@ -210,6 +210,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         }
     }
 
+    // tslint:disable-next-line:completed-docs
     repositoryUrl(participation: Participation) {
         return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }

@@ -100,6 +100,13 @@ export class ResultService implements IResultService {
         return this.http.post<Result>(`${this.submissionResourceUrl}/${submissionId}/example-result`, null, { observe: 'response' });
     }
 
+    /**
+     * Convert the completion date of the result.
+     * - Serializes it to json if it is a moment object.
+     * - Simple return the date if it is already a valid date.
+     * - Otherwise returns null.
+     * @param result
+     */
     public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
             completionDate:

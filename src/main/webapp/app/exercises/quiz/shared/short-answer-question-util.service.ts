@@ -424,6 +424,7 @@ export class ShortAnswerQuestionUtil {
          * @param xs Rest of the list
          * @param ys Other list
          */
+        // tslint:disable-next-line:completed-docs
         function interleave([x, ...xs]: string[], ys: string[] = []): string[] {
             return x === undefined
                 ? ys // base: no x

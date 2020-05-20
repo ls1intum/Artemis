@@ -81,5 +81,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         return 'fileUploadExerciseListModification';
     }
 
+    // tslint:disable-next-line:completed-docs
     callback() {}
 }

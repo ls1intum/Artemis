@@ -12,6 +12,7 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 
+// tslint:disable-next-line:completed-docs
 export enum FilterProp {
     ALL = 'all',
     OWN = 'own',
