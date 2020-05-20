@@ -51,6 +51,9 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         private fileService: FileService,
     ) {}
 
+    /**
+     * Retrieve the attachments of the current lecture on component initialization.
+     */
     ngOnInit() {
         this.notificationText = null;
         this.activatedRoute.data.subscribe(({ lecture }) => {
@@ -61,14 +64,23 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe from dialog error source on component destruction.
+     */
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Imitates the browser back button.
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Creates a new attachment object. Will be called when the user clicks the submit button of the new attachment form.
+     */
     addAttachment() {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture;
@@ -78,6 +90,11 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.attachmentToBeCreated = newAttachment;
     }
 
+    /**
+     * Saves the new attachment if it exists. Otherwise it creates a new attachment object.
+     * If the attachment existed before the attachment will be updated via the attachment service.
+     * Otherwise it will be created a new attachment via the attachment service.
+     */
     saveAttachment() {
         if (!this.attachmentToBeCreated) {
             return this.addAttachment();
@@ -107,15 +124,24 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         }
     }
 
+    // tslint:disable-next-line:completed-docs
     editAttachment(attachment: Attachment) {
         this.attachmentToBeCreated = attachment;
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
+    /**
+     * Replace backslashes in the attachment path.
+     * @param attachmentLink
+     */
     attachmentFileName(attachmentLink: string): string {
         return attachmentLink.replace(/\/.*\//, '');
     }
 
+    /**
+     * Deletes the given attachment via the attachment service.
+     * @param attachment that should be deleted of type {Attachment}
+     */
     deleteAttachment(attachment: Attachment) {
         this.attachmentService.delete(attachment.id).subscribe(
             () => {
@@ -126,6 +152,9 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Clean up the component's state when the user cancels the attachment upload.
+     */
     cancel() {
         if (this.attachmentBackup) {
             this.resetAttachment();
@@ -134,6 +163,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.erroredFile = null;
     }
 
+    /**
+     * Resets the already added attachment if the user cancels the attachment upload
+     * or the creation of a new attachment via the attachment service failed.
+     */
     resetAttachment() {
         if (this.attachmentBackup) {
             this.attachments = this.attachments.map((attachment) => {
@@ -146,10 +179,15 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         }
     }
 
+    // tslint:disable-next-line:completed-docs
     trackId(index: number, item: Attachment) {
         return item.id;
     }
 
+    /**
+     * Downloads an attachment via the file service.
+     * @param downloadUrl of the attachment that should be downloaded of type {string}
+     */
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
@@ -159,7 +197,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * @function setLectureAttachment
+     * Sets the attachment file if the user adds a file via the input for the attachment file.
      * @param $event {object} Event object which contains the uploaded file
      */
     setLectureAttachment($event: any): void {
@@ -173,8 +211,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * @function uploadLectureAttachmentAndSave
-     * @desc Upload the selected file and add it to the attachment
+     * Upload the selected file and add it to the attachment.
      */
     uploadLectureAttachmentAndSave(): void {
         const file = this.attachmentFile;
