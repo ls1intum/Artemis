@@ -139,6 +139,7 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
             repositoryService.createFile(repository, filename, inputStream);
+            inputStream.close();
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -158,6 +159,7 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
             repositoryService.createFolder(repository, folderName, inputStream);
+            inputStream.close();
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
