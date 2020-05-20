@@ -28,6 +28,7 @@ export class SettingsComponent implements OnInit {
 
     constructor(private accountService: AccountService, private fb: FormBuilder, private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {}
 
+    /** set the user identity and language in the settings on init */
     ngOnInit() {
         this.accountService.identity().then((user) => {
             this.updateForm(user!);
@@ -75,6 +76,7 @@ export class SettingsComponent implements OnInit {
         };
     }
 
+    /** updates the user form with the account's data */
     updateForm(account: Account): void {
         this.settingsForm.patchValue({
             firstName: account.firstName,

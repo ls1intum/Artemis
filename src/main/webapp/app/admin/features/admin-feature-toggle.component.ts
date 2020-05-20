@@ -35,6 +35,7 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     constructor(private featureToggleService: FeatureToggleService) {}
 
+    /** subscribe to active toggles on init */
     ngOnInit(): void {
         this.featureToggleService
             .getFeatureToggles()
@@ -46,6 +47,7 @@ export class AdminFeatureToggleComponent implements OnInit {
             .subscribe();
     }
 
+    /** sets the feature toggle state */
     onFeatureToggle(event: any, row: FeatureToggleState) {
         this.featureToggleService.setFeatureToggleState(row.name, !row.isActive).subscribe();
     }

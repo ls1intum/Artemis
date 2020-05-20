@@ -9,6 +9,7 @@ import { Audit } from 'app/admin/audits/audit.model';
 export class AuditsService {
     constructor(private http: HttpClient) {}
 
+    // tslint:disable-next-line:completed-docs
     query(req: any): Observable<HttpResponse<Audit[]>> {
         const params: HttpParams = createRequestOption(req);
 

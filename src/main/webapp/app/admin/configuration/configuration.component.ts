@@ -20,10 +20,12 @@ export class JhiConfigurationComponent implements OnInit {
         this.reverse = false;
     }
 
+    // tslint:disable-next-line:completed-docs
     keys(dict: any): Array<string> {
         return dict === undefined ? [] : Object.keys(dict);
     }
 
+    /** sets the configuration on init */
     ngOnInit() {
         this.configurationService.get().subscribe((configuration: any) => {
             this.configuration = configuration;

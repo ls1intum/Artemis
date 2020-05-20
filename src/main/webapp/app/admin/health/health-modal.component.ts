@@ -12,6 +12,7 @@ export class HealthModalComponent {
 
     constructor(public activeModal: NgbActiveModal) {}
 
+    /** process health detail values */
     readableValue(value: number): string {
         if (this.health && this.health.key === 'diskSpace') {
             // Should display storage space in an human readable unit
@@ -31,6 +32,7 @@ export class HealthModalComponent {
         }
     }
 
+    /** dismisses active modal */
     dismiss(): void {
         this.activeModal.dismiss();
     }

@@ -28,6 +28,7 @@ export class HealthService {
         this.separator = '.';
     }
 
+    /** gets the health */
     checkHealth(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/health');
     }

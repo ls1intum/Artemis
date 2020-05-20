@@ -14,10 +14,12 @@ export class HealthComponent implements OnInit {
 
     constructor(private modalService: NgbModal, private healthService: HealthService) {}
 
+    /** refresh health component on init */
     ngOnInit() {
         this.refresh();
     }
 
+    /** define badges according to status state */
     getBadgeClass(statusState: string) {
         if (statusState === 'UP') {
             return 'badge-success';

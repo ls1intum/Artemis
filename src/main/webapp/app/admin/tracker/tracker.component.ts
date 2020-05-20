@@ -10,6 +10,7 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
 
     constructor(private trackerService: JhiWebsocketService) {}
 
+    /** shows user activity */
     showActivity(activity: any) {
         let existingActivity = false;
         for (let index = 0; index < this.activities.length; index++) {
@@ -27,6 +28,7 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** subscribes to tracker services on init**/
     ngOnInit() {
         this.trackerService.subscribe('/topic/tracker');
         this.trackerService.receive('/topic/tracker').subscribe((activity: any) => {

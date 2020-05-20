@@ -29,21 +29,25 @@ export class AuditsComponent implements OnInit {
         this.datePipe = new DatePipe('en');
     }
 
+    /** gets and sorts the audits */
     getAudits() {
         return this.sortAudits(this.audits);
     }
 
+    /** loads the page on change */
     loadPage(page: number) {
         this.page = page;
         this.onChangeDate();
     }
 
+    // tslint:disable-next-line:completed-docs
     ngOnInit() {
         this.today();
         this.previousMonth();
         this.onChangeDate();
     }
 
+    /** subscribes to date changes */
     onChangeDate() {
         this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe((res) => {
             this.audits = res.body!;
