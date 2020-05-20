@@ -58,6 +58,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
     }
 
+    public callback() {}
+
     private getSubmissions(): void {
         this.textSubmissionService
             .getTextSubmissionsForExercise(this.exercise.id, { submittedOnly: true })

@@ -150,4 +150,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     public durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
+
+    callback() {}
 }

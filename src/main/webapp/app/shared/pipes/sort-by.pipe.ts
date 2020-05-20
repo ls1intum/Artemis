@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DifferencePipe } from 'ngx-moment';
+import { Submission } from 'app/entities/submission.model';
 
 @Pipe({
     name: 'sortBy',
@@ -8,21 +9,22 @@ export class SortByPipe implements PipeTransform {
     constructor(private momentDiff: DifferencePipe) {}
 
     /**
-     * Sorts the quizzes depending on their status or duration.
-     * @param array The array of quiz exercises.
-     * @param predicate The attribute to consider for sorting.
+     * Sorts the object according to a defined predicate.
+     * @param array The array of objects to sort.
+     * @param predicate The attribute of the object to consider for sorting.
      * @param reverse Whether should be sorted in reverse.
      */
     transform(array: any[], predicate: string, reverse: boolean): any[] {
         array.sort((a: any, b: any) => {
+            debugger;
             let tempA = a;
             let tempB = b;
             if (predicate === 'status') {
                 tempA['status'] = this.statusForQuiz(tempA);
                 tempB['status'] = this.statusForQuiz(tempB);
             } else if (predicate === 'duration' && (!tempA['duration'] || !tempB['duration'])) {
-                tempA['duration'] = this.durationForExercise(tempA);
-                tempB['duration'] = this.durationForExercise(tempB);
+                tempA['duration'] = this.durationForSubmission(tempA);
+                tempB['duration'] = this.durationForSubmission(tempB);
             }
             const keys = predicate.split('.');
             for (const tempKey of keys) {
@@ -65,11 +67,10 @@ export class SortByPipe implements PipeTransform {
     }
 
     /**
-     * Gets the duration of the exercise in minutes.
+     * Gets the duration of the submission in minutes.
      * @param exercise The exercise object.
      */
-    durationForExercise(exercise: any) {
-        // TODO: How does this work? An exercise does not have a completion date.
-        return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
+    durationForSubmission(submission: Submission) {
+        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
     }
 }
