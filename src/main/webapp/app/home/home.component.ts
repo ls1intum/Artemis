@@ -58,6 +58,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private profileService: ProfileService,
     ) {}
 
+    /**
+     * Gets the profile information and subscribes to the authentication state on component initialization.
+     */
     ngOnInit() {
         this.profileService
             .getProfileInfo()
@@ -83,6 +86,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.registerAuthenticationSuccess();
     }
 
+    /**
+     * Checks if the authentication was successful. If a user is set it will call currentUserCallback().
+     */
     registerAuthenticationSuccess() {
         this.eventManager.subscribe('authenticationSuccess', () => {
             this.accountService.identity().then((user) => {
@@ -91,10 +97,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
         });
     }
 
+    /**
+     * Sets the focus on the username input field So that the user can start typing right away.
+     */
     ngAfterViewInit() {
         this.renderer.selectRootElement('#username', true).focus();
     }
 
+    /**
+     * Handles the user login by calling the login service with the values of the login form.
+     * Redirects to the latest url (if there is one) before previous login expired.
+     * Also handles the login via Orion.
+     */
     login() {
         this.isSubmittingLogin = true;
         this.loginService
@@ -146,6 +160,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
             .finally(() => (this.isSubmittingLogin = false));
     }
 
+    /**
+     * Handles the result from the account service subscription and redirects to the course overview if an account was returned.
+     * @param account subscription result of type {User}
+     */
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
@@ -153,17 +171,25 @@ export class HomeComponent implements OnInit, AfterViewInit {
         }
     }
 
+    // tslint:disable-next-line:completed-docs
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }
 
+    // tslint:disable-next-line:completed-docs
     register() {
         this.router.navigate(['/register']);
     }
 
+    // tslint:disable-next-line:completed-docs
     requestResetPassword() {
         this.router.navigate(['/reset', 'request']);
     }
+
+    /**
+     * Triggered by an input change on the login form.
+     * @param $event
+     */
     inputChange($event: any) {
         if ($event.target && $event.target.name === 'username') {
             this.username = $event.target.value;
