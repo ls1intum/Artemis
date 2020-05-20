@@ -3,7 +3,6 @@
  * numberOfSubmissions. Has an inTime and late member.
  */
 export class DueDateStat {
-
     public inTime = 0;
     public late = 0;
 

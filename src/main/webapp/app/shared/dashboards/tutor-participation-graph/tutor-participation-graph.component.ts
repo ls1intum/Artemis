@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { get } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
-import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',

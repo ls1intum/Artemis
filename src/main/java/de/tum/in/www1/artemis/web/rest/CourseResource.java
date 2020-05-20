@@ -13,7 +13,6 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +38,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -490,9 +490,8 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
             DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(
-                    programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()),
-                0 // programming exercises cant have late submissions
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0 // programming exercises cant have late
+                                                                                                                                            // submissions
                 );
             }
             else {
@@ -626,9 +625,8 @@ public class CourseResource {
 
             DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(
-                    programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()),
-                    0 // programming exercises cant have late submissions
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0 // programming exercises cant have late
+                                                                                                                                            // submissions
                 );
             }
             else {

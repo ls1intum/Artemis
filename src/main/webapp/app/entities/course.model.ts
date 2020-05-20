@@ -3,7 +3,7 @@ import { Moment } from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
-import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 export class Course implements BaseEntity {
     public id: number;
@@ -51,7 +51,7 @@ export class Course implements BaseEntity {
      */
     static from(object: Course): Course {
         let course = Object.assign(new Course(), object);
-        course.exercises.forEach(e => {
+        course.exercises.forEach((e) => {
             e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
             e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
         });

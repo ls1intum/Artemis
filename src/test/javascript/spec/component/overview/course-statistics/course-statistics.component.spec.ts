@@ -19,7 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

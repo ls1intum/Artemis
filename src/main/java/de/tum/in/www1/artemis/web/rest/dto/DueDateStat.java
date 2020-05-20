@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 public class DueDateStat<T extends Number> {
 
     private T inTime;
+
     private T late;
 
     public DueDateStat(T inTime, T late) {

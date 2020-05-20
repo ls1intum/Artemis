@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -339,10 +339,8 @@ public class ResultService {
      * @return a number of assessments for the course
      */
     public DueDateStat<Long> countNumberOfAssessments(Long courseId) {
-        return new DueDateStat<>(
-            resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
-            resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false)
-        );
+        return new DueDateStat<>(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
+                resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
     }
 
     /**
@@ -363,10 +361,8 @@ public class ResultService {
      * @return a number of assessments for the exercise
      */
     public DueDateStat<Long> countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
-        return new DueDateStat<>(
-            resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
-            resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId)
-        );
+        return new DueDateStat<>(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
+                resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
     }
 
     /**
@@ -388,9 +384,8 @@ public class ResultService {
      */
     public DueDateStat<Long> countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
         return new DueDateStat<>(
-            resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
-            resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC))
-        );
+                resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
+                resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
     }
 
     /**
