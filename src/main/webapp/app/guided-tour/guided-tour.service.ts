@@ -180,14 +180,16 @@ export class GuidedTourService {
     }
 
     /**
-     * @return current tour step as Observable
+     * Returns the current tour step as Observable
+     * @returns {Observable<TourStep | null>}
      */
     public getGuidedTourCurrentStepStream(): Observable<TourStep | null> {
         return this.guidedTourCurrentStepSubject.asObservable();
     }
 
     /**
-     * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
+     * Returns Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
+     * @returns {Observable<boolean>}
      */
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
         // The guided tour is currently disabled for mobile devices and tablets
@@ -196,14 +198,16 @@ export class GuidedTourService {
     }
 
     /**
-     * @return Observable(true) if the required user interaction for the guided tour step has been executed, otherwise Observable(false)
+     * Returns an Observable(true) if the required user interaction for the guided tour step has been executed, otherwise Observable(false)
+     * @returns {Observable<boolean>}
      */
     public userInteractionFinishedState(): Observable<boolean> {
         return this.isUserInteractionFinishedSubject.asObservable();
     }
 
     /**
-     * @return Observable of the current modeling task UML name
+     * Returns an Observable of the current modeling task UML name
+     * @returns {Observable<string | null>}
      */
     public checkModelingComponent(): Observable<string | null> {
         return this.checkModelingComponentSubject.asObservable();
@@ -851,6 +855,11 @@ export class GuidedTourService {
         };
     }
 
+    /**
+     * Filters the available steps by disabled status of the step and permission of the step compared to the current user's permissions.
+     * Returns an empty array if there is no tour for the current component.
+     * @returns {TourStep[]} array of the filtered tour steps
+     */
     public getFilteredTourSteps(): TourStep[] {
         if (!this.availableTourForComponent) {
             return [];
