@@ -20,6 +20,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
     constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private elementRef: ElementRef, private renderer: Renderer2) {}
 
+    /** resets user account on init */
     ngOnInit() {
         this.route.queryParams.subscribe((params) => {
             this.key = params['key'];
@@ -27,7 +28,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         this.resetAccount = {};
         this.keyMissing = !this.key;
     }
-
+    /** sets the password element */
     ngAfterViewInit() {
         const passwordElement = this.elementRef.nativeElement.querySelector('#password');
         if (passwordElement != null) {
@@ -35,6 +36,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /** allows users to reset their password */
     finishReset() {
         this.doNotMatch = null;
         this.error = null;

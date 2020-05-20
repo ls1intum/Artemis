@@ -5,6 +5,7 @@ import { CookieService } from 'ngx-cookie-service';
 export class CSRFService {
     constructor(private cookieService: CookieService) {}
 
+    /** gets the CSRF token */
     getCSRF(name = 'XSRF-TOKEN') {
         return this.cookieService.get(name);
     }

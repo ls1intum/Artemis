@@ -8,6 +8,9 @@ import { SERVER_API_URL } from 'app/app.constants';
 export class PasswordResetFinishService {
     constructor(private http: HttpClient) {}
 
+    /** saves the new password after reset
+     * @param keyAndPassword - the new password to be saved
+     * */
     save(keyAndPassword: any): Observable<any> {
         return this.http.post(SERVER_API_URL + 'api/account/reset-password/finish', keyAndPassword);
     }

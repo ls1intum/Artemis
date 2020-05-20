@@ -14,10 +14,12 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
 
     constructor(private passwordResetInitService: PasswordResetInitService, private elementRef: ElementRef, private renderer: Renderer2) {}
 
+    /** resets account on init */
     ngOnInit() {
         this.resetAccount = {};
     }
 
+    /** sets the email element */
     ngAfterViewInit() {
         const emailElement = this.elementRef.nativeElement.querySelector('#email');
         if (emailElement != null) {
@@ -25,6 +27,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /** allows user to reset an account with email*/
     requestReset() {
         this.error = null;
         this.errorEmailNotExists = null;

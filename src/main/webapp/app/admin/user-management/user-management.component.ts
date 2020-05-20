@@ -204,6 +204,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         return this.searchTermString;
     }
 
+    /** validates the user search input */
     validateUserSearch(control: AbstractControl) {
         if (control.value.length >= 1 && control.value.length <= 2) {
             return { searchControl: true };

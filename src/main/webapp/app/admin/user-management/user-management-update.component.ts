@@ -78,6 +78,7 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
+    /** checks if the password should be random or not*/
     shouldRandomizePassword(useRandomPassword: any) {
         if (useRandomPassword) {
             this.user.password = null;
