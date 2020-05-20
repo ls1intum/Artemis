@@ -16,7 +16,6 @@ export class SortByPipe implements PipeTransform {
      */
     transform(array: any[], predicate: string, reverse: boolean): any[] {
         array.sort((a: any, b: any) => {
-            debugger;
             let tempA = a;
             let tempB = b;
             if (predicate === 'status') {
