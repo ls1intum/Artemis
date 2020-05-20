@@ -9,82 +9,13 @@
                 <jhi-external-submission [exercise]="fileUploadExercise"></jhi-external-submission>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
-                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-                <dd>
-                    <div *ngIf="fileUploadExercise.course">
-                        <a [routerLink]="['/course-management', fileUploadExercise.course?.id, 'view']">{{ fileUploadExercise.course?.title }}</a>
-                    </div>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.title }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-                <dd *ngIf="fileUploadExercise.categories">
-                    <span class="custom-tag" *ngFor="let item of fileUploadExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-                        <span>{{ item.category }}</span>
-                    </span>
-                </dd>
-                <dd *ngIf="!fileUploadExercise.categories">
-                    <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.difficulty">{{ fileUploadExercise.difficulty }}</span>
-                    <span *ngIf="!fileUploadExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.mode }}</span>
-                </dd>
-                <ng-container *ngIf="fileUploadExercise.teamAssignmentConfig">
-                    <dt><span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team Size</span></dt>
-                    <dd>
-                        <span>Min.</span>
-                        <span>{{ fileUploadExercise.teamAssignmentConfig.minTeamSize }}</span>
-                        <span>Max.</span>
-                        <span>{{ fileUploadExercise.teamAssignmentConfig.maxTeamSize }}</span>
-                        <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
-                    </dd>
-                </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.releaseDate">{{ fileUploadExercise.releaseDate | date: 'medium' }}</span>
-                    <span *ngIf="!fileUploadExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.dueDate">{{ fileUploadExercise.dueDate | date: 'medium' }}</span>
-                    <span *ngIf="!fileUploadExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.assessmentDueDate">{{ fileUploadExercise.assessmentDueDate | date: 'medium' }}</span>
-                    <span *ngIf="!fileUploadExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.maxScore }}</span>
-                </dd>
+                <jhi-exercise-details [exerciseDetails]="fileUploadExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
                 <dd>
                     <span>{{ fileUploadExercise.filePattern }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="!fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.problemStatement! | htmlForMarkdown"></dd>
                 <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
-                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions! | htmlForMarkdown"></dd>
-                <jhi-structured-grading-instructions-assessment-layout
-                    [readonly]="true"
-                    [criteria]="fileUploadExercise.gradingCriteria"
-                ></jhi-structured-grading-instructions-assessment-layout>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info">
