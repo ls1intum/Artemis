@@ -22,7 +22,7 @@ public class File extends java.io.File {
 
     @Override
     public String toString() {
-        //Make windows paths safe
+        // Make windows paths safe
         String safeFilename = super.toString().replaceAll("\\\\", "/");
         String safeRepositoryPath = repository.getLocalPath().toString().replaceAll("\\\\", "/");
 

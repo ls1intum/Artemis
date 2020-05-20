@@ -294,7 +294,7 @@ public class FileService {
 
         for (Resource resource : resources) {
 
-            //Replace windows seperator with "/"
+            // Replace windows seperator with "/"
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8").replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
