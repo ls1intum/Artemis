@@ -51,6 +51,11 @@ export class SystemNotificationService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Query all system notifications.
+     * @param req request options
+     * @returns Observable<HttpResponse<SystemNotification[]>>
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

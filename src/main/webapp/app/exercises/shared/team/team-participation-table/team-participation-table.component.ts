@@ -14,6 +14,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
+// tslint:disable-next-line:completed-docs
 enum AssessmentAction {
     START = 'start',
     CONTINUE = 'continue',
