@@ -15,7 +15,6 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 
 @NgModule({
     imports: [
@@ -33,7 +32,6 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
         ArtemisProgrammingExerciseStatusModule,
         FeatureToggleModule,
         SortByModule,
-        ExerciseDetailsModule,
     ],
     declarations: [ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent],
 })
