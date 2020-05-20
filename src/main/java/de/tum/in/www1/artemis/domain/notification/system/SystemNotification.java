@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.notification;
+package de.tum.in.www1.artemis.domain.notification.system;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 
 /**
  * A SystemNotification.

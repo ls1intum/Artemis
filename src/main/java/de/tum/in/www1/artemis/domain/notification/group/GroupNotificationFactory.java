@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.notification;
+package de.tum.in.www1.artemis.domain.notification.group;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;

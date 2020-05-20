@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.notification;
+package de.tum.in.www1.artemis.domain.notification.group;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 
 /**
  * A GroupNotification.

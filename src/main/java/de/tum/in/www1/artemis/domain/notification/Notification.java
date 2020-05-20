@@ -16,6 +16,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
+import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.single.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.system.SystemNotification;
 
 /**
  * A Notification.
