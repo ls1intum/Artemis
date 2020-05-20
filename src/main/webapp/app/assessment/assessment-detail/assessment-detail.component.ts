@@ -49,6 +49,7 @@ export class AssessmentDetailComponent {
         return sanitize(this.text);
     }
 
+    /** updates assessment feedback on drop of a structured grading criteria on the feedback element */
     updateAssessmentOnDrop(event: Event) {
         this.assessmentChange.emit(this.assessment);
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);

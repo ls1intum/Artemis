@@ -134,7 +134,7 @@ export class ListOfComplaintsComponent implements OnInit {
     back() {
         this.location.back();
     }
-
+    // tslint:disable-next-line:completed-docs
     callback() {}
 
     /** toggle between showing addressed and open complaints */

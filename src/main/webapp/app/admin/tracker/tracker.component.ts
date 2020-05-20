@@ -28,7 +28,7 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** subscribes to tracker services on init**/
+    /** subscribes to tracker services on init **/
     ngOnInit() {
         this.trackerService.subscribe('/topic/tracker');
         this.trackerService.receive('/topic/tracker').subscribe((activity: any) => {
@@ -36,6 +36,7 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** unsubscribes from tracker on destroy */
     ngOnDestroy() {
         this.trackerService.unsubscribe('/topic/tracker');
     }

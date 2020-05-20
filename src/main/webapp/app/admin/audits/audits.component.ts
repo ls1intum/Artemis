@@ -56,6 +56,7 @@ export class AuditsComponent implements OnInit {
         });
     }
 
+    /** returns previousMonth date */
     previousMonth() {
         const dateFormat = 'yyyy-MM-dd';
         let fromDate: Date = new Date();
@@ -69,6 +70,7 @@ export class AuditsComponent implements OnInit {
         this.fromDate = this.datePipe.transform(fromDate, dateFormat)!;
     }
 
+    /** sets the current date */
     today() {
         const dateFormat = 'yyyy-MM-dd';
         // Today + 1 day - needed if the current day must be included

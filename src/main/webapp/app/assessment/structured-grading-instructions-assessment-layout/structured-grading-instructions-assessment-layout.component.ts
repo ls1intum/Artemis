@@ -41,6 +41,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         }
         return colour;
     }
+    /** processes the score string for the preview */
     setScore(nr: number) {
         return nr + 'P';
     }

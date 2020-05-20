@@ -19,6 +19,7 @@ export class PasswordComponent implements OnInit {
 
     constructor(private passwordService: PasswordService, private accountService: AccountService) {}
 
+    /** set user identity on init */
     ngOnInit() {
         this.accountService.identity().then((user) => {
             this.user = user!;

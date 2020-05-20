@@ -23,11 +23,13 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     constructor(private languageService: JhiLanguageService, private registerService: RegisterService, private elementRef: ElementRef, private renderer: Renderer2) {}
 
+    /** create a new registerAccount on init*/
     ngOnInit() {
         this.success = false;
         this.registerAccount = new User();
     }
 
+    /** focus on login */
     ngAfterViewInit() {
         this.renderer.selectRootElement('#login', true).focus();
     }
