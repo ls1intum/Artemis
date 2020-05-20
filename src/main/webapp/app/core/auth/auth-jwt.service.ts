@@ -26,14 +26,19 @@ export interface IAuthServerProvider {
 export class AuthServerProvider implements IAuthServerProvider {
     constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
+    /** retrieves the authentication token */
     getToken() {
         return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
     }
 
+    /** allows login with credential
+     * @param {Credentials} credentials - the login credentials to authenticate with
+     * */
     login(credentials: Credentials): Observable<void> {
         return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map((response) => this.authenticateSuccess(response, credentials.rememberMe)));
     }
 
+    /** allows login with a token */
     loginWithToken(jwt: string, rememberMe: boolean): Promise<string> {
         if (jwt) {
             this.storeAuthenticationToken(jwt, rememberMe);
@@ -48,6 +53,9 @@ export class AuthServerProvider implements IAuthServerProvider {
         this.storeAuthenticationToken(jwt, rememberMe);
     }
 
+    /** stores the authentication token
+     * @param {Boolean} rememberMe - a flag that specifies whether the token should be stored in the local or session storage
+     * */
     storeAuthenticationToken(jwt: string, rememberMe: boolean): void {
         if (rememberMe) {
             this.localStorage.store('authenticationToken', jwt);
