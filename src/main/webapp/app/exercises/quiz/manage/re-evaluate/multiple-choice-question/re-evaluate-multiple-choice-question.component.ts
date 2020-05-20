@@ -66,10 +66,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.setAnswerTexts();
     }
 
+    /**
+     * Set the question text of the editor based on the generated text hint
+     */
     setQuestionText(): void {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
+    /**
+     * Set the question answer text based on the generated answer markdown.
+     */
     setAnswerTexts(): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         this.question.answerOptions?.forEach((answerOption, index) => {
