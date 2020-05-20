@@ -294,10 +294,11 @@ public class FileService {
 
         for (Resource resource : resources) {
 
-            String filePath = resource.getFile().getAbsolutePath();
+            //Replace windows seperator with "/"
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8").replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = filePath.indexOf(prefix);
-            String targetFilePath = keepParentFolder ? filePath.substring(index + prefix.length()) : "/" + resource.getFilename();
+            int index = fileUrl.indexOf(prefix);
+            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
             // special case for '.git.ignore.file' file which would not be included in build otherwise
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");

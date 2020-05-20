@@ -215,9 +215,9 @@ public class ProgrammingExerciseService {
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
         try {
-            String exercisePrefix = programmingLanguage + File.separator + "exercise";
-            String testPrefix = programmingLanguage + File.separator + "test";
-            String solutionPrefix = programmingLanguage + File.separator + "solution";
+            String exercisePrefix = programmingLanguage + "/exercise";
+            String testPrefix = programmingLanguage + "/test";
+            String solutionPrefix = programmingLanguage + "/solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise, user);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise, user);
