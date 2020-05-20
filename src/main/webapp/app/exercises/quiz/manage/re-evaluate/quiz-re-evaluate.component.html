@@ -34,6 +34,7 @@
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"
                     [questionIndex]="i + 1"
+                    [backupQuestion]="backupQuiz.quizQuestions[i]"
                     (questionUpdated)="onQuestionUpdated()"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionMoveUp)="moveUp(question)"

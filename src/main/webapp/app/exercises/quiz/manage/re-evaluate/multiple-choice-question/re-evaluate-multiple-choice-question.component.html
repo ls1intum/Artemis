@@ -66,9 +66,8 @@
             <div class="input-group" style="height: 60px;">
                 <ace-editor
                     #questionEditor
-                    [(text)]="questionEditorText"
+                    [text]="questionEditorText"
                     [mode]="editorMode"
-                    [autoUpdateContent]="editorAutoUpdate"
                     (textChanged)="onQuestionChange($event)"
                     style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
@@ -91,7 +90,6 @@
                 <ace-editor
                     [(text)]="answerEditorText[i]"
                     [mode]="editorMode"
-                    [autoUpdateContent]="editorAutoUpdate"
                     (textChanged)="onAnswerChange($event, i)"
                     style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
                     class="form-control"

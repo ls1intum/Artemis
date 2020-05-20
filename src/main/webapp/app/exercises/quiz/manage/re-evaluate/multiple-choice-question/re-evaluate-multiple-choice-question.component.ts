@@ -38,9 +38,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     questionEditorText = '';
     answerEditorText = new Array<string>();
     editorMode = 'markdown';
-    editorAutoUpdate = true;
 
     // Create Backup Question for resets
+    @Input()
     backupQuestion: MultipleChoiceQuestion;
 
     /**
@@ -50,11 +50,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
-     * Do nothing
+     * Setup content
      */
     ngOnInit(): void {
-        /** Setup editor **/
-        this.backupQuestion = Object.assign({}, this.question);
         this.setQuestionText();
         this.setAnswerTexts();
     }
@@ -73,7 +71,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     setAnswerTexts(): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         this.question.answerOptions?.forEach((answerOption, index) => {
-            this.answerEditorText[index] = this.generateAnswerMarkdown(answerOption);
+            const answerToSet = Object.assign({}, answerOption);
+            this.answerEditorText[index] = this.generateAnswerMarkdown(answerToSet);
         });
     }
 
@@ -81,6 +80,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Setup Question text editor
      */
     setupQuestionEditor() {
+        console.log('setup');
         if (this.aceEditorComponents) {
             this.aceEditorComponents.forEach((editor) => {
                 editor.setTheme('chrome');
@@ -91,12 +91,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                 editor.getEditor().setShowPrintMargin(false);
                 editor.getEditor().setOptions({
                     autoScrollEditorIntoView: true,
+                    wrap: true,
                 });
-                editor.getEditor().clearSelection();
 
                 editor.getEditor().on(
                     'blur',
                     () => {
+                        console.log('updated');
                         this.questionUpdated.emit();
                     },
                     this,
@@ -203,9 +204,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Resets the question text
      */
     resetQuestionText() {
-        this.question.text = this.backupQuestion.text;
-        this.question.explanation = this.backupQuestion.explanation;
-        this.question.hint = this.backupQuestion.hint;
+        this.question = Object.assign(this.question, { text: this.backupQuestion.text, explanation: this.backupQuestion.explanation, hint: this.backupQuestion.hint });
         this.setQuestionText();
     }
 
@@ -217,9 +216,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions = this.backupQuestion.answerOptions;
+        this.question.answerOptions!.forEach((answer, i) => {
+            this.resetAnswer(answer, i);
+        });
         // Reset answer editors
-        this.setupQuestionEditor();
         this.resetQuestionText();
         this.setAnswerTexts();
     }
@@ -229,7 +229,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption} the answer, which will be reset
      */
     resetAnswer(answer: AnswerOption, index: number) {
-        console.log('reset a');
         // Find correct answer if they have another order
         const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Overwrite current answerOption at given index with the backup
@@ -266,10 +265,18 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     onQuestionChange($event: any): void {
-        this.parseQuestionMarkdown($event);
+        const updatedQuestion = Object.assign({}, this.question);
+        const questionParts = this.splitByCorrectIncorrectTag($event);
+        const questionText = questionParts[0];
+        this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
+        this.question = Object.assign(this.question, { text: updatedQuestion.text, explanation: updatedQuestion.explanation, hint: updatedQuestion.hint });
+        this.setQuestionText();
     }
 
     onAnswerChange($event: any, index: number): void {
-        this.parseAnswerMarkdown($event, this.question.answerOptions![index]);
+        // workaround for unwanted copy overwriting of other properties
+        const updatedAnswer = Object.assign({}, this.question.answerOptions![index]);
+        this.parseAnswerMarkdown($event, updatedAnswer);
+        this.question.answerOptions![index] = { ...updatedAnswer };
     }
 }
