@@ -9,6 +9,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 export class JhiConfigurationService {
     constructor(private http: HttpClient) {}
 
+    /** returns the configuration properties */
     get(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/configprops', { observe: 'response' }).pipe(
             map((res: HttpResponse<any>) => {
@@ -26,7 +27,7 @@ export class JhiConfigurationService {
             }),
         );
     }
-
+    // tslint:disable-next-line:completed-docs
     getConfigPropertiesObjects(res: Object) {
         // This code is for Spring Boot 2
         if (res['contexts'] !== undefined) {
@@ -43,6 +44,7 @@ export class JhiConfigurationService {
         return res['contexts']['Artemis']['beans'];
     }
 
+    /** returns the management env */
     getEnv(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/env', { observe: 'response' }).pipe(
             map((res: HttpResponse<any>) => {
