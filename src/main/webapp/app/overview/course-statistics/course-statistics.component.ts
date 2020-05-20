@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 import { Course } from 'app/entities/course.model';
@@ -36,7 +35,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
-    private translationSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
+    private translateSubscription: Subscription;
     course: Course | null;
 
     // absolute score
@@ -189,28 +189,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.onCourseLoad();
 
-        if (this.course === undefined) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.courseExercises = this.course!.exercises;
-                this.calculateMaxScores();
-                this.calculateAbsoluteScores();
-                this.calculateRelativeScores();
-                this.calculatePresentationScores();
-                this.groupExercisesByType();
-            });
-        } else {
-            this.courseExercises = this.course!.exercises;
-            this.calculateMaxScores();
-            this.calculateAbsoluteScores();
-            this.calculateRelativeScores();
-            this.calculatePresentationScores();
-            this.groupExercisesByType();
-        }
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseCalculationService.updateCourse(course);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.onCourseLoad();
+        });
 
-        this.translationSubscription = this.translateService.onLangChange.subscribe(() => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.exerciseTitles = {
                 quiz: {
                     name: this.translateService.instant('artemisApp.course.quizExercises'),
@@ -241,12 +228,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * On destroy, unsubscribe from observables
      */
     ngOnDestroy() {
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
-        }
-        if (this.translationSubscription) {
-            this.translationSubscription.unsubscribe();
-        }
+        this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
+    }
+
+    private onCourseLoad() {
+        this.courseExercises = this.course!.exercises;
+        this.calculateMaxScores();
+        this.calculateAbsoluteScores();
+        this.calculateRelativeScores();
+        this.calculatePresentationScores();
+        this.groupExercisesByType();
     }
 
     /**

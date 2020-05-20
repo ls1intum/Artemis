@@ -10,6 +10,8 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-overview',
@@ -46,7 +48,7 @@ export class CoursesComponent implements OnInit {
      * enables tour for the course overview for the loaded courses {@see enableTourForCourseOverview}
      */
     loadAndFilterCourses() {
-        this.courseService.findAll().subscribe(
+        this.courseService.findAllForDashboard().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
@@ -60,22 +62,34 @@ export class CoursesComponent implements OnInit {
         this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
     }
 
-    get nextRelevantExercise(): Exercise | null {
+    get nextRelevantExercise(): Exercise | undefined {
+        const relevantExercises = new Array<Exercise>();
         let relevantExercise: Exercise | null = null;
         if (this.courses) {
             this.courses.forEach((course) => {
                 const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
                 if (relevantExerciseForCourse) {
-                    if (!relevantExercise) {
-                        relevantExercise = relevantExerciseForCourse;
-                        this.nextRelevantCourse = course;
-                    } else if (relevantExerciseForCourse.dueDate!.isBefore(relevantExercise.dueDate!)) {
-                        relevantExercise = relevantExerciseForCourse;
-                        this.nextRelevantCourse = course;
-                    }
+                    relevantExerciseForCourse.course = course;
+                    relevantExercises.push(relevantExerciseForCourse);
                 }
             });
+            if (relevantExercises.length === 0) {
+                return undefined;
+            } else if (relevantExercises.length === 1) {
+                relevantExercise = relevantExercises[0];
+            } else {
+                relevantExercise =
+                    // 1st priority is an active quiz
+                    relevantExercises.find((exercise: QuizExercise) => exercise.isActiveQuiz) ||
+                    // 2nd priority is a visible quiz
+                    relevantExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+                    // 3rd priority is the next due exercise
+                    relevantExercises.sort((a, b) => {
+                        return moment(a.dueDate).valueOf() - moment(b.dueDate).valueOf();
+                    })[0];
+            }
+            this.nextRelevantCourse = relevantExercise.course!;
+            return relevantExercise;
         }
-        return relevantExercise;
     }
 }
