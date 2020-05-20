@@ -497,7 +497,7 @@ public class GitService {
 
             while (itr.hasNext()) {
                 File nextFile = new File(itr.next(), repo);
-                 // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
+                // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
                 if (nextFile.getName().charAt(0) != '.') {
                     files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
                 }
