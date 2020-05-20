@@ -41,7 +41,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * On init, gets the course and adjusts its description
+     * On init, gets the course id, loads the course from the server {@see loadCourse},
+     * adjusts its description {@see adjustCourseDescription} and
+     * subscribe for the team assignment updates {@see subscribeToTeamAssignmentUpdates} and quiz changes {@see subscribeForQuizChanges}
      */
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
@@ -57,6 +59,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         this.subscribeForQuizChanges();
     }
 
+    /**
+     * Gets the course with the given course id from the server {@see findOneForDashboard} and runs an animation at the same time
+     * based on a timeout
+     * @param refresh - boolean variable to set if the 'refresh' button is pressed
+     */
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
@@ -67,6 +74,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy() {
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
@@ -76,6 +86,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * subscribes for the quizzes that are going to be visible
+     */
     subscribeForQuizChanges() {
         // subscribe to quizzes which get visible
         if (!this.quizExercisesChannel) {

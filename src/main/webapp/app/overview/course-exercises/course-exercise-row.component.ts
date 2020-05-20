@@ -129,6 +129,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         return exercise as QuizExercise;
     }
 
+    /**
+     * Navigates to the exercise details page if the click event is not on 'student actions' or 'results' targets
+     * @param event - click event
+     */
     showDetails(event: any) {
         const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');

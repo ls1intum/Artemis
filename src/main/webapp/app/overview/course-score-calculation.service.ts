@@ -78,6 +78,10 @@ export class CourseScoreCalculationService {
         return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
+    /**
+     * filters out the existing course object with the same id and pushes the new course to the course array
+     * @param course - course to be added to the course array
+     */
     updateCourse(course: Course) {
         // filter out the old course object with the same id
         this.courses = this.courses.filter((existingCourses) => existingCourses.id !== existingCourses.id);
