@@ -43,6 +43,12 @@ export class Course implements BaseEntity {
 
     constructor() {}
 
+    /**
+     * Correctly initializes a class instance from a typecasted object.
+     * Returns a 'real' class instance that supports all class methods.
+     * @param object: The typecasted object
+     * @returns The class instance
+     */
     static from(object: Course): Course {
         let course = Object.assign(new Course(), object);
         course.exercises.forEach(e => {

@@ -15,6 +15,12 @@ export class StatsForDashboard {
 
     constructor() {}
 
+    /**
+     * Correctly initializes a class instance from a typecasted object.
+     * Returns a 'real' class instance that supports all class methods.
+     * @param object: The typecasted object
+     * @returns The class instance
+     */
     static from(object: StatsForDashboard): StatsForDashboard {
         let stats = Object.assign(new StatsForDashboard(), object);
         stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
