@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.hibernate.Hibernate.isInitialized;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -15,14 +18,21 @@ public class TextAssessmentService extends AssessmentService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final TextBlockService textBlockService;
+
     private final UserService userService;
+
+    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
+            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
+        this.textBlockService = textBlockService;
+        this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
     /**
@@ -93,5 +103,49 @@ public class TextAssessmentService extends AssessmentService {
 
     public List<Feedback> getAssessmentsForResult(Result result) {
         return this.feedbackRepository.findByResult(result);
+    }
+
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
+        final Participation participation = textSubmission.getParticipation();
+        final TextExercise exercise = (TextExercise) participation.getExercise();
+        Result result = textSubmission.getResult();
+
+        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
+
+        if (result != null) {
+            // Load Feedback already created for this assessment
+            final List<Feedback> assessments = getAssessmentsForResult(result);
+            result.setFeedbacks(assessments);
+            if (assessments.isEmpty() && computeFeedbackSuggestions) {
+                automaticTextFeedbackService.get().suggestFeedback(result);
+            }
+        }
+        else {
+            // We we are the first ones to open assess this submission, we want to lock it.
+            result = new Result();
+            result.setParticipation(participation);
+            result.setSubmission(textSubmission);
+            resultService.createNewRatedManualResult(result, false);
+            result.setCompletionDate(null);
+            result = resultRepository.save(result);
+            textSubmission.setResult(result);
+
+            // If enabled, we want to compute feedback suggestions using Athene.
+            if (computeFeedbackSuggestions) {
+                result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
+                automaticTextFeedbackService.get().suggestFeedback(result);
+            }
+        }
+
+        // If we did not call AutomaticTextFeedbackService::suggestFeedback, we need to fetch them now.
+        if (!result.getFeedbacks().isEmpty() || !computeFeedbackSuggestions) {
+            final List<TextBlock> textBlocks = textBlockService.findAllBySubmissionId(textSubmission.getId());
+            textSubmission.setBlocks(textBlocks);
+        }
+
+        // If we did not fetch blocks from the database before, we fall back to computing them based on syntax.
+        if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
+            textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
+        }
     }
 }
