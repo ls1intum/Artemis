@@ -10,6 +10,7 @@ import { User } from 'app/core/user/user.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -20,7 +21,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
             [title]="latestResult ? (latestResult.hasComplaint ? 'entity.action.viewResult' : 'entity.action.updateResult') : 'entity.action.newResult'"
-            (onClick)="openManualResultDialog($event)"
+            (onClick)="openCodeEditorWithStudentSubmission()"
         ></jhi-button>
     `,
 })
@@ -34,7 +35,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
 
     latestResultSubscription: Subscription;
 
-    constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService, private router: Router) {}
 
     /**
      * - Check that the inserted result is of type MANUAL, otherwise set it to null
@@ -94,5 +95,11 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             (result) => this.onResultModified.emit(result),
             () => {},
         );
+    }
+
+    async openCodeEditorWithStudentSubmission() {
+        const route = `/course-management/${this.exercise.course?.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
+        await this.router.navigate([route]);
+        console.log('hey');
     }
 }

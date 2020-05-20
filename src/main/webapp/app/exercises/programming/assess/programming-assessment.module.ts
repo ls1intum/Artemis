@@ -9,9 +9,18 @@ import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/pr
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, FormsModule, FeatureToggleModule, ArtemisComplaintsForTutorModule],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        FormDateTimePickerModule,
+        FormsModule,
+        FeatureToggleModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisProgrammingAssessmentRoutingModule,
+    ],
     declarations: [
         ProgrammingAssessmentManualResultButtonComponent,
         ProgrammingAssessmentManualResultDialogComponent,
