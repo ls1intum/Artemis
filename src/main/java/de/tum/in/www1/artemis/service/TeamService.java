@@ -60,6 +60,21 @@ public class TeamService {
     }
 
     /**
+     * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
+     * @param exercise Exercise for which to return all teams
+     * @param teamOwnerId Optional user id by which to filter teams on their owner
+     * @return List of teams
+     */
+    public List<Team> findAllByExerciseIdWithEagerStudents(Exercise exercise, Long teamOwnerId) {
+        if (teamOwnerId != null) {
+            return teamRepository.findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(exercise.getId(), teamOwnerId);
+        }
+        else {
+            return teamRepository.findAllByExerciseIdWithEagerStudents(exercise.getId());
+        }
+    }
+
+    /**
      * Returns whether the student is already assigned to a team for a given exercise
      *
      * @param exercise Exercise for which to check

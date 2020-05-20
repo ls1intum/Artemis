@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
@@ -70,13 +70,10 @@ export class SystemNotificationService {
      * If the user is not authenticated we do an explicit request for an active system notification. Otherwise get recent system notifications.
      */
     getActiveNotification(): Observable<SystemNotification | null> {
-        if (!this.accountService.isAuthenticated()) {
-            return this.http
-                .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-                .pipe(map((res) => res.body));
-        }
-        return this.notificationService.getRecentSystemNotification();
+        return this.http
+            .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res) => res.body));
     }
 
     /**
