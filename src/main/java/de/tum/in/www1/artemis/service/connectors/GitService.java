@@ -71,7 +71,6 @@ public class GitService {
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     public GitService() {
-        log.info("Default Charset=" + Charset.defaultCharset());
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset=" + Charset.defaultCharset());
