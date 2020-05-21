@@ -574,6 +574,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function (question) {
+            if (question.score <= 0) {
+                return false;
+            }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
@@ -691,6 +694,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (!question.title || question.title === '') {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
+                    translateValues: { index: index + 1 },
+                });
+            }
+            if (question.score <= 0) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
                 });
             }
