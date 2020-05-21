@@ -11,6 +11,12 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
+/**
+ * Returns a function which initializes the Orion connector.
+ * @param {OrionConnectorService} connector - Interface between IDE and webapp
+ * @param {WindowRef} win - References the native window object
+ * @returns {() => void} Function initializing the connector
+ */
 export function initOrionConnector(connector: OrionConnectorService, win: WindowRef) {
     return () => OrionConnectorService.initConnector(connector, win);
 }

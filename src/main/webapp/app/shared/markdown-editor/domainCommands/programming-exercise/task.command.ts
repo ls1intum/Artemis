@@ -53,10 +53,12 @@ export class TaskCommand extends DomainTagCommand {
         this.focus();
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return TaskCommand.identifier;
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '[/task]';
     }

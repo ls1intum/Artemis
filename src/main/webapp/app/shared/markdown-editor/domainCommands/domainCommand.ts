@@ -5,8 +5,18 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
  * e.g multiple choice questions, drag an drop questions
  * Each domain command has its own logic and an unique identifier**/
 export abstract class DomainCommand extends Command {
-    abstract getOpeningIdentifier(): string; // e.g. [exp]
-    abstract getClosingIdentifier(): string; // e.g. [/exp]
+    /**
+     * Returns the opening identifier of a command e.g. [exp]
+     * @returns {string} Opening identifier of the command
+     */
+    abstract getOpeningIdentifier(): string;
+
+    /**
+     * Returns the closing identifier of a command e.g. [/exp]
+     * @returns {string} Closing identifier of the command
+     */
+    abstract getClosingIdentifier(): string;
+
     displayCommandButton = true;
 
     /**

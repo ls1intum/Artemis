@@ -12,5 +12,6 @@ export class ModalConfirmAutofocusComponent implements OnInit {
 
     constructor(public modal: NgbActiveModal) {}
 
+    // tslint:disable-next-line:completed-docs
     ngOnInit() {}
 }

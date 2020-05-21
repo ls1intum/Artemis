@@ -15,10 +15,12 @@ export class ExplanationCommand extends DomainTagCommand {
         addTextAtCursor(text, this.aceEditor);
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return ExplanationCommand.identifier;
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '[/exp]';
     }

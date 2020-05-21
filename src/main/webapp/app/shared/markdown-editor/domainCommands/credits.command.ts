@@ -17,10 +17,12 @@ export class CreditsCommand extends DomainTagCommand {
         addTextAtCursor(text, this.aceEditor);
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return CreditsCommand.identifier;
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '[/credits]';
     }

@@ -7,10 +7,12 @@ export class TestCaseCommand extends DomainMultiOptionListCommand {
         return 'testCase';
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return '(';
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return ')';
     }

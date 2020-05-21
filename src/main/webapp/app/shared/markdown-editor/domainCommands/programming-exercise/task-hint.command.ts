@@ -7,10 +7,12 @@ export class TaskHintCommand extends DomainMultiOptionListCommand {
         return 'exerciseHint';
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return '{';
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '}';
     }

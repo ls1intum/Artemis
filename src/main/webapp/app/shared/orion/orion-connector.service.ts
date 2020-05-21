@@ -200,6 +200,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
         this.window.nativeWindow.orionVCSConnector.selectRepository(repository);
     }
 
+    /** Triggers a local build and test. */
     buildAndTestLocally(): void {
         this.window.nativeWindow.orionBuildConnector.buildAndTestLocally();
     }

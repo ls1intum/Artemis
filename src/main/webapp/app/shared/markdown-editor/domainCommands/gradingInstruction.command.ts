@@ -58,10 +58,12 @@ export class GradingInstructionCommand extends DomainTagCommand {
         addTextAtCursor(text, this.aceEditor);
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return GradingInstructionCommand.identifier;
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '[/gradingInstruction]';
     }

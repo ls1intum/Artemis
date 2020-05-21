@@ -11,10 +11,12 @@ export abstract class Command {
     protected aceEditor: any;
     protected markdownWrapper: ElementRef;
 
+    // tslint:disable-next-line:completed-docs
     public setEditor(aceEditor: any): void {
         this.aceEditor = aceEditor;
     }
 
+    // tslint:disable-next-line:completed-docs
     public setMarkdownWrapper(ref: ElementRef) {
         this.markdownWrapper = ref;
     }
@@ -71,6 +73,10 @@ export abstract class Command {
         this.aceEditor.completers = [...(this.aceEditor.completers || []), completer];
     }
 
+    /**
+     * Abstract function for command executions.
+     * Each concrete command overrides this with command specific behavior.
+     */
     abstract execute(input?: string): void;
 
     protected deleteWhiteSpace(text: string) {

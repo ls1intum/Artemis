@@ -13,10 +13,12 @@ export class CorrectOptionCommand extends DomainTagCommand {
         addTextAtCursor(text, this.aceEditor);
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return CorrectOptionCommand.identifier;
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return '[/correct]';
     }

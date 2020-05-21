@@ -11,10 +11,12 @@ export type ValueItem = {
 export abstract class DomainMultiOptionCommand extends DomainCommand {
     protected values: ValueItem[] = [];
 
+    // tslint:disable-next-line:completed-docs
     setValues(values: ValueItem[]) {
         this.values = values;
     }
 
+    // tslint:disable-next-line:completed-docs
     getValues() {
         return this.values;
     }

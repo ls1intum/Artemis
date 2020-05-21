@@ -15,10 +15,12 @@ export class KatexCommand extends DomainTagCommand {
         addTextAtCursor(text, this.aceEditor);
     }
 
+    // tslint:disable-next-line:completed-docs
     getOpeningIdentifier(): string {
         return '$$ ';
     }
 
+    // tslint:disable-next-line:completed-docs
     getClosingIdentifier(): string {
         return ' $$';
     }
