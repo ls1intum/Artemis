@@ -87,7 +87,7 @@ public class SubmissionService {
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    public DueDateStat<Long> countSubmissionsForExercise(long exerciseId) {
+    public DueDateStat countSubmissionsForExercise(long exerciseId) {
         return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 

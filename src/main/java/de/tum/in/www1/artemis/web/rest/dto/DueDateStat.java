@@ -1,29 +1,29 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-public class DueDateStat<T extends Number> {
+public class DueDateStat {
 
-    private T inTime;
+    private Long inTime;
 
-    private T late;
+    private Long late;
 
-    public DueDateStat(T inTime, T late) {
+    public DueDateStat(Long inTime, Long late) {
         this.inTime = inTime;
         this.late = late;
     }
 
-    public T getInTime() {
+    public Long getInTime() {
         return inTime;
     }
 
-    public void setInTime(T inTime) {
+    public void setInTime(Long inTime) {
         this.inTime = inTime;
     }
 
-    public T getLate() {
+    public Long getLate() {
         return late;
     }
 
-    public void setLate(T late) {
+    public void setLate(Long late) {
         this.late = late;
     }
 }

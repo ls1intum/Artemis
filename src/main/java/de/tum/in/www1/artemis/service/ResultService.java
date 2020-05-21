@@ -338,8 +338,8 @@ public class ResultService {
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
-    public DueDateStat<Long> countNumberOfAssessments(Long courseId) {
-        return new DueDateStat<>(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
+    public DueDateStat countNumberOfAssessments(Long courseId) {
+        return new DueDateStat(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
                 resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
     }
 
@@ -360,8 +360,8 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public DueDateStat<Long> countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
-        return new DueDateStat<>(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
+    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
                 resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
     }
 
@@ -382,9 +382,8 @@ public class ResultService {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    public DueDateStat<Long> countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return new DueDateStat<>(
-                resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
+    public DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat(resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
                 resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
     }
 

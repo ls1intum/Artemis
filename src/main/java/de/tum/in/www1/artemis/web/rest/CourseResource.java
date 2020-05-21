@@ -490,9 +490,7 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
             DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0 // programming exercises cant have late
-                                                                                                                                            // submissions
-                );
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
@@ -500,7 +498,7 @@ public class CourseResource {
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
 
-            final DueDateStat<Long> numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             exercise.setNumberOfAssessments(numberOfAssessments);
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
@@ -545,9 +543,9 @@ public class CourseResource {
                 + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
-        final DueDateStat<Long> numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        final DueDateStat numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
@@ -625,9 +623,7 @@ public class CourseResource {
 
             DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0 // programming exercises cant have late
-                                                                                                                                            // submissions
-                );
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
@@ -690,7 +686,7 @@ public class CourseResource {
                 + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long startT = System.currentTimeMillis();
