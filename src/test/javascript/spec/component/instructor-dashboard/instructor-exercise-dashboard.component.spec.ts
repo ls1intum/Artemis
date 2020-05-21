@@ -40,11 +40,11 @@ describe('InstructorExerciseDashboardComponent', () => {
         const stats = new StatsForDashboard();
         stats.numberOfSubmissions.inTime = 420;
         stats.numberOfAssessments.inTime = 333;
-        stats.numberOfAutomaticAssistedAssessments = 42;
+        stats.numberOfAutomaticAssistedAssessments.inTime = 42;
         comp.stats = stats;
         comp.setStatistics();
-        expect(comp.totalManualAssessmentPercentage).equal(69);
-        expect(comp.totalAutomaticAssessmentPercentage).equal(10);
+        expect(comp.totalManualAssessmentPercentage.inTime).equal(69);
+        expect(comp.totalAutomaticAssessmentPercentage.inTime).equal(10);
         expect(comp.dataForAssessmentPieChart[0]).equal(87);
         expect(comp.dataForAssessmentPieChart[1]).equal(291);
         expect(comp.dataForAssessmentPieChart[2]).equal(42);
