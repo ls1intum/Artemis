@@ -22,6 +22,10 @@ public class File extends java.io.File {
 
     @Override
     public String toString() {
-        return super.toString().replaceFirst(repository.getLocalPath().toString(), "").replaceAll("^/+", "");
+        // Make windows paths safe
+        String safeFilename = super.toString().replaceAll("\\\\", "/");
+        String safeRepositoryPath = repository.getLocalPath().toString().replaceAll("\\\\", "/");
+
+        return safeFilename.replaceFirst(safeRepositoryPath, "").replaceAll("^/+", "");
     }
 }

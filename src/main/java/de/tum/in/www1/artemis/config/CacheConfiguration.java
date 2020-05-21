@@ -85,6 +85,8 @@ public class CacheConfiguration {
             createIfNotExists(cm, DropLocation.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, DragItem.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Submission.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, Submission.class.getName() + ".versions", jcacheConfiguration);
+            createIfNotExists(cm, SubmissionVersion.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, ModelingSubmission.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, QuizSubmission.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, QuizSubmission.class.getName() + ".submittedAnswers", jcacheConfiguration);

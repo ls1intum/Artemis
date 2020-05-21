@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,15 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -38,6 +39,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    TeamService teamService;
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
@@ -56,6 +60,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
+
+    @Autowired
+    SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
     CompassService compassService;
@@ -196,6 +203,50 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
+        exerciseRepo.save(useCaseExercise.mode(ExerciseMode.TEAM));
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("team");
+        team.setExercise(useCaseExercise);
+        team.addStudents(userRepo.findOneByLogin("student1").orElseThrow());
+        team.addStudents(userRepo.findOneByLogin("student2").orElseThrow());
+        teamService.save(useCaseExercise, team);
+
+        database.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
+
+        database.changeUser("student1");
+        Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
+        assertThat(version).as("submission version was created").isNotEmpty();
+        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+
+        database.changeUser("student2");
+        String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
+        returnedSubmission.setModel(validUseCaseModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
+        checkDetailsHidden(returnedSubmission, true);
+
+        database.changeUser("student2");
+        version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
+        assertThat(version).as("submission version was created").isNotEmpty();
+        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
+        database.changeUser("student2");
+        Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
+        assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
     }
 
     @Test

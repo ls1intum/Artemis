@@ -76,7 +76,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
+            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
 
             quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
             this.exercise = quizExercise;
@@ -108,14 +108,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;
-    }
-
-    isActiveQuiz(exercise: Exercise) {
-        return (
-            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
-        );
     }
 
     showDetails(event: any) {

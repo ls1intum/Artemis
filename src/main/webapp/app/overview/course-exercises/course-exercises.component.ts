@@ -4,7 +4,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
 import { sum, flatten, maxBy } from 'lodash';
@@ -40,6 +39,7 @@ enum SortFilterStorageKey {
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     public course: Course | null;
     public weeklyIndexKeys: string[];
@@ -87,16 +87,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course == null) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
-            });
-        }
-        this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
+        this.onCourseLoad();
 
-        this.applyFiltersAndOrder();
+        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseCalculationService.updateCourse(course);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.onCourseLoad();
+        });
 
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.applyFiltersAndOrder();
@@ -107,7 +104,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.translateSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
+    }
+
+    private onCourseLoad() {
+        this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
+        this.applyFiltersAndOrder();
     }
 
     private calcNumberOfExercises() {
@@ -244,7 +247,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
     }
 
-    get nextRelevantExercise(): Exercise {
+    get nextRelevantExercise(): Exercise | undefined {
         return this.exerciseService.getNextExerciseForHours(this.course!.exercises);
     }
 }
