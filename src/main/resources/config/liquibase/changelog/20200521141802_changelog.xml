@@ -3,7 +3,7 @@
     xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="petry" id="20200521141801">
+    <changeSet author="petry" id="20200521141802">
         <createTable tableName="result_rating">
             <column name="id" type="BIGINT"/>
             <column name="rating" type="TINYINT"/>

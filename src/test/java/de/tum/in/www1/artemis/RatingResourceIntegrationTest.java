@@ -113,4 +113,10 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         Rating result = ratingService.saveRating(rating);
         request.put("/api/rating", result, HttpStatus.OK);
     }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testGetRating_asUser_NOT_FOUND() throws Exception {
+        request.get("/api/rating/result/" + result.getId(), HttpStatus.NOT_FOUND, Rating.class);
+    }
 }
