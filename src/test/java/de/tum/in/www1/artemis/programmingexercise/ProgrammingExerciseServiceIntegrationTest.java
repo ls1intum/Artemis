@@ -109,7 +109,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(newlyImported.getNumberOfAssessments()).isNull();
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
-        assertThat(newlyImported.getNumberOfInTimeSubmissions()).isNull();
+        assertThat(newlyImported.getNumberOfSubmissions()).isNull();
         assertThat(newlyImported.getAttachments()).isNull();
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();

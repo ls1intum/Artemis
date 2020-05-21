@@ -301,7 +301,7 @@ public class ModelFactory {
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
-        toBeImported.setNumberOfInTimeSubmissions(template.getNumberOfInTimeSubmissions());
+        toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
