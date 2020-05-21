@@ -591,6 +591,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        // only select from in-time submissions if there are any
+        boolean hasInTimeSubmissions = submissionsWithoutResult.stream().anyMatch(s -> s.getSubmissionDate().isBefore(programmingExercise.getDueDate()));
+        if (hasInTimeSubmissions) {
+            submissionsWithoutResult = submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate().isBefore(programmingExercise.getDueDate())).collect(Collectors.toList());
+        }
+
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 

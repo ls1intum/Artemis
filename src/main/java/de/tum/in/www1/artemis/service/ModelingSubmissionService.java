@@ -145,6 +145,12 @@ public class ModelingSubmissionService extends SubmissionService {
             return Optional.empty();
         }
 
+        // only select from in-time submissions if there are any
+        boolean hasInTimeSubmissions = submissionsWithoutResult.stream().anyMatch(s -> s.getSubmissionDate().isBefore(modelingExercise.getDueDate()));
+        if (hasInTimeSubmissions) {
+            submissionsWithoutResult = submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate().isBefore(modelingExercise.getDueDate())).collect(Collectors.toList());
+        }
+
         Random random = new Random();
         var submissionWithoutResult = (ModelingSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);

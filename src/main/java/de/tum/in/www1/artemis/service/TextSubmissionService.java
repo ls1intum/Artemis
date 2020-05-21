@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -174,6 +175,13 @@ public class TextSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        // only select from in-time submissions if there are any
+        boolean hasInTimeSubmissions = submissionsWithoutResult.stream().anyMatch(s -> s.getSubmissionDate().isBefore(textExercise.getDueDate()));
+        if (hasInTimeSubmissions) {
+            submissionsWithoutResult = submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate().isBefore(textExercise.getDueDate())).collect(Collectors.toList());
+        }
+
         var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
