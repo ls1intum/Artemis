@@ -16,7 +16,10 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="user.naame"><span jhiTranslate="instructorDashboard.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="user.name">
+                        <span jhiTranslate="instructorDashboard.name">Name</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="numberOfParticipatedExercises">
                         <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
