@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,38 +19,34 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     /*
-     * We have to save the content as a String as git will automatically convert the
-     * line endings based on the developer's OS, therefore we do not store it as a
-     * file in src/test/resources/test-data
+     * We have to save the content as a String as git will automatically convert the line endings based on the developer's OS, therefore we do not store it as a file in
+     * src/test/resources/test-data
      */
 
-    //@formatter:off
-    private static final String FILE_WITH_UNIX_LINE_ENDINGS =
-            "public class LineEndings {\n" +
-            "\n" +
-            "    public void someMethod() {\n" +
-            "        // Some logic inside here\n" +
-            "        someService.call();\n" +
-            "    }\n" +
-            "}\n";
+    private static final String FILE_WITH_UNIX_LINE_ENDINGS = //
+            "public class LineEndings {\n" + //
+                    "\n" + //
+                    "    public void someMethod() {\n" + //
+                    "        // Some logic inside here\n" + //
+                    "        someService.call();\n" + //
+                    "    }\n" + //
+                    "}\n";
 
-    private static final String FILE_WITH_WINDOWS_LINE_ENDINGS =
-            "public class LineEndings {\r\n" +
-            "\r\n" +
-            "    public void someMethod() {\r\n" +
-            "        // Some logic inside here\r\n" +
-            "        someService.call();\r\n" +
-            "    }\r\n" +
-            "}\r\n";
-    //@formatter:on
+    private static final String FILE_WITH_WINDOWS_LINE_ENDINGS = //
+            "public class LineEndings {\r\n" + //
+                    "\r\n" + //
+                    "    public void someMethod() {\r\n" + //
+                    "        // Some logic inside here\r\n" + //
+                    "        someService.call();\r\n" + //
+                    "    }\r\n" + //
+                    "}\r\n";
 
     @Autowired
     FileService fileService;
 
     private void copyFile(String filePath, String destinationPath) {
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/repository-export/" + filePath),
-                    new File("./exportTest/" + destinationPath));
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/repository-export/" + filePath), new File("./exportTest/" + destinationPath));
         }
         catch (IOException ex) {
             fail("Failed while copying test files", ex);
