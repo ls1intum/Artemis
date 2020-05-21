@@ -405,8 +405,28 @@ public class JenkinsService implements ContinuousIntegrationService {
                     lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
                 }
             }
+            // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
+            LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
+            final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
+            while (buildlogIterator.hasNext()) {
+                BuildLogEntry entry = buildlogIterator.next();
 
-            return buildLog;
+                if (entry.getLog().contains("Compilation failure")) {
+                    break;
+                }
+                // filter unnecessary logs
+                if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
+                        || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
+                        || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
+                        || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
+                    // Remove the path from the log entries
+                    String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
+                    entry.setLog(entry.getLog().replace(path, ""));
+                    prunedBuildLog.add(entry);
+                }
+            }
+
+            return prunedBuildLog;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
