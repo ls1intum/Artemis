@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static io.github.jhipster.web.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -9,6 +7,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.service.RatingService;
@@ -57,7 +57,10 @@ public class RatingResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> getRatingForResult(@PathVariable Long resultId) {
         Optional<Rating> rating = this.ratingService.findRatingByResultId(resultId);
-        return wrapOrNotFound(rating);
+        if (rating.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating does not exist!");
+        }
+        return ResponseEntity.ok(rating.get());
     }
 
     /**
@@ -69,14 +72,10 @@ public class RatingResource {
     @PostMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) throws URISyntaxException {
-        // if (rating.getId() != null) {
-        // throw new BadRequestAlertException("A new rating cannot already have an ID", ENTITY_NAME, "idExists");
-        // }
         // TODO: Check authorization
         Rating result = this.ratingService.saveRating(rating);
         return ResponseEntity.created(new URI("/api/rating/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-        // return ResponseEntity.ok().build();
     }
 
     /**
