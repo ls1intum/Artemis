@@ -25,14 +25,14 @@ export class RatingComponent {
             return;
         }
         this._result = result;
-        this.ratingService.getRating(result.id).subscribe((rating) => {
-            console.log('Rating:' + rating);
-            if (rating !== null) {
+        this.ratingService.getRating(result.id).subscribe(
+            (rating) => {
                 this.rating = rating;
-            } else {
+            },
+            () => {
                 this.rating = new Rating(result, 0);
-            }
-        });
+            },
+        );
     }
 
     constructor(public ratingService: RatingService) {}
