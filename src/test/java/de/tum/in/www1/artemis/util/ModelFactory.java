@@ -45,6 +45,9 @@ public class ModelFactory {
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         QuizExercise quizExercise = new QuizExercise();
         quizExercise = (QuizExercise) populateExercise(quizExercise, releaseDate, dueDate, null, course);
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);

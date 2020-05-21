@@ -278,7 +278,7 @@ public class ModelingSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
 
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             // ask Compass for optimal submission to assess if diagram type is supported
             final List<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
 
@@ -317,7 +317,7 @@ public class ModelingSubmissionResource {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             compassService.resetModelsWaitingForAssessment(exerciseId);
         }
         return ResponseEntity.noContent().build();
