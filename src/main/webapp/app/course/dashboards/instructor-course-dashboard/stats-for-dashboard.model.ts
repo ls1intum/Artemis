@@ -22,7 +22,7 @@ export class StatsForDashboard {
      * @returns The class instance
      */
     static from(object: StatsForDashboard): StatsForDashboard {
-        let stats = Object.assign(new StatsForDashboard(), object);
+        const stats = Object.assign(new StatsForDashboard(), object);
         stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
         stats.numberOfAssessments = Object.assign(new DueDateStat(), stats.numberOfAssessments);
         stats.numberOfAutomaticAssistedAssessments = Object.assign(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);

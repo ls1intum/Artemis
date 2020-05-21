@@ -50,7 +50,7 @@ export class Course implements BaseEntity {
      * @returns The class instance
      */
     static from(object: Course): Course {
-        let course = Object.assign(new Course(), object);
+        const course = Object.assign(new Course(), object);
         course.exercises.forEach((e) => {
             e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
             e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
