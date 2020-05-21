@@ -109,24 +109,33 @@
                         <a class="th-link">#</a>
                     </th>
                     <th *ngIf="modelingExercise.teamMode" jhiSortBy="participation.team.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="!modelingExercise.teamMode" jhiSortBy="participation.student.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="successful" jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a></th>
+                    <th jhiSortBy="participation.submissions.length">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="result.score">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="duration">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="result.assessmentType">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
