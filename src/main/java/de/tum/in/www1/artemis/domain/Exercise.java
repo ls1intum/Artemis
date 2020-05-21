@@ -817,8 +817,8 @@ public abstract class Exercise implements Serializable {
         return numberOfSubmissionsTransient;
     }
 
-    public void setNumberOfSubmissions(DueDateStat numberOfnumberOfInTimeSubmissions) {
-        this.numberOfSubmissionsTransient = numberOfnumberOfInTimeSubmissions;
+    public void setNumberOfSubmissions(DueDateStat numberOfnumberOfSubmissions) {
+        this.numberOfSubmissionsTransient = numberOfnumberOfSubmissions;
     }
 
     public DueDateStat getNumberOfAssessments() {

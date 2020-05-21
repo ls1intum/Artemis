@@ -409,7 +409,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             else {
                 assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2).as("Stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats, "numberOfInTimeSubmissions", "numberOfAssessments");
+                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfSubmissions(), "inTime", "late");
+                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfAssessments(), "inTime", "late");
             }
         }
     }

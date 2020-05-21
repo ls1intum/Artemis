@@ -178,7 +178,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfInTimeSubmissions, numberOfLateSubmissions, numberOfAssessments, numberOfLateAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
