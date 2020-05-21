@@ -19,7 +19,7 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
-import { NotificationSidebarComponent } from 'app/shared/layouts/notification-sidebar/notification-sidebar.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';

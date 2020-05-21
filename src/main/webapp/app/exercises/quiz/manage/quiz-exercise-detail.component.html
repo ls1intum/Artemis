@@ -192,13 +192,25 @@
                 <div class="edit-quiz-footer-content">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
-                        <select *ngIf="showDropdown === 'isOpenForPractice'" class="form-control" [(ngModel)]="quizExercise.isOpenForPractice" title="status">
+                        <select
+                            *ngIf="showDropdown === 'isOpenForPractice'"
+                            class="form-control"
+                            [(ngModel)]="quizExercise.isOpenForPractice"
+                            (ngModelChange)="cacheValidation()"
+                            title="status"
+                        >
                             <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
                                 <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
                                 <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | translate }}</span>
                             </option>
                         </select>
-                        <select *ngIf="showDropdown === 'isVisibleBeforeStart'" class="form-control" [(ngModel)]="quizExercise.isVisibleBeforeStart" title="status">
+                        <select
+                            *ngIf="showDropdown === 'isVisibleBeforeStart'"
+                            class="form-control"
+                            [(ngModel)]="quizExercise.isVisibleBeforeStart"
+                            (ngModelChange)="cacheValidation()"
+                            title="status"
+                        >
                             <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
                                 <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | translate }}</span>
                                 <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | translate }}</span>

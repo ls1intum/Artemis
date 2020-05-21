@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -215,9 +214,9 @@ public class ProgrammingExerciseService {
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
         try {
-            String exercisePrefix = programmingLanguage + File.separator + "exercise";
-            String testPrefix = programmingLanguage + File.separator + "test";
-            String solutionPrefix = programmingLanguage + File.separator + "solution";
+            String exercisePrefix = programmingLanguage + "/exercise";
+            String testPrefix = programmingLanguage + "/test";
+            String solutionPrefix = programmingLanguage + "/solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise, user);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise, user);

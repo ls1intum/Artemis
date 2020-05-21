@@ -18,9 +18,11 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Submission } from 'app/entities/submission.model';
+import { SubjectObservablePair } from 'app/utils/rxjs.utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -28,6 +30,8 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
+
+    private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
 
     constructor(
         private http: HttpClient,
@@ -94,13 +98,36 @@ export class CourseManagementService {
     /**
      * finds all courses using a GET request
      */
-    findAll(): Observable<EntityArrayResponseType> {
+    findAllForDashboard(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.reconnectObjects(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+    }
+
+    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
+            .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
+    }
+
+    courseWasUpdated(course: Course | null): void {
+        if (course) {
+            return this.courses.get(course.id)?.subject.next(course);
+        }
+    }
+
+    getCourseUpdates(courseId: number): Observable<Course> {
+        if (!this.courses.has(courseId)) {
+            this.courses.set(courseId, new SubjectObservablePair());
+        }
+        return this.courses.get(courseId)!.observable;
     }
 
     /**
@@ -303,6 +330,13 @@ export class CourseManagementService {
         return res;
     }
 
+    private subscribeToCourseNotification(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.notificationService.handleCourseNotifications(res.body);
+        }
+        return res;
+    }
+
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
@@ -311,20 +345,27 @@ export class CourseManagementService {
         return res;
     }
 
-    private reconnectObjects(res: EntityArrayResponseType): EntityArrayResponseType {
-        /*if (res.body) {
-            res.body.forEach((course: Course) => {
-                // TODO: implement
-            });
-        }*/
-        return res;
-    }
-
     private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
                 course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+            });
+        }
+        return res;
+    }
+
+    private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
+        }
+        return res;
+    }
+
+    private setParticipationStatusForExercisesInCourses(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                course.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
             });
         }
         return res;

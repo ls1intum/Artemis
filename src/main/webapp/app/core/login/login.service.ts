@@ -7,7 +7,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {

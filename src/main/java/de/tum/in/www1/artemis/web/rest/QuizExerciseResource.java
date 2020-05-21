@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -52,13 +51,11 @@ public class QuizExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final QuizScheduleService quizScheduleService;
-
     private final GroupNotificationService groupNotificationService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            QuizScheduleService quizScheduleService, ExerciseService exerciseService, UserService userService) {
+            ExerciseService exerciseService, UserService userService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
@@ -66,7 +63,6 @@ public class QuizExerciseResource {
         this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.quizScheduleService = quizScheduleService;
         this.exerciseService = exerciseService;
     }
 
@@ -98,9 +94,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise = quizExerciseService.save(quizExercise);
-        quizScheduleService.scheduleQuizStart(quizExercise);
 
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
 
@@ -151,12 +145,10 @@ public class QuizExerciseResource {
 
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise = quizExerciseService.save(quizExercise);
-        quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
 
         // NOTE: it does not make sense to notify students here!
         if (notificationText != null) {
@@ -317,10 +309,9 @@ public class QuizExerciseResource {
 
         // save quiz exercise
         quizExercise = quizExerciseRepository.save(quizExercise);
-        quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 
@@ -346,8 +337,7 @@ public class QuizExerciseResource {
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise.get(), course, user);
         exerciseService.delete(quizExerciseId, false, false);
-        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
-        quizScheduleService.clearQuizData(quizExerciseId);
+        quizExerciseService.cancelScheduledQuiz(quizExerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.get().getTitle())).build();
     }
 
@@ -379,29 +369,13 @@ public class QuizExerciseResource {
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(originalQuizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(originalQuizExercise, null)) {
             return forbidden();
         }
 
-        quizExercise.undoUnallowedChanges(originalQuizExercise);
-        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
-
-        // update QuizExercise
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
-        quizExercise.reconnectJSONIgnoreAttributes();
-
-        // adjust existing results if an answer or and question was deleted and recalculate them
-        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
-
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        if (updateOfResultsAndStatisticsNecessary) {
-            // update Statistics
-            quizStatisticService.recalculateStatistics(quizExercise);
-        }
+        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
+
 }

@@ -66,7 +66,7 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
     }
 
     /**
-     * undo all answer-changes which are not allowed ( adding Answers)
+     * undo all answer-changes which are not allowed (adding Answers)
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      */
