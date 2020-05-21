@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -114,17 +113,17 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     public void normalizeEncodingUTF8() throws IOException {
         copyFile("EncodingUTF8.java", "EncodingUTF8.java");
         Charset charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingUTF8.java")));
-        assertThat(charset).isEqualTo(Charsets.UTF_8);
+        assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
     public void normalizeEncodingISO_8559_1() throws IOException {
         copyFile("EncodingISO_8559_1.java", "EncodingISO_8559_1.java");
         Charset charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
-        assertThat(charset).isEqualTo(Charsets.ISO_8859_1);
+        assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
         fileService.convertToUTF8("./exportTest/EncodingISO_8559_1.java");
         charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
-        assertThat(charset).isEqualTo(Charsets.UTF_8);
+        assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 }
