@@ -79,15 +79,6 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'assessment']"
-                                class="btn btn-primary btn-sm mr-1"
-                            >
-                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                            </button>
-                            <button
-                                type="submit"
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', modelingExercise.course.id, 'exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
