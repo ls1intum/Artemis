@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static io.github.jhipster.web.util.ResponseUtil.*;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing Rating.
@@ -50,9 +55,9 @@ public class RatingResource {
      */
     @GetMapping("/rating/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+    public ResponseEntity<Rating> getRatingForResult(@PathVariable Long resultId) {
         Optional<Rating> rating = this.ratingService.findRatingByResultId(resultId);
-        return ResponseEntity.ok(rating);
+        return wrapOrNotFound(rating);
     }
 
     /**
@@ -63,13 +68,15 @@ public class RatingResource {
      */
     @PostMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) {
-        if (rating.getId() != null) {
-            throw new BadRequestAlertException("A new rating cannot already have an ID", ENTITY_NAME, "idExists");
-        }
+    public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) throws URISyntaxException {
+        // if (rating.getId() != null) {
+        // throw new BadRequestAlertException("A new rating cannot already have an ID", ENTITY_NAME, "idExists");
+        // }
         // TODO: Check authorization
         Rating result = this.ratingService.saveRating(rating);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.created(new URI("/api/rating/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        // return ResponseEntity.ok().build();
     }
 
     /**

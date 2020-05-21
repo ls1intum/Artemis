@@ -36,7 +36,7 @@ public class RatingService {
      * @return Rating if it exists else null
      */
     public Optional<Rating> findRatingByResultId(Long resultId) {
-        return ratingRepository.findRatingByResultId(resultId);
+        return ratingRepository.findById(resultId);
     }
 
     /**
@@ -46,9 +46,9 @@ public class RatingService {
      */
     @Transactional
     public Rating saveRating(Rating rating) {
+        Result result = resultRepository.findById(rating.getResult().getId()).orElseThrow();
         Rating serverRating = new Rating();
         serverRating.setRating(rating.getRating());
-        Result result = resultRepository.getOne(rating.getResult().getId());
         serverRating.setResult(result);
         return ratingRepository.save(serverRating);
     }
