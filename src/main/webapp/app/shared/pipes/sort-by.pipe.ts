@@ -42,6 +42,11 @@ export class SortByPipe implements PipeTransform {
                     }
                 }
             }
+
+            if (typeof tempA === 'undefined' || typeof tempB === 'undefined') {
+                throw new Error(`The property ${predicate} does not exist`);
+            }
+
             const result =
                 tempA < tempB ? -1 : tempA > tempB ? 1 : tempA == null && tempB !== null ? -1 : tempA !== null && tempB == null ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
             return result * (reverse ? 1 : -1);
