@@ -17,11 +17,11 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    @Query("select notification from Notification notification left join notification.course left join notification.recipient "
-            + "where notification.notificationDate is not null and (type(notification) = GroupNotification "
-            + "and ((notification.course.instructorGroupName in :#{#currentGroups} and notification.type = 'INSTRUCTOR') "
-            + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} and notification.type = 'TA') "
-            + "or (notification.course.studentGroupName in :#{#currentGroups} and notification.type = 'STUDENT')))"
-            + "or type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}")
-    Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login, Pageable pageable);
+    @Query("SELECT notification FROM Notification notification WHERE notification.id "
+            + "IN(SELECT singleUserNotification FROM SingleUserNotification singleUserNotification WHERE singleUserNotification.recipient.login = :#{#login})"
+            + "OR notification.id IN(SELECT groupNotification FROM GroupNotification groupNotification WHERE "
+            + "(groupNotification.course.instructorGroupName IN :#{#currentUserGroups} AND groupNotification.type = 'INSTRUCTOR') "
+            + "OR (groupNotification.course.teachingAssistantGroupName IN :#{#currentUserGroups} AND groupNotification.type = 'TA') "
+            + "OR (groupNotification.course.studentGroupName IN :#{#currentUserGroups} AND groupNotification.type = 'STUDENT'))")
+    Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentUserGroups") Set<String> currentUserGroups, @Param("login") String login, Pageable pageable);
 }
