@@ -6,40 +6,64 @@ logging:
 spring:
     application:
         name: Artemis
-    jmx:
-        enabled: false
+    datasource:
+        type: com.zaxxer.hikari.HikariDataSource
+        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        name:
+        username:
+        password:
+        hikari:
+            auto-commit: false
     data:
         jpa:
             repositories:
                 bootstrap-mode: deferred
-    devtools:
-        restart:
-            enabled: false
-        livereload:
-            enabled: false
     jackson:
         serialization:
             indent-output: true
+            write-durations-as-timestamps: false
+    jmx:
+        enabled: false
     jpa:
+#        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
+        show-sql: false
+        hibernate:
+#            ddl-auto: none                         # out commented because it would lead to test execution errors
+            naming:
+                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        properties:
+            hibernate.id.new_generator_mappings: true
+            hibernate.connection.provider_disables_autocommit: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
+            hibernate.generate_statistics: false
+#            hibernate.hbm2ddl.auto: validate       # out commented because it would lead to test execution errors
+            hibernate.jdbc.time_zone: UTC
     liquibase:
         contexts: tests
         enabled: false
     mail:
         host: localhost
-        port: 25
-        username:
-        password:
+    main:
+        allow-bean-definition-overriding: true
     messages:
+        basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
-    mvc:
-        favicon:
-            enabled: false
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                core-size: 1
+                max-size: 50
+                queue-capacity: 10000
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                size: 1
     thymeleaf:
         mode: HTML
-    sleuth:
-        sampler:
-            probability: 1 # report 100% of traces
 
 server:
     port: 8080
@@ -90,6 +114,21 @@ jhipster:
         exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
+    logging:
+        # To test json console appender
+        use-json-format: false
+        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
+            enabled: false
+            host: localhost
+            port: 5000
+            queue-size: 512
+    mail: # specific JHipster mail property, for standard properties see MailProperties
+        from: Artemis@localhost
+        base-url: http://127.0.0.1:8080
+    metrics:
+        logs: # Reports metrics in the logs
+            enabled: false
+            report-frequency: 60 # in seconds
     security:
         authentication:
             jwt:
@@ -98,16 +137,3 @@ jhipster:
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
-    mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: Artemis@localhost
-        base-url: http://127.0.0.1:8080
-    metrics:
-        logs: # Reports metrics in the logs
-            enabled: false
-            report-frequency: 60 # in seconds
-    logging:
-        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
-            enabled: false
-            host: localhost
-            port: 5000
-            queue-size: 512

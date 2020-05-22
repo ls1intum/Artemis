@@ -78,8 +78,9 @@ public class RepositoryService {
             throw new FileNotFoundException();
         }
         InputStream inputStream = new FileInputStream(file.get());
-
-        return org.apache.commons.io.IOUtils.toByteArray(inputStream);
+        byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
+        inputStream.close();
+        return fileInBytes;
     }
 
     /**
@@ -102,6 +103,7 @@ public class RepositoryService {
 
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
+        inputStream.close();
     }
 
     /**
@@ -125,6 +127,7 @@ public class RepositoryService {
         File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
+        inputStream.close();
     }
 
     /**
