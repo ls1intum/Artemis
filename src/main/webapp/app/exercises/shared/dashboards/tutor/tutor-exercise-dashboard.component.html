@@ -301,9 +301,10 @@
             </div>
             <!-- Complaints -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                <h4>
+                <h4 class="d-inline-block">
                     {{ 'artemisApp.tutorExerciseDashboard.complaints' | translate }}
                 </h4>
+                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.tutorExerciseDashboard.complaintHint' | translate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
                         <thead>
@@ -355,9 +356,10 @@
 
             <!-- More Feedback Requests -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                <h4>
+                <h4 class="d-inline-block">
                     {{ 'artemisApp.tutorExerciseDashboard.moreFeedback' | translate }}
                 </h4>
+                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.tutorExerciseDashboard.moreFeedbackRequestHint' | translate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests?.length > 0; else noComplaints">
                         <thead>

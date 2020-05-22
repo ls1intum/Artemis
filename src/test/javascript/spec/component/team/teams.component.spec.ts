@@ -29,7 +29,7 @@ import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-tea
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { teamRoute } from 'app/exercises/shared/team/team.route.ts';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
+import { Router, convertToParamMap } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -46,6 +46,7 @@ describe('TeamsComponent', () => {
 
     const route = ({
         params: of({ exerciseId: 1 }),
+        snapshot: { queryParamMap: convertToParamMap({}) },
     } as any) as ActivatedRoute;
 
     beforeEach(async () => {
