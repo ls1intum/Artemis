@@ -82,7 +82,7 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        saveAndSend(new ExerciseCreatedGroupNotification(userService.getUser(), GroupNotificationType.TA, exercise));
     }
 
     /**
