@@ -1130,6 +1130,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
+     *
+     * @param courseId the id of the course for which the participations should be found
+     * @param teamShortName the short name of the team for which participations should be found
+     * @return participations of team
+     */
+    public List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(long courseId, String teamShortName) {
+        return studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(courseId, teamShortName);
+    }
+
+    /**
      * Get a mapping of participation ids to the number of submission for each participation.
      *
      * @param exerciseId the id of the exercise for which to consider participations

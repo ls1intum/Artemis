@@ -75,7 +75,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // submission sync with team members
     teamSyncInterval: number;
-    teamSyncTimer: number;
     private submissionChange = new Subject<ModelingSubmission>();
     submissionStream$ = this.submissionChange.asObservable();
 
@@ -102,7 +101,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
                 this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
-                    (modelingSubmission) => this.updateModelingSubmission(modelingSubmission),
+                    (modelingSubmission) => {
+                        this.updateModelingSubmission(modelingSubmission);
+                        if (this.modelingExercise.teamMode) {
+                            this.setupSubmissionStreamForTeam();
+                        } else {
+                            this.setAutoSaveTimer();
+                        }
+                    },
                     (error) => {
                         if (error.status === 403) {
                             this.router.navigate(['accessdenied']);
@@ -156,11 +162,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = assessmentResult;
                 this.prepareAssessmentData();
             });
-        }
-        if (this.modelingExercise.teamMode) {
-            this.setupSubmissionStreamForTeam();
-        } else {
-            this.setAutoSaveTimer();
         }
         this.isLoading = false;
         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
@@ -242,15 +243,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, 1000);
     }
 
+    /**
+     * Check every 2 seconds, if the user made changes for the submission in a team exercise: if yes, send it to the sever
+     */
     private setupSubmissionStreamForTeam(): void {
-        this.teamSyncTimer = 0;
         this.teamSyncInterval = window.setInterval(() => {
-            this.teamSyncTimer++;
-            if (this.teamSyncTimer >= 2 && !this.canDeactivate()) {
+            if (!this.canDeactivate()) {
+                // make sure this.submission includes the newest content of the apollon editor
                 this.updateSubmissionModel();
+                // notify the team sync component to send this.submission to the server (and all online team members)
                 this.submissionChange.next(this.submission);
             }
-        }, 1000);
+        }, 2000);
     }
 
     saveDiagram(): void {
@@ -517,6 +521,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
+     * NOTE: this is currently not used (it was supposed to allow students to retry the modeling exercise after they have recieved a result)
+     *
      * starts a retry and resets necessary attributes
      * the retry is only persisted after saving or submitting the model
      */
