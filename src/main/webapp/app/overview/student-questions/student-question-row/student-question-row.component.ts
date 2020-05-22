@@ -18,6 +18,7 @@ export interface StudentQuestionRowAction {
 
 export enum QuestionRowActionName {
     DELETE,
+    VOTE_CHANGE,
 }
 
 @Component({
@@ -81,6 +82,12 @@ export class StudentQuestionRowComponent implements OnInit {
                 break;
             case QuestionActionName.EXPAND:
                 this.isExpanded = !this.isExpanded;
+                break;
+            case QuestionActionName.VOTE_CHANGE:
+                this.interactQuestionRow.emit({
+                    name: QuestionRowActionName.VOTE_CHANGE,
+                    studentQuestion: action.studentQuestion,
+                });
                 break;
         }
     }
