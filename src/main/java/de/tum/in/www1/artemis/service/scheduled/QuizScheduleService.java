@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,6 +119,10 @@ public class QuizScheduleService {
         }
     }
 
+    public static void addResultsForStatisticUpdate(Long quizExerciseId, List<Result> results) {
+        results.forEach(result -> addResultForStatisticUpdate(quizExerciseId, result));
+    }
+
     /**
      * add a result to resultHashMap for a statistic-update
      * this should only be invoked once, when the quiz was submitted
@@ -133,6 +139,10 @@ public class QuizScheduleService {
             }
             resultHashMap.get(quizExerciseId).add(result);
         }
+    }
+
+    private static void addParticipations(Long quizExerciseId, List<StudentParticipation> participations) {
+        participations.forEach(participation -> addParticipation(quizExerciseId, participation));
     }
 
     /**
@@ -354,11 +364,12 @@ public class QuizScheduleService {
                 else {
                     submissions = submissionHashMap.get(quizExerciseId);
                 }
+                int numberOfSubmissions = submissions.keySet().size();
 
-                int num = createParticipations(quizExercise, submissions);
+                saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions);
 
-                if (num > 0) {
-                    log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                if (numberOfSubmissions > 0) {
+                    log.info("Processed {} submissions after {} ms in quiz {}", numberOfSubmissions, System.currentTimeMillis() - start, quizExercise.getTitle());
                 }
             }
 
@@ -417,7 +428,7 @@ public class QuizScheduleService {
             }
         }
         catch (Exception e) {
-            log.error("Exception in Quiz Schedule:\n{}", e.getMessage());
+            log.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
         }
     }
 
@@ -456,10 +467,12 @@ public class QuizScheduleService {
      *
      * @param quizExercise      the quiz which should be checked
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
-     * @return the number of created participations
      */
-    private int createParticipations(QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
-        int counter = 0;
+    private void saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
+
+        List<StudentParticipation> participations = new ArrayList<>();
+        List<QuizSubmission> submissions = new ArrayList<>();
+        List<Result> results = new ArrayList<>();
 
         for (String username : userSubmissionMap.keySet()) {
             try {
@@ -470,31 +483,63 @@ public class QuizScheduleService {
                     if (quizSubmission.getType() == null) {
                         quizSubmission.setType(SubmissionType.MANUAL);
                     }
-
-                    // Create Participation and Result and save to Database (DB Write)
-                    // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                    createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
-                    counter++;
-                    // second case: the quiz has ended
-                }
+                } // second case: the quiz has ended
                 else if (quizExercise.isEnded()) {
                     userSubmissionMap.remove(username);
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.TIMEOUT);
                     quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
-                    // Create Participation and Result and save to Database (DB Write)
-                    // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                    createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
-                    counter++;
                 }
+
+                // Create Participation and Result and save to Database (DB Write)
+                // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+
+                StudentParticipation participation = new StudentParticipation();
+                // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
+                participation.setInitializationDate(quizSubmission.getSubmissionDate());
+                Optional<User> user = userService.getUserByLogin(username);
+                user.ifPresent(participation::setParticipant);
+                // add the quizExercise to the participation
+                participation.setExercise(quizExercise);
+
+                // create new result
+                Result result = new Result().participation(participation).submission(quizSubmission);
+                result.setRated(true);
+                result.setAssessmentType(AssessmentType.AUTOMATIC);
+                result.setCompletionDate(quizSubmission.getSubmissionDate());
+                result.setSubmission(quizSubmission);
+
+                // calculate scores and update result and submission accordingly
+                quizSubmission.calculateAndUpdateScores(quizExercise);
+                result.evaluateSubmission();
+
+                // add result to participation
+                participation.addResult(result);
+
+                // add submission to participation
+                participation.addSubmissions(quizSubmission);
+                participation.setInitializationState(InitializationState.FINISHED);
+                participation.setExercise(quizExercise);
+
+                participations.add(participation);
+                submissions.add(quizSubmission);
+                results.add(result);
             }
             catch (Exception e) {
-                log.error("Exception in createParticipations() for {} in quiz {}: \n{}", username, quizExercise.getId(), e.getMessage());
+                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for {} in quiz {}: \n{}", username, quizExercise.getId(), e.getMessage());
             }
         }
 
-        return counter;
+        // TODO: should we use a transaction here?
+        // save all participations, results and quizSubmissions
+        studentParticipationRepository.saveAll(participations);
+        quizSubmissionRepository.saveAll(submissions);
+        resultRepository.saveAll(results);
+
+        // add the participation to the participationHashMap for the send out at the end of the quiz
+        addParticipations(quizExercise.getId(), participations);
+        // add the result of the participation resultHashMap for the statistic-Update
+        addResultsForStatisticUpdate(quizExercise.getId(), results);
     }
 
     /**
@@ -506,45 +551,5 @@ public class QuizScheduleService {
      */
     private void createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
 
-        if (quizExercise != null && username != null && quizSubmission != null) {
-
-            // create and save new participation
-            StudentParticipation participation = new StudentParticipation();
-            // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
-            participation.setInitializationDate(quizSubmission.getSubmissionDate());
-            Optional<User> user = userService.getUserByLogin(username);
-            user.ifPresent(participation::setParticipant);
-            // add the quizExercise to the participation
-            participation.setExercise(quizExercise);
-
-            // create new result
-            Result result = new Result().participation(participation).submission(quizSubmission);
-            result.setRated(true);
-            result.setAssessmentType(AssessmentType.AUTOMATIC);
-            result.setCompletionDate(quizSubmission.getSubmissionDate());
-            result.setSubmission(quizSubmission);
-
-            // calculate scores and update result and submission accordingly
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-            result.evaluateSubmission();
-
-            // add result to participation
-            participation.addResult(result);
-
-            // add submission to participation
-            participation.addSubmissions(quizSubmission);
-            participation.setInitializationState(InitializationState.FINISHED);
-            participation.setExercise(quizExercise);
-
-            // save participation, result and quizSubmission
-            participation = studentParticipationRepository.save(participation);
-            quizSubmissionRepository.save(quizSubmission);
-            result = resultRepository.save(result);
-
-            // add the participation to the participationHashMap for the send out at the end of the quiz
-            addParticipation(quizExercise.getId(), participation);
-            // add the result of the participation resultHashMap for the statistic-Update
-            addResultForStatisticUpdate(quizExercise.getId(), result);
-        }
     }
 }

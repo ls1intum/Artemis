@@ -58,10 +58,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     ResultRepository resultRepository;
 
+    int multiplier = 100;
+
     @BeforeEach
     public void init() {
         quizScheduleService.stopSchedule();
-        database.addUsers(10, 5, 1);
+        database.addUsers(10 * multiplier, 5, 1);
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
     }
 
@@ -84,13 +86,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExercise.setIsVisibleBeforeStart(true);
         quizExerciseService.save(quizExercise);
 
-        int numberOfParticipants = 10;
-        QuizSubmission quizSubmission = new QuizSubmission();
+        int numberOfParticipants = 10 * multiplier;
+        QuizSubmission quizSubmission;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            for (int j = 1; j <= 10; j++) {
-                database.generateSubmission(quizExercise, i, false, null);
-            }
+            quizSubmission = database.generateSubmission(quizExercise, i, false, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // save
@@ -127,15 +127,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
+            else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else {
@@ -146,13 +146,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(5);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
             }
             else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(3);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
             }
             else {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(2);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
             }
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);

@@ -1,4 +1,3 @@
-
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
@@ -7,10 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,8 +59,6 @@ public class ParticipationService {
 
     private final TeamRepository teamRepository;
 
-    private QuizSubmissionService quizSubmissionService;
-
     private final UserService userService;
 
     private final GitService gitService;
@@ -100,11 +95,6 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
-    }
-
-    @Autowired
-    public void setQuizSubmissionService(QuizSubmissionService quizSubmissionService) {
-        this.quizSubmissionService = quizSubmissionService;
     }
 
     /**
@@ -389,10 +379,6 @@ public class ParticipationService {
 
             if (result != null) {
                 participation.addResult(result);
-                if (!Hibernate.isInitialized(result.getSubmission())) {
-                    Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
-                    result.setSubmission(submission);
-                }
             }
 
             return participation;
