@@ -33,6 +33,28 @@ public class GroupNotification extends Notification implements Serializable {
     @JsonIgnoreProperties("groupNotifications")
     private Course course;
 
+    public GroupNotification(String title, String text, User author, Course course, GroupNotificationType type) {
+        this.setTitle(title);
+        this.setText(text);
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setAuthor(author);
+        this.setCourse(course);
+        this.setType(type);
+    }
+
+    public GroupNotification() {
+    }
+
+    // TODO: remove
+    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
+        this.setCourse(course);
+        this.setType(type);
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setTitle(title);
+        this.setText(notificationText);
+        this.setAuthor(user);
+    }
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public GroupNotificationType getType() {
@@ -55,18 +77,6 @@ public class GroupNotification extends Notification implements Serializable {
     public GroupNotification course(Course course) {
         this.course = course;
         return this;
-    }
-
-    public GroupNotification() {
-    }
-
-    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
-        this.setCourse(course);
-        this.setType(type);
-        this.setNotificationDate(ZonedDateTime.now());
-        this.setTitle(title);
-        this.setText(notificationText);
-        this.setAuthor(user);
     }
 
     public void setCourse(Course course) {

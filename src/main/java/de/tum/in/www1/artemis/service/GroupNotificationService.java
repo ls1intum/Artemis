@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.group.AttachmentUpdatedGroupNotification;
 import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
@@ -40,7 +41,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(attachment, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE, notificationText));
+        saveAndSend(new AttachmentUpdatedGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, attachment, notificationText));
     }
 
     /**
