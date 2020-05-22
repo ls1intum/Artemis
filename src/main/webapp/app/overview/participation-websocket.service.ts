@@ -17,15 +17,15 @@ export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
-    subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
+    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean) => BehaviorSubject<Result | null>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
-    openResultWebsocketSubscription: string | null; /* url of websocket connection */
-    openParticipationWebsocketSubscription: string | null; /* url of websocket connection */
+    openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
+    openPersonalWebsocketSubscription: string | null; /* url of websocket connection */
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservables: Map<number /* ID of participation */, BehaviorSubject<Participation | null>> = new Map<number, BehaviorSubject<Participation>>();
     participationObservableAll: BehaviorSubject<Participation | null> | null;
@@ -156,13 +156,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Checks if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
-     * @private
+     * @param personal whether the current user is a participant in the participation.
+     * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    private openResultWebsocketSubscriptionIfNotExisting() {
-        if (!this.openResultWebsocketSubscription) {
-            const participationResultTopic = `/user/topic/newResults`;
+    private openResultWebsocketSubscriptionIfNotExisting(personal: boolean, exerciseId: number | null) {
+        if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
+            let participationResultTopic: string;
+            if (personal) {
+                participationResultTopic = `/user/topic/newResults`;
+                this.openPersonalWebsocketSubscription = participationResultTopic;
+            } else {
+                participationResultTopic = `/topic/exercise/${exerciseId}/newResults`;
+                this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
+            }
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.openResultWebsocketSubscription = participationResultTopic;
             this.jhiWebsocketService
                 .receive(participationResultTopic)
                 .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
@@ -190,9 +197,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If there is no observable for the participation a new one will be created.
      *
      * @param participationId Id of Participation of which result to subscribe to
+     * @param personal whether the current user is a participant in the participation.
+     * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
-        this.openResultWebsocketSubscriptionIfNotExisting();
+    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId: number | null = null): BehaviorSubject<Result | null> {
+        this.openResultWebsocketSubscriptionIfNotExisting(personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result | null>(null);

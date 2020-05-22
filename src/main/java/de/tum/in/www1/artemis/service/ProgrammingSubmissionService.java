@@ -20,7 +20,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -530,13 +529,25 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
-        messagingTemplate.convertAndSend(topic, submission);
+        String topic = "/user/topic/newSubmission";
+        if (submission.getParticipation() instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, submission));
+        }
+
+        String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+        messagingTemplate.convertAndSend(exerciseTopic, submission);
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
-        messagingTemplate.convertAndSend(topic, error);
+        String topic = "/user/topic/newSubmission";
+        if (submission.getParticipation() instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, error));
+        }
+
+        String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+        messagingTemplate.convertAndSend(exerciseTopic, error);
     }
 
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {

@@ -36,7 +36,7 @@ const checkIfSubmissionIsError = (toBeDetermined: ProgrammingSubmission | Progra
 };
 
 export interface IProgrammingSubmissionService {
-    getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number) => Observable<ProgrammingSubmissionStateObj>;
+    getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<Object>;
@@ -52,7 +52,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public PROGRAMMING_EXERCISE_RESOURCE_URL = SERVER_API_URL + 'api/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
-    private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
+    private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     // participationId -> topic
@@ -164,10 +164,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param participationId that is connected to the submission.
      * @param exerciseId that is connected to the participation.
+     * @param personal whether the current user is a participant in the participation.
      */
-    private setupWebsocketSubscriptionForLatestPendingSubmission = (participationId: number, exerciseId: number): void => {
+    private setupWebsocketSubscriptionForLatestPendingSubmission = (participationId: number, exerciseId: number, personal: boolean): void => {
         if (!this.submissionTopicsSubscribed.get(participationId)) {
-            const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
+            let newSubmissionTopic: string;
+            if (personal) {
+                newSubmissionTopic = '/user/topic/newSubmission';
+            } else {
+                newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%exerciseId%', exerciseId.toString());
+            }
             this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
             this.websocketService.subscribe(newSubmissionTopic);
             this.resultTimerSubjects.set(participationId, new Subject<null>());
@@ -194,12 +200,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param participationId that is connected to the result.
      * @param exerciseId that is connected to the participation.
+     * @param personal whether the current user is a participant in the participation.
      */
-    private subscribeForNewResult = (participationId: number, exerciseId: number) => {
+    private subscribeForNewResult = (participationId: number, exerciseId: number, personal: boolean) => {
         if (this.resultSubscriptions[participationId]) {
             return;
         }
-        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId).pipe(
+        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId, personal, exerciseId).pipe(
             // Make sure that the incoming result belongs the latest submission!
             filter((result: Result | null) => {
                 if (!result || !result.submission) {
@@ -318,7 +325,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
                 // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
                 this.submissionSubjects[participation.id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, participation.id, exercise.id).subscribe();
+                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, participation.id, exercise.id, true).subscribe();
             });
     }
 
@@ -336,10 +343,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
      *
-     * @param participationId id of ProgrammingExerciseStudentParticipation
+     * @param participationId id of the ProgrammingExerciseStudentParticipation
      * @param exerciseId id of ProgrammingExercise
+     * @param personal whether the current user is a participant in the participation.
      */
-    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, forceCacheOverride = false) => {
+    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false) => {
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
@@ -348,7 +356,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         this.fetchLatestPendingSubmissionByParticipationId(participationId)
-            .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId)))
+            .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)))
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
@@ -386,7 +394,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         switchMap(
                             ([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
                                 this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                                return this.processPendingSubmission(submission, participationId, exerciseId);
+                                return this.processPendingSubmission(submission, participationId, exerciseId, false);
                             },
                         ),
                     );
@@ -447,17 +455,19 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param submissionToBeProcessed to cache and use for the websocket subscriptions
      * @param participationId that serves as an identifier for caching the submission.
      * @param exerciseId of the given participationId.
+     * @param personal whether the current user is a participant in the participation.
      */
     private processPendingSubmission = (
         submissionToBeProcessed: ProgrammingSubmission | null,
         participationId: number,
         exerciseId: number,
+        personal: boolean,
     ): Observable<ProgrammingSubmissionStateObj> => {
         return of(submissionToBeProcessed).pipe(
             // When a new submission comes in, make sure that a subscription is set up for new incoming submissions.
             // The new submission would then override the current latest pending submission.
             tap(() => {
-                this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId);
+                this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId, personal);
             }),
             // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
             map((submission: ProgrammingSubmission | null) => {
@@ -478,7 +488,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Now update the exercise build state object and start the result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj } };
-                this.subscribeForNewResult(participationId, exerciseId);
+                this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
     };
