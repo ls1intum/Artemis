@@ -10,6 +10,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -24,17 +25,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     private courseId: number;
     private subscription: Subscription;
     public course: Course | null;
+    public refreshingCourse = false;
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
     private teamAssignmentUpdateListener: Subscription;
+    private quizExercisesChannel: string;
 
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private teamService: TeamService,
+        private jhiWebsocketService: JhiWebsocketService,
     ) {}
 
     async ngOnInit() {
@@ -44,19 +47,51 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.adjustCourseDescription();
-            });
+            this.loadCourse();
         }
         this.adjustCourseDescription();
         await this.subscribeToTeamAssignmentUpdates();
+        this.subscribeForQuizChanges();
+    }
+
+    loadCourse(refresh = false) {
+        this.refreshingCourse = refresh;
+        this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
+            this.courseCalculationService.updateCourse(res.body!);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.adjustCourseDescription();
+            setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
+        });
     }
 
     ngOnDestroy() {
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
+        }
+        if (this.quizExercisesChannel) {
+            this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
+        }
+    }
+
+    subscribeForQuizChanges() {
+        // subscribe to quizzes which get visible
+        if (!this.quizExercisesChannel) {
+            this.quizExercisesChannel = '/topic/' + this.courseId + '/quizExercises';
+
+            // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+            this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
+            this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe(
+                (quizExercise) => {
+                    // the quiz was set to visible, we should add it to the exercise list and display it at the top
+                    if (this.course) {
+                        this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
+                        this.course.exercises.push(quizExercise);
+                        // this lines makes sure the quiz is sorted correctly
+                        this.courseService.courseWasUpdated(this.course);
+                    }
+                },
+                () => {},
+            );
         }
     }
 

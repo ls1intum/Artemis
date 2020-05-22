@@ -15,8 +15,9 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
     diagramTitle: string;
-    courses: Course[];
-    selectedCourse: Course;
+    course: Course;
+    courseTitle: string;
+    courseId: number;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -29,24 +30,32 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
      * Initializes courses from the server and assigns selected course
      */
     ngOnInit() {
-        this.courseService.getAll({ onlyActive: true }).subscribe((response) => {
-            this.courses = response.body!;
-            this.selectedCourse = this.courses[0];
+        this.courseService.find(this.getCourseId()).subscribe((response) => {
+            this.course = response.body!;
+            this.courseTitle = this.course.title;
         });
+    }
+
+    /**
+     * Parses the courseId.
+     */
+    getCourseId() {
+        // tslint:disable-next-line:radix
+        return parseInt(location.toString().split('management/')[1].split('/')[0]);
     }
 
     /**
      * Generates quiz exercise from Apollon diagram model
      */
     async save() {
-        if (this.selectedCourse === undefined) {
+        if (this.course === undefined) {
             return;
         }
 
         const model = this.apollonEditor.model;
 
         try {
-            const quizExercise = await generateDragAndDropQuizExercise(this.selectedCourse, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
+            const quizExercise = await generateDragAndDropQuizExercise(this.course, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
             this.activeModal.close(quizExercise);
         } catch (error) {
             this.activeModal.dismiss(error);

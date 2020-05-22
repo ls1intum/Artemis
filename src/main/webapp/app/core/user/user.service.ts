@@ -70,7 +70,7 @@ export class UserService {
     /**
      * Update the user notification date.
      */
-    updateUserNotificationDate(): Observable<HttpResponse<User>> {
+    updateLastNotificationRead(): Observable<HttpResponse<User>> {
         return this.http.put<User>(`${this.resourceUrl}/notification-date`, null, { observe: 'response' });
     }
 

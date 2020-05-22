@@ -1,0 +1,63 @@
+<li class="nav-item pointer">
+    <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
+        <fa-icon [icon]="'bell'"></fa-icon>
+        <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
+            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
+        </span>
+    </button>
+</li>
+
+<div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
+
+<div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
+    <div class="d-flex flex-column">
+        <div class="header pt-4 px-3">
+            <button class="close position-absolute border-0 bg-transparent" (click)="toggleSidebar()">
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <h5 class="mb-3 text-center">
+                {{ 'artemisApp.notification.notifications' | translate }}
+            </h5>
+            <div class="text-right">
+                <small class="text-muted">
+                    {{ 'artemisApp.notification.loadedNotificationCount' | translate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
+                </small>
+            </div>
+        </div>
+        <div id="notification-sidebar-container" (scroll)="onScroll()">
+            <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
+                {{ 'artemisApp.notification.unexpectedError' | translate }}
+            </div>
+            <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
+                <div>
+                    <h5>
+                        {{ notification.title }}
+                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)">
+                            new
+                        </span>
+                    </h5>
+                    <div class="mb-1">
+                        {{ notification.text }}
+                    </div>
+                    <div class="info text-muted text-right">
+                        {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}
+                        {{ 'artemisApp.notification.by' | translate }}
+                        <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
+                        <ng-template #noAuthor>
+                            <span jhiTranslate="global.title"></span>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-spinner text-center mx-3 my-2" style="font-size: large;" *ngIf="loading">
+                <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+            </div>
+            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
+                {{ 'artemisApp.notification.allLoaded' | translate }}
+            </small>
+            <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
+                {{ 'artemisApp.notification.noNotifications' | translate }}
+            </span>
+        </div>
+    </div>
+</div>

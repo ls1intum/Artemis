@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
-import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 

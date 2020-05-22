@@ -71,7 +71,7 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response(mockTeam);
     }
 
-    findAllByExerciseId(exerciseId: number) {
+    findAllByExerciseId(exerciseId: number, teamOwnerId?: number) {
         return MockTeamService.response(mockTeams);
     }
 
