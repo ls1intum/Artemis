@@ -1,6 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DifferencePipe } from 'ngx-moment';
-import { Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Pipe({
