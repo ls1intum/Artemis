@@ -158,7 +158,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     QuizExercise quizExercise = (QuizExercise) exerciseServer;
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
-                    assertThat(quizExercise.getQuizPointStatistic().getId()).as("Quiz point statistic was filtered out").isNull();
+                    assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
                     assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
                 }
                 if (exerciseServer instanceof TextExercise) {
@@ -235,7 +235,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     QuizExercise quizExercise = (QuizExercise) exerciseWithDetails;
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
-                    assertThat(quizExercise.getQuizPointStatistic().getId()).as("Quiz point statistic was filtered out").isNull();
+                    assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
                     assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
                     assertThat(quizExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
                 }

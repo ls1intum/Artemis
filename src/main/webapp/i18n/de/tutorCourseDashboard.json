@@ -23,7 +23,8 @@
             "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
             "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
             "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studenten",
-            "numberOfOpenComplaints": "Anzahl an offenen Beschwerden"
+            "numberOfOpenComplaints": "Anzahl an offenen Beschwerden",
+            "exerciseTeams": "Teams der Übung"
         }
     }
 }

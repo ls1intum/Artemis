@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -66,18 +67,17 @@ public class QuizScheduleService {
 
     private final UserService userService;
 
-    private final QuizExerciseService quizExerciseService;
+    private QuizExerciseService quizExerciseService;
 
     private final QuizStatisticService quizStatisticService;
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService) {
+            QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.userService = userService;
-        this.quizExerciseService = quizExerciseService;
         this.quizStatisticService = quizStatisticService;
     }
 
@@ -87,10 +87,16 @@ public class QuizScheduleService {
         startSchedule(3 * 1000);                          // every 3 seconds
     }
 
+    @Autowired
+    // break the dependency cycle
+    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
+        this.quizExerciseService = quizExerciseService;
+    }
+
     /**
      * add a quizSubmission to the submissionHashMap
      *
-     * @param quizExerciseId         the quizExerciseId of the quiz the submission belongs to (first Key)
+     * @param quizExerciseId the quizExerciseId of the quiz the submission belongs to (first Key)
      * @param username       the username of the user, who submitted the submission (second Key)
      * @param quizSubmission the quizSubmission, which should be added (Value)
      */
@@ -246,7 +252,7 @@ public class QuizScheduleService {
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
-            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
+            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now"),
                     Date.from(quizExercise.getReleaseDate().toInstant()));
 
             // save scheduled future in HashMap

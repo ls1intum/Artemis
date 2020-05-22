@@ -3,10 +3,13 @@
         "notification": {
             "notifications": "Notifications",
             "noNotifications": "No notifications available",
-            "showAllNotifications": "Show all notifications",
             "title": "Title",
             "text": "Text",
             "notificationDate": "Notification Date",
+            "unexpectedError": "An unexpected error occurred. Please reload the page.",
+            "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
+            "by": "by",
+            "allLoaded": "No further notifications available.",
             "target": {
                 "newAnswer": "View answer",
                 "newQuestion": "View question",
