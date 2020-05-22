@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.group.AttachmentUpdatedGroupNotification;
 import de.tum.in.www1.artemis.domain.notification.group.ExercisePracticeGroupNotification;
+import de.tum.in.www1.artemis.domain.notification.group.ExerciseStartedGroupNotification;
 import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
@@ -60,7 +61,7 @@ public class GroupNotificationService {
      * @param exercise that has been started
      */
     public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED, null));
+        saveAndSend(new ExerciseStartedGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, exercise));
     }
 
     /**

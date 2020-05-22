@@ -20,6 +20,6 @@ public class ExercisePracticeGroupNotification extends GroupNotification impleme
 
     public ExercisePracticeGroupNotification(User author, GroupNotificationType groupNotificationType, Exercise exercise) {
         super("Exercise open for practice", "Exercise \"" + exercise.getTitle() + "\" is now open for practice.", author, exercise.getCourse(), groupNotificationType);
-        this.setTarget(super.getExerciseCreatedTarget(exercise));
+        this.setTarget(super.getExerciseUpdatedTarget(exercise));
     }
 }
