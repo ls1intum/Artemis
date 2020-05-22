@@ -9,7 +9,6 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-
 @ActiveProfiles({ "artemis", "dev" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
 public class AbstractSpringDevelopmentTest {
