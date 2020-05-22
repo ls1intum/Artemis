@@ -44,10 +44,11 @@ public class QuizSubmissionWebsocketService {
     // to the user. Then we also could find out how long students work on the quiz on average
 
     /**
-     * Saves a Submission
-     * @param exerciseId the exerciseID to the corresponding QuizExercise
+     * Saves a quiz submission into the hash maps. Submitted quizzes are marked to be saved into the database in the QuizScheduleService
+     *
+     * @param exerciseId     the exerciseID to the corresponding QuizExercise
      * @param quizSubmission the submission which should be saved
-     * @param principal the current principal
+     * @param principal      refers to the user who initiated the request
      */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {

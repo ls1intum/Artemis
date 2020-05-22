@@ -58,28 +58,27 @@ public class QuizScheduleService {
 
     private ScheduledFuture<?> scheduledProcessQuizSubmissions;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
-    private final QuizSubmissionRepository quizSubmissionRepository;
-
     private final UserService userService;
+
+    private final QuizSubmissionRepository quizSubmissionRepository;
 
     private QuizExerciseService quizExerciseService;
 
-    private final QuizStatisticService quizStatisticService;
+    private QuizStatisticService quizStatisticService;
+
+    private SimpMessageSendingOperations messagingTemplate;
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizStatisticService quizStatisticService) {
+            UserService userService, QuizSubmissionRepository quizSubmissionRepository) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.quizSubmissionRepository = quizSubmissionRepository;
         this.userService = userService;
-        this.quizStatisticService = quizStatisticService;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -92,6 +91,12 @@ public class QuizScheduleService {
     // break the dependency cycle
     public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
         this.quizExerciseService = quizExerciseService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -293,12 +298,20 @@ public class QuizScheduleService {
         quizExerciseMap.remove(quizExerciseId);
     }
 
+    /*
+     * Clears all quiz data for all quiz exercises from the 4 hash maps for quizzes
+     */
     public void clearAllQuizData() {
         participationHashMap.clear();
         submissionHashMap.clear();
         resultHashMap.clear();
+        quizExerciseMap.clear();
     }
 
+    /**
+     * Clears all quiz data for one specific quiz exercise from the 4 hash maps for quizzes
+     * @param quizExerciseId refers to one specific quiz exercise for which the data should be cleared
+     */
     public void clearQuizData(Long quizExerciseId) {
         // delete all participation, submission, and result hashmap entries that correspond to this quiz
         participationHashMap.remove(quizExerciseId);
@@ -399,7 +412,7 @@ public class QuizScheduleService {
                             quizExercise.getTitle());
                 }
                 catch (Exception e) {
-                    log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());
+                    log.error("Exception in StatisticService.updateStatistics(): {}", e.getMessage(), e);
                 }
             }
         }

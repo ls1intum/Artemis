@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -97,7 +95,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
+            // NOTE: the communication back to the client is currently deactivated
+            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
@@ -106,7 +105,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // submit
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
+            // NOTE: the communication back to the client is currently deactivated
+            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // before the quiz submissions are processed, none of them ends up in the database
@@ -165,8 +165,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPractice() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
-        quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(2));
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
+        quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
         quizExercise.setDuration(2);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);

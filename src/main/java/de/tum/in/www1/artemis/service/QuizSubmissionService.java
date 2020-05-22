@@ -107,12 +107,14 @@ public class QuizSubmissionService {
     }
 
     /**
-     * TODO: add documentation
-     * @param exerciseId
-     * @param quizSubmission
-     * @param username
-     * @return
-     * @throws QuizSubmissionException
+     * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService
+     *
+     * @param exerciseId the exerciseID to the corresponding QuizExercise
+     * @param quizSubmission the submission which should be saved
+     * @param username the username of the user who has initiated the request
+     *
+     * @return the updated quiz submission object
+     * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
     public QuizSubmission submitForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username) throws QuizSubmissionException {
         long start = System.nanoTime();

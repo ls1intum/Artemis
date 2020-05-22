@@ -20,8 +20,6 @@ public class QuizStatisticService {
 
     private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
 
-    private SimpMessageSendingOperations messagingTemplate;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
@@ -29,6 +27,8 @@ public class QuizStatisticService {
     private final QuizPointStatisticRepository quizPointStatisticRepository;
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
+
+    private SimpMessageSendingOperations messagingTemplate;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
