@@ -615,7 +615,7 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Result addFeedbacksToResult(Result result) {
+    public Result addSampleFeedbackToResults(Result result) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
         Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
         List<Feedback> feedbacks = new ArrayList<>();

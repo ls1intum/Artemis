@@ -10,7 +10,7 @@ module.exports = (options) => ({
     resolve: {
         extensions: ['.ts', '.js'],
         modules: ['node_modules'],
-        mainFields: [ 'es2015', 'browser', 'module', 'main'],
+        mainFields: ['es2015', 'browser', 'module', 'main'],
         alias: utils.mapTypescriptAliasToWebpackAlias()
     },
     stats: {
@@ -37,7 +37,7 @@ module.exports = (options) => ({
                         minifyCSS: false
                     }
                 },
-                exclude: '/src/main/webapp/index.html'
+                exclude: utils.root('src/main/webapp/index.html')
             },
             {
                 test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,

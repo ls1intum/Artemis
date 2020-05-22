@@ -154,7 +154,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
 
         List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
@@ -165,7 +165,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student2", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
 
         List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
@@ -176,7 +176,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
 
         request.getList("/api/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
@@ -185,8 +185,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(solutionParticipation);
-        result = database.addFeedbacksToResult(result);
-
+        result = database.addSampleFeedbackToResults(result);
         request.getList("/api/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
 
@@ -194,9 +193,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = database.addResultToParticipation(solutionParticipation);
-        result = database.addFeedbacksToResult(result);
-
-        request.getList("/api/results/" + 66 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
+        result = database.addSampleFeedbackToResults(result);
+        request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
     @Test
@@ -487,7 +485,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getResult() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/results/" + result.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull();
         assertThat(returnedResult).isEqualTo(result);
@@ -507,8 +505,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         result.setCompletionDate(ZonedDateTime.now().minusHours(10));
         Result latestResult = database.addResultToParticipation(studentParticipation);
         latestResult.setCompletionDate(ZonedDateTime.now());
-        result = database.addFeedbacksToResult(result);
-        latestResult = database.addFeedbacksToResult(latestResult);
+        result = database.addSampleFeedbackToResults(result);
+        latestResult = database.addSampleFeedbackToResults(latestResult);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull();
         assertThat(returnedResult).isEqualTo(latestResult);
@@ -518,7 +516,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "student1", roles = "USER")
     public void getLatestResultWithFeedbacks_asStudent() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
         request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -526,7 +524,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void deleteResult() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
-        result = database.addFeedbacksToResult(result);
+        result = database.addSampleFeedbackToResults(result);
         request.delete("/api/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
         request.delete("api/results/" + result.getId(), HttpStatus.NOT_FOUND);
