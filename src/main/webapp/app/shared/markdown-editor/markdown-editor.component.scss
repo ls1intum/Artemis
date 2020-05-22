@@ -3,6 +3,7 @@
     flex-flow: column nowrap;
     flex: 1 1 auto;
     height: inherit;
+    background-color: white;
 
     // This is a fix for using the fullscreen mode on Safari.
     &:-webkit-full-screen {
@@ -26,12 +27,13 @@
         flex-flow: column nowrap;
         flex: 1 1 auto;
         touch-action: none;
-        min-height: 100px;
+        min-height: 200px;
 
         // Fix for full screen mode, otherwise the color is black.
         background-color: white;
 
         &__content {
+            height: 100% !important;
             width: 100%;
             flex: 1 1 auto;
             overflow: auto;

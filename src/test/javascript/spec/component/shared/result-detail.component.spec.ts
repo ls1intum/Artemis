@@ -4,14 +4,14 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { RepositoryService } from 'app/shared/result/repository.service';
+import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 

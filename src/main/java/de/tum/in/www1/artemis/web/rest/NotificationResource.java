@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,10 +19,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.NotificationService;
-import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -49,15 +46,11 @@ public class NotificationResource {
 
     private final NotificationService notificationService;
 
-    private final SystemNotificationService systemNotificationService;
-
     private final UserService userService;
 
-    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService,
-            SystemNotificationService systemNotificationService) {
+    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService) {
         this.notificationRepository = notificationRepository;
         this.notificationService = notificationService;
-        this.systemNotificationService = systemNotificationService;
         this.userService = userService;
     }
 
@@ -81,9 +74,9 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : get all notifications by pages.
+     * GET /notifications : Get all notifications by pages.
      *
-     * @param pageable Pagination information for fetching the nofications
+     * @param pageable Pagination information for fetching the notifications
      * @return the list notifications
      */
     @GetMapping("/notifications")
@@ -93,26 +86,6 @@ public class NotificationResource {
         final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /notifications/recent-for-user : get recent notifications (after last read) for users including the active system notification.
-     *
-     * @return the list notifications
-     */
-    @GetMapping("/notifications/recent-for-user")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getRecentNotificationsForCurrentUser() {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        List<Notification> notifications = new ArrayList<>();
-        SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
-        if (activeSystemNotification != null) {
-            notifications.add(activeSystemNotification);
-        }
-        if (currentUser != null) {
-            notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
-        }
-        return new ResponseEntity<>(notifications, null, HttpStatus.OK);
     }
 
     /**

@@ -87,7 +87,13 @@
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%;" dnd-sortable-handle>
                     <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
                 </span>
-                <ace-editor [mode]="editorMode" [autoUpdateContent]="editorAutoUpdate" style="min-height: 40px; height: 60px; width: 65%; overflow: auto;" class="form-control">
+                <ace-editor
+                    [(text)]="answerEditorText[i]"
+                    [mode]="editorMode"
+                    [autoUpdateContent]="editorAutoUpdate"
+                    style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
+                    class="form-control"
+                >
                 </ace-editor>
                 <div class="form-group text-center" style="width: 25%;">
                     <button

@@ -212,6 +212,7 @@ public class RepositoryWebsocketResource {
 
         InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
         Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+        inputStream.close();
     }
 
 }

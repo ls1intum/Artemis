@@ -94,9 +94,11 @@
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="false"
+                    [enableResize]="true"
                     [domainCommands]="dragAndDropQuestionDomainCommands"
                     (markdownChange)="changesInMarkdown()"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    class="h-auto"
                 ></jhi-markdown-editor>
             </div>
             <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
@@ -105,9 +107,11 @@
                         #markdownEditor
                         [markdown]="questionEditorText"
                         [showPreviewButton]="false"
+                        [enableResize]="true"
                         [domainCommands]="dragAndDropQuestionDomainCommands"
                         (markdownChange)="changesInMarkdown()"
                         (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                        class="h-auto"
                     ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top;">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
