@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.group.AttachmentUpdatedGroupNotification;
+import de.tum.in.www1.artemis.domain.notification.group.ExercisePracticeGroupNotification;
 import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
@@ -41,7 +42,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(new AttachmentUpdatedGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, attachment, notificationText));
+        saveAndSend(new AttachmentUpdatedGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, notificationText, attachment));
     }
 
     /**
@@ -50,7 +51,7 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE, null));
+        saveAndSend(new ExercisePracticeGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, exercise));
     }
 
     /**

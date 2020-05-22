@@ -18,7 +18,7 @@ public class AttachmentUpdatedGroupNotification extends GroupNotification implem
     public AttachmentUpdatedGroupNotification() {
     }
 
-    public AttachmentUpdatedGroupNotification(User author, GroupNotificationType groupNotificationType, Attachment attachment, String notificationText) {
+    public AttachmentUpdatedGroupNotification(User author, GroupNotificationType groupNotificationType, String notificationText, Attachment attachment) {
         super("Attachment updated", "Attachment \"" + attachment.getName() + "\" updated.", author, attachment.getLecture().getCourse(), groupNotificationType);
         this.setTarget(super.getLectureTarget(attachment.getLecture(), "attachmentUpdated"));
         if (notificationText != null) {
