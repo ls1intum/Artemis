@@ -42,18 +42,17 @@ public class QuizExerciseService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final UserService userService;
 
     private final ObjectMapper objectMapper;
 
     private QuizScheduleService quizScheduleService;
 
+    private SimpMessageSendingOperations messagingTemplate;
+
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate, QuizStatisticService quizStatisticService,
-            MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+            QuizSubmissionRepository quizSubmissionRepository, QuizStatisticService quizStatisticService, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
@@ -61,7 +60,6 @@ public class QuizExerciseService {
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.messagingTemplate = messagingTemplate;
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
         this.quizStatisticService = quizStatisticService;
     }
@@ -69,6 +67,11 @@ public class QuizExerciseService {
     @Autowired
     public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
         this.quizScheduleService = quizScheduleService;
+    }
+
+    @Autowired
+    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**

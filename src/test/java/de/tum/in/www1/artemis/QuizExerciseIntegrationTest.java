@@ -49,7 +49,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void init() throws Exception {
         database.addUsers(15, 5, 1);
-        quizScheduleService.startSchedule(3000);
+        quizScheduleService.startSchedule(5 * 1000);
     }
 
     @AfterEach

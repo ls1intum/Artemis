@@ -2,17 +2,22 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
@@ -26,9 +31,25 @@ public class QuizSubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private QuizExerciseService quizExerciseService;
+
+    private ParticipationService participationService;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
+        this.quizExerciseService = quizExerciseService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setParticipationService(ParticipationService participationService) {
+        this.participationService = participationService;
     }
 
     public QuizSubmission findOne(Long id) {
@@ -85,4 +106,60 @@ public class QuizSubmissionService {
         return result;
     }
 
+    /**
+     * TODO: add documentation
+     * @param exerciseId
+     * @param quizSubmission
+     * @param username
+     * @return
+     * @throws QuizSubmissionException
+     */
+    public QuizSubmission submitForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username) throws QuizSubmissionException {
+        long start = System.nanoTime();
+        // check if submission is still allowed
+        QuizExercise quizExercise = QuizScheduleService.getQuizExercise(exerciseId);
+        if (quizExercise == null) {
+            // Fallback solution
+            Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
+            if (optionalQuizExercise.isEmpty()) {
+                log.warn("Could not save quiz exercise for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
+                throw new QuizSubmissionException("The quiz could not be found");
+            }
+            quizExercise = optionalQuizExercise.get();
+        }
+        log.info("submitForLiveMode: Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        if (!quizExercise.isSubmissionAllowed()) {
+            throw new QuizSubmissionException("The quiz is not active");
+        }
+
+        // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
+
+        // check if user already submitted for this quiz
+        Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
+        log.info("submitForLiveMode: Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        if (!participation.getSubmissions().isEmpty()) {
+            log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
+            // NOTE: At this point, there can only be one Result because we already checked
+            // if the quiz is active, so there is no way the student could have already practiced
+            Submission previousSubmission = participation.getSubmissions().iterator().next();
+            if (previousSubmission.isSubmitted()) {
+                throw new QuizSubmissionException("You have already submitted the quiz");
+            }
+        }
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
+
+        // set submission date
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        // save submission to HashMap
+        QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
+
+        log.info("submitForLiveMode: Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        return quizSubmission;
+    }
 }

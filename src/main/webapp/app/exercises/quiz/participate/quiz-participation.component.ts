@@ -59,12 +59,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private subscriptionData: Subscription;
 
     timeDifference = 0;
-    outstandingWebsocketResponses = 0;
+    // outstandingWebsocketResponses = 0;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
     isSubmitting = false;
-    isSaving = false;
+    // isSaving = false;
     lastSavedTimeText = '';
     justSaved = false;
     waitingForQuizStart = false;
@@ -199,11 +199,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         });
         this.onDisconnected = () => {
             this.disconnected = true;
-            if (this.outstandingWebsocketResponses > 0) {
-                this.outstandingWebsocketResponses = 0;
-                this.isSaving = false;
-                this.unsavedChanges = true;
-            }
+            // if (this.outstandingWebsocketResponses > 0) {
+            //     this.outstandingWebsocketResponses = 0;
+            //     this.isSaving = false;
+            //     this.unsavedChanges = true;
+            // }
         };
         this.jhiWebsocketService.bind('disconnect', () => {
             this.onDisconnected();
@@ -316,7 +316,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // save answers (submissions) through websocket
             this.sendWebsocket = (submission: QuizSubmission) => {
-                this.outstandingWebsocketResponses++;
+                // this.outstandingWebsocketResponses++;
                 this.jhiWebsocketService.send(this.submissionChannel, submission);
             };
         }
@@ -792,8 +792,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.applySelection();
         if (this.sendWebsocket) {
             if (!this.disconnected) {
-                this.isSaving = true;
+                // this.isSaving = true;
                 this.sendWebsocket(this.submission);
+                this.unsavedChanges = false;
             } else {
                 this.unsavedChanges = true;
             }
@@ -823,39 +824,39 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             alert('Saving Answers failed: ' + error);
             this.unsavedChanges = true;
             this.isSubmitting = false;
-            if (this.outstandingWebsocketResponses > 0) {
-                this.outstandingWebsocketResponses--;
-            }
-            if (this.outstandingWebsocketResponses === 0) {
-                this.isSaving = false;
-            }
+            // if (this.outstandingWebsocketResponses > 0) {
+            //     this.outstandingWebsocketResponses--;
+            // }
+            // if (this.outstandingWebsocketResponses === 0) {
+            //     this.isSaving = false;
+            // }
             return;
         }
-        if (quizSubmission.submitted) {
-            this.outstandingWebsocketResponses = 0;
-            this.isSaving = false;
-            this.unsavedChanges = false;
-            this.isSubmitting = false;
-            this.submission = quizSubmission;
-            this.updateSubmissionTime();
-            this.applySubmission();
-        } else if (this.outstandingWebsocketResponses === 0) {
-            this.isSaving = false;
-            this.unsavedChanges = false;
-            this.submission = quizSubmission;
-            this.updateSubmissionTime();
-            this.applySubmission();
-        } else {
-            this.outstandingWebsocketResponses--;
-            if (this.outstandingWebsocketResponses === 0) {
-                this.isSaving = false;
-                this.unsavedChanges = false;
-                if (quizSubmission) {
-                    this.submission.submissionDate = quizSubmission.submissionDate;
-                    this.updateSubmissionTime();
-                }
-            }
-        }
+        // if (quizSubmission.submitted) {
+        //     // this.outstandingWebsocketResponses = 0;
+        //     this.isSaving = false;
+        //     this.unsavedChanges = false;
+        //     this.isSubmitting = false;
+        //     this.submission = quizSubmission;
+        //     this.updateSubmissionTime();
+        //     this.applySubmission();
+        // } else if (this.outstandingWebsocketResponses === 0) {
+        //     this.isSaving = false;
+        //     this.unsavedChanges = false;
+        //     this.submission = quizSubmission;
+        //     this.updateSubmissionTime();
+        //     this.applySubmission();
+        // } else {
+        //     this.outstandingWebsocketResponses--;
+        //     if (this.outstandingWebsocketResponses === 0) {
+        //         this.isSaving = false;
+        //         this.unsavedChanges = false;
+        //         if (quizSubmission) {
+        //             this.submission.submissionDate = quizSubmission.submissionDate;
+        //             this.updateSubmissionTime();
+        //         }
+        //     }
+        // }
     }
 
     /**
@@ -897,6 +898,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             confirmSubmit = window.confirm(warningText);
         }
         if (confirmSubmit) {
+            // TODO: use a REST Call because this should be more reliable
             this.isSubmitting = true;
             switch (this.mode) {
                 case 'practice':
@@ -920,19 +922,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     }
                     break;
                 case 'live':
-                    if (this.disconnected || !this.submissionChannel) {
-                        alert(
-                            "Cannot Submit while disconnected. Don't worry, answers that were saved" +
-                                'while you were still connected will be submitted automatically when the quiz ends.',
-                        );
-                        this.isSubmitting = false;
-                        return;
-                    }
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
                     quizSubmission.submitted = true;
-                    this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
+                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe(
+                        (response: HttpResponse<QuizSubmission>) => {
+                            this.submission = response.body!;
+                            this.isSubmitting = false;
+                            this.updateSubmissionTime();
+                            this.applySubmission();
+                        },
+                        (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                    );
                     break;
             }
         }

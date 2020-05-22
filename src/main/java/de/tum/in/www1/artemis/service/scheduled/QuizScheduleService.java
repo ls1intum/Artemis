@@ -85,7 +85,7 @@ public class QuizScheduleService {
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // activate Quiz Schedule Service
-        startSchedule(3 * 1000);                          // every 3 seconds
+        startSchedule(5 * 1000);                          // every 3 seconds
     }
 
     @Autowired
@@ -202,6 +202,15 @@ public class QuizScheduleService {
     }
 
     /**
+     * stores the quiz exercise in a HashMap for faster retrieval during the quiz
+     * @param quizExercise should include questions and statistics
+     */
+    public static void updateQuizExercise(QuizExercise quizExercise) {
+        log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
+        quizExerciseMap.put(quizExercise.getId(), quizExercise);
+    }
+
+    /**
      * Start scheduler of quiz schedule service
      *
      * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
@@ -219,6 +228,7 @@ public class QuizScheduleService {
             List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
             for (QuizExercise quizExercise : quizExercises) {
                 scheduleQuizStart(quizExercise);
+                updateQuizExercise(quizExercise);
             }
         }
         else {
@@ -257,7 +267,7 @@ public class QuizScheduleService {
     public void scheduleQuizStart(final QuizExercise quizExercise) {
         // first remove and cancel old scheduledFuture if it exists
         cancelScheduledQuizStart(quizExercise.getId());
-        quizExerciseMap.put(quizExercise.getId(), quizExercise);
+        updateQuizExercise(quizExercise);
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
@@ -294,6 +304,7 @@ public class QuizScheduleService {
         participationHashMap.remove(quizExerciseId);
         submissionHashMap.remove(quizExerciseId);
         resultHashMap.remove(quizExerciseId);
+        quizExerciseMap.remove(quizExerciseId);
     }
 
     /**
@@ -314,7 +325,7 @@ public class QuizScheduleService {
             // create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
             for (long quizExerciseId : submissionHashMap.keySet()) {
 
-                QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
+                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
                     submissionHashMap.remove(quizExerciseId);
@@ -342,15 +353,15 @@ public class QuizScheduleService {
             for (long quizExerciseId : participationHashMap.keySet()) {
 
                 // get the Quiz without the statistics and questions from the database
-                Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
+                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
                 // check if quiz has been deleted
-                if (quizExercise.isEmpty()) {
+                if (quizExercise == null) {
                     participationHashMap.remove(quizExerciseId);
                     continue;
                 }
 
                 // check if the quiz has ended
-                if (quizExercise.get().isEnded()) {
+                if (quizExercise.isEnded()) {
                     // send the participation with containing result and quiz back to the users via websocket
                     // and remove the participation from the ParticipationHashMap
                     int counter = 0;
@@ -363,7 +374,7 @@ public class QuizScheduleService {
                         counter++;
                     }
                     if (counter > 0) {
-                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.get().getTitle());
+                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
                     }
                 }
             }
@@ -372,7 +383,7 @@ public class QuizScheduleService {
             for (long quizExerciseId : resultHashMap.keySet()) {
 
                 // get the Quiz with the statistic from the database
-                QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
                 // check if quiz has been deleted (edge case), then do nothing!
                 if (quizExercise == null) {
                     log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");

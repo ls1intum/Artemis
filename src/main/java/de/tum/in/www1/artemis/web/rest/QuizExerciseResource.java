@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -251,7 +252,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -309,6 +310,7 @@ public class QuizExerciseResource {
 
         // save quiz exercise
         quizExercise = quizExerciseRepository.save(quizExercise);
+        QuizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
