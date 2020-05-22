@@ -11,6 +11,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -33,6 +34,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private assessmentsService: TextAssessmentsService,
         private momentDiff: DifferencePipe,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -58,7 +60,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
     }
 
-    public callback() {}
+    public sortRows() {
+        if (this.predicate === 'durationInMinutes') {
+            this.submissions.forEach((submission) => (submission.durationInMinutes = this.durationForSubmission(submission)));
+        }
+        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
+    }
 
     private getSubmissions(): void {
         this.textSubmissionService
@@ -120,5 +127,13 @@ export class TextAssessmentDashboardComponent implements OnInit {
                 this.getSubmissions();
             });
         }
+    }
+
+    /**
+     * Gets the duration of the submission in minutes.
+     * @param exercise The exercise object.
+     */
+    durationForSubmission(submission: Submission) {
+        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
     }
 }

@@ -11,6 +11,7 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/core/alert/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -33,6 +34,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
+        private sortService: SortService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -225,8 +227,29 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
+    public sortRows() {
+        if (this.predicate === 'statusAsNumber') {
+            this.quizExercises.forEach((a) => {
+                a.statusAsNumber = this.statusForQuiz(a);
+            });
+        }
+
+        this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
+    }
+
     /**
-     * Do nothing
+     * Returns the status of the quiz represented as numbers, whether the quiz is
+     * open for practice or is it visible before it starts.
+     * @param quizExercise The quizExercise object.
      */
-    callback() {}
+    private statusForQuiz(quizExercise: any) {
+        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
+            if (quizExercise.remainingTime <= 0) {
+                return quizExercise.isOpenForPractice ? 1 : 0;
+            } else {
+                return 2;
+            }
+        }
+        return quizExercise.isVisibleBeforeStart ? 3 : 4;
+    }
 }

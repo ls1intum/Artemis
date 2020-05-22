@@ -6,7 +6,7 @@
     <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th>
                         <a class="th-link">#</a>
                     </th>
@@ -27,7 +27,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.tutorExerciseDashboard.language">Language</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="duration">
+                    <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -36,7 +36,8 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
@@ -45,7 +46,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of filteredSubmissions | sortBy: predicate:reverse; let i = index">
+                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>

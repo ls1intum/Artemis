@@ -22,7 +22,7 @@
     </div>
     <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && { color: '#5cb85c' }">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }}% </strong>({{ assessedSubmissions }} out of
+            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
             {{ submissions.length }} submitted models assessed)
         </small>
     </h4>
@@ -95,7 +95,9 @@
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">Other submissions:</h5>
+    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">
+        Other submissions:
+    </h5>
     <p *ngIf="modelingExercise.automaticAssessmentSupported && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
@@ -104,7 +106,7 @@
     <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (!modelingExercise.automaticAssessmentSupported || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th>
                         <a class="th-link">#</a>
                     </th>
@@ -129,7 +131,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="duration">
+                    <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -138,7 +140,8 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
@@ -147,7 +150,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions | sortBy: predicate:reverse; let i = index">
+                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.participation.participantName }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
@@ -156,7 +159,7 @@
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }}%</span>
+                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
                         {{

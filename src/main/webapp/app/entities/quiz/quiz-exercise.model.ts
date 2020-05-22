@@ -23,6 +23,7 @@ export class QuizExercise extends Exercise {
     public adjustedReleaseDate: Moment;
     public ended: boolean;
     public started: boolean;
+    public statusAsNumber: number;
 
     public isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
     public isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)

@@ -12,6 +12,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { Submission } from 'app/entities/submission.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -35,6 +36,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private momentDiff: DifferencePipe,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -151,5 +153,18 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    callback() {}
+    public sortRows() {
+        if (this.predicate === 'durationInMinutes') {
+            this.submissions.forEach((submission) => (submission.durationInMinutes = this.durationForSubmission(submission)));
+        }
+        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
+    }
+
+    /**
+     * Gets the duration of the submission in minutes.
+     * @param exercise The exercise object.
+     */
+    durationForSubmission(submission: Submission) {
+        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
+    }
 }

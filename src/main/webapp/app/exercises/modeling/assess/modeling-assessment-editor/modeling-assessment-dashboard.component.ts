@@ -19,6 +19,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -67,6 +68,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private accountService: AccountService,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -261,5 +263,18 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    callback() {}
+    public sortRows() {
+        if (this.predicate === 'durationInMinutes') {
+            this.submissions.forEach((submission) => (submission.durationInMinutes = this.durationForSubmission(submission)));
+        }
+        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
+    }
+
+    /**
+     * Gets the duration of the submission in minutes.
+     * @param exercise The exercise object.
+     */
+    durationForSubmission(submission: Submission) {
+        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
+    }
 }
