@@ -74,6 +74,12 @@ export class CourseScoreCalculationService {
         return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
+    updateCourse(course: Course) {
+        // filter out the old course object with the same id
+        this.courses = this.courses.filter((existingCourses) => existingCourses.id !== existingCourses.id);
+        this.courses.push(course);
+    }
+
     setCourses(courses: Course[]) {
         this.courses = courses;
     }
