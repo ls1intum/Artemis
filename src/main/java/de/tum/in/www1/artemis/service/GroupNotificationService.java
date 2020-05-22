@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.notification.group.GroupNotificationFactory.createNotification;
-
 import java.time.ZonedDateTime;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -9,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.group.*;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
@@ -131,8 +128,8 @@ public class GroupNotificationService {
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(new NewAnswerForLectureGroupNotification(userService.getUser(), GroupNotificationType.TA, studentQuestionAnswer));
+        saveAndSend(new NewAnswerForLectureGroupNotification(userService.getUser(), GroupNotificationType.INSTRUCTOR, studentQuestionAnswer));
     }
 
     /**
