@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.notification.group.AttachmentUpdatedGroupNotification;
-import de.tum.in.www1.artemis.domain.notification.group.ExercisePracticeGroupNotification;
-import de.tum.in.www1.artemis.domain.notification.group.ExerciseStartedGroupNotification;
-import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.group.*;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
 @Service
@@ -76,7 +73,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        saveAndSend(new ExerciseUpdatedGroupNotification(userService.getUser(), GroupNotificationType.STUDENT, notificationText, exercise));
     }
 
     /**
@@ -95,7 +92,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED, notificationText));
+        saveAndSend(new ExerciseUpdatedGroupNotification(userService.getUser(), GroupNotificationType.INSTRUCTOR, notificationText, exercise));
     }
 
     /**
