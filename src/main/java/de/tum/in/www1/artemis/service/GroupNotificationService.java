@@ -121,8 +121,8 @@ public class GroupNotificationService {
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_EXERCISE));
-        saveAndSend(createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(new NewAnswerForExerciseGroupNotification(userService.getUser(), GroupNotificationType.TA, studentQuestionAnswer));
+        saveAndSend(new NewAnswerForExerciseGroupNotification(userService.getUser(), GroupNotificationType.INSTRUCTOR, studentQuestionAnswer));
     }
 
     /**
