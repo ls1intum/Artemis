@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.notification.single.SingleUserNotificationFactory.createNotification;
-
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.single.NewAnswerForExerciseSingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.single.NewAnswerForLectureSingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.single.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
@@ -28,7 +27,7 @@ public class SingleUserNotificationService {
      * @param answer for exercise that is new
      */
     public void notifyUserAboutNewAnswerForExercise(StudentQuestionAnswer answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(new NewAnswerForExerciseSingleUserNotification(answer));
     }
 
     /**
@@ -37,7 +36,7 @@ public class SingleUserNotificationService {
      * @param answer for lecture that is new
      */
     public void notifyUserAboutNewAnswerForLecture(StudentQuestionAnswer answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(new NewAnswerForLectureSingleUserNotification(answer));
     }
 
     /**

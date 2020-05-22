@@ -6,9 +6,6 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import com.google.gson.JsonObject;
-
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
@@ -46,44 +43,12 @@ public class SingleUserNotification extends Notification implements Serializable
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(User recipient, User author, String title, String text) {
-        this.setRecipient(recipient);
-        this.setAuthor(author);
-        this.setNotificationDate(ZonedDateTime.now());
+    public SingleUserNotification(String title, String text, User author, User recipient) {
         this.setTitle(title);
         this.setText(text);
-    }
-
-    /**
-     * Set the target JSON string for an exercise notification
-     *
-     * @param studentQuestionAnswer a question that was posted for an exercise
-     * @return JSON string with all properties for the notification target field
-     */
-    public String studentQuestionAnswerTargetForExercise(StudentQuestionAnswer studentQuestionAnswer) {
-        JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
-        target.addProperty("entity", "exercises");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
-        target.addProperty("mainPage", "courses");
-        return target.toString();
-    }
-
-    /**
-     * Set the target JSON string for a lecture notification
-     *
-     * @param studentQuestionAnswer a question that was posted for a lecture
-     * @return JSON string with all properties for the notification target field
-     */
-    public String studentQuestionAnswerTargetForLecture(StudentQuestionAnswer studentQuestionAnswer) {
-        JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getLecture().getId());
-        target.addProperty("entity", "lectures");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getLecture().getCourse().getId());
-        target.addProperty("mainPage", "courses");
-        return target.toString();
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setAuthor(author);
+        this.setRecipient(recipient);
     }
 
     @Override
