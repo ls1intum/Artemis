@@ -24,38 +24,12 @@ logging:
 artemis:
     version: #project.version#
 
-eureka:
-    client:
-        enabled: true
-        healthcheck:
-            enabled: true
-        fetch-registry: true
-        register-with-eureka: true
-        instance-info-replication-interval-seconds: 10
-        registry-fetch-interval-seconds: 10
-    instance:
-        appname: artemis
-        instanceId: artemis:${spring.application.instance-id:${random.value}}
-        lease-renewal-interval-in-seconds: 5
-        lease-expiration-duration-in-seconds: 10
-        status-page-url-path: ${management.endpoints.web.base-path}/info
-        health-check-url-path: ${management.endpoints.web.base-path}/health
-        metadata-map:
-            zone: primary # This is needed for the load balancer
-            profile: ${spring.profiles.active}
-            version: #project.version#
-            git-version: ${git.commit.id.describe:}
-            git-commit: ${git.commit.id.abbrev:}
-            git-branch: ${git.branch:}
-ribbon:
-    eureka:
-        enabled: true
 management:
     endpoints:
         web:
             base-path: /management
             exposure:
-                include: ["configprops", "env", "health", "info", "threaddump", "logfile", "jhimetrics", "prometheus" ]
+                include: ['configprops', 'env', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
     endpoint:
         health:
             show-details: when_authorized
@@ -110,6 +84,17 @@ spring:
         open-in-view: false
         properties:
             hibernate.jdbc.time_zone: UTC
+            hibernate.id.new_generator_mappings: true
+            hibernate.connection.provider_disables_autocommit: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
+            hibernate.generate_statistics: false
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.order_inserts: true
+            hibernate.order_updates: true
+            hibernate.query.fail_on_pagination_over_collection_fetch: true
+            hibernate.query.in_clause_parameter_padding: true
         hibernate:
             ddl-auto: none
             naming:

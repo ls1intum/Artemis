@@ -22,16 +22,13 @@ import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerF
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import de.tum.in.www1.artemis.config.debug.HttpLoggingFilter;
-import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
-import io.github.jhipster.web.filter.CachingHttpHeadersFilter;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -46,7 +43,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private final JHipsterProperties jHipsterProperties;
 
     public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
-
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
     }
@@ -55,10 +51,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     public void onStartup(ServletContext servletContext) {
         if (env.getActiveProfiles().length != 0) {
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
-        }
-        EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
-        if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_PRODUCTION))) {
-            initCachingHttpHeadersFilter(servletContext, disps);
         }
         // addLoggingFilter(servletContext, disps);
         log.info("Web application fully configured");
@@ -117,19 +109,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             return "";
         }
         return extractedPath.substring(0, extractionEndIndex);
-    }
-
-    /**
-     * Initializes the caching HTTP Headers Filter.
-     */
-    private void initCachingHttpHeadersFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
-        log.debug("Registering Caching HTTP Headers Filter");
-        FilterRegistration.Dynamic cachingHttpHeadersFilter = servletContext.addFilter("cachingHttpHeadersFilter", new CachingHttpHeadersFilter(jHipsterProperties));
-
-        cachingHttpHeadersFilter.addMappingForUrlPatterns(disps, true, "/i18n/*");
-        cachingHttpHeadersFilter.addMappingForUrlPatterns(disps, true, "/content/*");
-        cachingHttpHeadersFilter.addMappingForUrlPatterns(disps, true, "/app/*");
-        cachingHttpHeadersFilter.setAsyncSupported(true);
     }
 
     // not used at the moment
