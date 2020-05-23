@@ -18,7 +18,6 @@ export class NotificationSidebarComponent implements OnInit {
     showSidebar = false;
     loading = false;
     notifications: Notification[] = [];
-    sortedNotifications: Notification[] = [];
     recentNotificationCount = 0;
     totalNotifications = 0;
     lastNotificationRead: Moment | null = null;
@@ -120,31 +119,24 @@ export class NotificationSidebarComponent implements OnInit {
             // TODO: How can it happen that the same id comes twice through the channel?
             if (notification && notification.notificationDate) {
                 notification.notificationDate = moment(notification.notificationDate);
-                // Increase total notifications count if the notification does not already exist.
-                if (!this.notifications.some(({ id }) => id === notification.id)) {
-                    this.totalNotifications += 1;
-                }
-                this.addNotifications([notification]);
+                this.addNotifications([notification], true);
             }
         });
     }
 
-    private addNotifications(notifications: Notification[]): void {
+    private addNotifications(notifications: Notification[], fromSocket = false): void {
         if (notifications) {
             notifications.forEach((notification: Notification) => {
                 if (!this.notifications.some(({ id }) => id === notification.id) && notification.notificationDate) {
                     this.notifications.push(notification);
+                    if (fromSocket) {
+                        // Increase total notifications count if the notification does not already exist.
+                        this.totalNotifications += 1;
+                    }
                 }
             });
-            this.updateNotifications();
+            this.updateRecentNotificationCount();
         }
-    }
-
-    private updateNotifications(): void {
-        this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
-            return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
-        });
-        this.updateRecentNotificationCount();
     }
 
     private updateRecentNotificationCount(): void {
