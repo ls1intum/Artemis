@@ -14,7 +14,7 @@ export let options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 5,
-    setupTimeout: '240s',
+    setupTimeout: '480s',
     teardownTimeout: '240s',
 };
 
@@ -47,7 +47,7 @@ export function setup() {
     // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
     const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
     if (timeoutExercise > 0) {
-        console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
+        console.log('Wait ' + timeoutExercise + 's before creating the quiz exercise so that the setup can finish properly');
         sleep(timeoutExercise);
     }
 
@@ -75,9 +75,9 @@ export default function (data) {
         const questions = getQuizQuestions(artemis, data.courseId, data.exerciseId);
         const remainingTime = websocketConnectionTime - delay;
         const startTime = new Date().getTime();
-        while ((new Date().getTime() - startTime) / 1000 < remainingTime) {
-            simulateQuizWork(artemis, data.exerciseId, questions, 30);
-        }
+        // while ((new Date().getTime() - startTime) / 1000 < remainingTime) {
+        simulateQuizWork(artemis, data.exerciseId, questions, 30, currentUsername);
+        // }
     });
 
     return data;
