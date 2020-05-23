@@ -344,7 +344,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * PUT /quiz-exercises-re-evaluate : Re-evaluates an existing quizExercise.
+     * PUT /quiz-exercises/:quizExerciseId/re-evaluate : Re-evaluates an existing quizExercise.
      * <p>
      * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary 2. save changed quizExercise 3. if flag is
      * set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
@@ -353,15 +353,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
-    @PutMapping("/quiz-exercises-re-evaluate")
+    @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
-        if (quizExercise.getId() == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
-        }
-        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
