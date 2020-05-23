@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -251,7 +252,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -309,6 +310,7 @@ public class QuizExerciseResource {
 
         // save quiz exercise
         quizExercise = quizExerciseRepository.save(quizExercise);
+        QuizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
@@ -342,24 +344,22 @@ public class QuizExerciseResource {
     }
 
     /**
-     * PUT /quiz-exercises-re-evaluate : Re-evaluates an existing quizExercise.
-     * <p>
-     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary 2. save changed quizExercise 3. if flag is
-     * set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
+     * PUT /quiz-exercises/:quizExerciseId/re-evaluate : Re-evaluates an existing quizExercise.
      *
+     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
+     * 2. save changed quizExercise
+     * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
+     *
+     * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise the quizExercise to re-evaluate
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
-    @PutMapping("/quiz-exercises-re-evaluate")
+    @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
-        if (quizExercise.getId() == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
-        }
-        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();

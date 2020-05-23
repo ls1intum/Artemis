@@ -15,7 +15,7 @@ public final class Constants {
 
     public static final String DEFAULT_LANGUAGE = "en";
 
-    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
+    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
     public static final String TEMP_FILEPATH = "uploads" + File.separator + "images" + File.separator + "temp" + File.separator;
 
