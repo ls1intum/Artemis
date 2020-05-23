@@ -1,5 +1,10 @@
 package de.tum.in.www1.artemis;
 
+import com.atlassian.bamboo.specs.util.BambooServer;
+import com.offbytwo.jenkins.JenkinsServer;
+import de.tum.in.www1.artemis.service.connectors.BitbucketService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -21,13 +26,24 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "automaticText" })
+@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected LtiService ltiService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
+    @SpyBean
+    protected JenkinsService continuousIntegrationService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate.
+    @SpyBean
+    protected GitLabService versionControlService;
+
+    @SpyBean
+    protected JenkinsServer jenkinsServer;
 
     @SpyBean
     protected GitService gitService;
@@ -51,6 +67,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService);
+        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, jenkinsServer, gitService, groupNotificationService, websocketMessagingService,
+            plantUmlService, messagingTemplate, programmingSubmissionService);
     }
 }
