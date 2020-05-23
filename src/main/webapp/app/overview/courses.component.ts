@@ -11,6 +11,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as moment from 'moment';
 
 @Component({
@@ -23,6 +24,10 @@ export class CoursesComponent implements OnInit {
     public nextRelevantCourse: Course;
 
     courseForGuidedTour: Course | null;
+    quizExercisesChannels: string[];
+    isQuizLive: boolean = false;
+    liveQuizId: number;
+    liveQuizCourse: Course | null;
 
     constructor(
         private courseService: CourseManagementService,
@@ -32,11 +37,13 @@ export class CoursesComponent implements OnInit {
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
         private teamService: TeamService,
+        private jhiWebsocketService: JhiWebsocketService,
     ) {}
 
     async ngOnInit() {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
+        this.subscribeForQuizStartForCourses();
     }
 
     loadAndFilterCourses() {
@@ -84,4 +91,35 @@ export class CoursesComponent implements OnInit {
             return relevantExercise;
         }
     }
+
+    subscribeForQuizStartForCourses(){
+        if (this.courses) {
+            // subscribe to quiz exercises that are live
+            if (!this.quizExercisesChannels) {
+                this.quizExercisesChannels = this.courses.map(course => {return '/topic/' + course.id + '/quizExercises/start-now'});
+                console.log('channels: ')
+                console.log(this.quizExercisesChannels);
+
+                // quizExercises channels => react to the start of a quiz exercise for all courses
+                this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.subscribe(channel));
+                this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.receive(channel).subscribe(
+                    (quizExercise: QuizExercise) => {
+                        // the quiz was started so we want to enable the #quizLiveModal modal
+                        console.log("blub123")
+                        console.log(quizExercise)
+                        this.isQuizLive = true;
+                        document.getElementById('quizLiveModal')!.style.display = 'block';
+                        this.liveQuizId = quizExercise.id;
+                        this.liveQuizCourse = quizExercise.course
+                    },
+                    () => {},
+                     )
+                );
+
+            }
+        }
+        console.log('isQuizLive: '+this.isQuizLive +', liveQuizId: '+ this.liveQuizId +'liveQuizCourse: '+ this.liveQuizCourse);
+    }
+
+
 }

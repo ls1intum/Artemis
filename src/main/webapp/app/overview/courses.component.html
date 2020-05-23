@@ -33,3 +33,25 @@
     >
     </jhi-overview-course-card>
 </div>
+<!-- Modal -->
+<div class="modal fade in" id="quizLiveModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" >Go-Live of a new Quiz Exercise</h5>
+            </div>
+            <div class="modal-body">
+                <p>The Quiz quizName is now live! Click on go to quiz in order to access to quiz.
+                <!--{{
+                'artemisApp.studentDashboard.exerciseTitleWithoutDueDate'
+                    | translate: { date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm', course: nextRelevantCourse.title }
+                }}-->
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" routerLink="/courses/{{ liveQuizCourse }}/quiz-exercises/{{ liveQuizId }}/live">Go to Quiz </button>
+            </div>
+        </div>
+    </div>
+</div>
