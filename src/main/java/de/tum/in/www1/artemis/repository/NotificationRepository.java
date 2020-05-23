@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    @Query("SELECT notification FROM Notification notification WHERE notification.id "
+    @Query("SELECT notification FROM Notification notification WHERE notification.notificationDate IS NOT NULL AND notification.id "
             + "IN(SELECT singleUserNotification FROM SingleUserNotification singleUserNotification WHERE singleUserNotification.recipient.login = :#{#login}) "
             + "OR notification.id IN(SELECT groupNotification FROM GroupNotification groupNotification WHERE "
             + "(groupNotification.course.instructorGroupName IN :#{#currentUserGroups} AND groupNotification.type = 'INSTRUCTOR') "
