@@ -114,17 +114,17 @@ export function getQuizQuestions(artemis, courseId, exerciseId) {
     return JSON.parse(res[0].body).exercise.quizQuestions;
 }
 
-export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
+export function simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername) {
     artemis.websocket(function (socket) {
         function subscribe() {
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission\n\n\u0000');
         }
 
-        function submitRandomAnswer() {
+        function submitRandomAnswer(numberOfQuestions) {
             const answer = {
                 submissionExerciseType: 'quiz',
                 submitted: false,
-                submittedAnswers: questions.map((q) => generateAnswer(q)),
+                submittedAnswers: questions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
             };
             const answerString = JSON.stringify(answer);
             const wsMessage = `SEND\ndestination:/topic/quizExercise/${exerciseId}/submission\ncontent-length:${answerString.length}\n\n${answerString}\u0000`;
@@ -155,10 +155,13 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
             }
         });
 
-        // submit new quiz answer
-        socket.setTimeout(function () {
-            submitRandomAnswer();
-        }, 10 * 1000);
+        for (let questionCount = 1; questionCount <= 10; questionCount++) {
+            // submit new quiz answer
+            socket.setTimeout(function () {
+                submitRandomAnswer(questionCount);
+            }, (questionCount - 1) * 3000 + 1000);
+        }
+
 
         // Stop after timeout
         socket.setTimeout(function () {
