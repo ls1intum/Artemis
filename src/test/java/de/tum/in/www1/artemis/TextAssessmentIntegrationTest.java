@@ -330,7 +330,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
-        database.addFeedbacksToResult(textSubmission.getResult());
+        database.addSampleFeedbackToResults(textSubmission.getResult());
         request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
