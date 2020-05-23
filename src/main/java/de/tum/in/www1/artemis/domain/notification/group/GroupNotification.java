@@ -33,6 +33,9 @@ public class GroupNotification extends Notification implements Serializable {
     @JsonIgnoreProperties("groupNotifications")
     private Course course;
 
+    public GroupNotification() {
+    }
+
     public GroupNotification(String title, String text, User author, Course course, GroupNotificationType type) {
         this.setTitle(title);
         this.setText(text);
@@ -40,9 +43,6 @@ public class GroupNotification extends Notification implements Serializable {
         this.setAuthor(author);
         this.setCourse(course);
         this.setType(type);
-    }
-
-    public GroupNotification() {
     }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
