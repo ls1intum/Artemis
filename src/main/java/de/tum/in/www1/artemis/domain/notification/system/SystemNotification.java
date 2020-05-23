@@ -6,6 +6,8 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
@@ -14,6 +16,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
  */
 @Entity
 @DiscriminatorValue(value = "S")
+@JsonTypeName("system")
 public class SystemNotification extends Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -5,11 +5,13 @@ import java.io.Serializable;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 
 @Entity
 @DiscriminatorValue(value = "U-NAFL")
+@JsonTypeName("single-newAnswerForLecture")
 public class NewAnswerForLectureSingleUserNotification extends SingleUserNotification implements Serializable {
 
     private static final long serialVersionUID = 1L;

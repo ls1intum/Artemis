@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
  */
 @Entity
 @DiscriminatorValue(value = "G")
+@JsonTypeName("group")
 public class GroupNotification extends Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
