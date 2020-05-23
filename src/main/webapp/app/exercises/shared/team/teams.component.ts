@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -12,14 +12,21 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 
+export enum FilterProp {
+    ALL = 'all',
+    OWN = 'own',
+}
+
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
 })
 export class TeamsComponent implements OnInit, OnDestroy {
-    ButtonSize = ButtonSize;
+    readonly FilterProp = FilterProp;
+    readonly ButtonSize = ButtonSize;
 
     teams: Team[] = [];
+    teamCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
     filteredTeamsSize = 0;
     exercise: Exercise;
 
@@ -33,6 +40,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
@@ -50,6 +58,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit() {
+        this.initTeamFilter();
         this.loadAll();
     }
 
@@ -68,12 +77,37 @@ export class TeamsComponent implements OnInit, OnDestroy {
             this.isLoading = true;
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe((teamsResponse) => {
+                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser.id! : undefined;
+                this.teamService.findAllByExerciseId(params['exerciseId'], teamOwnerId).subscribe((teamsResponse) => {
                     this.teams = teamsResponse.body!;
                     this.isLoading = false;
                 });
             });
         });
+    }
+
+    /**
+     * Initializes the team filter based on the query param "filter"
+     */
+    initTeamFilter() {
+        switch (this.route.snapshot.queryParamMap.get('filter')) {
+            case FilterProp.OWN:
+                this.teamCriteria.filterProp = FilterProp.OWN;
+                break;
+            default:
+                this.teamCriteria.filterProp = FilterProp.ALL;
+                break;
+        }
+    }
+
+    /**
+     * Updates the criteria by which to filter teams and the filter query param, then reloads teams
+     * @param filter New filter prop value
+     */
+    updateTeamFilter(filter: FilterProp) {
+        this.teamCriteria.filterProp = filter;
+        this.router.navigate([], { relativeTo: this.route, queryParams: { filter }, queryParamsHandling: 'merge', replaceUrl: true });
+        this.loadAll();
     }
 
     /**
