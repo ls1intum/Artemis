@@ -68,6 +68,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     lastSavedTimeText = '';
     justSaved = false;
     waitingForQuizStart = false;
+    refreshingQuiz = false;
 
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
@@ -977,5 +978,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     isMobile(): boolean {
         return this.deviceService.isMobile();
+    }
+
+    /**
+     * Refresh quiz
+     */
+    refreshQuiz(refresh = false) {
+        this.refreshingQuiz = refresh;
+        this.quizExerciseService.find(this.quizId).subscribe((res: HttpResponse<QuizExercise>) => {
+            const _quizExercise = res.body!;
+            if (_quizExercise.started) {
+                this.quizExercise = _quizExercise;
+            }
+            setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+        });
     }
 }
