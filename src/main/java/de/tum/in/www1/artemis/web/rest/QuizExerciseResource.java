@@ -345,10 +345,12 @@ public class QuizExerciseResource {
 
     /**
      * PUT /quiz-exercises/:quizExerciseId/re-evaluate : Re-evaluates an existing quizExercise.
-     * <p>
-     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary 2. save changed quizExercise 3. if flag is
-     * set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
      *
+     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
+     * 2. save changed quizExercise
+     * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
+     *
+     * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise the quizExercise to re-evaluate
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated

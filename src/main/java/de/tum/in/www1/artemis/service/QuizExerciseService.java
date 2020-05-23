@@ -351,7 +351,7 @@ public class QuizExerciseService {
             else {
                 messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
             }
-            log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
+            log.info("    sent out '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
             log.error("Exception occurred while serializing quiz exercise", e);

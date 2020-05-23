@@ -586,14 +586,23 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0); // one less
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2); // one less
+            if (pointCounter.getPoints() == 0.0 || pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
             }
             else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0); // one more
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3); // one more
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
         }
 
@@ -607,6 +616,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 2.0 || pointCounter.getPoints() == 5.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
@@ -629,6 +639,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 HttpStatus.OK);
 
         // max score should be less
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {

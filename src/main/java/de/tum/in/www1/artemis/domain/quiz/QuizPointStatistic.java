@@ -89,7 +89,7 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
 
     @Override
     public String toString() {
-        return "QuizPointStatistic{" + "id=" + getId() + "}";
+        return "QuizPointStatistic{" + "id=" + getId() + ", counters=" + getPointCounters() + "}";
     }
 
     /**
