@@ -45,16 +45,6 @@ public class GroupNotification extends Notification implements Serializable {
     public GroupNotification() {
     }
 
-    // TODO: remove
-    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
-        this.setCourse(course);
-        this.setType(type);
-        this.setNotificationDate(ZonedDateTime.now());
-        this.setTitle(title);
-        this.setText(notificationText);
-        this.setAuthor(user);
-    }
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public GroupNotificationType getType() {
