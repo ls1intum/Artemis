@@ -7,7 +7,7 @@
         "sourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "removeComments": false,
+        "removeComments": true,
         "strict": false,
         "noImplicitReturns": false,
         "noFallthroughCasesInSwitch": true,

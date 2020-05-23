@@ -42,12 +42,6 @@ spring:
         database-platform: org.hibernate.dialect.MySQL8Dialect
         database: MYSQL
         show-sql: false
-        properties:
-            hibernate.id.new_generator_mappings: true
-            hibernate.connection.provider_disables_autocommit: true
-            hibernate.cache.use_second_level_cache: true
-            hibernate.cache.use_query_cache: false
-            hibernate.generate_statistics: false
     liquibase:
         contexts: prod
     mail:
