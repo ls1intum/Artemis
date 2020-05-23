@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { Exercise } from 'app/entities/exercise.model';
-import { Router } from '@angular/router';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -20,7 +19,7 @@ export class ExerciseDetailsComponent implements OnInit {
     formattedProblemStatement: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private route: Router) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
     /**
      * Life cycle hook to indicate component creation is done
      */
