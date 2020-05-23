@@ -89,7 +89,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        saveAndSend(new ExerciseUpdatedGroupNotification(userService.getUser(), GroupNotificationType.INSTRUCTOR, notificationText, exercise));
+        saveAndSend(new ExerciseUpdatedGroupNotification(null, GroupNotificationType.INSTRUCTOR, notificationText, exercise));
     }
 
     /**
