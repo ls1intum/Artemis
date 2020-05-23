@@ -93,7 +93,7 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.order_inserts: true
             hibernate.order_updates: true
-            hibernate.query.fail_on_pagination_over_collection_fetch: true
+#            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
         hibernate:
             ddl-auto: none
