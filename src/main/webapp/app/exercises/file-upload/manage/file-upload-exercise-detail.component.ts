@@ -12,7 +12,6 @@ import { AlertService } from 'app/core/alert/alert.service';
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
-    styleUrls: ['./file-upload-exercise-detail.component.scss'],
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;

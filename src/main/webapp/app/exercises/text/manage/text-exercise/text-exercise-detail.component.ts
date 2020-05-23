@@ -13,7 +13,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
-    styleUrls: ['./text-exercise-detail.component.scss'],
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     AssessmentType = AssessmentType;

@@ -13,7 +13,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
-    styleUrls: ['./modeling-exercise-detail.component.scss'],
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
