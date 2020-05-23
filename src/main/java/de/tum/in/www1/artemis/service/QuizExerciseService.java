@@ -346,7 +346,9 @@ public class QuizExerciseService {
             if (quizChange.equals("set-visible")) {
                 // the quiz id is not yet known to the client, we need to use a more generic topic
                 messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
-                // TODO: start-now would also be interesting to be supported in the client, but needs to be handled differently in the client
+            } else if(quizChange.equals("start-now")) {
+                // the quiz id is not yet known to the client, we need to use a more generic topic
+                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises/start-now", MessageBuilder.withPayload(payload).build());
             }
             else {
                 messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
