@@ -17,7 +17,14 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
-    styles: [],
+    styles: [
+        `
+        .liveQuiz-modal {
+            display: block;
+            opacity: 1;
+        }
+        `
+    ],
 })
 export class CoursesComponent implements OnInit {
     public courses: Course[];
@@ -26,7 +33,7 @@ export class CoursesComponent implements OnInit {
     courseForGuidedTour: Course | null;
     quizExercisesChannels: string[];
     isQuizLive: boolean = false;
-    liveQuizId: number;
+    liveQuiz: QuizExercise;
     liveQuizCourse: Course | null;
 
     constructor(
@@ -97,29 +104,19 @@ export class CoursesComponent implements OnInit {
             // subscribe to quiz exercises that are live
             if (!this.quizExercisesChannels) {
                 this.quizExercisesChannels = this.courses.map(course => {return '/topic/' + course.id + '/quizExercises/start-now'});
-                console.log('channels: ')
-                console.log(this.quizExercisesChannels);
-
                 // quizExercises channels => react to the start of a quiz exercise for all courses
                 this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.subscribe(channel));
                 this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.receive(channel).subscribe(
                     (quizExercise: QuizExercise) => {
                         // the quiz was started so we want to enable the #quizLiveModal modal
-                        console.log("blub123")
-                        console.log(quizExercise)
                         this.isQuizLive = true;
-                        document.getElementById('quizLiveModal')!.style.display = 'block';
-                        this.liveQuizId = quizExercise.id;
+                        this.liveQuiz = quizExercise;
                         this.liveQuizCourse = quizExercise.course
                     },
                     () => {},
-                     )
+                    )
                 );
-
             }
         }
-        console.log('isQuizLive: '+this.isQuizLive +', liveQuizId: '+ this.liveQuizId +'liveQuizCourse: '+ this.liveQuizCourse);
     }
-
-
 }

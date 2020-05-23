@@ -207,6 +207,12 @@
             "explanationAnswered": "Du hast die Frage beantwortet",
             "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
             "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!"
+        },
+        "quizLiveModal": {
+            "title": "Go-Live einer neuen Quiz-Übung",
+            "body": "Das Quiz {{quizName}} für den Kurs {{courseName}} ist nun aktiv! Klick auf den 'Weiter zum Quiz' Button um zum Quiz zu gelangen.",
+            "cancelButton": "Abbrechen",
+            "goToButton": "Weiter zum Quiz"
         }
     }
 }
