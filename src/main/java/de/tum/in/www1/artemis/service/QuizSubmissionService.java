@@ -129,7 +129,7 @@ public class QuizSubmissionService {
             }
             quizExercise = optionalQuizExercise.get();
         }
-        log.info("submitForLiveMode: Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("submitForLiveMode: Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
@@ -139,7 +139,7 @@ public class QuizSubmissionService {
 
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
-        log.info("submitForLiveMode: Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("submitForLiveMode: Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!participation.getSubmissions().isEmpty()) {
             log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked

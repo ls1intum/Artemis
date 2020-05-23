@@ -372,10 +372,11 @@ public class QuizScheduleService {
                 int numberOfSubmittedSubmissions = saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions);
 
                 if (numberOfSubmittedSubmissions > 0) {
-                    log.info("Saved {} submissions to database after {} µs in quiz {}", numberOfSubmittedSubmissions, (System.nanoTime() - start) / 1000, quizExercise.getTitle());
+                    log.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, printDuration(start), quizExercise.getTitle());
                 }
             }
 
+            start = System.nanoTime();
             // Send out Participations from ParticipationHashMap to each user if the quiz has ended
             for (long quizExerciseId : participationHashMap.keySet()) {
 
@@ -401,11 +402,12 @@ public class QuizScheduleService {
                         counter++;
                     }
                     if (counter > 0) {
-                        log.info("Sent out {} participations after {} µs for quiz {}", counter, (System.nanoTime() - start) / 1000, quizExercise.getTitle());
+                        log.info("Sent out {} participations in {} for quiz {}", counter, printDuration(start), quizExercise.getTitle());
                     }
                 }
             }
 
+            start = System.nanoTime();
             // Update Statistics with Results from ResultHashMap (DB Read and DB Write) and remove from ResultHashMap
             for (long quizExerciseId : resultHashMap.keySet()) {
 
@@ -422,8 +424,7 @@ public class QuizScheduleService {
                 try {
                     Set<Result> newResultsForQuiz = resultHashMap.remove(quizExerciseId);
                     quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                    log.debug("Updated statistics with {} new results after {} µs for quiz {}", newResultsForQuiz.size(), (System.nanoTime() - start) / 1000,
-                            quizExercise.getTitle());
+                    log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), printDuration(start), quizExercise.getTitle());
                 }
                 catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics(): {}", e.getMessage(), e);
@@ -433,6 +434,23 @@ public class QuizScheduleService {
         catch (Exception e) {
             log.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
         }
+    }
+
+    private static String printDuration(long timeNanoStart) {
+        long durationInMicroSeconds = (System.nanoTime() - timeNanoStart) / 1000;
+        if (durationInMicroSeconds > 1000) {
+            double durationInMilliSeconds = durationInMicroSeconds / 1000.0;
+            if (durationInMilliSeconds > 1000) {
+                double durationInSeconds = durationInMilliSeconds / 1000.0;
+                return roundOffTo2DecPlaces(durationInSeconds) + "s";
+            }
+            return roundOffTo2DecPlaces(durationInMilliSeconds) + "ms";
+        }
+        return durationInMicroSeconds + "µs";
+    }
+
+    private static String roundOffTo2DecPlaces(double val) {
+        return String.format("%.2f", val);
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
