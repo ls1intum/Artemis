@@ -331,19 +331,23 @@ public class QuizScheduleService {
     }
 
     /**
-     * 1. Check SubmissionHashMap for new submissions with “isSubmitted() == true” a. Process each Submission (set submissionType to “SubmissionType.MANUAL”) and create
-     * Participation and Result and save them to Database (DB Write) b. Remove processed Submissions from SubmissionHashMap and write Participation with Result into
-     * ParticipationHashMap and write Result into ResultHashMap 2. If Quiz has ended: a. Process all Submissions in SubmissionHashMap that belong to this quiz i. set “isSubmitted”
-     * to “true” and submissionType to “SubmissionType.TIMEOUT” ii. Create Participation and Result and save to Database (DB Write) iii. Remove processed Submissions from
-     * SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap b. Send out Participations (including QuizExercise and
-     * Result) from ParticipationHashMap via WebSocket to each user and remove them from ParticipationHashMap (WebSocket Send) 3. Update Statistics with Results from ResultHashMap
-     * (DB Read and DB Write) and remove from ResultHashMap 4. Send out new Statistics over WebSocket (WebSocket Send)
+     * // @formatter:off
+     * 1. Check SubmissionHashMap for new submissions with “isSubmitted() == true”
+     *      a. Process each Submission (set submissionType to “SubmissionType.MANUAL”) and create Participation and Result and save them to Database (DB WRITE)
+     *      b. Remove processed Submissions from SubmissionHashMap and write Participation with Result into ParticipationHashMap and write Result into ResultHashMap
+     * 2. If Quiz has ended:
+     *      a. Process all Submissions in SubmissionHashMap that belong to this quiz i. set “isSubmitted”   to “true” and submissionType to “SubmissionType.TIMEOUT”
+     *          ii. Create Participation and Result and save to Database (DB WRITE)
+     *          iii. Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+     *      b. Send out Participations (including QuizExercise and Result) from ParticipationHashMap to each participant and remove them from ParticipationHashMap (WEBSOCKET SEND)
+     * 3. Update Statistics with Results from ResultHashMap (DB READ and DB WRITE) and remove from ResultHashMap
+     * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
 
             // create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
             for (long quizExerciseId : submissionHashMap.keySet()) {
@@ -364,12 +368,11 @@ public class QuizScheduleService {
                 else {
                     submissions = submissionHashMap.get(quizExerciseId);
                 }
-                int numberOfSubmissions = submissions.keySet().size();
 
-                saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions);
+                int numberOfSubmittedSubmissions = saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions);
 
-                if (numberOfSubmissions > 0) {
-                    log.info("Processed {} submissions after {} ms in quiz {}", numberOfSubmissions, System.currentTimeMillis() - start, quizExercise.getTitle());
+                if (numberOfSubmittedSubmissions > 0) {
+                    log.info("Saved {} submissions to database after {} µs in quiz {}", numberOfSubmittedSubmissions, (System.nanoTime() - start) / 1000, quizExercise.getTitle());
                 }
             }
 
@@ -398,7 +401,7 @@ public class QuizScheduleService {
                         counter++;
                     }
                     if (counter > 0) {
-                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                        log.info("Sent out {} participations after {} µs for quiz {}", counter, (System.nanoTime() - start) / 1000, quizExercise.getTitle());
                     }
                 }
             }
@@ -419,7 +422,7 @@ public class QuizScheduleService {
                 try {
                     Set<Result> newResultsForQuiz = resultHashMap.remove(quizExerciseId);
                     quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                    log.debug("Updated statistics with {} new results after {} ms for quiz {}", newResultsForQuiz.size(), System.currentTimeMillis() - start,
+                    log.debug("Updated statistics with {} new results after {} µs for quiz {}", newResultsForQuiz.size(), (System.nanoTime() - start) / 1000,
                             quizExercise.getTitle());
                 }
                 catch (Exception e) {
@@ -467,9 +470,11 @@ public class QuizScheduleService {
      *
      * @param quizExercise      the quiz which should be checked
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
+     * @return                  the number of processed submissions (submit or timeout)
      */
-    private void saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
+    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 
+        int count = 0;
         List<StudentParticipation> participations = new ArrayList<>();
         List<QuizSubmission> submissions = new ArrayList<>();
         List<Result> results = new ArrayList<>();
@@ -490,7 +495,12 @@ public class QuizScheduleService {
                     quizSubmission.setType(SubmissionType.TIMEOUT);
                     quizSubmission.setSubmissionDate(ZonedDateTime.now());
                 }
+                else {
+                    // the quiz is running and the submission was not yet submitted.
+                    continue;
+                }
 
+                count++;
                 // Create Participation and Result and save to Database (DB Write)
                 // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
 
@@ -540,16 +550,6 @@ public class QuizScheduleService {
         addParticipations(quizExercise.getId(), participations);
         // add the result of the participation resultHashMap for the statistic-Update
         addResultsForStatisticUpdate(quizExercise.getId(), results);
-    }
-
-    /**
-     * create Participation and Result if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
-     *
-     * @param quizExercise   the quizExercise the quizSubmission belongs to
-     * @param username       the user, who submitted the quizSubmission
-     * @param quizSubmission the quizSubmission, which is used to calculate the Result
-     */
-    private void createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
-
+        return count;
     }
 }
