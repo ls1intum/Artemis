@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -20,7 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Rating;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.RatingService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -37,14 +46,27 @@ public class RatingResource {
 
     private final RatingService ratingService;
 
+    private final UserService userService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ResultService resultService;
+
+    private final ParticipationService participationService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
 
-    public RatingResource(RatingService ratingService) {
+    public RatingResource(RatingService ratingService, UserService userService, AuthorizationCheckService authCheckService, ResultService resultService,
+            ParticipationService participationService) {
         this.ratingService = ratingService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
+        this.resultService = resultService;
+        this.participationService = participationService;
     }
 
     /**
@@ -73,7 +95,16 @@ public class RatingResource {
     @PostMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) throws URISyntaxException {
-        // TODO: Check authorization
+        if (rating.getId() != null) {
+            throw new BadRequestAlertException("The rating must not have an ID", ENTITY_NAME, "idDoesExist");
+        }
+        User user = userService.getUser();
+        Result res = resultService.findOne(rating.getResult().getId());
+        StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
+        if (!authCheckService.isOwnerOfParticipation(participation, user)) {
+            return forbidden();
+        }
+
         Rating result = this.ratingService.saveRating(rating);
         return ResponseEntity.created(new URI("/api/rating/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -91,7 +122,13 @@ public class RatingResource {
         if (rating.getId() == null) {
             throw new BadRequestAlertException("The rating must have an ID", ENTITY_NAME, "idDoesNotExist");
         }
-        // TODO: Check authorization
+        User user = userService.getUser();
+        Result res = resultService.findOne(rating.getId());
+        StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
+        if (!authCheckService.isOwnerOfParticipation(participation, user)) {
+            return forbidden();
+        }
+
         Rating result = this.ratingService.updateRating(rating);
         return ResponseEntity.ok(result);
     }

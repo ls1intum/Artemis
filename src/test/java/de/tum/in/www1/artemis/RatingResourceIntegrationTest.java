@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -55,6 +56,9 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     RatingRepository ratingRepo;
+
+    @Autowired
+    SubmissionRepository submissionRepo;
 
     private TextExercise exercise;
 
@@ -95,28 +99,41 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(value = "student1", roles = "USER")
     public void testCreateRating_asUser() throws Exception {
         request.post("/api/rating", rating, HttpStatus.CREATED);
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testCreateRating_asTutor_FORBIDDEN() throws Exception {
+        request.post("/api/rating", rating, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser() throws Exception {
         Rating result = ratingService.saveRating(rating);
         request.get("/api/rating/result/" + result.getId(), HttpStatus.OK, Rating.class);
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetRating_asUser_NOT_FOUND() throws Exception {
+        request.get("/api/rating/result/" + result.getId(), HttpStatus.NOT_FOUND, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testUpdateRating_asUser() throws Exception {
         Rating result = ratingService.saveRating(rating);
         request.put("/api/rating", result, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void testGetRating_asUser_NOT_FOUND() throws Exception {
-        request.get("/api/rating/result/" + result.getId(), HttpStatus.NOT_FOUND, Rating.class);
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
+        Rating result = ratingService.saveRating(rating);
+        request.put("/api/rating", result, HttpStatus.FORBIDDEN);
     }
 }
