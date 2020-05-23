@@ -125,7 +125,7 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should close sidebar when user clicks on a notification', () => {
-            notificationSidebarComponent.sortedNotifications = notifications;
+            notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponentFixture.detectChanges();
             notificationSidebarComponent.showSidebar = true;
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
@@ -137,7 +137,7 @@ describe('Notification Sidebar Component', () => {
     describe('Notification click', () => {
         it('should interpret notification target when user clicks notification', () => {
             sinon.spy(notificationService, 'interpretNotification');
-            notificationSidebarComponent.sortedNotifications = notifications;
+            notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponentFixture.detectChanges();
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
@@ -181,14 +181,14 @@ describe('Notification Sidebar Component', () => {
             expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
         }));
 
-        it('should update sorted notifications array after new notifications were loaded', fakeAsync(() => {
-            const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
+        it('should update notifications array after new notifications were loaded', fakeAsync(() => {
+            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
             sinon.replace(notificationService, 'query', fake);
             notificationSidebarComponent.ngOnInit();
             tick(500);
             expect(notificationService.query).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
-            expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
+            expect(notificationSidebarComponent.notifications[0]).to.be.equal(notificationNow);
+            expect(notificationSidebarComponent.notifications[1]).to.be.equal(notificationPast);
         }));
 
         it('should set total notification count to received X-Total-Count header', fakeAsync(() => {
