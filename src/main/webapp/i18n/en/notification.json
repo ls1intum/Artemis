@@ -18,7 +18,7 @@
                 "attachmentUpdated": "View lecture"
             }
         },
-        "systemNotification": {
+        "system": {
             "systemNotification": "System notification",
             "systemNotifications": "System notifications",
             "title": "Title",

@@ -1,6 +1,6 @@
 <div *ngIf="notification">
     <h2>
-        <span jhiTranslate="artemisApp.systemNotification.systemNotification">System notification</span>
+        <span jhiTranslate="artemisApp.system.systemNotification">System notification</span>
         [{{ notification.id }}]
     </h2>
     <dl class="row-md jh-entity-details">
@@ -8,13 +8,13 @@
         <dd>
             <span>{{ notification.id }}</span>
         </dd>
-        <dt><span jhiTranslate="artemisApp.systemNotification.title">Title</span></dt>
+        <dt><span jhiTranslate="artemisApp.system.title">Title</span></dt>
         <dd>{{ notification.title }}</dd>
-        <dt><span jhiTranslate="artemisApp.systemNotification.text">Text</span></dt>
+        <dt><span jhiTranslate="artemisApp.system.text">Text</span></dt>
         <dd>{{ notification.text }}</dd>
-        <dt><span jhiTranslate="artemisApp.systemNotification.type">Type</span></dt>
+        <dt><span jhiTranslate="artemisApp.system.type">Type</span></dt>
         <dd>{{ notification.type }}</dd>
-        <dt><span jhiTranslate="artemisApp.systemNotification.expireDate">Expire Date</span></dt>
+        <dt><span jhiTranslate="artemisApp.system.expireDate">Expire Date</span></dt>
         <dd>{{ notification.expireDate | date: 'dd.MM.yyyy HH:mm' }}</dd>
     </dl>
     <button type="submit" routerLink="/admin/system-notification-management" class="btn btn-info">
