@@ -30,8 +30,8 @@ export function setup() {
 
     let artemis, exerciseId, course, userId;
 
-    if (parseInt(__ENV.COURSE_ID) === 0|| parseInt(__ENV.EXERCISE_ID)  === 0) {
-        console.log("Creating new course and exercise as no parameters are given");
+    if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
+        console.log('Creating new course and exercise as no parameters are given');
 
         // Create course
         artemis = login(adminUsername, adminPassword);
@@ -59,9 +59,9 @@ export function setup() {
         // Wait some time for builds to finish and test results to come in
         sleep(20);
 
-        return {exerciseId: exerciseId, courseId: course.id};
+        return { exerciseId: exerciseId, courseId: course.id };
     } else {
-        console.log("Using existing course and exercise");
+        console.log('Using existing course and exercise');
         return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
     }
 }

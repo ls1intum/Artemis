@@ -159,12 +159,11 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             // submit new quiz answer
             socket.setTimeout(function () {
                 if (questionCount == 10) {
-                    console.log("10 for " + currentUsername);
+                    console.log('10 for ' + currentUsername);
                 }
                 submitRandomAnswer(questionCount);
             }, (questionCount - 1) * 3000 + 1000);
         }
-
 
         // Stop after timeout
         socket.setTimeout(function () {
