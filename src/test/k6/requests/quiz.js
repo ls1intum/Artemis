@@ -1,7 +1,7 @@
 import { PARTICIPATION, QUIZ_EXERCISES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue } from '../util/utils.js';
-import { QUIZ_EXERCISE } from './endpoints.js';
+import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE } from './endpoints.js';
 
 export function createQuizExercise(artemis, course) {
     let res;
@@ -132,6 +132,23 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             socket.send(wsMessage);
         }
 
+        function submitRandomAnswerREST(numberOfQuestions) {
+            const answer = {
+                submissionExerciseType: 'quiz',
+                submitted: false,
+                submittedAnswers: questions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
+            };
+
+            let res = artemis.post(SUBMIT_QUIZ_LIVE(exerciseId), answer);
+            if (res[0].status !== 200) {
+                console.log('ERROR when submitting quiz via REST. Response headers:');
+                for (let [key, value] of Object.entries(res[0].headers)) {
+                    console.log(`${key}: ${value}`);
+                }
+                console.log('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+            }
+        }
+
         function generateAnswer(question) {
             const randAnswer = randomArrayValue(question.answerOptions);
             return {
@@ -155,13 +172,15 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             }
         });
 
-        for (let questionCount = 1; questionCount <= 10 * 5; questionCount++) {
+        for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
             socket.setTimeout(function () {
-                if (questionCount === 10) {
-                    console.log("10 for " + currentUsername);
+                if (questionCount === 50) {
+                    console.log("Submitting via REST for " + currentUsername);
+                    submitRandomAnswerREST(10);
+                } else {
+                    submitRandomAnswer(10);
                 }
-                submitRandomAnswer(10);
             }, (questionCount - 1) * 500 + 1000);
         }
 
