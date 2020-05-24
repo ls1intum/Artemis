@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
@@ -26,7 +26,7 @@ import * as moment from 'moment';
         `,
     ],
 })
-export class CoursesComponent implements OnInit {
+export class CoursesComponent implements OnInit, OnDestroy {
     public courses: Course[];
     public nextRelevantCourse: Course;
 
@@ -51,7 +51,15 @@ export class CoursesComponent implements OnInit {
     async ngOnInit() {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
-        this.subscribeForQuizStartForCourses();
+    }
+
+    /**
+     * Unsubscribe from all websocket subscriptions.
+     */
+    ngOnDestroy() {
+        if (this.quizExercisesChannels) {
+            this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
+        }
     }
 
     loadAndFilterCourses() {
@@ -60,6 +68,9 @@ export class CoursesComponent implements OnInit {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
+                // TODO: Stephan Krusche: this is deactivate at the moment, I think we need a more generic solution in more components, e.g. using the the existing notification
+                // sent to the client, when a quiz starts. This should slide in from the side.
+                // this.subscribeForQuizStartForCourses();
             },
             (response: string) => this.onError(response),
         );
@@ -105,17 +116,21 @@ export class CoursesComponent implements OnInit {
             // subscribe to quiz exercises that are live
             if (!this.quizExercisesChannels) {
                 this.quizExercisesChannels = this.courses.map((course) => {
-                    return '/topic/' + course.id + '/quizExercises/start-now';
+                    return '/topic/courses/' + course.id + '/quizExercises';
                 });
                 // quizExercises channels => react to the start of a quiz exercise for all courses
                 this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.subscribe(channel));
                 this.quizExercisesChannels.forEach((channel) =>
                     this.jhiWebsocketService.receive(channel).subscribe(
                         (quizExercise: QuizExercise) => {
-                            // the quiz was started so we want to enable the #quizLiveModal modal
-                            this.isQuizLive = true;
-                            this.liveQuiz = quizExercise;
-                            this.liveQuizCourse = quizExercise.course!;
+                            if (quizExercise.started) {
+                                // ignore set visible
+                                this.isQuizLive = true;
+                                this.liveQuiz = quizExercise;
+                                this.liveQuizCourse = quizExercise.course!;
+                            } else if (quizExercise.visibleToStudents) {
+                                // TODO: show the exercise at the top
+                            }
                         },
                         () => {},
                     ),

@@ -76,7 +76,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     subscribeForQuizChanges() {
         // subscribe to quizzes which get visible
         if (!this.quizExercisesChannel) {
-            this.quizExercisesChannel = '/topic/' + this.courseId + '/quizExercises';
+            this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExercisesChannel);

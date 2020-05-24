@@ -158,7 +158,7 @@
                 <span jhiTranslate="artemisApp.quizExercise.solution"></span>
             </div>
             <jhi-button
-                *ngIf="!quizExercise.started"
+                *ngIf="mode === 'live' && !quizExercise.started"
                 id="refresh-quiz"
                 (click)="refreshQuiz(true)"
                 [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"

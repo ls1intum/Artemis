@@ -344,8 +344,10 @@ public class QuizExerciseService {
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
-            messagingTemplate.send("/topic/courses" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
-            log.info("    sent out '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
+            if (quizExercise.isVisibleToStudents()) {
+                messagingTemplate.send("/topic/courses/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
+            }
+            log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
             log.error("Exception occurred while serializing quiz exercise", e);
