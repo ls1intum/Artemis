@@ -87,7 +87,7 @@ export default function (data) {
         const remainingTime = websocketConnectionTime - delay;
         const startTime = new Date().getTime();
         // while ((new Date().getTime() - startTime) / 1000 < remainingTime) {
-        simulateQuizWork(artemis, data.exerciseId, questions, 30, currentUsername);
+        simulateQuizWork(artemis, data.exerciseId, questions, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername);
         // }
     });
 

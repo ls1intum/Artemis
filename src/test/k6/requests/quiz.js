@@ -158,7 +158,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         for (let questionCount = 1; questionCount <= 10; questionCount++) {
             // submit new quiz answer
             socket.setTimeout(function () {
-                if (questionCount == 10) {
+                if (questionCount === 10) {
                     console.log("10 for " + currentUsername);
                 }
                 submitRandomAnswer(questionCount);
