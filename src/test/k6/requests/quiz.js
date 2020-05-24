@@ -155,14 +155,14 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             }
         });
 
-        for (let questionCount = 1; questionCount <= 10; questionCount++) {
+        for (let questionCount = 1; questionCount <= 10 * 5; questionCount++) {
             // submit new quiz answer
             socket.setTimeout(function () {
                 if (questionCount === 10) {
                     console.log("10 for " + currentUsername);
                 }
-                submitRandomAnswer(questionCount);
-            }, (questionCount - 1) * 1000 + 1000);
+                submitRandomAnswer(10);
+            }, (questionCount - 1) * 500 + 1000);
         }
 
         // Stop after timeout
