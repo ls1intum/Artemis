@@ -7,7 +7,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -58,7 +57,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
         private router: Router,
-        private momentDiff: DifferencePipe,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
@@ -179,10 +177,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
-    durationString(completionDate: Date, initializationDate: Date) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
-    }
-
     refresh() {
         this.getSubmissions(true);
     }
@@ -264,17 +258,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     public sortRows() {
-        if (this.predicate === 'durationInMinutes') {
-            this.submissions.forEach((submission) => (submission.durationInMinutes = this.durationForSubmission(submission)));
-        }
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
-    }
-
-    /**
-     * Gets the duration of the submission in minutes.
-     * @param exercise The exercise object.
-     */
-    durationForSubmission(submission: Submission) {
-        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
     }
 }

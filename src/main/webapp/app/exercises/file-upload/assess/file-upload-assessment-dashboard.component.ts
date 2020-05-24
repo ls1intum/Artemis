@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -34,7 +33,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
-        private momentDiff: DifferencePipe,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
@@ -82,7 +80,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                                 submission.result.participation = submission.participation;
                                 submission.participation.results = [submission.result];
                             }
-
                             return submission;
                         }),
                     ),
@@ -149,22 +146,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
     }
 
-    public durationString(completionDate: Date, initializationDate: Date) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
-    }
-
     public sortRows() {
-        if (this.predicate === 'durationInMinutes') {
-            this.submissions.forEach((submission) => (submission.durationInMinutes = this.durationForSubmission(submission)));
-        }
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
-    }
-
-    /**
-     * Gets the duration of the submission in minutes.
-     * @param exercise The exercise object.
-     */
-    durationForSubmission(submission: Submission) {
-        return this.momentDiff.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
     }
 }

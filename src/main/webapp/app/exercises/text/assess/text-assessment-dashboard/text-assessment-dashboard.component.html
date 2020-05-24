@@ -62,12 +62,7 @@
                     </td>
                     <td>{{ 'artemisApp.tutorExerciseDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
                     <td>
-                        {{
-                            durationString(
-                                submission.submissionDate,
-                                submission.participation.initializationDate ? submission.participation.initializationDate : exercise.releaseDate
-                            )
-                        }}
+                        {{ submission.durationInMinutes }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.result) | translate }}</td>

@@ -1,8 +1,8 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { Result } from 'app/entities/result.model';
+import * as moment from 'moment';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -24,18 +24,16 @@ export const enum SubmissionExerciseType {
 export abstract class Submission implements BaseEntity {
     public id: number;
     public submitted = false; // default value
-    public submissionDate: Moment | null;
+    public submissionDate: moment.Moment | null;
     public type: SubmissionType;
     public exampleSubmission: boolean;
     public submissionExerciseType: SubmissionExerciseType;
+    public durationInMinutes: number | null;
 
     public result: Result;
     public participation: Participation;
 
     public language: Language | null;
-
-    // helper Properties
-    public durationInMinutes: number;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;

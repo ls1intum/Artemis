@@ -3,7 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
-
+import { DifferencePipe } from 'ngx-moment';
+import { has } from 'lodash';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -18,7 +19,7 @@ export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
     public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private differencePipe: DifferencePipe) {}
 
     /**
      * Delete an existing submission
@@ -95,5 +96,13 @@ export class SubmissionService {
             this.convertSubmissionsDateFromServer(res.body);
         }
         return res;
+    }
+
+    calculateDurationInMinutes(submission: Submission) {
+        if (has(submission, 'participation.submissionDate') && has(submission, 'participation.initializationDate')) {
+            return this.differencePipe.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
+        } else {
+            return null;
+        }
     }
 }

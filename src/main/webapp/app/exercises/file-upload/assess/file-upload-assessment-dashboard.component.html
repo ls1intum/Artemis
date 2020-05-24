@@ -23,7 +23,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="duration">
+                    <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -56,12 +56,7 @@
                         <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
-                        {{
-                            durationString(
-                                submission.submissionDate,
-                                submission.participation.initializationDate ? submission.participation.initializationDate : exercise.releaseDate
-                            )
-                        }}
+                        {{ submission.durationInMinutes }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
                     <td *ngIf="exercise.isAtLeastInstructor">

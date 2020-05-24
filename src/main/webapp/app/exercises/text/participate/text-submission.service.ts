@@ -1,35 +1,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { tap, map } from 'rxjs/operators';
-
+import { map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = TextSubmissionService.convert(textSubmission);
+        const copy = this.convert(textSubmission);
         return this.http
             .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = TextSubmissionService.convert(textSubmission);
+        const copy = this.convert(textSubmission);
         return this.http
             .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
@@ -39,7 +39,7 @@ export class TextSubmissionService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
     }
 
     // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
@@ -54,16 +54,16 @@ export class TextSubmissionService {
         );
     }
 
-    private static convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = TextSubmissionService.convertItemFromServer(res.body!);
+    private convertResponse(res: EntityResponseType): EntityResponseType {
+        const body: TextSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
-    private static convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
+    private convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
         const jsonResponse: TextSubmission[] = res.body!;
         const body: TextSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(TextSubmissionService.convertItemFromServer(jsonResponse[i]));
+            body.push(this.convertItemFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
     }
@@ -71,14 +71,16 @@ export class TextSubmissionService {
     /**
      * Convert a returned JSON object to TextSubmission.
      */
-    private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
-        return Object.assign({}, textSubmission);
+    private convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
+        const convertedSubmission = Object.assign({}, textSubmission);
+        convertedSubmission.durationInMinutes = this.submissionService.calculateDurationInMinutes(convertedSubmission);
+        return convertedSubmission;
     }
 
     /**
      * Convert a TextSubmission to a JSON which can be sent to the server.
      */
-    private static convert(textSubmission: TextSubmission): TextSubmission {
+    private convert(textSubmission: TextSubmission): TextSubmission {
         return Object.assign({}, textSubmission);
     }
 }

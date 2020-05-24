@@ -162,12 +162,7 @@
                         <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
-                        {{
-                            durationString(
-                                submission.submissionDate,
-                                submission.participation.initializationDate ? submission.participation.initializationDate : modelingExercise.releaseDate
-                            )
-                        }}
+                        {{ submission.durationInMinutes }}
                         minutes
                     </td>
                     <td>{{ submission.result && submission.result.assessmentType }}</td>
