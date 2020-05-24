@@ -1,4 +1,5 @@
 <div class="quiz-header container" *ngIf="quizExercise">
+    <jhi-alert></jhi-alert>
     <h2 [ngSwitch]="mode">
         {{ quizExercise.course!.title }} - {{ quizExercise.title }}
         <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>

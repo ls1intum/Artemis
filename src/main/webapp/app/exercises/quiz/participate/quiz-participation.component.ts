@@ -193,8 +193,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // listen to connect / disconnect events
         this.onConnected = () => {
             this.disconnected = false;
+            // if the disconnect happened during the live quiz and we still have unsaved changes, we send the submission automatically to the server
             if (this.unsavedChanges && this.sendWebsocket) {
                 this.sendWebsocket(this.submission);
+            }
+            // if the quiz was not yet started, we might have missed the quiz start ==> refresh
+            if (this.quizExercise && !this.quizExercise.started) {
+                this.refreshQuiz(true);
             }
         };
         this.jhiWebsocketService.bind('connect', () => {
@@ -304,16 +309,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
                 (payload) => {
-                    if (payload === 'the quiz is not active') {
-                        this.onSaveSuccess(null, payload);
-                    } else if (payload === 'you have already submitted the quiz') {
-                        this.onSaveSuccess(null, payload);
-                    } else {
-                        this.onSaveSuccess(payload as QuizSubmission, null);
+                    if (payload.error) {
+                        this.onSaveError(payload.error);
                     }
                 },
                 (error) => {
-                    this.onSubmitError(error);
+                    this.onSaveError(error);
                 },
             );
 
@@ -819,12 +820,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * Callback function for handling quiz submission after saving submission to server
-     * @param quizSubmission The quiz submission data from the server
      * @param error a potential error during save
      */
-    onSaveSuccess(quizSubmission: QuizSubmission | null, error: string | null) {
-        if (!quizSubmission || error) {
-            alert('Saving Answers failed: ' + error);
+    onSaveError(error: string) {
+        if (error) {
+            const errorMessage = 'Saving answers failed: ' + error;
+            // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+            const jhiAlert = this.jhiAlertService.error(errorMessage);
+            jhiAlert.msg = errorMessage;
             this.unsavedChanges = true;
             this.isSubmitting = false;
             // if (this.outstandingWebsocketResponses > 0) {
@@ -833,7 +836,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // if (this.outstandingWebsocketResponses === 0) {
             //     this.isSaving = false;
             // }
-            return;
         }
         // if (quizSubmission.submitted) {
         //     // this.outstandingWebsocketResponses = 0;
@@ -910,7 +912,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                            (error: HttpErrorResponse) => this.onSubmitError(error),
                         );
                     }
                     break;
@@ -920,7 +922,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                            (error: HttpErrorResponse) => this.onSubmitError(error),
                         );
                     }
                     break;
@@ -936,7 +938,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.updateSubmissionTime();
                             this.applySubmission();
                         },
-                        (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                        (error: HttpErrorResponse) => this.onSubmitError(error),
                     );
                     break;
             }
@@ -961,9 +963,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Callback function for handling error when submitting
      * @param error
      */
-    onSubmitError(error: string) {
-        console.error(error);
-        alert('Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.');
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
+        // console.error(error);
+        // alert('Submitting was not possible. If your answers have been saved, you can also wait until the quiz has finished.');
         this.isSubmitting = false;
     }
 

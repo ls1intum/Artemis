@@ -117,6 +117,7 @@ public class QuizSubmissionService {
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
     public QuizSubmission submitForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username) throws QuizSubmissionException {
+
         long start = System.nanoTime();
         // check if submission is still allowed
         QuizExercise quizExercise = QuizScheduleService.getQuizExercise(exerciseId);
