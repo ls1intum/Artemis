@@ -194,7 +194,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(textExerciseAfterDueDate.getDueDate());
 
         TextSubmission storedSubmission = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-            TextSubmission.class);
+                TextSubmission.class);
 
         assertThat(storedSubmission).as("text submission without assessment was found").isNotNull();
         assertThat(storedSubmission.getId()).as("in-time text submission was found").isEqualTo(textSubmission.getId());

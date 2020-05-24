@@ -235,7 +235,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(fileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
-            FileUploadSubmission.class);
+                FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
