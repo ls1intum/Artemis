@@ -697,7 +697,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.score <= 0) {
+            if (question.score < 0) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
