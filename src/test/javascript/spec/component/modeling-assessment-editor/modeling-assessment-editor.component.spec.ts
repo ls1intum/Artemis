@@ -17,6 +17,7 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
+import { DifferencePipe } from 'ngx-moment';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -27,7 +28,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
             declarations: [],
-            providers: [JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' })],
+            providers: [JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' }), DifferencePipe],
         }).compileComponents();
     }));
 

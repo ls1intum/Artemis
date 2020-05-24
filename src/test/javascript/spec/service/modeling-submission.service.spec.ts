@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { DifferencePipe } from 'ngx-moment';
 
 describe('ModelingSubmission Service', () => {
     let injector: TestBed;
@@ -13,6 +14,7 @@ describe('ModelingSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [DifferencePipe],
         });
         injector = getTestBed();
         service = injector.get(ModelingSubmissionService);

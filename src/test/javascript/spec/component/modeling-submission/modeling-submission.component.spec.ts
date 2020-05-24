@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { DifferencePipe } from 'ngx-moment';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
@@ -85,6 +86,7 @@ describe('Component Tests', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                     { provide: DeviceDetectorService },
+                    DifferencePipe,
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

@@ -37,6 +37,7 @@ import { By } from '@angular/platform-browser';
 import { throwError } from 'rxjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { DifferencePipe } from 'ngx-moment';
 
 chai.use(sinonChai);
 
@@ -76,6 +77,7 @@ describe('FileUploadAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
+                DifferencePipe,
             ],
         })
             .compileComponents()

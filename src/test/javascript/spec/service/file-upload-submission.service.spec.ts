@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { DifferencePipe } from 'ngx-moment';
 
 describe('FileUploadSubmission Service', () => {
     let injector: TestBed;
@@ -13,6 +14,7 @@ describe('FileUploadSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [DifferencePipe],
         });
         injector = getTestBed();
         service = injector.get(FileUploadSubmissionService);

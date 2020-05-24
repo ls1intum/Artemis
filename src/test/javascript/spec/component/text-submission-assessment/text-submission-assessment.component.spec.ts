@@ -25,6 +25,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
+import { DifferencePipe } from 'ngx-moment';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -78,7 +79,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 RouterModule,
             ],
             declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: route }, DifferencePipe],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {

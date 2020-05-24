@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { DifferencePipe } from 'ngx-moment';
 
 describe('TextSubmission Service', () => {
     let injector: TestBed;
@@ -12,6 +13,7 @@ describe('TextSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [DifferencePipe],
         });
         injector = getTestBed();
         service = injector.get(TextSubmissionService);

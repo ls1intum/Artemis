@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/cor
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
+import { DifferencePipe } from 'ngx-moment';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationSubmissionDeleteDialogComponent } from 'app/exercises/shared/participation-submission/participation-submission-delete-dialog.component';
@@ -19,6 +20,7 @@ describe('ParticipationSubmissionDeleteDialogComponent', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [ParticipationSubmissionDeleteDialogComponent],
+                providers: [DifferencePipe],
             })
                 .overrideTemplate(ParticipationSubmissionDeleteDialogComponent, '')
                 .compileComponents();
