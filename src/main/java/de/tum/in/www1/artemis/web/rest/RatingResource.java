@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing Rating.
@@ -106,8 +105,7 @@ public class RatingResource {
         }
 
         Rating result = this.ratingService.saveRating(rating);
-        return ResponseEntity.created(new URI("/api/rating/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/rating/" + result.getId())).body(result);
     }
 
     /**
