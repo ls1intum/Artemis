@@ -81,7 +81,7 @@ describe('StudentVotesComponent', () => {
         componentFixture.detectChanges();
         component.toggleDownVote();
         componentFixture.detectChanges();
-        expect(component.voteValueChange).to.deep.equal(-1);
+        expect(component.voteValueChange).to.deep.equal(-2);
         expect(component.userVote!.isPositive).to.be.false;
     });
 });
