@@ -165,7 +165,6 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             }, (questionCount - 1) * 1000 + 1000);
         }
 
-
         // Stop after timeout
         socket.setTimeout(function () {
             console.log("Connection timed out");

@@ -90,6 +90,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     result: Result;
     questionScores = {};
     quizId: number;
+    courseId: number;
     interval: any;
 
     /**
@@ -128,7 +129,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
             this.subscription = this.route.params.subscribe((params) => {
-                this.quizId = params['exerciseId'];
+                this.quizId = Number(params['exerciseId']);
+                this.courseId = Number(params['courseId']);
                 // init according to mode
                 switch (this.mode) {
                     case 'practice':
@@ -141,7 +143,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.initShowSolution();
                         break;
                     case 'live':
-                        this.init();
+                        this.initLiveMode();
                         break;
                 }
             });
@@ -187,7 +189,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * loads latest submission from server and sets up socket connection
      */
-    init() {
+    initLiveMode() {
         // listen to connect / disconnect events
         this.onConnected = () => {
             this.disconnected = false;
@@ -341,14 +343,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         if (!this.quizExerciseChannel) {
-            this.quizExerciseChannel = '/topic/quizExercise/' + this.quizId;
+            this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                (payload) => {
-                    if (this.waitingForQuizStart) {
-                        this.applyQuizFull(payload);
+                (quiz) => {
+                    if (this.waitingForQuizStart && this.quizId === quiz.id) {
+                        this.applyQuizFull(quiz);
                     }
                 },
                 () => {},
@@ -987,12 +989,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     refreshQuiz(refresh = false) {
         this.refreshingQuiz = refresh;
-        this.quizExerciseService.find(this.quizId).subscribe((res: HttpResponse<QuizExercise>) => {
-            const _quizExercise = res.body!;
-            if (_quizExercise.started) {
-                this.quizExercise = _quizExercise;
-            }
-            setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
-        });
+        this.quizExerciseService.findForStudent(this.quizId).subscribe(
+            (res: HttpResponse<QuizExercise>) => {
+                const quizExercise = res.body!;
+                if (quizExercise.started) {
+                    this.quizExercise = quizExercise;
+                    this.initLiveMode();
+                }
+                setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+            },
+            () => {
+                // error case
+                setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+            },
+        );
     }
 }
