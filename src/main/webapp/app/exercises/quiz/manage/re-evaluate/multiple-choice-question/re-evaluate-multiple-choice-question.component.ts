@@ -17,7 +17,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
 
-    @ViewChildren(AceEditorComponent)
+    @ViewChildren('answerEditor')
     aceEditorComponents!: QueryList<AceEditorComponent>;
 
     @Input()
@@ -61,12 +61,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Setup editor after view init
      */
     ngAfterViewInit(): void {
-        this.setupEditors();
+        this.setupQuestionEditor();
+        this.setupAnswerEditors();
     }
 
     private setQuestionText(): void {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-        this.setupEditors();
+        this.setupQuestionEditor();
     }
 
     private setAnswerTexts(): void {
@@ -74,36 +75,48 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
             const answerToSet = Object.assign({}, answerOption);
             this.answerEditorText[index] = this.generateAnswerMarkdown(answerToSet);
         });
-        this.setupEditors();
+        this.setupAnswerEditors();
     }
 
     /**
-     * Setup text editors
+     * Setup text editor for the question
      */
-    setupEditors(): void {
+    setupQuestionEditor(): void {
+        if (this.questionEditor) {
+            this.setupEditor(this.questionEditor);
+            this.questionEditor.getEditor().on(
+                'blur',
+                () => {
+                    const updatedQuestion = Object.assign({}, this.question);
+                    const questionParts = this.splitByCorrectIncorrectTag(this.questionEditor.value.trim());
+                    const questionText = questionParts[0];
+                    this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
+                    this.question.text = updatedQuestion.text;
+                    this.question.explanation = updatedQuestion.explanation;
+                    this.question.hint = updatedQuestion.hint;
+                    this.setQuestionText();
+                    this.questionUpdated.emit();
+                },
+                this,
+            );
+        }
+    }
+
+    /**
+     * Setup text editors for the answer options
+     */
+    setupAnswerEditors(): void {
         if (this.aceEditorComponents) {
             this.aceEditorComponents.forEach((editor, i) => {
                 this.setupEditor(editor);
                 editor.getEditor().on(
                     'blur',
                     () => {
-                        if (editor.getEditor().container.classList.contains('answer-editor')) {
-                            const updatedAnswer = Object.assign({}, this.question.answerOptions![i - 1]);
-                            this.parseAnswerMarkdown(editor.value.trim(), updatedAnswer);
-                            this.question.answerOptions![i - 1] = updatedAnswer;
-                            this.setAnswerTexts();
-                            this.questionUpdated.emit();
-                        } else {
-                            const updatedQuestion = Object.assign({}, this.question);
-                            const questionParts = this.splitByCorrectIncorrectTag(editor.value.trim());
-                            const questionText = questionParts[0];
-                            this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
-                            this.question.text = updatedQuestion.text;
-                            this.question.explanation = updatedQuestion.explanation;
-                            this.question.hint = updatedQuestion.hint;
-                            this.setQuestionText();
-                            this.questionUpdated.emit();
-                        }
+                        const updatedAnswer = Object.assign({}, this.question.answerOptions![i]);
+                        this.parseAnswerMarkdown(editor.value.trim(), updatedAnswer);
+                        this.question.answerOptions![i] = updatedAnswer;
+                        this.setAnswerTexts();
+                        this.questionUpdated.emit();
                     },
                     this,
                 );
@@ -216,7 +229,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     resetQuestionTitle() {
         this.question.title = this.backupQuestion.title;
         this.questionUpdated.emit();
-        this.setupEditors();
     }
 
     /**
@@ -228,7 +240,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.hint = this.backupQuestion.hint;
         this.setQuestionText();
         this.questionUpdated.emit();
-        this.setupEditors();
+        this.setupQuestionEditor();
     }
 
     /**
@@ -246,7 +258,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.resetQuestionText();
         this.setAnswerTexts();
         this.questionUpdated.emit();
-        this.setupEditors();
+        this.setupQuestionEditor();
+        this.setupAnswerEditors();
     }
 
     /**
@@ -260,7 +273,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.answerOptions![index] = backupAnswer;
         this.setAnswerTexts();
         this.questionUpdated.emit();
-        this.setupEditors();
+        this.setupAnswerEditors();
     }
 
     /**
@@ -292,10 +305,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     onQuestionChange(): void {
-        this.setupEditors();
+        this.setupQuestionEditor();
     }
 
     onAnswerChange(): void {
-        this.setupEditors();
+        this.setupAnswerEditors();
     }
 }
