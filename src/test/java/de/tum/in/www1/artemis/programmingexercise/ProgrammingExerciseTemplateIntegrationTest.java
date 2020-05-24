@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,7 +27,9 @@ import org.apache.maven.plugins.surefire.report.ReportTestSuite;
 import org.apache.maven.plugins.surefire.report.SurefireReportParser;
 import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.shared.invoker.*;
+import org.apache.maven.shared.utils.Os;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +67,38 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     LocalRepository testRepo = new LocalRepository();
 
     LocalRepository solutionRepo = new LocalRepository();
+
+    @BeforeAll
+    public static void detectMavenHome() {
+        /*
+         * Maven invoker only looks for those two values and ignores maven, even if it is available over PATH. Because Maven reports the path when "-version" is used, we use that
+         * to auto-detect the maven home and store it in the system properties.
+         */
+        String m2Home = System.getenv("M2_HOME");
+        String mavenHome = System.getProperty("maven.home");
+
+        if (m2Home != null || mavenHome != null)
+            return;
+
+        try {
+            String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
+            Process mvn = Runtime.getRuntime().exec(mvnExecutable + " -version");
+            mvn.waitFor();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
+                String prefix = "maven home:";
+                Optional<String> home = br.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+                if (home.isPresent()) {
+                    System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
+                }
+                else {
+                    fail("maven home not found, unexpected '-version' format");
+                }
+            }
+        }
+        catch (Exception e) {
+            fail("maven home not found", e);
+        }
+    }
 
     @BeforeEach
     @SuppressWarnings("resource")
