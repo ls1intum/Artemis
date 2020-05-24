@@ -18,7 +18,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     private questionEditor: AceEditorComponent;
 
     @ViewChildren(AceEditorComponent)
-    aceEditorComponents: QueryList<AceEditorComponent>;
+    aceEditorComponents!: QueryList<AceEditorComponent>;
 
     @Input()
     question: MultipleChoiceQuestion;
@@ -61,49 +61,68 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Setup editor after view init
      */
     ngAfterViewInit(): void {
-        this.setupQuestionEditor();
+        this.setupEditors();
     }
 
-    setQuestionText(): void {
+    private setQuestionText(): void {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.setupEditors();
     }
 
-    setAnswerTexts(): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        this.question.answerOptions?.forEach((answerOption, index) => {
+    private setAnswerTexts(): void {
+        this.question.answerOptions!.forEach((answerOption, index) => {
             const answerToSet = Object.assign({}, answerOption);
             this.answerEditorText[index] = this.generateAnswerMarkdown(answerToSet);
         });
+        this.setupEditors();
     }
 
     /**
-     * Setup Question text editor
+     * Setup text editors
      */
-    setupQuestionEditor() {
-        console.log('setup');
+    setupEditors(): void {
         if (this.aceEditorComponents) {
-            this.aceEditorComponents.forEach((editor) => {
-                editor.setTheme('chrome');
-                editor.getEditor().renderer.setShowGutter(false);
-                editor.getEditor().renderer.setPadding(10);
-                editor.getEditor().renderer.setScrollMargin(8, 8);
-                editor.getEditor().setHighlightActiveLine(false);
-                editor.getEditor().setShowPrintMargin(false);
-                editor.getEditor().setOptions({
-                    autoScrollEditorIntoView: true,
-                    wrap: true,
-                });
-
+            this.aceEditorComponents.forEach((editor, i) => {
+                this.setupEditor(editor);
                 editor.getEditor().on(
                     'blur',
                     () => {
-                        console.log('updated');
-                        this.questionUpdated.emit();
+                        if (editor.getEditor().container.classList.contains('answer-editor')) {
+                            const updatedAnswer = Object.assign({}, this.question.answerOptions![i - 1]);
+                            this.parseAnswerMarkdown(editor.value.trim(), updatedAnswer);
+                            this.question.answerOptions![i - 1] = updatedAnswer;
+                            this.setAnswerTexts();
+                            this.questionUpdated.emit();
+                            this.setupEditor(editor);
+                        } else {
+                            const updatedQuestion = Object.assign({}, this.question);
+                            const questionParts = this.splitByCorrectIncorrectTag(editor.value.trim());
+                            const questionText = questionParts[0];
+                            this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
+                            this.question.text = updatedQuestion.text;
+                            this.question.explanation = updatedQuestion.explanation;
+                            this.question.hint = updatedQuestion.hint;
+                            this.setQuestionText();
+                            this.questionUpdated.emit();
+                            this.setupEditor(editor);
+                        }
                     },
                     this,
                 );
             });
         }
+    }
+
+    private setupEditor(editor: AceEditorComponent): void {
+        editor.setTheme('chrome');
+        editor.getEditor().renderer.setShowGutter(false);
+        editor.getEditor().renderer.setPadding(10);
+        editor.getEditor().renderer.setScrollMargin(8, 8);
+        editor.getEditor().setHighlightActiveLine(false);
+        editor.getEditor().setShowPrintMargin(false);
+        editor.getEditor().setOptions({
+            wrap: true,
+        });
     }
 
     /**
@@ -198,14 +217,20 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetQuestionTitle() {
         this.question.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
+        this.setupEditors();
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText() {
-        this.question = Object.assign(this.question, { text: this.backupQuestion.text, explanation: this.backupQuestion.explanation, hint: this.backupQuestion.hint });
+        this.question.text = this.backupQuestion.text;
+        this.question.explanation = this.backupQuestion.explanation;
+        this.question.hint = this.backupQuestion.hint;
         this.setQuestionText();
+        this.questionUpdated.emit();
+        this.setupEditors();
     }
 
     /**
@@ -222,6 +247,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         // Reset answer editors
         this.resetQuestionText();
         this.setAnswerTexts();
+        this.questionUpdated.emit();
+        this.setupEditors();
     }
 
     /**
@@ -234,6 +261,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         // Overwrite current answerOption at given index with the backup
         this.question.answerOptions![index] = backupAnswer;
         this.setAnswerTexts();
+        this.questionUpdated.emit();
+        this.setupEditors();
     }
 
     /**
@@ -264,19 +293,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         return answer.invalid;
     }
 
-    onQuestionChange($event: any): void {
-        const updatedQuestion = Object.assign({}, this.question);
-        const questionParts = this.splitByCorrectIncorrectTag($event);
-        const questionText = questionParts[0];
-        this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
-        this.question = Object.assign(this.question, { text: updatedQuestion.text, explanation: updatedQuestion.explanation, hint: updatedQuestion.hint });
-        this.setQuestionText();
+    onQuestionChange(): void {
+        this.setupEditors();
     }
 
-    onAnswerChange($event: any, index: number): void {
-        // workaround for unwanted copy overwriting of other properties
-        const updatedAnswer = Object.assign({}, this.question.answerOptions![index]);
-        this.parseAnswerMarkdown($event, updatedAnswer);
-        this.question.answerOptions![index] = { ...updatedAnswer };
+    onAnswerChange(): void {
+        this.setupEditors();
     }
 }

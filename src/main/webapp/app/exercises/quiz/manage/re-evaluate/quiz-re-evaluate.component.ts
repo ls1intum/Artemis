@@ -65,7 +65,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.quizExercise && changes.quizExercise.currentValue != null) {
+        if (changes.quizExercise && changes.quizExercise.currentValue !== null) {
             this.prepareEntity(this.quizExercise);
             this.backupQuiz = this.quizExercise;
         }

@@ -68,7 +68,7 @@
                     #questionEditor
                     [text]="questionEditorText"
                     [mode]="editorMode"
-                    (textChanged)="onQuestionChange($event)"
+                    (textChanged)="onQuestionChange()"
                     style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
                 >
@@ -90,9 +90,9 @@
                 <ace-editor
                     [(text)]="answerEditorText[i]"
                     [mode]="editorMode"
-                    (textChanged)="onAnswerChange($event, i)"
+                    (textChanged)="onAnswerChange()"
                     style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
-                    class="form-control"
+                    class="answer-editor form-control"
                 >
                 </ace-editor>
                 <div class="form-group text-center" style="width: 25%;">
