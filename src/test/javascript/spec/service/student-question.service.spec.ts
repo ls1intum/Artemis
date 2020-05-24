@@ -69,7 +69,7 @@ describe('ExerciseHint Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .updateVotes(expected.id, 42)
+                .updateVotes(expected.id, 0)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });

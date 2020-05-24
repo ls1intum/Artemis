@@ -43,19 +43,19 @@ describe('StudentVotesComponent', () => {
         // if not yet voted
         component.toggleUpVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(43);
+        expect(component.voteValueChange).to.deep.equal(1);
         expect(component.userVote!.isPositive).to.be.true;
         // if already upvoted
         component.toggleUpVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(42);
+        expect(component.voteValueChange).to.deep.equal(-1);
         expect(component.userVote).to.be.null;
         // if already downvoted
         component.userVote = { isPositive: false };
         componentFixture.detectChanges();
         component.toggleUpVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(44);
+        expect(component.voteValueChange).to.deep.equal(2);
         expect(component.userVote!.isPositive).to.be.true;
     });
 
@@ -69,19 +69,19 @@ describe('StudentVotesComponent', () => {
         // if not yet voted
         component.toggleDownVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(41);
+        expect(component.voteValueChange).to.deep.equal(-1);
         expect(component.userVote!.isPositive).to.be.false;
         // if already downvoted
         component.toggleDownVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(42);
+        expect(component.voteValueChange).to.deep.equal(+1);
         expect(component.userVote).to.be.null;
         // if already upvoted
         component.userVote = { isPositive: true };
         componentFixture.detectChanges();
         component.toggleDownVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(40);
+        expect(component.voteValueChange).to.deep.equal(-1);
         expect(component.userVote!.isPositive).to.be.false;
     });
 });
