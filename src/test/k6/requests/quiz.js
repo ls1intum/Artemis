@@ -149,7 +149,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         // Wait for new result
         socket.on('message', function (message) {
             if (message.startsWith('MESSAGE\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission')) {
-                console.log(`RECEIVED callback from server for ${__VU}`);
+                console.log(`RECEIVED callback from server for ${currentUsername}: ${message}`);
                 sleep(5);
                 socket.close();
             }
@@ -158,6 +158,9 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         for (let questionCount = 1; questionCount <= 10; questionCount++) {
             // submit new quiz answer
             socket.setTimeout(function () {
+                if (questionCount == 10) {
+                    console.log("10 for " + currentUsername);
+                }
                 submitRandomAnswer(questionCount);
             }, (questionCount - 1) * 3000 + 1000);
         }
