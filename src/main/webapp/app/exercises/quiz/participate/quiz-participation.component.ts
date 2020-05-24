@@ -90,6 +90,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     result: Result;
     questionScores = {};
     quizId: number;
+    courseId: number;
     interval: any;
 
     /**
@@ -129,6 +130,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.mode = data.mode;
             this.subscription = this.route.params.subscribe((params) => {
                 this.quizId = params['exerciseId'];
+                this.courseId = params['courseId'];
                 // init according to mode
                 switch (this.mode) {
                     case 'practice':
@@ -341,14 +343,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         if (!this.quizExerciseChannel) {
-            this.quizExerciseChannel = '/topic/quizExercise/' + this.quizId;
+            this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                (payload) => {
-                    if (this.waitingForQuizStart) {
-                        this.applyQuizFull(payload);
+                (quiz) => {
+                    if (this.waitingForQuizStart && this.quizId === quiz.id) {
+                        this.applyQuizFull(quiz);
                     }
                 },
                 () => {},

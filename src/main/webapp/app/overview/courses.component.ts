@@ -19,11 +19,11 @@ import * as moment from 'moment';
     templateUrl: './courses.component.html',
     styles: [
         `
-        .liveQuiz-modal {
-            display: block;
-            opacity: 1;
-        }
-        `
+            .liveQuiz-modal {
+                display: block;
+                opacity: 1;
+            }
+        `,
     ],
 })
 export class CoursesComponent implements OnInit {
@@ -32,9 +32,10 @@ export class CoursesComponent implements OnInit {
 
     courseForGuidedTour: Course | null;
     quizExercisesChannels: string[];
-    isQuizLive: boolean = false;
+
+    isQuizLive = false;
     liveQuiz: QuizExercise;
-    liveQuizCourse: Course | null;
+    liveQuizCourse: Course;
 
     constructor(
         private courseService: CourseManagementService,
@@ -99,22 +100,25 @@ export class CoursesComponent implements OnInit {
         }
     }
 
-    subscribeForQuizStartForCourses(){
+    subscribeForQuizStartForCourses() {
         if (this.courses) {
             // subscribe to quiz exercises that are live
             if (!this.quizExercisesChannels) {
-                this.quizExercisesChannels = this.courses.map(course => {return '/topic/' + course.id + '/quizExercises/start-now'});
+                this.quizExercisesChannels = this.courses.map((course) => {
+                    return '/topic/' + course.id + '/quizExercises/start-now';
+                });
                 // quizExercises channels => react to the start of a quiz exercise for all courses
-                this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.subscribe(channel));
-                this.quizExercisesChannels.forEach(channel => this.jhiWebsocketService.receive(channel).subscribe(
-                    (quizExercise: QuizExercise) => {
-                        // the quiz was started so we want to enable the #quizLiveModal modal
-                        this.isQuizLive = true;
-                        this.liveQuiz = quizExercise;
-                        this.liveQuizCourse = quizExercise.course
-                    },
-                    () => {},
-                    )
+                this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.subscribe(channel));
+                this.quizExercisesChannels.forEach((channel) =>
+                    this.jhiWebsocketService.receive(channel).subscribe(
+                        (quizExercise: QuizExercise) => {
+                            // the quiz was started so we want to enable the #quizLiveModal modal
+                            this.isQuizLive = true;
+                            this.liveQuiz = quizExercise;
+                            this.liveQuizCourse = quizExercise.course!;
+                        },
+                        () => {},
+                    ),
                 );
             }
         }

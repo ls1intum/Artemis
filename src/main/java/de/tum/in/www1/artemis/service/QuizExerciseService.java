@@ -343,16 +343,8 @@ public class QuizExerciseService {
             long start = System.currentTimeMillis();
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
-            if (quizChange.equals("set-visible")) {
-                // the quiz id is not yet known to the client, we need to use a more generic topic
-                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
-            } else if(quizChange.equals("start-now")) {
-                // the quiz id is not yet known to the client, we need to use a more generic topic
-                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises/start-now", MessageBuilder.withPayload(payload).build());
-            }
-            else {
-                messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
-            }
+            // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
+            messagingTemplate.send("/topic/courses" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
             log.info("    sent out '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
