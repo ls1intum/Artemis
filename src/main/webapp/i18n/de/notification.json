@@ -55,7 +55,7 @@
                 }
             }
         },
-        "system": {
+        "systemNotification": {
             "systemNotification": "Systemmitteilung",
             "systemNotifications": "Systemmitteilungen",
             "title": "Titel",

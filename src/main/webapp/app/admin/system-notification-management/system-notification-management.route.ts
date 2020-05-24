@@ -32,7 +32,7 @@ export const systemNotificationManagementRoute: Routes = [
             pagingParams: JhiResolvePagingParams,
         },
         data: {
-            pageTitle: 'artemisApp.system.systemNotifications',
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
             defaultSort: 'id,asc',
         },
     },
@@ -43,7 +43,7 @@ export const systemNotificationManagementRoute: Routes = [
             notification: SystemNotificationManagementResolve,
         },
         data: {
-            pageTitle: 'artemisApp.system.systemNotifications',
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
         },
     },
     {
@@ -53,7 +53,7 @@ export const systemNotificationManagementRoute: Routes = [
             notification: SystemNotificationManagementResolve,
         },
         data: {
-            pageTitle: 'artemisApp.system.systemNotifications',
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
         },
     },
     {
@@ -63,7 +63,7 @@ export const systemNotificationManagementRoute: Routes = [
             notification: SystemNotificationManagementResolve,
         },
         data: {
-            pageTitle: 'artemisApp.system.systemNotifications',
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
         },
     },
 ];
