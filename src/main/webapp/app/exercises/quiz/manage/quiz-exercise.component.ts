@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,14 +19,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     readonly ActionType = ActionType;
-
-    QuizStatus = {
-        HIDDEN: 'Hidden',
-        VISIBLE: 'Visible',
-        ACTIVE: 'Active',
-        CLOSED: 'Closed',
-        OPEN_FOR_PRACTICE: 'Open for Practice',
-    };
+    readonly QuizStatus = QuizStatus;
 
     @Input() quizExercises: QuizExercise[] = [];
 
@@ -121,7 +114,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Set the quiz exercise status for all quiz exercises.
      */
     setQuizExercisesStatus() {
-        this.quizExercises.forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
+        this.quizExercises.forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.getStatus(quizExercise)));
     }
 
     /**
@@ -156,7 +149,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course!);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course!);
-        newQuizExercise.status = this.quizExerciseService.statusForQuiz(newQuizExercise);
+        newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {
@@ -228,28 +221,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     public sortRows() {
-        if (this.predicate === 'statusAsNumber') {
-            this.quizExercises.forEach((a) => {
-                a.statusAsNumber = this.statusForQuiz(a);
-            });
-        }
-
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
-    }
-
-    /**
-     * Returns the status of the quiz represented as numbers, whether the quiz is
-     * open for practice or is it visible before it starts.
-     * @param quizExercise The quizExercise object.
-     */
-    private statusForQuiz(quizExercise: any) {
-        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
-            if (quizExercise.remainingTime <= 0) {
-                return quizExercise.isOpenForPractice ? 1 : 0;
-            } else {
-                return 2;
-            }
-        }
-        return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 }

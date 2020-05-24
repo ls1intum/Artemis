@@ -4,6 +4,14 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 
+export enum QuizStatus {
+    CLOSED,
+    OPEN_FOR_PRACTICE,
+    ACTIVE,
+    VISIBLE,
+    HIDDEN,
+}
+
 export class QuizExercise extends Exercise {
     public id: number;
     public remainingTime: number; // (computed by server)
@@ -16,14 +24,13 @@ export class QuizExercise extends Exercise {
     public duration: number;
     public quizPointStatistic: QuizPointStatistic;
     public quizQuestions: QuizQuestion[];
-    public status: string;
+    public status: QuizStatus;
 
     // helper attributes
     public adjustedDueDate: Moment;
     public adjustedReleaseDate: Moment;
     public ended: boolean;
     public started: boolean;
-    public statusAsNumber: number;
 
     public isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
     public isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
