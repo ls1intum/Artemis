@@ -176,7 +176,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             // submit new quiz answer
             socket.setTimeout(function () {
                 if (questionCount === 50) {
-                    console.log("Submitting via REST for " + currentUsername);
+                    console.log('Submitting via REST for ' + currentUsername);
                     submitRandomAnswerREST(10);
                 } else {
                     submitRandomAnswer(10);
@@ -186,7 +186,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         // Stop after timeout
         socket.setTimeout(function () {
-            console.log("Connection timed out");
+            console.log('Connection timed out');
             socket.close();
         }, timeout * 1000);
     });
