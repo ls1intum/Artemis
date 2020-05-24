@@ -25,13 +25,13 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.2.0"
+    id "com.google.cloud.tools.jib" version "2.3.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.0.0"
+    id "com.diffplug.gradle.spotless" version "4.0.1"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -201,7 +201,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:3.8.9"
+    implementation "org.liquibase:liquibase-core:3.9.0"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -259,7 +259,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:3.3.3"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
-    testImplementation "org.awaitility:awaitility:4.0.2"
+    testImplementation "org.awaitility:awaitility:4.0.3"
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation group: 'org.json', name: 'json', version: '20190722'
