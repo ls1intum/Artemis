@@ -115,7 +115,11 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      *  -> if canceled: close Modal
      */
     save(): void {
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise);
+        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise).then((res) => {
+            res.result.then(() => {
+                this.backupQuiz = this.quizExercise;
+            });
+        });
     }
 
     /**

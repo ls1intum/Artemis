@@ -93,7 +93,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                             this.question.answerOptions![i - 1] = updatedAnswer;
                             this.setAnswerTexts();
                             this.questionUpdated.emit();
-                            this.setupEditor(editor);
                         } else {
                             const updatedQuestion = Object.assign({}, this.question);
                             const questionParts = this.splitByCorrectIncorrectTag(editor.value.trim());
@@ -104,7 +103,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                             this.question.hint = updatedQuestion.hint;
                             this.setQuestionText();
                             this.questionUpdated.emit();
-                            this.setupEditor(editor);
                         }
                     },
                     this,
