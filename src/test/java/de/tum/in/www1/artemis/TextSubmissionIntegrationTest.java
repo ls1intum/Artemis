@@ -64,6 +64,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     private TextSubmission textSubmission;
 
+    private TextSubmission lateTextSubmission;
+
     private StudentParticipation afterDueDateParticipation;
 
     private User student;
@@ -80,6 +82,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        lateTextSubmission = ModelFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
 
         // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
@@ -178,6 +181,23 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_selectInTime() throws Exception {
+
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        lateTextSubmission = database.addTextSubmission(textExerciseAfterDueDate, lateTextSubmission, "student2");
+
+        assertThat(textSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(textExerciseAfterDueDate.getDueDate());
+        assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(textExerciseAfterDueDate.getDueDate());
+
+        TextSubmission storedSubmission = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+            TextSubmission.class);
+
+        assertThat(storedSubmission).as("text submission without assessment was found").isNotNull();
+        assertThat(storedSubmission.getId()).as("in-time text submission was found").isEqualTo(textSubmission.getId());
     }
 
     @Test

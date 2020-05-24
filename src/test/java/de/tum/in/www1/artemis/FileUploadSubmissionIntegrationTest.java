@@ -69,6 +69,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     private FileUploadSubmission notSubmittedFileUploadSubmission;
 
+    private FileUploadSubmission lateFileUploadSubmission;
+
     private MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
     private StudentParticipation participation;
@@ -81,6 +83,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
+        lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
         database.addParticipationForExercise(fileUploadExercise, "student3");
         participation = database.addParticipationForExercise(afterDueDateFileUploadExercise, "student3");
     }
@@ -204,12 +207,37 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getSubmissionWithoutAssessment() throws Exception {
         FileUploadSubmission submission = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+        database.addFileUploadSubmission(fileUploadExercise, lateFileUploadSubmission, "student2"); // tests prioritizing in-time submissions over late submissions
+
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(submittedFileUploadSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(fileUploadExercise.getDueDate());
+        assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(fileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getLateSubmissionWithoutAssessment() throws Exception {
+
+        database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+        FileUploadSubmission lateSubmission = database.addFileUploadSubmission(fileUploadExercise, lateFileUploadSubmission, "student1");
+
+        database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(submittedFileUploadSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(fileUploadExercise.getDueDate());
+        assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(fileUploadExercise.getDueDate());
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+            FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }

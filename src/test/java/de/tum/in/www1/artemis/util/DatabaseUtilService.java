@@ -681,7 +681,7 @@ public class DatabaseUtilService {
 
     public void addCourseWithOneTextExerciseDueDateReached() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
