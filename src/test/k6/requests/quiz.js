@@ -145,7 +145,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                 for (let [key, value] of Object.entries(res[0].headers)) {
                     console.log(`${key}: ${value}`);
                 }
-                console.log('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+                fail('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
             }
         }
 
