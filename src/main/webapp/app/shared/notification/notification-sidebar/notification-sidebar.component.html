@@ -31,7 +31,7 @@
             <div class="notification-item p-3" *ngFor="let notification of notifications" (click)="startNotification(notification)">
                 <div>
                     <h5>
-                        {{ notification.title }}
+                        {{ notificationTitle(notification) }}
                         <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)">
                             new
                         </span>

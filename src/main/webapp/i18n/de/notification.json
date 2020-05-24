@@ -16,6 +16,43 @@
                 "exerciseCreated": "Übung ansehen",
                 "exerciseUpdated": "Übung ansehen",
                 "attachmentUpdated": "Vorlesung ansehen"
+            },
+            "single": {
+                "newAnswerForExercise": {
+                    "title": "Neue Antwort"
+                },
+                "newAnswerForLecture": {
+                    "title": "Neue Antwort"
+                }
+            },
+            "group": {
+                "attachmentUpdated": {
+                    "title": "Anhang aktualisiert"
+                },
+                "exerciseCreated": {
+                    "title": "Aufgabe erstellt"
+                },
+                "exercisePractice": {
+                    "title": "Aufgabe zum Üben freigegeben"
+                },
+                "exerciseStarted": {
+                    "title": "Aufgabe gestartet"
+                },
+                "exerciseUpdated": {
+                    "title": "Aufgabe aktualisiert"
+                },
+                "newAnswerForExercise": {
+                    "title": "Neue Antwort"
+                },
+                "newAnswerForLecture": {
+                    "title": "Neue Antwort"
+                },
+                "newQuestionForExercise": {
+                    "title": "Neue Frage"
+                },
+                "newQuestionForLecture": {
+                    "title": "Neue Frage"
+                }
             }
         },
         "system": {

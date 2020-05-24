@@ -16,6 +16,43 @@
                 "exerciseCreated": "View exercise",
                 "exerciseUpdated": "View exercise",
                 "attachmentUpdated": "View lecture"
+            },
+            "single": {
+                "newAnswerForExercise": {
+                    "title": "New answer"
+                },
+                "newAnswerForLecture": {
+                    "title": "New answer"
+                }
+            },
+            "group": {
+                "attachmentUpdated": {
+                    "title": "Attachment updated"
+                },
+                "exerciseCreated": {
+                    "title": "Exercise created"
+                },
+                "exercisePractice": {
+                    "title": "Exercise open for practice"
+                },
+                "exerciseStarted": {
+                    "title": "Exercise started"
+                },
+                "exerciseUpdated": {
+                    "title": "Exercise updated"
+                },
+                "newAnswerForExercise": {
+                    "title": "New Answer"
+                },
+                "newAnswerForLecture": {
+                    "title": "New Answer"
+                },
+                "newQuestionForExercise": {
+                    "title": "New Question"
+                },
+                "newQuestionForLecture": {
+                    "title": "New Question"
+                }
             }
         },
         "system": {

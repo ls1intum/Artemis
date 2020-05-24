@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
@@ -25,7 +26,12 @@ export class NotificationSidebarComponent implements OnInit {
     notificationsPerPage = 25;
     error: string | null = null;
 
-    constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
+    constructor(
+        private notificationService: NotificationService,
+        private userService: UserService,
+        private accountService: AccountService,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Load notifications when user is authenticated on component initialization.
@@ -86,6 +92,19 @@ export class NotificationSidebarComponent implements OnInit {
                 this.loadNotifications();
             }
         }
+    }
+
+    /**
+     * Get the notification title for the given notification by evaluating the appropriate translation string for the notification type.
+     * Backwards compatibility: if the notification type is `single` or `group` the title assigned to the given notification will be returned.
+     * @param notification
+     */
+    notificationTitle(notification: Notification): string {
+        if (notification.notificationType === 'single' || notification.notificationType === 'group') {
+            return notification.title;
+        }
+        const typeParts = notification.notificationType.split('-');
+        return this.translateService.instant('artemisApp.notification.' + typeParts[0] + '.' + typeParts[1] + '.title');
     }
 
     private loadNotifications(): void {
