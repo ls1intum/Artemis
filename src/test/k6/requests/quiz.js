@@ -162,12 +162,13 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                     console.log("10 for " + currentUsername);
                 }
                 submitRandomAnswer(questionCount);
-            }, (questionCount - 1) * 3000 + 1000);
+            }, (questionCount - 1) * 1000 + 1000);
         }
 
 
         // Stop after timeout
         socket.setTimeout(function () {
+            console.log("Connection timed out");
             socket.close();
         }, timeout * 1000);
     });
