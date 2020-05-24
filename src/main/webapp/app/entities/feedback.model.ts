@@ -2,6 +2,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 
+/**
+ * provides different possible highlight colors for feedback
+ */
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
     CYAN = 'rgba(23, 162, 184, 0.3)',
@@ -10,6 +13,9 @@ export enum FeedbackHighlightColor {
     GREEN = 'rgba(40, 167, 69, 0.6)',
 }
 
+/**
+ * provides different types of how feedback can be given
+ */
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',

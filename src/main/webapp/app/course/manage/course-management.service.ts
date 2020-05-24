@@ -105,6 +105,10 @@ export class CourseManagementService {
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
+    /**
+     * finds the course with the provided unique identifier for dashboard
+     * @param courseId - the id of the course to be found
+     */
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
@@ -115,12 +119,20 @@ export class CourseManagementService {
             .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
 
+    /**
+     * call back after update of the course given as argument
+     * @param course
+     */
     courseWasUpdated(course: Course | null): void {
         if (course) {
             return this.courses.get(course.id)?.subject.next(course);
         }
     }
 
+    /**
+     * retrieves all updates for the course with the given courseId
+     * @param courseId
+     */
     getCourseUpdates(courseId: number): Observable<Course> {
         if (!this.courses.has(courseId)) {
             this.courses.set(courseId, new SubjectObservablePair());
@@ -354,7 +366,11 @@ export class CourseExerciseService {
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     // exercise specific calls
-
+    /**
+     * returns the programing exercise with the provided exerciseId for the course corresponding to courseId
+     * @param courseId
+     * @param exerciseId
+     */
     findProgrammingExercise(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}`)

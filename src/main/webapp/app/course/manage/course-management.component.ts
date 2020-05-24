@@ -113,7 +113,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * @callback empty callback
+     * empty callback function
      */
     callback() {}
 

@@ -194,6 +194,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * sets the croppedImage attribute to base64 of the provided event
      * @param $event
      */
     imageCropped($event: ImageCroppedEvent) {
