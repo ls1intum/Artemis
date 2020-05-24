@@ -123,14 +123,14 @@ public class StudentQuestionResource {
      * PUT /student-question-votes/{questionId} : Updates votes for a studentQuestion.
      *
      * @param questionId the ID of the question to update
-     * @param votes new number of votes to set
+     * @param voteChange value by which votes are increased / decreased
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-questions/{questionId}/votes")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long questionId, @RequestBody Integer votes) throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long questionId, @RequestBody Integer voteChange) throws URISyntaxException {
         final User user = userService.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
         if (optionalStudentQuestion.isEmpty()) {
@@ -138,7 +138,8 @@ public class StudentQuestionResource {
         }
         if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
             StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
-            updatedStudentQuestion.setVotes(votes);
+            Integer newVotes = updatedStudentQuestion.getVotes() + voteChange;
+            updatedStudentQuestion.setVotes(newVotes);
             StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedStudentQuestion.getId().toString())).body(result);
         }

@@ -32,6 +32,7 @@ export class StudentVotesComponent implements OnInit {
 
     user: User;
     userVote: StudentVote | null;
+    voteValueChange = 0;
 
     constructor(private localStorage: LocalStorageService, private accountService: AccountService) {}
 
@@ -51,22 +52,22 @@ export class StudentVotesComponent implements OnInit {
     toggleUpVote(): void {
         if (this.userVote) {
             if (this.userVote.isPositive) {
-                this.votes--;
                 this.userVote = null;
+                this.voteValueChange = -1;
                 this.localStorage.clear(`q${this.questionId}u${this.user.id}`);
             } else {
-                this.votes += 2;
                 this.userVote.isPositive = true;
+                this.voteValueChange = 2;
                 this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
             }
         } else {
-            this.votes++;
             this.userVote = { isPositive: true };
+            this.voteValueChange = 1;
             this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
         }
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
-            value: this.votes,
+            value: this.voteValueChange,
         });
     }
 
@@ -76,22 +77,22 @@ export class StudentVotesComponent implements OnInit {
     toggleDownVote(): void {
         if (this.userVote) {
             if (this.userVote.isPositive) {
-                this.votes -= 2;
                 this.userVote.isPositive = false;
+                this.voteValueChange = -2;
                 this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
             } else {
-                this.votes++;
                 this.userVote = null;
+                this.voteValueChange = 1;
                 this.localStorage.clear(`q${this.questionId}u${this.user.id}`);
             }
         } else {
-            this.votes--;
             this.userVote = { isPositive: false };
+            this.voteValueChange = -1;
             this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
         }
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
-            value: this.votes,
+            value: this.voteValueChange,
         });
     }
 }
