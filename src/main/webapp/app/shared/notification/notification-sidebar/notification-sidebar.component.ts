@@ -139,6 +139,7 @@ export class NotificationSidebarComponent implements OnInit {
             if (notification && notification.notificationDate) {
                 notification.notificationDate = moment(notification.notificationDate);
                 this.addNotifications([notification], true);
+                this.sortNotifications();
             }
         });
     }
@@ -168,5 +169,11 @@ export class NotificationSidebarComponent implements OnInit {
         } else {
             this.recentNotificationCount = this.notifications.length;
         }
+    }
+
+    private sortNotifications(): void {
+        this.notifications = this.notifications.sort((a: Notification, b: Notification) => {
+            return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
+        });
     }
 }
