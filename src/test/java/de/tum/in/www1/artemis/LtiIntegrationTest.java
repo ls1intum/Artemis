@@ -60,7 +60,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             + "&lis_person_sourcedid=lovaiible" + "&oauth_callback=about%3Ablank";
 
     @BeforeEach
-    void init() throws InterruptedException {
+    void init() {
         /* We mock the following methods because we don't have the OAuth secret for edx */
         doReturn(true).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
@@ -173,7 +173,6 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         LtiOutcomeUrl savedLtiOutcomeUrl = ltiOutcomeUrlRepository.findAll().get(0);
 
         request.delete("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.OK);
-        request.delete("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(ltiOutcomeUrlRepository.findAll()).isEmpty();
     }
@@ -221,8 +220,6 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         LtiUserId savedLtiUserId = ltiUserIdRepository.findAll().get(0);
 
         request.delete("/api/lti-user-ids/" + savedLtiUserId.getId(), HttpStatus.OK);
-        request.delete("/api/lti-user-ids/" + savedLtiUserId.getId() + 1, HttpStatus.INTERNAL_SERVER_ERROR);
-
         assertThat(ltiUserIdRepository.findAll()).isEmpty();
     }
 }
