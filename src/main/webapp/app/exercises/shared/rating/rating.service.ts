@@ -8,7 +8,7 @@ import { SERVER_API_URL } from 'app/app.constants';
     providedIn: 'root',
 })
 export class RatingService {
-    private ratingResourceUrl = SERVER_API_URL + 'api/rating';
+    private ratingResourceUrl = SERVER_API_URL + 'api/results/';
 
     constructor(private http: HttpClient) {}
 
@@ -17,7 +17,7 @@ export class RatingService {
      * @param rating - Rating for the result
      */
     setRating(rating: Rating): Observable<Rating> {
-        return this.http.post<Rating>(this.ratingResourceUrl, rating);
+        return this.http.post<Rating>(this.ratingResourceUrl + `/${rating.id}/rating/${rating.rating}`, rating);
     }
 
     /**
@@ -25,7 +25,7 @@ export class RatingService {
      * @param resultId - Id of Result who's rating is received
      */
     getRating(resultId: number): Observable<Rating> {
-        return this.http.get<Rating>(this.ratingResourceUrl + `/result/${resultId}`);
+        return this.http.get<Rating>(this.ratingResourceUrl + `/${resultId}/rating`);
     }
 
     /**
@@ -33,6 +33,6 @@ export class RatingService {
      * @param rating - Rating for the result
      */
     updateRating(rating: Rating): Observable<Rating> {
-        return this.http.put<Rating>(this.ratingResourceUrl, rating);
+        return this.http.put<Rating>(this.ratingResourceUrl + `/${rating.id}/rating/${rating.rating}`, rating);
     }
 }

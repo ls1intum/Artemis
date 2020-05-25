@@ -32,6 +32,7 @@ public class RatingService {
 
     /**
      * Return Rating that refers to Result with id resultId
+     *
      * @param resultId - Id of Result that the rating refers to
      * @return Rating if it exists else null
      */
@@ -41,27 +42,31 @@ public class RatingService {
 
     /**
      * Persist a new Rating
-     * @param rating - Rating that should be persisted
+     *
+     * @param resultId    - Id of the rating that should be persisted
+     * @param ratingValue - Value of the rating that should be persisted
      * @return persisted Rating
      */
     @Transactional
-    public Rating saveRating(Rating rating) {
-        Result result = resultRepository.findById(rating.getResult().getId()).orElseThrow();
+    public Rating saveRating(Long resultId, Integer ratingValue) {
+        Result result = resultRepository.findById(resultId).orElseThrow();
         Rating serverRating = new Rating();
-        serverRating.setRating(rating.getRating());
+        serverRating.setRating(ratingValue);
         serverRating.setResult(result);
         return ratingRepository.save(serverRating);
     }
 
     /**
      * Update an existing Rating
-     * @param rating - Updated Rating that should be persisted
+     *
+     * @param resultId    - Id of the rating that should be updated
+     * @param ratingValue - Value of the updated rating
      * @return updated rating
      */
     @Transactional
-    public Rating updateRating(Rating rating) {
-        Rating update = this.ratingRepository.getOne(rating.getId());
-        update.setRating(rating.getRating());
+    public Rating updateRating(Long resultId, Integer ratingValue) {
+        Rating update = this.ratingRepository.getOne(resultId);
+        update.setRating(ratingValue);
         return update;
     }
 }

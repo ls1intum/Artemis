@@ -76,7 +76,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         database.addCourseWithOneTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
-        User tutor1 = users.get(2);
         Participation participation = database.addParticipationForExercise(exercise, student1.getLogin());
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
@@ -88,8 +87,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         rating = new Rating();
         rating.setResult(result);
         rating.setRating(2);
-
-        // this.submission = database.addTextSubmissionWithResultAndAssessor(exercise, submission, student1.getLogin(), tutor1.getLogin());
     }
 
     @AfterEach
@@ -101,39 +98,39 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testCreateRating_asUser() throws Exception {
-        request.post("/api/rating", rating, HttpStatus.CREATED);
+        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testCreateRating_asTutor_FORBIDDEN() throws Exception {
-        request.post("/api/rating", rating, HttpStatus.FORBIDDEN);
+        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser() throws Exception {
-        Rating result = ratingService.saveRating(rating);
-        request.get("/api/rating/result/" + result.getId(), HttpStatus.OK, Rating.class);
+        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
+        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser_NOT_FOUND() throws Exception {
-        request.get("/api/rating/result/" + result.getId(), HttpStatus.NOT_FOUND, Rating.class);
+        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.NOT_FOUND, Rating.class);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testUpdateRating_asUser() throws Exception {
-        Rating result = ratingService.saveRating(rating);
-        request.put("/api/rating", result, HttpStatus.OK);
+        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
+        request.put("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
-        Rating result = ratingService.saveRating(rating);
-        request.put("/api/rating", result, HttpStatus.FORBIDDEN);
+        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
+        request.put("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
 }

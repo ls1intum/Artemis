@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,7 +28,6 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing Rating.
@@ -53,12 +50,6 @@ public class RatingResource {
 
     private final ParticipationService participationService;
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
-
     public RatingResource(RatingService ratingService, UserService userService, AuthorizationCheckService authCheckService, ResultService resultService,
             ParticipationService participationService) {
         this.ratingService = ratingService;
@@ -74,7 +65,7 @@ public class RatingResource {
      * @param resultId - Id of result that is referenced with the rating
      * @return Rating or 404 Not Found
      */
-    @GetMapping("/rating/result/{resultId}")
+    @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> getRatingForResult(@PathVariable Long resultId) {
         Optional<Rating> rating = this.ratingService.findRatingByResultId(resultId);
@@ -87,47 +78,43 @@ public class RatingResource {
     /**
      * Persist a new Rating
      *
-     * @param rating - Rating that should be persisted
+     * @param resultId    - Id of the rating that should be updated
+     * @param ratingValue - Value of the updated rating
      * @return inserted Rating
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/rating")
+    @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) throws URISyntaxException {
-        if (rating.getId() != null) {
-            throw new BadRequestAlertException("The rating must not have an ID", ENTITY_NAME, "idDoesExist");
-        }
+    public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) throws URISyntaxException {
         User user = userService.getUser();
-        Result res = resultService.findOne(rating.getResult().getId());
+        Result res = resultService.findOne(resultId);
         StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
         if (!authCheckService.isOwnerOfParticipation(participation, user)) {
             return forbidden();
         }
 
-        Rating result = this.ratingService.saveRating(rating);
-        return ResponseEntity.created(new URI("/api/rating/" + result.getId())).body(result);
+        Rating result = this.ratingService.saveRating(resultId, ratingValue);
+        return ResponseEntity.created(new URI("/api/results/" + result.getId() + "/rating")).body(result);
     }
 
     /**
      * Update a Rating
      *
-     * @param rating - updated Rating
+     * @param resultId    - Id of the rating that should be updated
+     * @param ratingValue - Value of the updated rating
      * @return updated Rating
      */
-    @PutMapping("/rating")
+    @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> updateRatingForResult(@RequestBody Rating rating) {
-        if (rating.getId() == null) {
-            throw new BadRequestAlertException("The rating must have an ID", ENTITY_NAME, "idDoesNotExist");
-        }
+    public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) {
         User user = userService.getUser();
-        Result res = resultService.findOne(rating.getId());
+        Result res = resultService.findOne(resultId);
         StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
         if (!authCheckService.isOwnerOfParticipation(participation, user)) {
             return forbidden();
         }
 
-        Rating result = this.ratingService.updateRating(rating);
+        Rating result = this.ratingService.updateRating(resultId, ratingValue);
         return ResponseEntity.ok(result);
     }
 }
