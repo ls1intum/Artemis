@@ -82,7 +82,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithLatestResultAsAnInstructor() throws Exception {
         addStudentParticipationWithResult();
-        StudentParticipation participation = (StudentParticipation) studentParticipationRepository.findAll().get(0);
+        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
     }
@@ -91,7 +91,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksAsStudent() throws Exception {
         addStudentParticipationWithResult();
-        StudentParticipation participation = (StudentParticipation) studentParticipationRepository.findAll().get(0);
+        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -99,7 +99,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
         addTemplateParticipationWithResult();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -107,7 +107,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         addTemplateParticipationWithResult();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -115,7 +115,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         addTemplateParticipationWithResult();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -123,7 +123,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
         addSolutionParticipationWithResult();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -131,7 +131,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         addSolutionParticipationWithResult();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -139,7 +139,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         addSolutionParticipationWithResult();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 

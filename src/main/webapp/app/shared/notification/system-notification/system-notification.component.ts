@@ -5,7 +5,7 @@ import { SystemNotification, SystemNotificationType } from 'app/entities/system-
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
-import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-system-notification',

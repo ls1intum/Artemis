@@ -73,11 +73,8 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
-        database.addCourseWithOneModelingExercise();
-        course = courseRepo.findAll().get(0);
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        modelingExercise.setCourse(course);
-        modelingExerciseRepository.save(modelingExercise);
+        course = database.addCourseWithOneModelingExercise();
+        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
         studentParticipation.setExercise(modelingExercise);
         result = database.addResultToParticipation(studentParticipation);
@@ -111,7 +108,8 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
 
         assertThat(modelingExerciseRepository.findById(modelingExercise.getId()).get()).as("modeling exercise is present").isNotNull();
         assertThat(modelAssessmentConflictRepository.findAll().isEmpty()).as("modeling assessment conflict repository is not empty").isFalse();
-        List<ModelAssessmentConflict> response = request.get("/api/exercises/" + modelingExercise.getId() + "/model-assessment-conflicts", HttpStatus.OK, List.class);
+        List<ModelAssessmentConflict> response = request.getList("/api/exercises/" + modelingExercise.getId() + "/model-assessment-conflicts", HttpStatus.OK,
+                ModelAssessmentConflict.class);
 
         assertThat(response.isEmpty()).as("List is not empty").isFalse();
         assertThat(response.size()).as("List contains 1 conflict").isEqualTo(1);
@@ -146,7 +144,7 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
         List<ModelAssessmentConflict> body = new ArrayList<ModelAssessmentConflict>();
         body.add(modelAssessmentConflict);
 
-        List<ModelAssessmentConflict> response = request.putWithResponseBody("/api/model-assessment-conflicts/escalate", body, List.class, HttpStatus.OK);
+        List<ModelAssessmentConflict> response = request.putWithResponseBodyList("/api/model-assessment-conflicts/escalate", body, ModelAssessmentConflict.class, HttpStatus.OK);
         assertThat(response.isEmpty()).as("response not empty").isFalse();
         assertThat(response.size()).as("size equals body length").isEqualTo(body.size());
     }

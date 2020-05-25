@@ -14,6 +14,7 @@ import { Result } from 'app/entities/result.model';
 })
 export class AssessmentHeaderComponent {
     @Input() hideBackButton: boolean;
+    @Input() isComplaint: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;

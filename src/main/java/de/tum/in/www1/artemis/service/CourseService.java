@@ -89,10 +89,23 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises (filtered for given user)
+     * Get one course with exercises and lectures (filtered for given user)
+     *
+     * @param courseId  the course to fetch
+     * @param user      the user entity
+     * @return          the course including exercises and lectures for the user
+     */
+    public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
+        Course course = findOne(courseId);
+        fetchExercisesAndLecturesForCourse(user, course);
+        return course;
+    }
+
+    /**
+     * Get all courses with exercises and lectures (filtered for given user)
      *
      * @param user      the user entity
-     * @return the list of all courses including exercises for the user
+     * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
         return findAllActive().stream()
@@ -100,12 +113,22 @@ public class CourseService {
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
                 .peek(course -> {
-                    // fetch visible lectures exercises for each course after filtering
-                    Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
-                    List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
-                    course.setExercises(new HashSet<>(exercises));
-                    course.setLectures(lectures);
+                    fetchExercisesAndLecturesForCourse(user, course);
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * fetch exercises and lectures for one course
+     *
+     * @param user to determine which exercises and lectures the user can see
+     * @param course the course for which exercises and lectures should be fetched
+     */
+    private void fetchExercisesAndLecturesForCourse(User user, Course course) {
+        // fetch visible lectures exercises for each course after filtering
+        Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
+        List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
+        course.setExercises(new HashSet<>(exercises));
+        course.setLectures(lectures);
     }
 
     private boolean isActiveCourseVisibleForUser(User user, Course course) {
