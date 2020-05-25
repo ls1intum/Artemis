@@ -54,7 +54,6 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
-        checkGeneralFeedback(textAssessment);
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
                 .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
