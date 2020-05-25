@@ -58,6 +58,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private subscriptionData: Subscription;
 
+    // Difference between server and client time
     timeDifference = 0;
     // outstandingWebsocketResponses = 0;
 
@@ -797,8 +798,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.sendWebsocket) {
             if (!this.disconnected) {
                 // this.isSaving = true;
+                this.submission.submissionDate = moment().add(this.timeDifference, 'seconds');
                 this.sendWebsocket(this.submission);
                 this.unsavedChanges = false;
+                this.updateSubmissionTime();
             } else {
                 this.unsavedChanges = true;
             }
