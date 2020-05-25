@@ -31,4 +31,11 @@ export class MockUserService {
             }),
         } as HttpResponse<User[]>);
     }
+
+    updateLastNotificationRead(): Observable<HttpResponse<User>> {
+        return of({
+            body: {} as User,
+            headers: new HttpHeaders(),
+        } as HttpResponse<User>);
+    }
 }

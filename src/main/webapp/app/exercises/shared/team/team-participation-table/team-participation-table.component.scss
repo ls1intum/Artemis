@@ -60,3 +60,7 @@ $space-left-from-divider: 50px;
     font-weight: bold;
     color: $current-exercise-text-color;
 }
+
+.btn[disabled]:hover {
+    cursor: not-allowed;
+}

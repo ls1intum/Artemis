@@ -130,6 +130,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
+    List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
