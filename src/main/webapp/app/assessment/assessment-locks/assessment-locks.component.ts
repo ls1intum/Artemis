@@ -50,7 +50,6 @@ export class AssessmentLocksComponent implements OnInit {
             this.tutorId = Number(queryParams['tutorId']);
         });
         this.getAllLockedSubmissions();
-        console.log('submissions:', this.submissions);
     }
 
     /**

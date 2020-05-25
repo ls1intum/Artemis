@@ -1,23 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyNoInteractions;
-
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
@@ -33,6 +15,23 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -44,6 +43,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     CourseRepository courseRepo;
+
+    @Autowired
+    ExerciseRepository exerciseRepo;
+
+    @Autowired
+    ParticipationRepository participationRepo;
+
+    @Autowired
+    SubmissionRepository submissionRepo;
+
+    @Autowired
+    ResultRepository resultRepo;
 
     @Autowired
     CustomAuditEventRepository auditEventRepo;
@@ -747,5 +758,38 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
+        database.addCourseWithDifferentModelingExercises();
+        ModelingExercise classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+
+        List<Submission> lockedSubmissions = request.get("/api/courses/" + classExercise.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
+        assertThat(lockedSubmissions).as("Locked Submissions length is 0").hasSize(0);
+
+        String validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student2", "tutor1");
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student3", "tutor1");
+
+        lockedSubmissions = request.get("/api/courses/" + classExercise.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
+        assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
+        List<Submission> lockedSubmissions = request.get("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
     }
 }
