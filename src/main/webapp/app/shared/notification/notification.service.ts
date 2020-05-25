@@ -62,7 +62,7 @@ export class NotificationService {
 
     /**
      * Query all notifications.
-     * @param req request options
+     * @param {any?} req request options
      * @return Observable<HttpResponse<Notification[]>>
      */
     query(req?: any): Observable<HttpResponse<Notification[]>> {
@@ -162,7 +162,7 @@ export class NotificationService {
 
     /**
      * Get the notificationObserver.
-     * @return {BehaviorSubject<Notification}
+     * @return {BehaviorSubject<Notification | null>}
      */
     subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
         return this.notificationObserver;

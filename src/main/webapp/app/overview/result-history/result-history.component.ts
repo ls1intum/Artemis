@@ -14,7 +14,7 @@ export class ResultHistoryComponent {
     @Input() showPreviousDivider = false;
 
     /**
-     * get string for icon if score bigger than 75
+     * get string for icon if score greater/equal 75
      * @param {Result} result
      * @return {string} icon
      */

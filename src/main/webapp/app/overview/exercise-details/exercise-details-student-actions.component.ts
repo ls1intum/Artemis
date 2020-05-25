@@ -69,6 +69,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * get repositoryUrl for participation
      *
      * @param {Participation} participation
+     * @return {string}
      */
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
@@ -81,7 +82,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     /**
      * The user info part of the repository url of a team participation has to be be added with the current user's login.
      *
-     * @return repository url with username of current user inserted
+     * @return {string} repository url with username of current user inserted
      */
     private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
         // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
@@ -162,7 +163,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     /**
      * build the sourceTreeUrl from the cloneUrl
      * @param {string} cloneUrl
-     * @return sourceTreeUrl
+     * @return {string} sourceTreeUrl
      */
     buildSourceTreeUrl(cloneUrl: string): string {
         return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
@@ -204,7 +205,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     /**
      * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
      *
-     * @return {assignedTeamId}
+     * @return {number | undefined} assignedTeamId
      */
     get assignedTeamId(): number | undefined {
         const participation = this.exercise.studentParticipations[0];

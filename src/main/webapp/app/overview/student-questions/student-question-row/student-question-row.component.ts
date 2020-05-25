@@ -52,7 +52,7 @@ export class StudentQuestionRowComponent implements OnInit {
     }
 
     /**
-     * interact with asnwer component
+     * interact with answer component according to the action argument
      * @param {StudentQuestionAnswerAction} action
      */
     interactAnswer(action: StudentQuestionAnswerAction) {
@@ -70,7 +70,7 @@ export class StudentQuestionRowComponent implements OnInit {
     }
 
     /**
-     * interact with question component
+     * interact with question component according to the action argument
      * @param {StudentQuestionAction} action
      */
     interactQuestion(action: StudentQuestionAction): void {

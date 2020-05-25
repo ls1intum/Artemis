@@ -45,7 +45,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Notify all participation subscribers with the newest participation value (e.g. if the result has changed).
-     * @param participation
+     * @param {Participation} participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
         if (!this.participationObservable) {
@@ -57,7 +57,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Notify all result subscribers with the newest result provided.
-     * @param result
+     * @param {Result} result
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation!.id);
@@ -72,7 +72,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Update a cachedParticipation with the given result, meaning that the new result will be added to it.
-     * @param result
+     * @param {Result} result
      */
     private addResultToParticipation = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.participation!.id);
@@ -88,8 +88,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * This adds a participation to the cached data maps. The exercise information is required to find the correct
      * participations for a given exercise. Please note: we explicitly do not want to use websockets here!
      *
-     * @param newParticipation The new participation for the cached data maps
-     * @param exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
+     * @param {StudentParticipation} newParticipation The new participation for the cached data maps
+     * @param {Exercise?} exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
@@ -104,7 +104,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Returns all participations for all exercises. The participation objects include the exercise data and all results.
-     * @return array of Participations
+     * @return {[StudentParticipation]} array of Participations
      */
     private getAllParticipations(): StudentParticipation[] {
         return [...this.cachedParticipations.values()];
@@ -114,7 +114,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return the cached student participation for the exercise or null
+     * @return {StudentParticipation | null} the cached student participation for the exercise or null
      */
     public getParticipationForExercise(exerciseId: number): StudentParticipation | null {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
@@ -132,8 +132,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     /**
      * Removes all participation information locally from all cached data maps.
      *
-     * @param participationId ID of the participation that should not be tracked anymore
-     * @param exerciseId optional the participationId an exercise that should not be tracked anymore
+     * @param {number} participationId ID of the participation that should not be tracked anymore
+     * @param {number?} exerciseId optional the participationId an exercise that should not be tracked anymore
      */
     private removeParticipation(participationId: number, exerciseId?: number) {
         this.cachedParticipations.delete(participationId);
@@ -153,7 +153,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Checks for the given participation if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
-     * @param participationId
+     * @param {number} participationId
      * @private
      */
     private openResultWebsocketSubscriptionIfNotExisting(participationId: number) {
@@ -173,6 +173,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * A received object will be the full participation object including all results and the exercise.
      *
      * If no observable exists a new one will be created.
+     * @return {BehaviorSubject<Participation | null>}
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | null> {
         if (!this.participationObservable) {
@@ -187,7 +188,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * If there is no observable for the participation a new one will be created.
      *
-     * @param participationId Id of Participation of which result to subscribe to
+     * @param {number} participationId Id of Participation of which result to subscribe to
+     * @return {BehaviorSubject<Result | null>}
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
         this.openResultWebsocketSubscriptionIfNotExisting(participationId);
@@ -201,8 +203,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Unsubscribe from the result
-     * @param participationId
-     * @param exercise The exercise to which the participationId belongs to. Needed for deciding whether to unsubscribe from the websocket
+     * @param {number} participationId
+     * @param {Exercise} exercise The exercise to which the participationId belongs to. Needed for deciding whether to unsubscribe from the websocket
      */
     public unsubscribeForLatestResultOfParticipation(participationId: number, exercise: Exercise): void {
         // Only unsubscribe from websocket, if the exercise is not active any more

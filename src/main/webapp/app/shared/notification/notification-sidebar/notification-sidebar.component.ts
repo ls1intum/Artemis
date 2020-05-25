@@ -53,7 +53,7 @@ export class NotificationSidebarComponent implements OnInit {
     /**
      * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
      * of what should happen after the notification was clicked will be handled in the notification service.
-     * @param notification that will be interpreted of type {Notification}
+     * @param {Notification} notification that will be interpreted of type {Notification}
      */
     startNotification(notification: Notification): void {
         this.showSidebar = false;

@@ -54,7 +54,7 @@ export class StudentQuestionAnswerService {
 
     /**
      * get studentQuestionAnswers for query
-     * @param {any} req?
+     * @param {any?} req
      * @return Observable<EntityArrayResponseType>
      */
     query(req?: any): Observable<EntityArrayResponseType> {

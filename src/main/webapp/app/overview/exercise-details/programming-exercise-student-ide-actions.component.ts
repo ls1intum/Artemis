@@ -67,8 +67,8 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     /**
      * Get the repo URL of a participation. Can be used to clone from the repo or push to it.
      *
-     * @param participation The participation for which to get the repository URL
-     * @return The URL of the remote repository in which the user's code referring the the current exercise is stored.
+     * @param {Participation} participation The participation for which to get the repository URL
+     * @return {string} The URL of the remote repository in which the user's code referring the the current exercise is stored.
      */
     repositoryUrl(participation: Participation) {
         return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
