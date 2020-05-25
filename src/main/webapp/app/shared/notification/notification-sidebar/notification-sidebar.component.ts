@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
@@ -26,12 +24,7 @@ export class NotificationSidebarComponent implements OnInit {
     notificationsPerPage = 25;
     error: string | null = null;
 
-    constructor(
-        private notificationService: NotificationService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
     /**
      * Load notifications when user is authenticated on component initialization.
@@ -95,16 +88,11 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
-     * Returns the title stored with the given notification if there is a title.
-     * Otherwise, returns the notification title for the given notification by evaluating the appropriate translation string for the notification type.
+     * Evaluate the title for the given notification. The evaluation will be handled in the notification service.
      * @param notification {Notification}
      */
     notificationTitle(notification: Notification): string {
-        if (notification.title) {
-            return notification.title;
-        }
-        const typeParts = notification.notificationType.split('-');
-        return this.translateService.instant('artemisApp.notification.' + typeParts[0] + '.' + typeParts[1] + '.title');
+        return this.notificationService.notificationTitle(notification);
     }
 
     private loadNotifications(): void {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map } from 'rxjs/operators';
@@ -21,7 +22,13 @@ export class NotificationService {
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private router: Router,
+        private http: HttpClient,
+        private accountService: AccountService,
+        private translateService: TranslateService,
+    ) {
         this.initNotificationObserver();
     }
 
@@ -164,6 +171,19 @@ export class NotificationService {
                 this.router.navigate(['courses', notification.course.id, 'lectures', notification.notificationTarget.lecture.id]);
                 break;
         }
+    }
+
+    /**
+     * Returns the title stored with the given notification if there is a title.
+     * Otherwise, returns the notification title for the given notification by evaluating the appropriate translation string for the notification type.
+     * @param notification {Notification}
+     */
+    notificationTitle(notification: Notification): string {
+        if (notification.title) {
+            return notification.title;
+        }
+        const typeParts = notification.notificationType.split('-');
+        return this.translateService.instant('artemisApp.notification.' + typeParts[0] + '.' + typeParts[1] + '.title');
     }
 
     /**
