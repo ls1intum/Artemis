@@ -222,7 +222,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         studentQuestion.setVotes(42);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
     }
@@ -234,7 +234,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         studentQuestion.setVotes(42);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
     }
@@ -247,7 +247,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         studentQuestion.setVotes(42);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
     }
