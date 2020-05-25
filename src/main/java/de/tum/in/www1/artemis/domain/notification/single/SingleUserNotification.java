@@ -8,6 +8,7 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
@@ -46,12 +47,13 @@ public class SingleUserNotification extends Notification implements Serializable
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(String title, String text, User author, User recipient) {
+    public SingleUserNotification(String title, String text, User author, User recipient, Course course) {
         this.setTitle(title);
         this.setText(text);
         this.setNotificationDate(ZonedDateTime.now());
         this.setAuthor(author);
         this.setRecipient(recipient);
+        this.setCourse(course);
     }
 
     @Override
