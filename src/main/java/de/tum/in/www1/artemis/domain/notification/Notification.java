@@ -11,11 +11,15 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
+import de.tum.in.www1.artemis.domain.notification.group.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.single.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.system.SystemNotification;
 
 /**
  * A Notification.
@@ -29,6 +33,8 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 // NOTE: Use strict cache to prevent lost updates
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
+@JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification implements Serializable {
 
