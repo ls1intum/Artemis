@@ -120,7 +120,7 @@ public class StudentQuestionResource {
     }
 
     /**
-     * PUT /student-question-votes/{questionId} : Updates votes for a studentQuestion.
+     * PUT /student-questions/{questionId}/votes : Updates votes for a studentQuestion.
      *
      * @param questionId the ID of the question to update
      * @param voteChange value by which votes are increased / decreased
@@ -144,7 +144,7 @@ public class StudentQuestionResource {
             Integer newVotes = updatedStudentQuestion.getVotes() + voteChange;
             updatedStudentQuestion.setVotes(newVotes);
             StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedStudentQuestion.getId().toString())).body(result);
+            return ResponseEntity.ok().body(result);
         }
         else {
             return forbidden();
