@@ -6,7 +6,7 @@ import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { Notification, NotificationType } from 'app/entities/notification.model';
+import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -95,12 +95,12 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
-     * Get the notification title for the given notification by evaluating the appropriate translation string for the notification type.
-     * Backwards compatibility: if the notification type is `single` or `group` the title assigned to the given notification will be returned.
-     * @param notification
+     * Returns the title stored with the given notification if there is a title.
+     * Otherwise, returns the notification title for the given notification by evaluating the appropriate translation string for the notification type.
+     * @param notification {Notification}
      */
     notificationTitle(notification: Notification): string {
-        if (notification.notificationType === NotificationType.SINGLE || notification.notificationType === NotificationType.GROUP) {
+        if (notification.title) {
             return notification.title;
         }
         const typeParts = notification.notificationType.split('-');
