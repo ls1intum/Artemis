@@ -63,10 +63,9 @@ public class RatingService {
      * @param ratingValue - Value of the updated rating
      * @return updated rating
      */
-    @Transactional
     public Rating updateRating(Long resultId, Integer ratingValue) {
-        Rating update = this.ratingRepository.getOne(resultId);
+        Rating update = this.ratingRepository.findById(resultId).orElseThrow();
         update.setRating(ratingValue);
-        return update;
+        return ratingRepository.save(update);
     }
 }
