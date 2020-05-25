@@ -38,17 +38,6 @@ export class NotificationService {
     }
 
     /**
-     * Find notification by id.
-     * @param {number} id
-     * @return Observable<HttpResponse<Notification>>
-     */
-    find(id: number): Observable<HttpResponse<Notification>> {
-        return this.http
-            .get<Notification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
-    }
-
-    /**
      * Query all notifications.
      * @param req request options
      * @return Observable<HttpResponse<Notification[]>>

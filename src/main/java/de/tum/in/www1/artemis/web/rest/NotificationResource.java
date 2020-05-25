@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.PaginationUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 
 /**
@@ -85,20 +83,6 @@ public class NotificationResource {
         }
         Notification result = notificationRepository.save(notification);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, notification.getId().toString())).body(result);
-    }
-
-    /**
-     * GET /notifications/:id : get the "id" notification.
-     *
-     * @param id the id of the notification to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
-     */
-    @GetMapping("/notifications/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Notification> getNotification(@PathVariable Long id) {
-        log.debug("REST request to get Notification : {}", id);
-        Optional<Notification> notification = notificationRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(notification);
     }
 
     /**

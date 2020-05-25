@@ -198,18 +198,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR")
-    public void testGetNotification_asInstructor() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        Notification notification = request.postWithResponseBody("/api/notifications", groupNotification, Notification.class, HttpStatus.CREATED);
-        request.put("/api/notifications", notification, HttpStatus.OK);
-        request.get("/api/notifications/" + notification.getId(), HttpStatus.OK, Notification.class);
-        request.get("/api/notifications/" + notification.getId() + 1, HttpStatus.NOT_FOUND, Notification.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
     public void testDeleteNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
         GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
