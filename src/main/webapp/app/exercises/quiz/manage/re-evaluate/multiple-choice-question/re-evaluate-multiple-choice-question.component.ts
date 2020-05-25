@@ -38,6 +38,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     questionEditorText = '';
     answerEditorText = new Array<string>();
     editorMode = 'markdown';
+    editorOptions = {
+        showPrintMargin: false,
+        highlightActiveLine: false,
+        showGutter: false,
+        wrap: true,
+        printMargin: 8,
+    };
 
     // Create Backup Question for resets
     @Input()
@@ -76,12 +83,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         });
     }
 
+    private setAnswerText(index: number): void {
+        const answerToSet = Object.assign({}, this.question.answerOptions![index]);
+        this.answerEditorText[index] = this.generateAnswerMarkdown(answerToSet);
+    }
+
     /**
      * Setup text editor for the question
      */
     setupQuestionEditor(): void {
         if (this.questionEditor) {
-            this.setupEditor(this.questionEditor);
             this.questionEditor.getEditor().on(
                 'blur',
                 () => {
@@ -106,32 +117,19 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     setupAnswerEditors(): void {
         if (this.aceEditorComponents) {
             this.aceEditorComponents.forEach((editor, i) => {
-                this.setupEditor(editor);
                 editor.getEditor().on(
                     'blur',
                     () => {
                         const updatedAnswer = Object.assign({}, this.question.answerOptions![i]);
                         this.parseAnswerMarkdown(editor.value.trim(), updatedAnswer);
                         this.question.answerOptions![i] = updatedAnswer;
-                        this.setAnswerTexts();
+                        this.setAnswerText(i);
                         this.questionUpdated.emit();
                     },
                     this,
                 );
             });
         }
-    }
-
-    private setupEditor(editor: AceEditorComponent): void {
-        editor.setTheme('chrome');
-        editor.getEditor().renderer.setShowGutter(false);
-        editor.getEditor().renderer.setPadding(10);
-        editor.getEditor().renderer.setScrollMargin(8, 8);
-        editor.getEditor().setHighlightActiveLine(false);
-        editor.getEditor().setShowPrintMargin(false);
-        editor.getEditor().setOptions({
-            wrap: true,
-        });
     }
 
     /**
@@ -249,7 +247,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Overwrite current answerOption at given index with the backup
         this.question.answerOptions![index] = backupAnswer;
-        this.setAnswerTexts();
+        this.setAnswerText(index);
         this.questionUpdated.emit();
     }
 

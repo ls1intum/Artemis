@@ -67,7 +67,10 @@
                 <ace-editor
                     #questionEditor
                     [text]="questionEditorText"
+                    [theme]="'chrome'"
                     [mode]="editorMode"
+                    [autoUpdateContent]="true"
+                    [options]="editorOptions"
                     style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
                 >
@@ -89,7 +92,10 @@
                 <ace-editor
                     #answerEditor
                     [text]="answerEditorText[i]"
+                    [theme]="'chrome'"
                     [mode]="editorMode"
+                    [autoUpdateContent]="true"
+                    [options]="editorOptions"
                     style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
                     class="form-control"
                 >
