@@ -172,9 +172,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     public void testDeleteNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
         GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        Notification notification = request.postWithResponseBody("/api/notifications", groupNotification, Notification.class, HttpStatus.CREATED);
-        request.put("/api/notifications", notification, HttpStatus.OK);
-        request.delete("/api/notifications/" + notification.getId(), HttpStatus.OK);
+        groupNotification.setTarget(null);
+        notificationRepository.save(groupNotification);
+        request.delete("/api/notifications/" + groupNotification.getId(), HttpStatus.OK);
     }
 }
