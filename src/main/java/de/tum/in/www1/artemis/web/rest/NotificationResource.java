@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.NotificationService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.PaginationUtil;
 import io.swagger.annotations.ApiParam;
@@ -64,25 +62,6 @@ public class NotificationResource {
         final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * PUT /notifications : Updates an existing notification.
-     *
-     * @param notification the notification to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the notification is not valid, or with status 500
-     *         (Internal Server Error) if the notification couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("/notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
-        log.debug("REST request to update Notification : {}", notification);
-        if (notification.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        Notification result = notificationRepository.save(notification);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, notification.getId().toString())).body(result);
     }
 
     /**

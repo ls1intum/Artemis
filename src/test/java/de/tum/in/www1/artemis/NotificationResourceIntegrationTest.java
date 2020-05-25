@@ -169,35 +169,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR")
-    public void testUpdateNotification_asInstructor_OK() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        groupNotification.setId(1L);
-        request.put("/api/notifications", groupNotification, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void testUpdateNotification_asInstructor_BAD_REQUEST() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        request.putWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    public void testUpdateNotification_asStudent() throws Exception {
-        GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        groupNotification.setId(2L);
-        request.put("/api/notifications", groupNotification, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
     public void testDeleteNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
         GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
