@@ -137,7 +137,7 @@ export class NotificationService {
      * Navigate to notification target.
      * @param {GroupNotification} notification
      */
-    interpretNotification(notification: Notification): void {
+    navigateToTarget(notification: Notification): void {
         switch (notification.notificationType) {
             case NotificationType.SINGLE:
             case NotificationType.GROUP:
