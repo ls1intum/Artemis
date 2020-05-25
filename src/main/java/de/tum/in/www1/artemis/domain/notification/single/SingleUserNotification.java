@@ -47,8 +47,7 @@ public class SingleUserNotification extends Notification implements Serializable
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(String title, String text, User author, User recipient, Course course) {
-        this.setTitle(title);
+    public SingleUserNotification(String text, User author, User recipient, Course course) {
         this.setText(text);
         this.setNotificationDate(ZonedDateTime.now());
         this.setAuthor(author);
