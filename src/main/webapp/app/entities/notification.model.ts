@@ -30,4 +30,5 @@ export class Notification implements BaseEntity {
     public target: string;
     public author: User;
     public course: Course;
+    public notificationTarget: any;
 }

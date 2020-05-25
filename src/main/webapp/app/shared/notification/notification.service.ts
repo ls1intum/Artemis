@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
-import { Notification } from 'app/entities/notification.model';
+import { Notification, NotificationType } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
@@ -172,10 +172,33 @@ export class NotificationService {
      * Navigate to notification target.
      * @param {GroupNotification} notification
      */
-    interpretNotification(notification: GroupNotification): void {
-        const target = JSON.parse(notification.target);
-        const courseId = target.course || notification.course.id;
-        this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+    interpretNotification(notification: Notification): void {
+        switch (notification.notificationType) {
+            case NotificationType.SINGLE:
+            case NotificationType.GROUP:
+                const target = JSON.parse(notification.target);
+                let courseId = target.course;
+                if (notification instanceof GroupNotification) {
+                    courseId = notification.course.id;
+                }
+                this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+                break;
+            case NotificationType.SINGLE_NEW_ANSWER_FOR_EXERCISE:
+            case NotificationType.GROUP_EXERCISE_CREATED:
+            case NotificationType.GROUP_EXERCISE_PRACTICE:
+            case NotificationType.GROUP_EXERCISE_STARTED:
+            case NotificationType.GROUP_EXERCISE_UPDATED:
+            case NotificationType.GROUP_NEW_ANSWER_FOR_EXERCISE:
+            case NotificationType.GROUP_NEW_QUESTION_FOR_EXERCISE:
+                this.router.navigate(['courses', notification.course.id, 'exercises', notification.notificationTarget.exercise.id]);
+                break;
+            case NotificationType.SINGLE_NEW_ANSWER_FOR_LECTURE:
+            case NotificationType.GROUP_ATTACHMENT_UPDATED:
+            case NotificationType.GROUP_NEW_ANSWER_FOR_LECTURE:
+            case NotificationType.GROUP_NEW_QUESTION_FOR_LECTURE:
+                this.router.navigate(['courses', notification.course.id, 'lectures', notification.notificationTarget.lecture.id]);
+                break;
+        }
     }
 
     /**
