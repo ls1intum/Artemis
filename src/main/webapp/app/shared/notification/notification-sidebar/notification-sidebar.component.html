@@ -2,7 +2,7 @@
     <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="'bell'"></fa-icon>
         <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
-            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
+            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length && recentNotificationCount >= notificationsPerPage">+</span>
         </span>
     </button>
 </li>
