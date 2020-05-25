@@ -46,7 +46,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1200;
+    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1500;
 
     @BeforeEach
     void init() {
@@ -109,7 +109,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1L));
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
-        Thread.sleep(1000);
+        Thread.sleep(SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
@@ -120,7 +120,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateIsNull() throws Exception {
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
-        Thread.sleep(1000);
+        Thread.sleep(SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
@@ -130,14 +130,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
         mockStudentRepoLocks();
-        long delayMS = 100; // 100 ms.
+        long delayMS = 200; // 200 ms.
         programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
         // Setting it the first time.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
         // Setting it the second time.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS) * 2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS * 2)));
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
         Thread.sleep(delayMS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS);

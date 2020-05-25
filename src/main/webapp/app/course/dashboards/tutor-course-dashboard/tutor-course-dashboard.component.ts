@@ -78,6 +78,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     /**
      * Load all exercises and statistics for tutors of this course.
+     * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
         this.courseService.getForTutors(this.courseId).subscribe(
@@ -126,7 +127,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 }
 
                 if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
+                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments / this.numberOfSubmissions) * 100);
                 }
             },
             (response: string) => this.onError(response),
