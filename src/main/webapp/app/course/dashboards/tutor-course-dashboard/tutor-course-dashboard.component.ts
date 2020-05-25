@@ -83,7 +83,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     loadAll() {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
-                this.course = res.body!;
+                this.course = Course.from(res.body!);
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
