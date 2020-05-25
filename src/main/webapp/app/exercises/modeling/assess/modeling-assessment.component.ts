@@ -245,10 +245,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * @param feedbacks the feedback list to convert and pass on to Apollon
      */
     private updateApollonAssessments(feedbacks: Feedback[]) {
-        if (feedbacks === undefined) {
-            return;
-        }
-
         if (!feedbacks) {
             return;
         }
