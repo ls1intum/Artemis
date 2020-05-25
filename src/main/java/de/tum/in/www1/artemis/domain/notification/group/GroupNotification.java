@@ -6,7 +6,6 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.gson.JsonObject;
 
@@ -29,10 +28,6 @@ public class GroupNotification extends Notification implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private GroupNotificationType type;
-
-    @ManyToOne
-    @JsonIgnoreProperties("groupNotifications")
-    private Course course;
 
     public GroupNotification() {
     }
@@ -59,19 +54,6 @@ public class GroupNotification extends Notification implements Serializable {
 
     public void setType(GroupNotificationType type) {
         this.type = type;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public GroupNotification course(Course course) {
-        this.course = course;
-        return this;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

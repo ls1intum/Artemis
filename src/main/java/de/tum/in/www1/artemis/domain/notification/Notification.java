@@ -13,6 +13,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 
@@ -59,6 +60,9 @@ public abstract class Notification implements Serializable {
 
     @ManyToOne
     private User author;
+
+    @ManyToOne
+    private Course course;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -158,6 +162,19 @@ public abstract class Notification implements Serializable {
 
     public void setAuthor(User user) {
         this.author = user;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public Notification course(Course course) {
+        this.course = course;
+        return this;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

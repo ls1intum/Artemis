@@ -1,6 +1,7 @@
 import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course.model';
 
 export enum NotificationType {
     SYSTEM = 'system',
@@ -28,4 +29,5 @@ export class Notification implements BaseEntity {
     public notificationDate: Moment | null;
     public target: string;
     public author: User;
+    public course: Course;
 }
