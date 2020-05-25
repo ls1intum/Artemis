@@ -7,10 +7,8 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -70,27 +68,6 @@ public class GroupNotification extends Notification implements Serializable {
             return false;
         }
         return Objects.equals(getId(), groupNotification.getId());
-    }
-
-    public String getExerciseUpdatedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "exerciseUpdated");
-    }
-
-    /**
-     * Create JSON representation for a GroupNotification for an Exercise.
-     *
-     * @param exercise for which to create the notification.
-     * @param message to use for the notification.
-     * @return the stringified JSON of the target.
-     */
-    public String getExerciseTarget(Exercise exercise, String message) {
-        JsonObject target = new JsonObject();
-        target.addProperty("message", message);
-        target.addProperty("id", exercise.getId());
-        target.addProperty("entity", "exercises");
-        target.addProperty("course", exercise.getCourse().getId());
-        target.addProperty("mainPage", "courses");
-        return target.toString();
     }
 
     public String getTopic() {
