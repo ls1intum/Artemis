@@ -28,17 +28,20 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final CompassService compassService;
 
+    private final SubmissionVersionService submissionVersionService;
+
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
-            AuthorizationCheckService authCheckService) {
+            CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService, resultRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
+        this.submissionVersionService = submissionVersionService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -119,7 +122,7 @@ public class ModelingSubmissionService extends SubmissionService {
     @Transactional
     public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
 
             // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
@@ -207,6 +210,16 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setParticipation(participation);
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
+        // versioning of submission
+        try {
+            if (modelingExercise.isTeamMode()) {
+                submissionVersionService.save(modelingSubmission, username);
+            }
+        }
+        catch (Exception ex) {
+            log.error("Modeling submission version could not be saved: " + ex);
+        }
+
         participation.addSubmissions(modelingSubmission);
 
         if (modelingSubmission.isSubmitted()) {
@@ -241,7 +254,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         var result = lockSubmission(modelingSubmission);
-        if (result.getAssessor() == null && compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }
     }
@@ -281,7 +294,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise   the exercise the submission belongs to
      */
     public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
     }

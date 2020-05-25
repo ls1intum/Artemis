@@ -156,6 +156,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
+        studentRepo.resetLocalRepo();
+        studentTeamRepo.resetLocalRepo();
     }
 
     @ParameterizedTest

@@ -191,6 +191,17 @@ If you only want to allow the server that runs Artemis to query the information,
 
 If you use SSH and use a different port than `2222`, you have to adjust the port above.
 
+14. Disable prometheus.  
+    As we encountered issues with the prometheus log files not being deleted and therefore filling up the disk space, we decided to disable prometheus within Gitlab.
+    If you also want to disable prometheus, edit the configuration again using
+    
+        nano /etc/gitlab/gitlab.rb
+    
+    and add the following line
+        
+        prometheus_monitoring['enable'] = false
+        
+    The issue with more details can be found [here](https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/4166).
 
 Reconfigure Gitlab
     

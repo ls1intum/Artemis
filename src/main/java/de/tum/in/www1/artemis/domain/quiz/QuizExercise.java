@@ -30,10 +30,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @DiscriminatorValue(value = "Q")
 public class QuizExercise extends Exercise implements Serializable {
 
-    public enum Status {
-        INACTIVE, STARTED, FINISHED
-    }
-
     private static final long serialVersionUID = 1L;
 
     @Column(name = "randomize_question_order")
@@ -200,7 +196,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Check if the quiz has started
-     * 
+     *
      * @return true if quiz has started, false otherwise
      */
     @JsonView(QuizView.Before.class)
@@ -210,7 +206,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Check if submissions for this quiz are allowed at the moment
-     * 
+     *
      * @return true if submissions are allowed, false otherwise
      */
     @JsonIgnore
@@ -220,7 +216,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Check if the quiz has ended
-     * 
+     *
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
@@ -231,7 +227,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Check if the quiz should be filtered for students (because it hasn't ended yet)
-     * 
+     *
      * @return true if quiz should be filtered, false otherwise
      */
     @JsonIgnore
@@ -282,8 +278,6 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public QuizExercise questions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -296,8 +290,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -311,8 +303,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.remove(quizQuestion);
         quizQuestion.setExercise(null);
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -323,9 +313,6 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
-        if (quizQuestions != null) {
-            recalculatePointCounters();
-        }
     }
 
     @Override
@@ -625,18 +612,11 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * Constructor. 1. generate associated QuizPointStatistic implicitly
+     * correct the associated quizPointStatistic
+     * 1. add new PointCounters for new Scores
+     * 2. delete old PointCounters if the score is no longer contained
      */
-    public QuizExercise() {
-        // creates the associated quizPointStatistic implicitly
-        quizPointStatistic = new QuizPointStatistic();
-        quizPointStatistic.setQuiz(this);
-    }
-
-    /**
-     * correct the associated quizPointStatistic implicitly 1. add new PointCounters for new Scores 2. delete old PointCounters if the score is no longer contained
-     */
-    private void recalculatePointCounters() {
+    public void recalculatePointCounters() {
         if (quizPointStatistic == null || !Hibernate.isInitialized(quizPointStatistic)) {
             return;
         }
@@ -752,8 +732,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 }
             }
         }
-        // reconnect quizPointStatistic
-        getQuizPointStatistic().setQuiz(this);
+
         // reconnect pointCounters
         for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
@@ -762,21 +741,4 @@ public class QuizExercise extends Exercise implements Serializable {
         }
     }
 
-    /**
-     * Determines the Status of a QuizExercise
-     *
-     * @param quiz the Quiz for which the status should be determined
-     * @return the Status of the given Quiz
-     */
-    public static Status statusForQuiz(QuizExercise quiz) {
-        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            return Status.INACTIVE;
-        }
-        else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
-            return Status.FINISHED;
-        }
-        else {
-            return Status.STARTED;
-        }
-    }
 }
