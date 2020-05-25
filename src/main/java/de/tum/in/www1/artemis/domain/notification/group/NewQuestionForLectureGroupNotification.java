@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -18,11 +20,28 @@ public class NewQuestionForLectureGroupNotification extends GroupNotification im
 
     private static final long serialVersionUID = 1L;
 
+    @ManyToOne(targetEntity = StudentQuestion.class)
+    @JoinColumn(name = "notification_target")
+    private StudentQuestion notificationTarget;
+
     public NewQuestionForLectureGroupNotification() {
     }
 
     public NewQuestionForLectureGroupNotification(User author, GroupNotificationType groupNotificationType, StudentQuestion question) {
         super("New Question", "Lecture \"" + question.getLecture().getTitle() + "\" got a new question.", author, question.getLecture().getCourse(), groupNotificationType);
-        this.setTarget(super.getLectureQuestionTarget(question.getLecture()));
+        this.setNotificationTarget(question);
+    }
+
+    public StudentQuestion getNotificationTarget() {
+        return notificationTarget;
+    }
+
+    public NewQuestionForLectureGroupNotification notificationTarget(StudentQuestion notificationTarget) {
+        this.notificationTarget = notificationTarget;
+        return this;
+    }
+
+    public void setNotificationTarget(StudentQuestion notificationTarget) {
+        this.notificationTarget = notificationTarget;
     }
 }

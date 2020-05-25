@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -18,11 +20,28 @@ public class ExerciseStartedGroupNotification extends GroupNotification implemen
 
     private static final long serialVersionUID = 1L;
 
+    @ManyToOne(targetEntity = Exercise.class)
+    @JoinColumn(name = "notification_target")
+    private Exercise notificationTarget;
+
     public ExerciseStartedGroupNotification() {
     }
 
     public ExerciseStartedGroupNotification(User author, GroupNotificationType groupNotificationType, Exercise exercise) {
         super("Exercise started", "Exercise \"" + exercise.getTitle() + "\" just started.", author, exercise.getCourse(), groupNotificationType);
-        this.setTarget(super.getExerciseUpdatedTarget(exercise));
+        this.setNotificationTarget(exercise);
+    }
+
+    public Exercise getNotificationTarget() {
+        return notificationTarget;
+    }
+
+    public ExerciseStartedGroupNotification notificationTarget(Exercise notificationTarget) {
+        this.notificationTarget = notificationTarget;
+        return this;
+    }
+
+    public void setNotificationTarget(Exercise notificationTarget) {
+        this.notificationTarget = notificationTarget;
     }
 }

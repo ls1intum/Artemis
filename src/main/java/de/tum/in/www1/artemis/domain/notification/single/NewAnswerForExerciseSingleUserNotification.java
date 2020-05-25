@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.domain.notification.single;
 
 import java.io.Serializable;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 
 @Entity
@@ -16,21 +14,28 @@ public class NewAnswerForExerciseSingleUserNotification extends SingleUserNotifi
 
     private static final long serialVersionUID = 1L;
 
+    @ManyToOne(targetEntity = StudentQuestionAnswer.class)
+    @JoinColumn(name = "notification_target")
+    private StudentQuestionAnswer notificationTarget;
+
     public NewAnswerForExerciseSingleUserNotification() {
     }
 
     public NewAnswerForExerciseSingleUserNotification(StudentQuestionAnswer answer) {
         super("New answer", "Your Question got answered.", answer.getAuthor(), answer.getQuestion().getAuthor());
-        this.setTarget(this.createTarget(answer));
+        this.setNotificationTarget(answer);
     }
 
-    private String createTarget(StudentQuestionAnswer studentQuestionAnswer) {
-        JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
-        target.addProperty("entity", "exercises");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
-        target.addProperty("mainPage", "courses");
-        return target.toString();
+    public StudentQuestionAnswer getNotificationTarget() {
+        return notificationTarget;
+    }
+
+    public NewAnswerForExerciseSingleUserNotification notificationTarget(StudentQuestionAnswer notificationTarget) {
+        this.notificationTarget = notificationTarget;
+        return this;
+    }
+
+    public void setNotificationTarget(StudentQuestionAnswer notificationTarget) {
+        this.notificationTarget = notificationTarget;
     }
 }
