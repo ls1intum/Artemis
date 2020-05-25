@@ -135,7 +135,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value | date: 'medium' }}
+                        {{ value | artemisDate: 'long':true }}
                     </ng-template>
                 </ngx-datatable-column>
 

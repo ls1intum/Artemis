@@ -97,8 +97,8 @@
                             <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                         </td>
                         <td>{{ exercise.title }}</td>
-                        <td>{{ exercise.dueDate | date: 'medium' }}</td>
-                        <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
+                        <td>{{ exercise.dueDate | artemisDate }}</td>
+                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
                         <td>{{ exercise.numberOfSubmissions.total }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>

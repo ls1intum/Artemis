@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static org.hibernate.Hibernate.isInitialized;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -268,45 +267,27 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final TextSubmission textSubmission = optionalTextSubmission.get();
-        final User user = userService.getUserWithGroupsAndAuthorities();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        exercise.setGradingCriteria(gradingCriteria);
+        Result result = textSubmission.getResult();
+
+        final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
-        Result result = textSubmission.getResult();
-        // If we already have a result, we need to check if it is locked.
-        if (result != null) {
-            final User assessor = result.getAssessor();
-            if (!isAtLeastInstructorForExercise && assessor != null && !assessor.getLogin().equals(user.getLogin()) && result.getCompletionDate() == null) {
-                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
-            }
-
-            // Load Feedback already created for this assessment
-            final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-            result.setFeedbacks(assessments);
-            if (assessments.isEmpty() && computeFeedbackSuggestions) {
-                automaticTextFeedbackService.get().suggestFeedback(result);
-            }
+        if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
+                && result.getCompletionDate() == null) {
+            // If we already have a result, we need to check if it is locked.
+            throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
         }
-        // We we are the first ones to open assess this submission, we want to lock it.
-        else {
-            result = new Result();
-            result.setParticipation(participation);
-            result.setSubmission(textSubmission);
-            resultService.createNewRatedManualResult(result, false);
-            result.setCompletionDate(null);
-            result = resultRepository.save(result);
 
-            // If enabled, we want to compute feedback suggestions using Athene.
-            if (computeFeedbackSuggestions) {
-                result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
-                automaticTextFeedbackService.get().suggestFeedback(result);
-            }
-        }
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
+
+        textSubmissionService.hideDetails(textSubmission, user);
+        result = textSubmission.getResult();
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
@@ -314,23 +295,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // Remove Result from Submission, as it is send in participation.results[0]
         textSubmission.setResult(null);
-
-        // If we did not call AutomaticTextFeedbackService::suggestFeedback, we need to fetch them now.
-        if (!result.getFeedbacks().isEmpty() || !computeFeedbackSuggestions) {
-            final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-            textSubmission.setBlocks(textBlocks);
-        }
-
-        // If we did not fetch blocks from the database before, we fall back to computing them based on syntax.
-        if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
-            textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
-        }
-        textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-
-        if (!isAtLeastInstructorForExercise && participation instanceof StudentParticipation) {
-            final StudentParticipation studentParticipation = (StudentParticipation) participation;
-            studentParticipation.filterSensitiveInformation();
-        }
 
         // Remove Submission from Result
         result.setSubmission(null);

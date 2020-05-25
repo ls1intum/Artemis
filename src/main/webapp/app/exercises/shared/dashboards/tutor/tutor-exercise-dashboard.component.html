@@ -240,7 +240,7 @@
                     <tbody>
                         <tr *ngFor="let submission of submissions; let i = index">
                             <td>{{ i + 1 }}</td>
-                            <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                            <td>{{ submission.submissionDate | artemisDate }}</td>
                             <td>
                                 <jhi-result [participation]="submission.participation"></jhi-result>
                             </td>
@@ -280,7 +280,7 @@
                         </tr>
                         <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
                             <td></td>
-                            <td>{{ unassessedSubmission?.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                            <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
@@ -340,7 +340,7 @@
                         <tbody>
                             <tr *ngFor="let complaint of complaints; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ complaint.submittedTime | date: 'MMM d, y HH:mm:ss' }}</td>
+                                <td>{{ complaint.submittedTime | artemisDate }}</td>
                                 <td>
                                     <jhi-result [result]="complaint.result" [participation]="complaint.result.participation"></jhi-result>
                                 </td>
@@ -395,7 +395,7 @@
                         <tbody>
                             <tr *ngFor="let moreFeedbackRequest of moreFeedbackRequests; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ moreFeedbackRequest.submittedTime | date: 'MMM d, y HH:mm:ss' }}</td>
+                                <td>{{ moreFeedbackRequest.submittedTime | artemisDate }}</td>
                                 <td>
                                     <jhi-result [result]="moreFeedbackRequest.result"></jhi-result>
                                 </td>

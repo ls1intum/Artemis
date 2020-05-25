@@ -1058,6 +1058,7 @@ public class DatabaseUtilService {
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
+        submission.setResult(result);
         return submission;
     }
 
@@ -1069,8 +1070,24 @@ public class DatabaseUtilService {
         return addTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
+    public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
+            List<Feedback> feedbacks) {
+        submission = addTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
+        Result result = submission.getResult();
+        for (Feedback f : feedbacks)
+            f.setResult(result);
+        feedbackRepo.saveAll(feedbacks);
+        result.setFeedbacks(feedbacks);
+        resultRepo.save(result);
+        return submission;
+    }
+
     public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
-        blocks.forEach(block -> block.setSubmission(submission));
+        blocks.forEach(block -> {
+            block.setSubmission(submission);
+            block.setTextFromSubmission();
+            block.computeId();
+        });
         submission.setBlocks(blocks);
         textBlockRepo.saveAll(blocks);
         textSubmissionRepo.save(submission);
