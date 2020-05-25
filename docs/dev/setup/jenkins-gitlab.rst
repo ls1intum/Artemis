@@ -11,7 +11,7 @@ Configurations*
 
 **If you want to setup everything on your local machine, you can also
 just ignore all NGINX related steps.** **Just make sure that you use
-unique port mappings for your Docker containers (e.g.** ``80`` **for 
+unique port mappings for your Docker containers (e.g.** ``80`` **for
 GitLab,** ``8080`` **for Jenkins,** ``8081`` **for Artemis)**
 
 **Prerequisites:**
@@ -42,7 +42,7 @@ will be explained below in the corresponding sections.
            use-external: false
            internal-admin:
                username: artemis_admin
-               password: artemis_admin            
+               password: artemis_admin
        version-control:
            url: <https://gitlab-url>
            user: <gitlab-admin-user>
@@ -203,13 +203,13 @@ Gitlab Access Token
 
 12. (Optional) Allow outbound requests to local network
 
-There is a known limitation for the local setup: webhook URLs for the
-communication between Gitlab and Artemis and between Gitlab and Jenkins
-cannot include local IP addresses. This option can be deactivate in
-Gitlab on ``<https://gitlab-url>/admin/application_settings/network`` →
-Outbound requests. Another possible solution is to register a local URL,
-e.g. using `ngrok <https://ngrok.com/>`__, to be available over a domain
-the Internet.
+    There is a known limitation for the local setup: webhook URLs for the
+    communication between Gitlab and Artemis and between Gitlab and Jenkins
+    cannot include local IP addresses. This option can be deactivate in
+    Gitlab on ``<https://gitlab-url>/admin/application_settings/network`` →
+    Outbound requests. Another possible solution is to register a local URL,
+    e.g. using `ngrok <https://ngrok.com/>`__, to be available over a domain
+    the Internet.
 
 13. Adjust the monitoring-endpoint whitelist. Run the following command
 
@@ -230,12 +230,29 @@ the Internet.
        gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
        gitlab_rails['gitlab_shell_ssh_port'] = 2222
 
-This will disable the firewall for all IP addresses. If you only want to
-allow the server that runs Artemis to query the information, replace
-``0.0.0.0/0`` with ``ARTEMIS.SERVER.IP.ADRESS/32``
+    This will disable the firewall for all IP addresses. If you only want to
+    allow the server that runs Artemis to query the information, replace
+    ``0.0.0.0/0`` with ``ARTEMIS.SERVER.IP.ADRESS/32``
 
-If you use SSH and use a different port than ``2222``, you have to
-adjust the port above.
+    If you use SSH and use a different port than ``2222``, you have to
+    adjust the port above.
+
+14. Disable prometheus.
+    As we encountered issues with the prometheus log files not being deleted and therefore filling up the disk space, we decided to disable prometheus within Gitlab.
+    If you also want to disable prometheus, edit the configuration again using
+
+    ::
+
+        nano /etc/gitlab/gitlab.rb
+
+    and add the following line
+
+    ::
+
+        prometheus_monitoring['enable'] = false
+
+    The issue with more details can be found `here <https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/4166>`__.
+
 
 Reconfigure Gitlab
 
@@ -388,7 +405,7 @@ Start Jenkins
 
     ::
 
-        sudo docker exec -it jenkins /bin/bash 
+        sudo docker exec -it jenkins /bin/bash
 
         mvn -version
 
@@ -612,7 +629,7 @@ the following steps:
 
    .. figure:: jenkins-gitlab/jenkins_project_config_xml.png
       :align: center
-      
+
       Job configuration XML
 
 10. Copy the value of
@@ -675,19 +692,19 @@ them with your setup specific values ### GitLab
        add_header Referrer-Policy same-origin;
        client_max_body_size 10m;
        client_body_buffer_size 1m;
-    
+
        location / {
            proxy_pass              http://localhost:<your exposed GitLab HTTP port (default 80)>;
            proxy_read_timeout      300;
            proxy_connect_timeout   300;
            proxy_http_version      1.1;
            proxy_redirect          http://         https://;
-    
+
            proxy_set_header    Host                $http_host;
            proxy_set_header    X-Real-IP           $remote_addr;
            proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
            proxy_set_header    X-Forwarded-Proto   $scheme;
-    
+
            gzip off;
        }
    }
@@ -709,7 +726,7 @@ Jenkins
        add_header Referrer-Policy same-origin;
        client_max_body_size 10m;
        client_body_buffer_size 1m;
-    
+
        location / {
            proxy_pass              http://localhost:<your exposed Jenkins HTTP port (default 8080)>;
            proxy_set_header        Host                $host:$server_port;
@@ -717,16 +734,16 @@ Jenkins
            proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
            proxy_set_header        X-Forwarded-Proto   $scheme;
            proxy_redirect          http://             https://;
-    
+
            # Required for new HTTP-based CLI
            proxy_http_version 1.1;
            proxy_request_buffering off;
            proxy_buffering off; # Required for HTTP-based CLI to work over SSL
-    
+
            # workaround for https://issues.jenkins-ci.org/browse/JENKINS-45651
            add_header 'X-SSH-Endpoint' 'your.jenkins.domain.com:50022' always;
        }
-    
+
        error_page 502 /502.html;
        location /502.html {
            root /usr/share/nginx/html;
