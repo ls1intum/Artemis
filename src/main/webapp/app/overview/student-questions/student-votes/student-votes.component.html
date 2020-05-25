@@ -3,9 +3,15 @@
         <fa-icon class="clickable fa-2x vote" [class.vote-active]="userVote && userVote.isPositive" [icon]="'angle-up'" (click)="toggleUpVote()"></fa-icon>
     </div>
     <div class="col-auto text-center">
-        {{ votes }}
+        {{ votes > 0 ? votes : 0 }}
     </div>
     <div class="col-auto">
-        <fa-icon class="clickable fa-2x vote" [class.vote-active]="userVote && !userVote.isPositive" [icon]="'angle-down'" (click)="toggleDownVote()"></fa-icon>
+        <fa-icon
+            class="clickable fa-2x vote"
+            [class.vote-active]="userVote && !userVote.isPositive"
+            [class.invisible]="votes <= 0 && !userVote"
+            [icon]="'angle-down'"
+            (click)="toggleDownVote()"
+        ></fa-icon>
     </div>
 </div>

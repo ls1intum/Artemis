@@ -131,7 +131,7 @@ public class StudentQuestionResource {
     @PutMapping("/student-questions/{questionId}/votes")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long questionId, @RequestBody Integer voteChange) throws URISyntaxException {
-        if (voteChange < -2 && voteChange > 2) {
+        if (voteChange < -2 || voteChange > 2) {
             return forbidden();
         }
         final User user = userService.getUserWithGroupsAndAuthorities();
