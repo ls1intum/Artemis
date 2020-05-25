@@ -294,7 +294,8 @@ public class FileService {
 
         for (Resource resource : resources) {
 
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            // Replace windows seperator with "/"
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8").replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
@@ -408,7 +409,9 @@ public class FileService {
 
                 line = reader.readLine();
             }
-
+            // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
+            reader.close();
+            writer.close();
             Files.delete(file.toPath());
             FileUtils.moveFile(tempFile, new File(filePath));
         }

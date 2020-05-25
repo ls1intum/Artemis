@@ -15,13 +15,13 @@ public class CompassConfiguration {
     public final static double RELATION_TYPE_WEIGHT = 0.3;
 
     // Weight of the source and destination elements when calculating the similarity of two UML relationships
-    public final static double RELATION_ELEMENT_WEIGHT = 0.35;
+    public final static double RELATION_ELEMENT_WEIGHT = 0.25;
 
     // Weight of the multiplicity when calculating the similarity of two UML relationships
-    public final static double RELATION_MULTIPLICITY_OPTIONAL_WEIGHT = 0.05;
+    public final static double RELATION_MULTIPLICITY_WEIGHT = 0.05;
 
     // Weight of the roles when calculating the similarity of two UML relationships
-    public final static double RELATION_ROLE_OPTIONAL_WEIGHT = 0.05;
+    public final static double RELATION_ROLE_WEIGHT = 0.05;
 
     // Weight of the class type when calculating the similarity of two UML classes
     public final static double CLASS_TYPE_WEIGHT = 0.3;

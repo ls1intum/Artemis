@@ -3,7 +3,7 @@
 [![GitHub Actions Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
 
-This application was generated using JHipster 6.8.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.8.0))
+This application was generated using JHipster 6.9.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.9.0))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
