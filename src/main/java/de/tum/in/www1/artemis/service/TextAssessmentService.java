@@ -105,6 +105,15 @@ public class TextAssessmentService extends AssessmentService {
         return this.feedbackRepository.findByResult(result);
     }
 
+    /**
+     * Load entities from database needed for text assessment & compute Feedback suggestions (Athene):
+     *   1. Create or load the result
+     *   2. Compute Feedback Suggestions
+     *   3. Load Text Blocks
+     *   4. Compute Fallback Text Blocks if needed
+     *
+     * @param textSubmission Text Submission to be assessed
+     */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
