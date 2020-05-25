@@ -30,8 +30,7 @@ public class GroupNotification extends Notification implements Serializable {
     public GroupNotification() {
     }
 
-    public GroupNotification(String title, String text, User author, Course course, GroupNotificationType type) {
-        this.setTitle(title);
+    public GroupNotification(String text, User author, Course course, GroupNotificationType type) {
         this.setText(text);
         this.setNotificationDate(ZonedDateTime.now());
         this.setAuthor(author);

@@ -28,7 +28,7 @@ public class ExerciseUpdatedGroupNotification extends GroupNotification implemen
     }
 
     public ExerciseUpdatedGroupNotification(User author, GroupNotificationType groupNotificationType, String notificationText, Exercise exercise) {
-        super("Exercise updated", "Exercise \"" + exercise.getTitle() + "\" updated.", author, exercise.getCourse(), groupNotificationType);
+        super("Exercise \"" + exercise.getTitle() + "\" updated.", author, exercise.getCourse(), groupNotificationType);
         this.setNotificationTarget(exercise);
         if (notificationText != null) {
             this.setText(notificationText);

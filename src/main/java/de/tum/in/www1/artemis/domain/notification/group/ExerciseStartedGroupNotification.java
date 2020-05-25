@@ -28,7 +28,7 @@ public class ExerciseStartedGroupNotification extends GroupNotification implemen
     }
 
     public ExerciseStartedGroupNotification(User author, GroupNotificationType groupNotificationType, Exercise exercise) {
-        super("Exercise started", "Exercise \"" + exercise.getTitle() + "\" just started.", author, exercise.getCourse(), groupNotificationType);
+        super("Exercise \"" + exercise.getTitle() + "\" just started.", author, exercise.getCourse(), groupNotificationType);
         this.setNotificationTarget(exercise);
     }
 

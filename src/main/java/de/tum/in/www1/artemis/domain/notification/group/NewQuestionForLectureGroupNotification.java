@@ -28,7 +28,7 @@ public class NewQuestionForLectureGroupNotification extends GroupNotification im
     }
 
     public NewQuestionForLectureGroupNotification(User author, GroupNotificationType groupNotificationType, StudentQuestion question) {
-        super("New Question", "Lecture \"" + question.getLecture().getTitle() + "\" got a new question.", author, question.getLecture().getCourse(), groupNotificationType);
+        super("Lecture \"" + question.getLecture().getTitle() + "\" got a new question.", author, question.getLecture().getCourse(), groupNotificationType);
         this.setNotificationTarget(question);
     }
 
