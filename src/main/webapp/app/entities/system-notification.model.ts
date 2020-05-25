@@ -11,6 +11,7 @@ export class SystemNotification extends Notification {
     public type: SystemNotificationType;
 
     constructor() {
-        super(NotificationType.SYSTEM);
+        super();
+        super.notificationType = NotificationType.SYSTEM;
     }
 }

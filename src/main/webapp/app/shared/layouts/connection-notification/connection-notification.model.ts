@@ -12,6 +12,7 @@ export class ConnectionNotification extends Notification {
     public type: ConnectionNotificationType | null;
 
     constructor() {
-        super(NotificationType.CONNECTION);
+        super();
+        super.notificationType = NotificationType.CONNECTION;
     }
 }
