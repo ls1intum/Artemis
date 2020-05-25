@@ -78,16 +78,17 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     /**
-     * Calculate percentage for given numerator an denominator.
+     * Calculate rounded towards zero percentage for given numerator and denominator.
      * @param numerator
      * @param denominator
+     * @return {number} percentage for given numerator and denominator that is rounded towards zero
      */
     calculatePercentage(numerator: number, denominator: number): number {
         if (denominator === 0) {
             return 0;
         }
 
-        return Math.round((numerator / denominator) * 100);
+        return Math.floor((numerator / denominator) * 100);
     }
 
     /**

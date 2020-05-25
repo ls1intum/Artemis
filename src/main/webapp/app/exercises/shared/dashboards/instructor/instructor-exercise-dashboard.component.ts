@@ -48,20 +48,21 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     /**
-     * Computes the stats for the assessment charts
+     * Computes the stats for the assessment charts.
+     * Percentages are rounded towards zero.
      */
     public setStatistics() {
         if (this.stats.numberOfSubmissions.inTime > 0) {
-            this.totalManualAssessmentPercentage.inTime = Math.round(
+            this.totalManualAssessmentPercentage.inTime = Math.floor(
                 ((this.stats.numberOfAssessments.inTime - this.stats.numberOfAutomaticAssistedAssessments.inTime) / this.stats.numberOfSubmissions.inTime) * 100,
             );
-            this.totalAutomaticAssessmentPercentage.inTime = Math.round((this.stats.numberOfAutomaticAssistedAssessments.inTime / this.stats.numberOfSubmissions.inTime) * 100);
+            this.totalAutomaticAssessmentPercentage.inTime = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.inTime / this.stats.numberOfSubmissions.inTime) * 100);
         }
         if (this.stats.numberOfSubmissions.late > 0) {
-            this.totalManualAssessmentPercentage.late = Math.round(
+            this.totalManualAssessmentPercentage.late = Math.floor(
                 ((this.stats.numberOfAssessments.late - this.stats.numberOfAutomaticAssistedAssessments.late) / this.stats.numberOfSubmissions.late) * 100,
             );
-            this.totalAutomaticAssessmentPercentage.late = Math.round((this.stats.numberOfAutomaticAssistedAssessments.late / this.stats.numberOfSubmissions.late) * 100);
+            this.totalAutomaticAssessmentPercentage.late = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.late / this.stats.numberOfSubmissions.late) * 100);
         }
 
         this.dataForAssessmentPieChart = [

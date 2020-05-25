@@ -231,13 +231,13 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 }
 
                 if (this.numberOfSubmissions.inTime > 0) {
-                    this.totalAssessmentPercentage.inTime = Math.round((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                    this.totalAssessmentPercentage.inTime = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
                 }
                 if (this.numberOfSubmissions.late > 0) {
-                    this.totalAssessmentPercentage.late = Math.round((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                    this.totalAssessmentPercentage.late = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
                 }
                 if (this.numberOfSubmissions.total) {
-                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
+                    this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
                 }
             },
             (response: string) => this.onError(response),

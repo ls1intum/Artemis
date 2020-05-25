@@ -80,20 +80,21 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      */
     calculatePercentageAssessmentProgress() {
         if (this.numberOfSubmissions?.inTime !== 0) {
-            this.percentageInTimeAssessmentProgress = Math.round((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+            this.percentageInTimeAssessmentProgress = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
         }
         if (this.numberOfSubmissions?.late !== 0) {
-            this.percentageLateAssessmentProgress = Math.round((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+            this.percentageLateAssessmentProgress = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
         }
     }
 
     /**
      * Function to calculate the percentage of responded complaints
-     * This is calculated adding the number of not evaluated complaints and feedback requests and dividing by the total number of complaints and feedbacks.
+     * This is calculated adding the number of not evaluated complaints and feedback requests and dividing
+     * by the total number of complaints and feedbacks and rounding it tpwards zero.
      */
     calculatePercentageComplaintsProgress() {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
-            this.percentageComplaintsProgress = Math.round(
+            this.percentageComplaintsProgress = Math.floor(
                 ((this.numberOfComplaints -
                 this.numberOfOpenComplaints + // nr of evaluated complaints
                     (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) / // nr of evaluated more feedback requests
