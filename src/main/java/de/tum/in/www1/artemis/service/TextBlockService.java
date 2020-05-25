@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
 public class TextBlockService {
@@ -27,6 +28,16 @@ public class TextBlockService {
     private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
 
     public static final Comparator<TextBlock> compareByStartIndexReversed = (TextBlock first, TextBlock second) -> compare(second.getStartIndex(), first.getStartIndex());
+
+    private final TextBlockRepository textBlockRepository;
+
+    TextBlockService(TextBlockRepository textBlockRepository) {
+        this.textBlockRepository = textBlockRepository;
+    }
+
+    public List<TextBlock> findAllBySubmissionId(Long id) {
+        return this.textBlockRepository.findAllBySubmissionId(id);
+    }
 
     /**
      * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission
