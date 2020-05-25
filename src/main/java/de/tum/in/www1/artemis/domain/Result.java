@@ -13,6 +13,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -116,6 +117,10 @@ public class Result implements Serializable {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    // TODO: Store static assessment in feedback attribute but make sure it won't get filtered out by testCaseService
+    @Transient
+    private List<Feedback> staticAssessmentFeedback = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -377,6 +382,15 @@ public class Result implements Serializable {
             return false;
         }
         return !Objects.equals(existingText, newText);
+    }
+
+    public void addStaticAssessmentFeedback(List<Feedback> staticAssessmentFeedback) {
+        this.staticAssessmentFeedback.addAll(staticAssessmentFeedback);
+    }
+
+    @JsonIgnore
+    public List<Feedback> getStaticAssessmentFeedback() {
+        return this.staticAssessmentFeedback;
     }
 
     public Participation getParticipation() {

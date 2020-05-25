@@ -127,7 +127,7 @@ public class ResultService {
     /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
-     * 
+     *
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
@@ -170,6 +170,8 @@ public class ResultService {
                 extractTestCasesFromResult(programmingExercise, result);
             }
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            // TODO: Set static assessment is stored as another transient attribute for now, otherwise testCaseService will remove it
+            result.addFeedbacks(result.getStaticAssessmentFeedback());
             result = resultRepository.save(result);
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 

@@ -20,12 +20,12 @@ public class StaticAssessmentReportDTO {
         this.tool = tool;
     }
 
-    public List<BambooStaticAssessmentIssue> getFindings() {
+    public List<BambooStaticAssessmentIssue> getIssues() {
         return issues;
     }
 
-    public void setFindings(List<BambooStaticAssessmentIssue> findings) {
-        this.issues = findings;
+    public void setIssues(List<BambooStaticAssessmentIssue> issues) {
+        this.issues = issues;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

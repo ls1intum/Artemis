@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
@@ -72,6 +73,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
+    private final FeedbackService feedbackService;
     private final RestTemplate restTemplate;
     private final BambooClient bambooClient;
     private final ObjectMapper mapper;
@@ -79,13 +81,14 @@ public class BambooService implements ContinuousIntegrationService {
     public BambooService(GitService gitService, ResultRepository resultRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
                          Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
-                         @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
+                         FeedbackService feedbackService, @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
+        this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
         this.bambooClient = bambooClient;
         this.mapper = mapper;
@@ -531,6 +534,9 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
         result.setParticipation((Participation) participation);
 
+        //TODO: Add Static Assessment Feedback only if the exercise was configured that way
+        addStaticAssessmentFeedbackToResult(result, buildResult.getBuild().getJobs());
+
         return addFeedbackToResultNew(result, buildResult.getBuild().getJobs());
     }
 
@@ -680,6 +686,18 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return result;
+    }
+
+    /**
+     *
+     * @param result
+     * @param jobs
+     */
+    private void addStaticAssessmentFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
+        for (final var job : jobs) {
+            var feedbackList = feedbackService.createFeedbackFromStaticAssessmentReports(job.getStaticAssessmentReports());
+            result.addStaticAssessmentFeedback(feedbackList);
+        }
     }
 
     /**
