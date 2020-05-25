@@ -493,14 +493,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        if (!this.feedback || this.feedback.length === 0) {
-            this.totalScore = 0;
-            return;
-        }
-        let totalScore = 0;
-        for (const feedback of this.feedback) {
-            totalScore += feedback.credits!;
-        }
-        this.totalScore = totalScore;
+        const credits = (this.feedback || []).map((feedback) => feedback.credits);
+        this.totalScore = credits.reduce((a, b) => a + b, 0);
     }
 }
