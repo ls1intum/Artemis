@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
 import javax.annotation.PreDestroy;
-import javax.cache.CacheManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +37,6 @@ public class CacheConfiguration {
     private GitProperties gitProperties;
 
     private BuildProperties buildProperties;
-
-    private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
 
     private final Environment env;
 
