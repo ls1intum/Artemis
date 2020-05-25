@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
@@ -52,25 +51,6 @@ public class NotificationResource {
         this.notificationRepository = notificationRepository;
         this.notificationService = notificationService;
         this.userService = userService;
-    }
-
-    /**
-     * POST /notifications : Create a new notification.
-     *
-     * @param notification the notification to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new notification, or with status 400 (Bad Request) if the notification has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
-        log.debug("REST request to save Notification : {}", notification);
-        if (notification.getId() != null) {
-            throw new BadRequestAlertException("A new notification cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        Notification result = notificationRepository.save(notification);
-        return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**

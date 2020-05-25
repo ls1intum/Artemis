@@ -26,18 +26,6 @@ export class NotificationService {
     }
 
     /**
-     * Create new notification.
-     * @param {Notification} notification
-     * @return Observable<HttpResponse<Notification>>
-     */
-    create(notification: Notification): Observable<HttpResponse<Notification>> {
-        const copy = this.convertDateFromClient(notification);
-        return this.http
-            .post<Notification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
-    }
-
-    /**
      * Update existing notification.
      * @param {Notification} notification
      * @return Observable<HttpResponse<Notification>>

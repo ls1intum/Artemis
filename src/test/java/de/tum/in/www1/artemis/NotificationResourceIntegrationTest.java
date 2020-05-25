@@ -87,36 +87,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void testCreateNotification_asUser() throws Exception {
-        GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        request.post("/api/notifications", groupNotification, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void testCreateNotification_asInstructor() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-
-        GroupNotification response = request.postWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.CREATED);
-        assertThat(response.getTarget()).as("response same target").isEqualTo(groupNotification.getTarget());
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void testCreateNotification_asInstructor_BAD_REQUEST() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification("Title", "Notification Text", null, exercise.getCourse(), type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        groupNotification.setId(1L);
-        request.post("/api/notifications", groupNotification, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_recipientEvaluation() throws Exception {
         User recipient = userService.getUser();
