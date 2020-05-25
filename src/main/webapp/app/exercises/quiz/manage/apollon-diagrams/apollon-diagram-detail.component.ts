@@ -26,6 +26,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
+    private courseId: number;
 
     /** Whether some elements are interactive in the apollon editor. */
     get hasInteractive(): boolean {
@@ -52,8 +53,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.params.subscribe((params) => {
             const id = Number(params['id']);
+            this.courseId = Number(params['courseId']);
 
-            this.apollonDiagramService.find(id).subscribe(
+            this.apollonDiagramService.find(id, this.courseId).subscribe(
                 (response) => {
                     const diagram = response.body!;
 
@@ -117,7 +119,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram).subscribe(
+        this.apollonDiagramService.update(updatedDiagram, this.courseId).subscribe(
             () => this.setAutoSaveTimer(),
             () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'),
         );

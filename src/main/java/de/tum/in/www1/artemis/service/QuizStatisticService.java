@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 
 @Service
@@ -42,14 +39,23 @@ public class QuizStatisticService {
     }
 
     /**
-     * 1. Go through all Results in the Participation and recalculate the score 2. recalculate the statistics of the given quizExercise
+     * 1. Go through all Results in the Participation and recalculate the score
+     * 2. Recalculate the statistics of the given quizExercise
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
     public void recalculateStatistics(QuizExercise quizExercise) {
 
         // reset all statistics
-        quizExercise.getQuizPointStatistic().resetStatistic();
+        if (quizExercise.getQuizPointStatistic() != null) {
+            quizExercise.getQuizPointStatistic().resetStatistic();
+        }
+        else {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
+            quizExercise.recalculatePointCounters();
+        }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestion.getQuizQuestionStatistic().resetStatistic();
@@ -77,8 +83,8 @@ public class QuizStatisticService {
             // update statistics with latest rated und unrated Result
             this.addResultToAllStatistics(quizExercise, latestRatedResult);
             this.addResultToAllStatistics(quizExercise, latestUnratedResult);
-
         }
+
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
