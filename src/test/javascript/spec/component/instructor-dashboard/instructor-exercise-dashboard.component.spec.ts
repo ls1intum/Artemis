@@ -49,4 +49,18 @@ describe('InstructorExerciseDashboardComponent', () => {
         expect(comp.dataForAssessmentPieChart[1]).equal(291);
         expect(comp.dataForAssessmentPieChart[2]).equal(42);
     });
+
+    it('Statistics are calculated, and rounded towards zero correctly', () => {
+        const stats = new StatsForDashboard();
+        stats.numberOfSubmissions = 2162;
+        stats.numberOfAssessments = 2152;
+        stats.numberOfAutomaticAssistedAssessments = 4;
+        comp.stats = stats;
+        comp.setStatistics();
+        expect(comp.totalManualAssessmentPercentage).equal(99);
+        expect(comp.totalAutomaticAssessmentPercentage).equal(0);
+        expect(comp.dataForAssessmentPieChart[0]).equal(10);
+        expect(comp.dataForAssessmentPieChart[1]).equal(2148);
+        expect(comp.dataForAssessmentPieChart[2]).equal(4);
+    });
 });
