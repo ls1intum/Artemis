@@ -346,8 +346,8 @@ public class QuizExerciseService {
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents()) {
                 messagingTemplate.send("/topic/courses/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
+                log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
-            log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
             log.error("Exception occurred while serializing quiz exercise", e);

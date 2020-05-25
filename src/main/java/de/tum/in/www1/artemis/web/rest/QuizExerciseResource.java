@@ -97,6 +97,9 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
+        // notify websocket channel of changes to the quiz exercise
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
+
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
@@ -151,7 +154,7 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
 
-        // NOTE: it does not make sense to notify students here!
+        // TODO: it does not really make sense to notify students here!
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
