@@ -1,4 +1,4 @@
-import { Notification, NotificationType } from 'app/entities/notification.model';
+import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
 export const enum GroupNotificationType {
@@ -10,8 +10,4 @@ export const enum GroupNotificationType {
 export class GroupNotification extends Notification {
     type: GroupNotificationType;
     course: Course;
-
-    constructor() {
-        super(NotificationType.GROUP);
-    }
 }

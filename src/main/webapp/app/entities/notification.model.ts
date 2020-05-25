@@ -17,8 +17,4 @@ export class Notification implements BaseEntity {
     public notificationDate: Moment | null;
     public target: string;
     public author: User;
-
-    protected constructor(notificationType: NotificationType) {
-        this.notificationType = notificationType;
-    }
 }
