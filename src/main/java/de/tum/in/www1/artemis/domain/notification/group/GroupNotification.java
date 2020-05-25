@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -91,32 +90,8 @@ public class GroupNotification extends Notification implements Serializable {
         return Objects.equals(getId(), groupNotification.getId());
     }
 
-    public String getExerciseCreatedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "exerciseCreated");
-    }
-
     public String getExerciseUpdatedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, "exerciseUpdated");
-    }
-
-    public String getExerciseAnswerTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "newAnswer");
-    }
-
-    public String getExerciseQuestionTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, "newQuestion");
-    }
-
-    public String getLectureQuestionTarget(Lecture lecture) {
-        return getLectureTarget(lecture, "newQuestion");
-    }
-
-    public String getLectureAnswerTarget(Lecture lecture) {
-        return getLectureTarget(lecture, "newAnswer");
-    }
-
-    public String getAttachmentUpdated(Lecture lecture) {
-        return getLectureTarget(lecture, "attachmentUpdated");
     }
 
     /**
@@ -132,23 +107,6 @@ public class GroupNotification extends Notification implements Serializable {
         target.addProperty("id", exercise.getId());
         target.addProperty("entity", "exercises");
         target.addProperty("course", exercise.getCourse().getId());
-        target.addProperty("mainPage", "courses");
-        return target.toString();
-    }
-
-    /**
-     * Create JSON representation for a GroupNotification for a Lecture.
-     *
-     * @param lecture for which to create the notification.
-     * @param message to use for the notification.
-     * @return the stringified JSON of the target.
-     */
-    public String getLectureTarget(Lecture lecture, String message) {
-        JsonObject target = new JsonObject();
-        target.addProperty("message", message);
-        target.addProperty("id", lecture.getId());
-        target.addProperty("entity", "lectures");
-        target.addProperty("course", lecture.getCourse().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
     }
