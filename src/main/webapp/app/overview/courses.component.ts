@@ -111,6 +111,9 @@ export class CoursesComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * TODO: this code is currently unused: instead use a high priority notification and display a notification to the students in the notification center
+     */
     subscribeForQuizStartForCourses() {
         if (this.courses) {
             // subscribe to quiz exercises that are live
@@ -123,6 +126,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 this.quizExercisesChannels.forEach((channel) =>
                     this.jhiWebsocketService.receive(channel).subscribe(
                         (quizExercise: QuizExercise) => {
+                            // TODO: conversion to moment is missing for exercise dates
                             if (quizExercise.started) {
                                 // ignore set visible
                                 this.isQuizLive = true;
