@@ -67,7 +67,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
 
     private setQuestionText(): void {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-        this.setupQuestionEditor();
     }
 
     private setAnswerTexts(): void {
@@ -75,7 +74,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
             const answerToSet = Object.assign({}, answerOption);
             this.answerEditorText[index] = this.generateAnswerMarkdown(answerToSet);
         });
-        this.setupAnswerEditors();
     }
 
     /**
@@ -152,23 +150,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * Parse the question-markdown and apply the result to the question's data
-     *
-     * The markdown rules are as follows:
-     *
-     * 1. Text is split at [correct] and [wrong]
-     *    => The first part (any text before the first [correct] or [wrong]) is the question text
-     * 2. The question text is parsed with ArtemisMarkdown
-     *
-     * @param text {string} the markdown text to parse
-     */
-    parseQuestionMarkdown(text: string) {
-        const questionParts = this.splitByCorrectIncorrectTag(text);
-        const questionText = questionParts[0];
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
-    }
-
-    /**
      * Parse the an answer markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
@@ -240,7 +221,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.hint = this.backupQuestion.hint;
         this.setQuestionText();
         this.questionUpdated.emit();
-        this.setupQuestionEditor();
     }
 
     /**
@@ -258,8 +238,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.resetQuestionText();
         this.setAnswerTexts();
         this.questionUpdated.emit();
-        this.setupQuestionEditor();
-        this.setupAnswerEditors();
     }
 
     /**
@@ -273,7 +251,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.answerOptions![index] = backupAnswer;
         this.setAnswerTexts();
         this.questionUpdated.emit();
-        this.setupAnswerEditors();
     }
 
     /**
@@ -302,13 +279,5 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     isAnswerInvalid(answer: AnswerOption) {
         return answer.invalid;
-    }
-
-    onQuestionChange(): void {
-        this.setupQuestionEditor();
-    }
-
-    onAnswerChange(): void {
-        this.setupAnswerEditors();
     }
 }

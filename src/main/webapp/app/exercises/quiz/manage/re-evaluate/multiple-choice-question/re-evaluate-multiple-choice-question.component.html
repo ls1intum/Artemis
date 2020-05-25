@@ -68,7 +68,6 @@
                     #questionEditor
                     [text]="questionEditorText"
                     [mode]="editorMode"
-                    (textChanged)="onQuestionChange()"
                     style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
                 >
@@ -91,7 +90,6 @@
                     #answerEditor
                     [text]="answerEditorText[i]"
                     [mode]="editorMode"
-                    (textChanged)="onAnswerChange()"
                     style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
                     class="form-control"
                 >
