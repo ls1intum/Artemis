@@ -38,13 +38,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     questionEditorText = '';
     answerEditorText = new Array<string>();
     editorMode = 'markdown';
-    editorOptions = {
-        showPrintMargin: false,
-        highlightActiveLine: false,
-        showGutter: false,
-        wrap: true,
-        printMargin: 8,
-    };
 
     // Create Backup Question for resets
     @Input()
@@ -68,8 +61,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Setup editor after view init
      */
     ngAfterViewInit(): void {
-        this.setupQuestionEditor();
-        this.setupAnswerEditors();
+        // this.setupQuestionEditor();
+        // this.setupAnswerEditors();
     }
 
     private setQuestionText(): void {
@@ -109,6 +102,24 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                 this,
             );
         }
+    }
+
+    onQuestionChange(text: string): void {
+        const updatedQuestion = Object.assign({}, this.question);
+        const questionParts = this.splitByCorrectIncorrectTag(text.trim());
+        const questionText = questionParts[0];
+        this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
+        this.question.text = updatedQuestion.text;
+        this.question.explanation = updatedQuestion.explanation;
+        this.question.hint = updatedQuestion.hint;
+        this.questionUpdated.emit();
+    }
+
+    onAnswerOptionChange(text: string, i: number): void {
+        const updatedAnswer = Object.assign({}, this.question.answerOptions![i]);
+        this.parseAnswerMarkdown(text.trim(), updatedAnswer);
+        this.question.answerOptions![i] = updatedAnswer;
+        this.questionUpdated.emit();
     }
 
     /**
