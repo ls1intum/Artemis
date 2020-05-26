@@ -19,39 +19,50 @@
             },
             "single": {
                 "newAnswerForExercise": {
-                    "title": "New answer"
+                    "title": "New answer",
+                    "text": "Your Question got answered."
                 },
                 "newAnswerForLecture": {
-                    "title": "New answer"
+                    "title": "New answer",
+                    "text": "Your Question got answered."
                 }
             },
             "group": {
                 "attachmentUpdated": {
-                    "title": "Attachment updated"
+                    "title": "Attachment updated",
+                    "text": "Attachment \"{{ targetTitle }}\" updated."
                 },
                 "exerciseCreated": {
-                    "title": "Exercise created"
+                    "title": "Exercise created",
+                    "text": "A new exercise \"{{ targetTitle }}\" got created."
                 },
                 "exercisePractice": {
-                    "title": "Exercise open for practice"
+                    "title": "Exercise open for practice",
+                    "text": "Exercise \"{{ targetTitle }}\" is now open for practice."
                 },
                 "exerciseStarted": {
-                    "title": "Exercise started"
+                    "title": "Exercise started",
+                    "text": "Exercise \"{{ targetTitle }}\" just started."
                 },
                 "exerciseUpdated": {
-                    "title": "Exercise updated"
+                    "title": "Exercise updated",
+                    "text": "Exercise \"{{ targetTitle }}\" updated."
                 },
                 "newAnswerForExercise": {
-                    "title": "New Answer"
+                    "title": "New Answer",
+                    "text": "Exercise \"{{ targetTitle }}\" got a new answer."
                 },
                 "newAnswerForLecture": {
-                    "title": "New Answer"
+                    "title": "New Answer",
+                    "text": "Lecture \"{{ targetTitle }}\" got a new answer."
                 },
                 "newQuestionForExercise": {
-                    "title": "New Question"
+                    "title": "New Question",
+                    "text": "Exercise \"{{ targetTitle }}\" got a new question."
                 },
                 "newQuestionForLecture": {
-                    "title": "New Question"
+                    "title": "New Question",
+                    "text": "Lecture \"{{ targetTitle }}\" got a new question."
                 }
             }
         },

@@ -19,39 +19,50 @@
             },
             "single": {
                 "newAnswerForExercise": {
-                    "title": "Neue Antwort"
+                    "title": "Neue Antwort",
+                    "text": "Deine Frage wurde beantwortet."
                 },
                 "newAnswerForLecture": {
-                    "title": "Neue Antwort"
+                    "title": "Neue Antwort",
+                    "text": "Deine Frage wurde beantwortet."
                 }
             },
             "group": {
                 "attachmentUpdated": {
-                    "title": "Anhang aktualisiert"
+                    "title": "Anhang aktualisiert",
+                    "text": "Anhang \"{{ targetTitle }}\" wurde aktualisiert."
                 },
                 "exerciseCreated": {
-                    "title": "Aufgabe erstellt"
+                    "title": "Aufgabe erstellt",
+                    "text": "Eine neue Aufgabe \"{{ targetTitle }}\" wurde erstellt."
                 },
                 "exercisePractice": {
-                    "title": "Aufgabe zum Üben freigegeben"
+                    "title": "Aufgabe zum Üben freigegeben",
+                    "text": "Aufgabe \"{{ targetTitle }}\" ist jetzt zum Üben freigegeben."
                 },
                 "exerciseStarted": {
-                    "title": "Aufgabe gestartet"
+                    "title": "Aufgabe gestartet",
+                    "text": "Aufgabe \"{{ targetTitle }}\" wurde gestartet."
                 },
                 "exerciseUpdated": {
-                    "title": "Aufgabe aktualisiert"
+                    "title": "Aufgabe aktualisiert",
+                    "text": "Aufgabe \"{{ targetTitle }}\" wurde aktualisiert."
                 },
                 "newAnswerForExercise": {
-                    "title": "Neue Antwort"
+                    "title": "Neue Antwort",
+                    "text": "Aufgabe \"{{ targetTitle }}\" hat eine neue Antwort erhalten."
                 },
                 "newAnswerForLecture": {
-                    "title": "Neue Antwort"
+                    "title": "Neue Antwort",
+                    "text": "Vorlesung \"{{ targetTitle }}\" hat eine neue Antwort erhalten."
                 },
                 "newQuestionForExercise": {
-                    "title": "Neue Frage"
+                    "title": "Neue Frage",
+                    "text": "Aufgabe \"{{ targetTitle }}\" hat eine neue Frage erhalten."
                 },
                 "newQuestionForLecture": {
-                    "title": "Neue Frage"
+                    "title": "Neue Frage",
+                    "text": "Vorlesung \"{{ targetTitle }}\" hat eine neue Frage erhalten."
                 }
             }
         },
