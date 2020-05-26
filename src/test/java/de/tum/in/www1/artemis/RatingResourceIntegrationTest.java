@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -99,6 +101,10 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
+        // result and rating always have the same Id
+        Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
+        assertThat(savedRating.getRating()).isEqualTo(2);
+        assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }
 
     @Test
@@ -116,21 +122,28 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testGetRating_asUser_NOT_FOUND() throws Exception {
-        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
+    public void testGetRating_asUser_Null() throws Exception {
+        Rating savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
+        assertThat(savedRating).isEqualTo(null);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getId() + "/rating/" + rating.getRating(), null, HttpStatus.OK);
+        request.put("/api/results/" + savedRating.getId() + "/rating/" + 5, null, HttpStatus.OK);
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getId()).get();
+        assertThat(updatedRating.getRating()).isEqualTo(5);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
+        request.put("/api/results/" + savedRating.getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
+
+        // check that rating is not updated
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getId()).get();
+        assertThat(updatedRating.getRating()).isNotEqualTo(5);
     }
 }
