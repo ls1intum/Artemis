@@ -25,6 +25,13 @@ export class QuizParticipationService {
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
+    submitForLiveMode(quizSubmission: QuizSubmission, exerciseId: number): Observable<EntityResponseType> {
+        const copy = this.convert(quizSubmission);
+        return this.http
+            .post<QuizSubmission>(`api/exercises/${exerciseId}/submissions/live`, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
     private convertResponse<T>(res: HttpResponse<T>): HttpResponse<T> {
         const body: T = this.convertItemFromServer(res.body!);
         return res.clone({ body });

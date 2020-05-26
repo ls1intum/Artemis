@@ -180,8 +180,6 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
                     shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
-                    // TODO Francisco: please double check if this makes sense: it definitely avoids a null pointer exception because the method getSubmittedTextForSpot(...) above
-                    // can return null
                     if (shortAnswerSubmittedText == null) {
                         continue;
                     }

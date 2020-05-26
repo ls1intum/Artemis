@@ -171,7 +171,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
+        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
@@ -599,18 +599,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return Objects.equals(getId(), quizExercise.getId());
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
-                + getAllowedNumberOfAttempts() + "'" + ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'"
-                + ", isPlannedToStart='" + isIsPlannedToStart() + "'" + ", duration='" + getDuration() + "'" + "}";
-    }
-
     /**
      * correct the associated quizPointStatistic
      * 1. add new PointCounters for new Scores
@@ -741,4 +729,16 @@ public class QuizExercise extends Exercise implements Serializable {
         }
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
+
+    @Override
+    public String toString() {
+        return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
+                + getAllowedNumberOfAttempts() + "'" + ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'"
+                + ", isPlannedToStart='" + isIsPlannedToStart() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='" + getDuration() + "'" + ", dueDate='"
+                + getDueDate() + "'" + "}";
+    }
 }
