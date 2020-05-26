@@ -37,7 +37,7 @@
                         </span>
                     </h5>
                     <div class="mb-1">
-                        {{ notification.text }}
+                        {{ notificationText(notification) }}
                     </div>
                     <div class="info text-muted text-right">
                         {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}

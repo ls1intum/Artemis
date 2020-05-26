@@ -95,6 +95,14 @@ export class NotificationSidebarComponent implements OnInit {
         return this.notificationService.notificationTitle(notification);
     }
 
+    /**
+     * Evaluate the text for the given notification. The evaluation will be handled in the notification service.
+     * @param notification {Notification}
+     */
+    notificationText(notification: Notification): string {
+        return this.notificationService.notificationText(notification);
+    }
+
     private loadNotifications(): void {
         if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;

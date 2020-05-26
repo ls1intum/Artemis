@@ -187,6 +187,41 @@ export class NotificationService {
     }
 
     /**
+     * Returns the text stored with the given notification if there is a text.
+     * Otherwise, returns the notification text for the given notification by evaluating the appropriate translation string for the notification type.
+     * @param notification {Notification}
+     */
+    notificationText(notification: Notification): string {
+        if (notification.text) {
+            return notification.text;
+        }
+        // Evaluate translation string
+        let targetTitle;
+        switch (notification.notificationType) {
+            case NotificationType.GROUP_ATTACHMENT_UPDATED:
+                targetTitle = notification.notificationTarget.name;
+                break;
+            case NotificationType.GROUP_EXERCISE_CREATED:
+            case NotificationType.GROUP_EXERCISE_PRACTICE:
+            case NotificationType.GROUP_EXERCISE_STARTED:
+            case NotificationType.GROUP_EXERCISE_UPDATED:
+            case NotificationType.GROUP_NEW_ANSWER_FOR_EXERCISE:
+            case NotificationType.GROUP_NEW_QUESTION_FOR_EXERCISE:
+                targetTitle = notification.notificationTarget.exercise.title;
+                break;
+            case NotificationType.GROUP_NEW_ANSWER_FOR_LECTURE:
+            case NotificationType.GROUP_NEW_QUESTION_FOR_LECTURE:
+                targetTitle = notification.notificationTarget.lecture.title;
+                break;
+        }
+        const typeParts = notification.notificationType.split('-');
+        if (targetTitle) {
+            return this.translateService.instant('artemisApp.notification.' + typeParts[0] + '.' + typeParts[1] + '.text', { targetTitle });
+        }
+        return this.translateService.instant('artemisApp.notification.' + typeParts[0] + '.' + typeParts[1] + '.text');
+    }
+
+    /**
      * Set new notification observer.
      */
     private initNotificationObserver(): void {
