@@ -49,7 +49,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void init() throws Exception {
         database.addUsers(15, 5, 1);
-        quizScheduleService.startSchedule(3000);
+        quizScheduleService.startSchedule(5 * 1000);
     }
 
     @AfterEach
@@ -418,7 +418,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // var now = ZonedDateTime.now();
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         // quizExercise.setDuration(3600);
@@ -458,14 +458,16 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
         // reevaluate without changing anything and check if statistics are still correct
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
+                QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         // remove wrong answer option and reevaluate
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
@@ -485,7 +487,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         ShortAnswerQuestion sq = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         sq.setInvalid(true);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
@@ -508,7 +511,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // max score should be less
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
@@ -533,10 +537,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // var now = ZonedDateTime.now();
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        // quizExercise.setDuration(3600);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        quizExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        quizExercise.setDuration(3600);
+        quizExercise.setIsOpenForPractice(true);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // generate unrated submissions for each student
@@ -545,25 +550,19 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
                 QuizSubmission quizSubmissionPractice = database.generateSubmission(quizExercise, i, true, ZonedDateTime.now());
-
                 database.addSubmission(quizExercise, quizSubmissionPractice, "student" + i);
-
                 database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
             }
         }
 
         // submission with everything selected
         QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), true);
-
         database.addSubmission(quizExercise, quizSubmissionPractice, "student1");
-
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         // submission with nothing selected
         quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), false);
-
         database.addSubmission(quizExercise, quizSubmissionPractice, "student5");
-
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         assertThat(studentParticipationRepository.findAll().size()).isEqualTo(10);
@@ -573,26 +572,37 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
         // reevaluate without changing anything and check if statistics are still correct
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
+                QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         // remove wrong answer option and reevaluate
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0); // one less
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2); // one less
+            if (pointCounter.getPoints() == 0.0 || pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
             }
             else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0); // one more
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3); // one more
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
         }
 
@@ -600,11 +610,13 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         ShortAnswerQuestion sq = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         sq.setInvalid(true);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 2.0 || pointCounter.getPoints() == 5.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
@@ -623,9 +635,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
 
         // max score should be less
+        System.out.println("QuizPointStatistic after re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
