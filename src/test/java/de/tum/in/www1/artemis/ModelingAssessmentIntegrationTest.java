@@ -611,16 +611,17 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> manualFeedback = new ArrayList<>();
         List<Feedback> automaticFeedback = new ArrayList<>();
         List<Feedback> adaptedFeedback = new ArrayList<>();
-        storedResult.getFeedbacks().forEach(storedFeedback -> {
-            if (storedFeedback.getType().equals(FeedbackType.MANUAL)) {
-                manualFeedback.add(storedFeedback);
-            }
-            else if (storedFeedback.getType().equals(FeedbackType.AUTOMATIC)) {
-                automaticFeedback.add(storedFeedback);
-            }
-            else {
-                adaptedFeedback.add(storedFeedback);
-            }
+        List<Feedback> manualUnreferencedFeedback = new ArrayList<>();
+
+        storedResult.getFeedbacks().forEach(
+            storedFeedback -> {
+                switch (storedFeedback.getType()) {
+                    case MANUAL -> manualFeedback.add(storedFeedback);
+                    case AUTOMATIC -> automaticFeedback.add(storedFeedback);
+                    case MANUAL_UNREFERENCED -> manualUnreferencedFeedback.add(storedFeedback);
+                    case AUTOMATIC_ADAPTED -> adaptedFeedback.add(storedFeedback);
+
+                }
         });
         assertThat(storedResult.getAssessmentType()).as("type of result is MANUAL").isEqualTo(AssessmentType.MANUAL);
         assertThat(manualFeedback.size()).as("number of manual feedback elements is correct").isEqualTo(newFeedback.size());
