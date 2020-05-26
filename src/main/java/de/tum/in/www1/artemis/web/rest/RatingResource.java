@@ -68,7 +68,7 @@ public class RatingResource {
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> getRatingForResult(@PathVariable Long resultId) {
-        Optional<Rating> rating = this.ratingService.findRatingByResultId(resultId);
+        Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
         if (rating.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating does not exist!");
         }
