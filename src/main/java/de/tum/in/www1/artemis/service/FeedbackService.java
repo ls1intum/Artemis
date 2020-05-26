@@ -53,7 +53,7 @@ public class FeedbackService {
                 feedback.setText(tool.name());
                 feedback.setDetailText(issue.getMessage());
                 feedback.setReference(issue.getClassname() + ':' + issue.getLine());
-                feedback.setType(FeedbackType.AUTOMATIC);
+                feedback.setType(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT);
                 feedback.setPositive(false);
                 feedbackList.add(feedback);
             }

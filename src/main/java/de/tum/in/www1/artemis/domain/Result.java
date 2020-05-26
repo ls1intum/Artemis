@@ -118,7 +118,7 @@ public class Result implements Serializable {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
-    // TODO: Store static assessment in feedback attribute but make sure it won't get filtered out by testCaseService
+    // Stores static assessment feedback temporally. Otherwise, ProgrammingExerciseTestCaseService will remove it
     @Transient
     private List<Feedback> staticAssessmentFeedback = new ArrayList<>();
 
