@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -14,10 +13,12 @@ import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [
+        ArtemisDatePipe,
         HasAnyAuthorityDirective,
         SecuredImageComponent,
         DeleteDialogComponent,
@@ -27,9 +28,9 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
         SlideToggleComponent,
         JhiConnectionStatusComponent,
     ],
-    providers: [DatePipe],
     entryComponents: [DeleteDialogComponent],
     exports: [
+        ArtemisDatePipe,
         ArtemisSharedLibsModule,
         FindLanguageFromKeyPipe,
         AlertComponent,
