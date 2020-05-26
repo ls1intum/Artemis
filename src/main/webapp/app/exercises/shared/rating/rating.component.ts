@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'ng-starrating';
 import { Result } from 'app/entities/result.model';
@@ -10,28 +10,22 @@ import { Rating } from 'app/entities/rating.model';
     templateUrl: './rating.component.html',
     styleUrls: ['./rating.component.scss'],
 })
-export class RatingComponent {
+export class RatingComponent implements OnInit {
     public rating: Rating;
-    private _result: Result;
+    @Input() result: Result;
 
     constructor(public ratingService: RatingService) {}
 
-    /**
-     * Result Input of the result that the rating is for
-     * @param result
-     */
-    @Input()
-    public set result(result: Result) {
-        if (!result || !result.submission) {
+    ngOnInit(): void {
+        if (!this.result || !this.result.submission) {
             return;
         }
-        this._result = result;
-        this.ratingService.getRating(result.id).subscribe(
+        this.ratingService.getRating(this.result.id).subscribe(
             (rating) => {
                 this.rating = rating;
             },
             () => {
-                this.rating = new Rating(result, 0);
+                this.rating = new Rating(this.result, 0);
             },
         );
     }
