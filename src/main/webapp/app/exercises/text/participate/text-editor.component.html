@@ -68,8 +68,11 @@
                         >:</b
                     >
                     <br />
-                    <div *ngFor="let feedback of unreferencedFeedback">
-                        <span> {{ feedback.credits + ' Points: ' }} </span>
+                    <br />
+                    <div class="alert alert-info" style="background-color: powderblue;" *ngFor="let feedback of unreferencedFeedback">
+                        <strong>
+                            <span> {{ feedback.credits + ' Points: ' }} </span>
+                        </strong>
                         <span> {{ feedback.detailText }} </span>
                     </div>
                 </div>
