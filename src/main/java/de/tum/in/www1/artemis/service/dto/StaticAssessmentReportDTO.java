@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.artemis.domain.enumeration.StaticAssessmentTool;
-
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StaticAssessmentReportDTO {
