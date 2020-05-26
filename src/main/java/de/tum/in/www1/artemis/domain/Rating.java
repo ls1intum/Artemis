@@ -66,6 +66,6 @@ public class Rating implements Serializable {
 
     @Override
     public String toString() {
-        return "Feedback{" + "id=" + getId() + ", rating='" + getRating() + "'" + ", resultId='" + getId() + "'}";
+        return "Rating{" + "id=" + getId() + ", rating='" + getRating() + "'}";
     }
 }
