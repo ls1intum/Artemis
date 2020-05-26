@@ -106,10 +106,10 @@
             "previewMode": "Preview",
             "preview": "Preview Quiz",
             "solution": "Sample Solution",
-            "quizIsOverText": "The quiz has ended. Please wait. The results will load automatically.",
+            "quizIsOverText": "The quiz has ended. Please wait. If the results so not load automatically within 60s, please refresh the page.",
             "notParticipatedText": "The quiz has ended and you have not participated. There are no results to display.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
-            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically 60s after the end of the quiz, please reload the page.",
             "re-evaluate": {
                 "title": "Re-evaluate Quiz Exercise for {{ param }}",
                 "resetQuiz": "Reset Quiz Exercise",

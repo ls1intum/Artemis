@@ -74,7 +74,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     timeUntilStart = '0';
-    disconnected = true;
+    disconnected = false;
     unsavedChanges = false;
 
     sendWebsocket: (submission: QuizSubmission) => void;
@@ -626,15 +626,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
                 // apply randomized order where necessary
                 this.randomizeOrder(this.quizExercise);
-
-                // alert user 5 seconds after quiz has ended (in case websocket didn't work)
-                this.runningTimeouts.push(
-                    setTimeout(() => {
-                        if (this.disconnected && !this.showingResult) {
-                            alert('Loading results failed. Please wait a few seconds and refresh the page manually.');
-                        }
-                    }, (this.quizExercise.remainingTime + 5) * 1000),
-                );
             }
         } else {
             // quiz hasn't started yet
