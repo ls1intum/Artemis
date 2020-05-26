@@ -20,6 +20,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { RouterModule } from '@angular/router';
 import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment-locks.route';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
@@ -45,6 +46,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ExternalSubmissionButtonComponent,
         ExternalSubmissionDialogComponent,
         AssessmentLocksComponent,
+        UnreferencedFeedbackComponent,
     ],
     exports: [
         AssessmentLayoutComponent,
@@ -55,6 +57,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
         AssessmentLocksComponent,
+        UnreferencedFeedbackComponent,
     ],
 })
 export class ArtemisAssessmentSharedModule {}

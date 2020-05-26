@@ -301,7 +301,7 @@ export class CourseManagementService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
@@ -502,7 +502,7 @@ export class CourseExerciseService {
         return participation;
     }
 
-    protected convertDateFromServer<T extends Exercise>(res: T): T {
+    convertDateFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
         res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
         return res;
