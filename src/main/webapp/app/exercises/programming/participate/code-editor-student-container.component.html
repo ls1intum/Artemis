@@ -32,14 +32,15 @@
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
-        <jhi-code-editor-actions
+        <jhi-code-editor-tutor-actions></jhi-code-editor-tutor-actions>
+        <!--<jhi-code-editor-actions
             [disableActions]="repositoryIsLocked"
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
             [(commitState)]="commitState"
             (onSavedFiles)="onSavedFiles($event)"
             (onError)="onError($event)"
-        ></jhi-code-editor-actions>
+        ></jhi-code-editor-actions> -->
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft

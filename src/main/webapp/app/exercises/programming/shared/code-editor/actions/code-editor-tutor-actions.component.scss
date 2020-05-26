@@ -1,0 +1,32 @@
+.save-button {
+    text-align: left;
+    color: white;
+    background-color: #3e8acc;
+    &:hover {
+        background-color: #0f6ab4;
+    }
+    border: none;
+    border-radius: 1px;
+}
+
+.submit-button {
+    text-align: left;
+    color: white;
+    background-color: #28a745;
+    &:hover {
+        background-color: #155724;
+    }
+    border: none;
+    border-radius: 1px;
+}
+
+.cancel-button {
+    text-align: left;
+    color: white;
+    background-color: #c82333;
+    &:hover {
+        background-color: #8b0000;
+    }
+    border: none;
+    border-radius: 1px;
+}
