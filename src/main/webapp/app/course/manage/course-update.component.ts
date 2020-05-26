@@ -181,7 +181,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * @function set course icon
+     * Updates the component's state related to the course image (file, filename) when the user adds a file to the corresponding input field.
      * @param $event {object} Event object which contains the uploaded file
      */
     setCourseImage($event: any): void {
@@ -209,7 +209,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * @function uploadBackground
+     * Prepares the course image for upload (filename, content type, base64 encoding) and uploads it via the file upload service.
      * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
      */
     uploadCourseImage(): void {
