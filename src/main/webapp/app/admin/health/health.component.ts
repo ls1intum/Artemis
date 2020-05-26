@@ -28,6 +28,9 @@ export class HealthComponent implements OnInit {
         }
     }
 
+    /**
+     * Handles the subscription to the health service. It will update the component's health state when something is received.
+     */
     refresh(): void {
         this.healthService.checkHealth().subscribe(
             (health) => (this.health = health),
@@ -39,6 +42,10 @@ export class HealthComponent implements OnInit {
         );
     }
 
+    /**
+     * Creates a modal with the given health aspect if the user wants to see more details.
+     * @param health
+     */
     showHealth(health: { key: HealthKey; value: HealthDetails }): void {
         const modalRef = this.modalService.open(HealthModalComponent);
         modalRef.componentInstance.health = health;
