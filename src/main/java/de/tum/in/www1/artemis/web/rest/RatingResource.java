@@ -58,10 +58,10 @@ public class RatingResource {
     }
 
     /**
-     * Return Rating referencing resultId or 404 Not Found
+     * Return Rating referencing resultId or null
      *
      * @param resultId - Id of result that is referenced with the rating
-     * @return Rating or 404 Not Found
+     * @return Rating or null
      */
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -73,7 +73,7 @@ public class RatingResource {
     /**
      * Persist a new Rating
      *
-     * @param resultId    - Id of the rating that should be updated
+     * @param resultId    - Id of result that is referenced with the rating that should be persisted
      * @param ratingValue - Value of the updated rating
      * @return inserted Rating
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -95,7 +95,7 @@ public class RatingResource {
     /**
      * Update a Rating
      *
-     * @param resultId    - Id of the rating that should be updated
+     * @param resultId    - Id of result that is referenced with the rating that should be updated
      * @param ratingValue - Value of the updated rating
      * @return updated Rating
      */
