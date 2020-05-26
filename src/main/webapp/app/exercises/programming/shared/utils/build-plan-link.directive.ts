@@ -46,12 +46,20 @@ export class BuildPlanLinkDirective implements OnInit {
             .subscribe();
     }
 
+    /**
+     * Sets the exerciseProjectKey property and updates the linkToBuildPlan property.
+     * @param {string} key new exerciseProjectKey value
+     */
     @Input()
     set projectKey(key: string) {
         this.exerciseProjectKey = key;
         this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 
+    /**
+     * Sets the participationBuildPlanId property and updates the linkToBuildPlan property.
+     * @param {string} planId new participationBuildPlanId value
+     */
     @Input()
     set buildPlanId(planId: string) {
         this.participationBuildPlanId = planId;

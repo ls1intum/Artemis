@@ -40,18 +40,31 @@ export class BuildPlanButtonDirective implements OnInit {
         window.open(this.buildPlanLink!);
     }
 
+    /**
+     * Sets the exerciseProjectKey property and updates the linkToBuildPlan property.
+     * @param {string} key new exerciseProjectKey value
+     */
     @Input()
     set projectKey(key: string) {
         this.exerciseProjectKey = key;
         this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 
+    /**
+     * Sets the participationBuildPlanId property and updates the linkToBuildPlan property.
+     * @param {string} planId new participationBuildPlanId value
+     */
     @Input()
     set buildPlanId(planId: string) {
         this.participationBuildPlanId = planId;
         this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 
+    /**
+     * Sets buildPlanLink according to parameter string and visibility according to whether parameter is null.
+     * null => hidden | not null => visible
+     * @param {string} link link to build plan
+     */
     set linkToBuildPlan(link: string | null) {
         this.buildPlanLink = link;
         this.visibility = link ? 'visible' : 'hidden';

@@ -48,7 +48,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * Initializes Apollon Editor and sets auto save timer
+     * Initializes Apollon Editor and sets auto save timer.
      */
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -79,7 +79,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Clears auto save interval and destroys Apollon Editor
+     * Clears auto save interval and destroys Apollon Editor.
      */
     ngOnDestroy() {
         clearInterval(this.autoSaveInterval);
@@ -89,7 +89,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Initializes Apollon Editor with UML Model
+     * Initializes Apollon Editor with UML Model.
      * @param initialModel
      */
     initializeApollonEditor(initialModel: UMLModel) {
@@ -106,7 +106,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Saves the diagram
+     * Saves the diagram.
      */
     saveDiagram() {
         if (this.apollonDiagram === null) {
@@ -126,8 +126,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * This function sets and starts an auto-save timer that automatically saves changes
-     * to the model after 30 seconds.
+     * Sets and starts an auto-save timer that automatically saves changes to the model after 30 seconds.
      */
     private setAutoSaveTimer(): void {
         clearInterval(this.autoSaveInterval);
@@ -163,7 +162,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Download the current selection of the diagram as a PNG image.
+     * Downloads the current selection of the diagram as a PNG image.
      *
      * @async
      */
@@ -182,7 +181,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Automatically trigger the download of a file.
+     * Automatically triggers the download of a file.
      *
      * @param {Blob | File} file A `Blob` or `File` object which should be downloaded.
      */
@@ -202,7 +201,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Reverts to the previous state, equivalent with pressing the back button on your browser.
      */
     previousState() {
         window.history.back();

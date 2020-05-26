@@ -42,7 +42,7 @@ export enum DomainType {
 }
 
 /**
- * Enumeration defining whether the is a conflict while checking out.
+ * Enumeration defining whether there is a conflict while checking out.
  */
 export enum RepositoryError {
     CHECKOUT_CONFLICT = 'checkoutConflict',
@@ -72,7 +72,7 @@ export enum EditorState {
 }
 
 /**
- * Enumeration defining type of the resize operation.
+ * Enumeration defining the type of the resize operation.
  */
 export enum ResizeType {
     SIDEBAR_LEFT = 'SIDEBAR_LEFT',

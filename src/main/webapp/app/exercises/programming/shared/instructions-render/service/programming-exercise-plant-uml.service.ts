@@ -59,6 +59,12 @@ export class ProgrammingExercisePlantUmlService {
         });
     }
 
+    /**
+     * Converts an ArrayBuffer to a base64 string.
+     *
+     * @private
+     * @param {*} res the response to convert
+     */
     private convertPlantUmlResponseToBase64(res: any): string {
         return Buffer.from(res, 'binary').toString('base64');
     }

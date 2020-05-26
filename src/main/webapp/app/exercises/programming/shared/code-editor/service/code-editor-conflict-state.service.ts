@@ -26,14 +26,15 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
     }
 
     /**
-     * Unsubscribe fromm all subscriptions.
+     * Unsubscribes from all subscriptions.
      */
     ngOnDestroy(): void {
         Object.values(this.websocketConnections).forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
     }
 
     /**
-     * Subscribe to git conflict notifications. Does not emit the same value twice in a row (distinctUntilChanged).
+     * Subscribes to git conflict notifications.
+     * Does not emit the same value twice in a row (distinctUntilChanged).
      * Emits an OK as a first value.
      */
     subscribeConflictState = () => {
@@ -49,7 +50,7 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
     };
 
     /**
-     * Notify all subscribers about a given conflictState.
+     * Notifies all subscribers about a given conflictState.
      *
      * @param gitConflictState
      */
@@ -61,6 +62,9 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
         }
     };
 
+    /**
+     * Checks the domain type and returns the type concatenated with the id as a string.
+     */
     private getDomainKey = () => {
         const [domainType, domainValue] = this.domain;
         return `${domainType === DomainType.PARTICIPATION ? 'participation' : 'test'}-${domainValue.id.toString()}`;

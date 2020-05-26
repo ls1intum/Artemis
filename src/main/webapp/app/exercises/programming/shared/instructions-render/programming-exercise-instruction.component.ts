@@ -147,6 +147,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribe();
     }
 
+    /**
+     * If property exercise and exercise.exerciseHints exist, returns an observable of that exercise's hints.
+     * Otherwise it queries the exercise by id to return exercise hints observable.
+     *
+     * @private
+     * @param {number} exerciseId
+     */
     private loadExerciseHints(exerciseId: number) {
         if (this.exercise && this.exercise.exerciseHints) {
             return of(this.exercise.exerciseHints);
@@ -178,7 +185,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * Set up the websocket for retrieving build results.
+     * Sets up the websocket for retrieving build results.
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
     private setupResultWebsocket() {
@@ -197,7 +204,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * Render the markdown into html.
+     * Renders the markdown into html.
      */
     updateMarkdown(): void {
         this.injectableContentForMarkdownCallbacks = [];
@@ -226,7 +233,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * Retrieve latest result for the participation/exercise/course combination.
+     * Retrieves latest result for the participation/exercise/course combination.
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {

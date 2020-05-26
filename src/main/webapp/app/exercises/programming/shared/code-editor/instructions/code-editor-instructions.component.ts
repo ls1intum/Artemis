@@ -64,9 +64,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     }
 
     /**
-     * Update the problem statement with the new string received.
+     * Updates the problem statement with the new string received.
      * This does not save the new problem statement on the server.
-     * @param newProblemStatement
+     * @param {string} newProblemStatement
      */
     onProblemStatementEditorUpdate(newProblemStatement: string) {
         this.exercise = { ...this.exercise, problemStatement: newProblemStatement };

@@ -68,6 +68,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         super(http, jhiWebsocketService, domainService);
     }
 
+    // tslint:disable-next-line:completed-docs
     getStatus = () => {
         return this.http.get<any>(this.restResourceUrl!).pipe(
             handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
@@ -79,10 +80,12 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         );
     };
 
+    // tslint:disable-next-line:completed-docs
     commit = () => {
         return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
+    // tslint:disable-next-line:completed-docs
     pull = () => {
         return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
@@ -102,6 +105,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
         super(http, jhiWebsocketService, domainService);
     }
 
+    // tslint:disable-next-line:completed-docs
     getBuildLogs = () => {
         const [domainType, domainValue] = this.domain;
         if (domainType === DomainType.PARTICIPATION) {
@@ -143,10 +147,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
 
+    // tslint:disable-next-line:completed-docs
     getRepositoryContent = () => {
         return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
+    // tslint:disable-next-line:completed-docs
     getFile = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),
@@ -154,18 +160,23 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
+    // tslint:disable-next-line:completed-docs
     createFile = (fileName: string) => {
         return this.http
             .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    // tslint:disable-next-line:completed-docs
     createFolder = (folderName: string) => {
         return this.http
             .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    /**
+     * Updates content of one file.
+     */
     updateFileContent = (fileName: string, fileContent: string) => {
         return this.http
             .put(`${this.restResourceUrl}/file`, fileContent, {
@@ -174,6 +185,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    /**
+     * Updates content of multiple files.
+     */
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
@@ -210,12 +224,19 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         return this.fileUpdateSubject.asObservable();
     };
 
+    /**
+     * Renames file to given filename.
+     */
     renameFile = (currentFilePath: string, newFilename: string) => {
         return this.http
             .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    /**
+     * Deletes file with given filename.
+     * @param {string} fileName name of file to delete
+     */
     deleteFile = (fileName: string) => {
         return this.http
             .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })

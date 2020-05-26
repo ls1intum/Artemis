@@ -25,7 +25,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     }
 
     /**
-     * Completes building subject. If there are subscriptions unsubscribe form them.
+     * Completes building subject. If there are subscriptions unsubscribe from them.
      */
     ngOnDestroy() {
         if (this.submissionSubscription) {

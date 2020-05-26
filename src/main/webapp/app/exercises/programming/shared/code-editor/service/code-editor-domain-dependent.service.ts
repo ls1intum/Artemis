@@ -37,7 +37,7 @@ export abstract class DomainDependentService implements OnDestroy {
     }
 
     /**
-     * Unsubscribe from current subscription.
+     * Unsubscribes from current subscription.
      */
     ngOnDestroy() {
         if (this.domainChangeSubscription) {

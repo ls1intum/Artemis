@@ -158,12 +158,12 @@ export class CodeEditorGridComponent implements AfterViewInit {
     }
 
     /**
-     * Collapse parts of the editor (file browser, build output...)
-     * @param $event {object} Click event object; contains target information
-     * @param horizontal {boolean} Used to decide which height to use for the collapsed element
-     * @param interactResizable {Interactable} The interactjs element, used to en-/disable resizing
-     * @param minWidth {number} Width to set the element to after toggling the collapse
-     * @param minHeight {number} Height to set the element to after toggling the collapse
+     * Collapses parts of the editor (file browser, build output...)
+     * @param {object} $event Click event object; contains target information
+     * @param {boolean} horizontal Used to decide which height to use for the collapsed element
+     * @param {Interactable} interactResizable The interactjs element, used to en-/disable resizing
+     * @param {number} minWidth Width to set the element to after toggling the collapse
+     * @param {number} minHeight Height to set the element to after toggling the collapse
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {

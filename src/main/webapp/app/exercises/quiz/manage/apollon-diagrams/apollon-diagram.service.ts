@@ -47,7 +47,7 @@ export class ApollonDiagramService {
     }
 
     /**
-     * Query for all diagrams with option req.
+     * Queries for all diagrams with option req.
      * @param req? - options of the query.
      */
     query(req?: any): Observable<HttpResponse<ApollonDiagram[]>> {
@@ -75,11 +75,17 @@ export class ApollonDiagramService {
             .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
     }
 
+    /**
+     * Converts JSON object within HttpResponse to ApollonDiagram and returns it within an HttpResponse.
+     */
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ApollonDiagram = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
+    /**
+     * Converts JSON object array within HttpResponse to ApollonDiagram array and returns it within an HttpResponse.
+     */
     private convertArrayResponse(res: HttpResponse<ApollonDiagram[]>): HttpResponse<ApollonDiagram[]> {
         const jsonResponse: ApollonDiagram[] = res.body!;
         const body: ApollonDiagram[] = [];
@@ -90,7 +96,7 @@ export class ApollonDiagramService {
     }
 
     /**
-     * Convert a returned JSON object to ApollonDiagram.
+     * Converts a returned JSON object to ApollonDiagram.
      */
     private convertItemFromServer(apollonDiagram: ApollonDiagram): ApollonDiagram {
         const copy: ApollonDiagram = Object.assign({}, apollonDiagram);
@@ -98,7 +104,7 @@ export class ApollonDiagramService {
     }
 
     /**
-     * Convert a ApollonDiagram to a JSON which can be sent to the server.
+     * Converts a ApollonDiagram to a JSON which can be sent to the server.
      */
     private convert(apollonDiagram: ApollonDiagram): ApollonDiagram {
         const copy: ApollonDiagram = Object.assign({}, apollonDiagram);

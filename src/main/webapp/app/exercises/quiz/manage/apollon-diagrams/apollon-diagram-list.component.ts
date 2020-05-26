@@ -30,7 +30,7 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Initializes Apollon diagrams from the server
+     * Initializes Apollon diagrams from the server.
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -45,7 +45,7 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Deletes specified Apollon diagram
+     * Deletes specified Apollon diagram.
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
@@ -63,7 +63,7 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Returns the title for Apollon diagram
+     * Returns the title for Apollon diagram.
      * @param diagram
      */
     getTitleForApollonDiagram(diagram: ApollonDiagram): string {
@@ -71,7 +71,7 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Opens dialog for creating a new diagram
+     * Opens dialog for creating a new diagram.
      */
     openCreateDiagramDialog(courseId: number) {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
@@ -81,7 +81,7 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Returns the unique identifier for items in the collection
+     * Returns the unique identifier for items in the collection.
      * @param index of a diagram in the collection
      * @param item current diagram
      */
@@ -90,12 +90,12 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Used in the template for jhiSort
+     * Used in the template for jhiSort.
      */
     callback() {}
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Reverts to the previous state, equivalent with pressing the back button on your browser.
      */
     previousState() {
         window.history.back();

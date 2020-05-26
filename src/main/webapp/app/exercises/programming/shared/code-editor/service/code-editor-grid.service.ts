@@ -19,10 +19,12 @@ export class CodeEditorGridService implements ICodeEditorGridService, OnDestroy 
         this.resizeSubject.complete();
     }
 
+    // tslint:disable-next-line:completed-docs
     public subscribeForResizeEvents = (byTypes: ResizeType[]) => {
         return this.resizeSubject.pipe(filter((resizeType) => byTypes.includes(resizeType))) as Observable<ResizeType>;
     };
 
+    // tslint:disable-next-line:completed-docs
     public submitResizeEvent = (resizeType: ResizeType) => {
         this.resizeSubject.next(resizeType);
     };
