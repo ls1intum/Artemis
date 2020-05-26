@@ -32,8 +32,8 @@
                             <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | translate }}</span>
                         </ng-template>
                     </td>
-                    <td>{{ notification.notificationDate | date: 'dd.MM.yyyy HH:mm' }}</td>
-                    <td>{{ notification.expireDate | date: 'dd.MM.yyyy HH:mm' }}</td>
+                    <td>{{ notification.notificationDate | artemisDate }}</td>
+                    <td>{{ notification.expireDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit" [routerLink]="['./', notification.id, 'view']" class="btn btn-info btn-sm">
