@@ -4,6 +4,7 @@ import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
+import { TranslateService } from '@ngx-translate/core';
 
 import { MockLanguageHelper, MockLanguageService } from './helpers/mocks/service/mock-language.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -20,6 +21,7 @@ import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import * as moment from 'moment';
 import { MockComponent } from 'ng-mocks';
+import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
@@ -72,6 +74,10 @@ import { MockComponent } from 'ng-mocks';
         {
             provide: NgbModal,
             useValue: null,
+        },
+        {
+            provide: TranslateService,
+            useClass: MockTranslateService,
         },
     ],
     declarations: [MockComponent(FaIconComponent)],

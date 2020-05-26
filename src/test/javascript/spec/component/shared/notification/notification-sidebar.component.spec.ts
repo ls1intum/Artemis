@@ -3,7 +3,6 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as moment from 'moment';
 import { BehaviorSubject, of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -13,7 +12,6 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,7 +51,6 @@ describe('Notification Sidebar Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useClass: MockUserService },
             ],
