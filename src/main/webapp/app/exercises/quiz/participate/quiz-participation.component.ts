@@ -193,15 +193,20 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     initLiveMode() {
         // listen to connect / disconnect events
         this.onConnected = () => {
+            if (this.disconnected) {
+                // if the disconnect happened during the live quiz and we still have unsaved changes, we send the submission automatically to the server
+                if (this.unsavedChanges && this.sendWebsocket) {
+                    this.sendWebsocket(this.submission);
+                }
+                // if the quiz was not yet started, we might have missed the quiz start => refresh
+                if (this.quizExercise && !this.quizExercise.started) {
+                    this.refreshQuiz(true);
+                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(moment())) {
+                    // if the quiz has ended, we might have missed to load the results => refresh
+                    this.refreshQuiz(true);
+                }
+            }
             this.disconnected = false;
-            // if the disconnect happened during the live quiz and we still have unsaved changes, we send the submission automatically to the server
-            if (this.unsavedChanges && this.sendWebsocket) {
-                this.sendWebsocket(this.submission);
-            }
-            // if the quiz was not yet started, we might have missed the quiz start ==> refresh
-            if (this.quizExercise && !this.quizExercise.started) {
-                this.refreshQuiz(true);
-            }
         };
         this.jhiWebsocketService.bind('connect', () => {
             this.onConnected();
