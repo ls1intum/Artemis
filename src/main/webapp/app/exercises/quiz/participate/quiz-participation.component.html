@@ -133,7 +133,7 @@
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
                 </div>
-                <jhi-connection-status *ngIf="mode === 'live'" class="conxnection-status-quiz">
+                <jhi-connection-status *ngIf="mode === 'live'" class="connection-status-quiz">
                     <span innerContent *ngIf="unsavedChanges" jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
                 </jhi-connection-status>
                 <div *ngIf="mode === 'practice'">
