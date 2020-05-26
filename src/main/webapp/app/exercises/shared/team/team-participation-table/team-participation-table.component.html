@@ -38,7 +38,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
-                    {{ value ? (moment(value) | date: 'dd.MM.yyyy') : ('artemisApp.exercise.dateNotSet' | translate) }}
+                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | translate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -52,7 +52,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
-                    {{ value ? (moment(value) | date: 'dd.MM.yyyy') : ('artemisApp.exercise.dateNotSet' | translate) }}
+                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | translate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -119,7 +119,7 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else initializationDateUnavailable">
-                        {{ value.participation.initializationDate | date: 'dd.MM.yyyy HH:mm' }}
+                        {{ value.participation.initializationDate | artemisDate }}
                     </ng-container>
                     <ng-template #initializationDateUnavailable>
                         {{ 'artemisApp.exercise.dateNotSet' | translate }}
@@ -156,7 +156,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.initializationState" [minWidth]="100" [width]="200">
+            <ngx-datatable-column prop="participation.initializationState" [minWidth]="100" [width]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationState')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
@@ -171,6 +171,37 @@
                     </ng-container>
                     <ng-template #initializationState>
                         {{ 'artemisApp.InitializationState.UNINITIALIZED' | translate }}
+                    </ng-template>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column *ngIf="isTeamOwner || exercise.isAtLeastInstructor" [minWidth]="200" [width]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assessment">
+                            Assessment
+                        </span>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="row">
+                    <ng-container *ngIf="value.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
+                        <button
+                            [disabled]="assessmentButtonDisabled(value, value.submission)"
+                            (click)="openAssessmentEditor(value, value.submission)"
+                            class="btn btn-warning btn-sm"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <span [jhiTranslate]="'artemisApp.tutorExerciseDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
+                        </button>
+                    </ng-container>
+                    <ng-template #programmingAssessment>
+                        <jhi-programming-assessment-manual-result
+                            *ngIf="value.participation"
+                            [participationId]="value.participation?.id"
+                            [latestResult]="value.submission?.result"
+                            [exercise]="value"
+                            (onResultModified)="loadAll()"
+                        ></jhi-programming-assessment-manual-result>
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>

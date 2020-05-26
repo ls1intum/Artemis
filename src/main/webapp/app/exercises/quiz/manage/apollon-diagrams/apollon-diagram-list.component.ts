@@ -16,6 +16,7 @@ export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
+    courseId: number;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
@@ -32,7 +33,8 @@ export class ApollonDiagramListComponent implements OnInit {
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        this.apollonDiagramsService.query().subscribe(
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
             (response) => {
                 this.apollonDiagrams = response.body!;
             },
@@ -43,21 +45,11 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Navigates to details pages of specified Apollon diagram
-     * @param id of the Apolon Diagram
-     */
-    goToDetailsPage(id: number) {
-        this.router.navigate([id], {
-            relativeTo: this.route,
-        });
-    }
-
-    /**
      * Deletes specified Apollon diagram
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
+        this.apollonDiagramsService.delete(apollonDiagram.id, this.courseId).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
@@ -81,11 +73,11 @@ export class ApollonDiagramListComponent implements OnInit {
     /**
      * Opens dialog for creating a new diagram
      */
-    openCreateDiagramDialog() {
+    openCreateDiagramDialog(courseId: number) {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
-        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram);
+        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     }
 
     /**

@@ -8,6 +8,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,12 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -35,6 +36,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     TextSubmissionRepository submissionRepository;
+
+    @Autowired
+    SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
     StudentParticipationRepository participationRepository;
@@ -51,6 +55,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    TeamService teamService;
+
     private TextExercise textExerciseAfterDueDate;
 
     private TextExercise textExerciseBeforeDueDate;
@@ -63,7 +70,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        student = database.addUsers(1, 1, 1).get(0);
+        student = database.addUsers(2, 1, 1).get(0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
         textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
@@ -76,7 +83,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
-        userRepository.save(ModelFactory.generateActivatedUser("student2"));
+        userRepository.save(ModelFactory.generateActivatedUser("student3"));
     }
 
     @AfterEach
@@ -167,7 +174,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // set dates to UTC and round to milliseconds for comparison
         textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result", "blocks");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
@@ -238,6 +245,49 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_beforeDueDate_isTeamMode() throws Exception {
+        exerciseRepo.save(textExerciseBeforeDueDate.mode(ExerciseMode.TEAM));
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("team");
+        team.setExercise(textExerciseBeforeDueDate);
+        team.addStudents(userRepository.findOneByLogin("student1").orElseThrow());
+        team.addStudents(userRepository.findOneByLogin("student2").orElseThrow());
+        teamService.save(textExerciseBeforeDueDate, team);
+
+        StudentParticipation participation = database.addTeamParticipationForExercise(textExerciseBeforeDueDate, team.getId());
+        textExerciseBeforeDueDate.setStudentParticipations(Set.of(participation));
+
+        TextSubmission submission = request.putWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, TextSubmission.class,
+                HttpStatus.OK);
+
+        database.changeUser("student1");
+        Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(submission.getId());
+        assertThat(version).as("submission version was created").isNotEmpty();
+        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
+
+        database.changeUser("student2");
+        submission.setText(submission.getText() + " Extra contribution.");
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", submission, HttpStatus.OK);
+
+        database.changeUser("student2");
+        version = submissionVersionRepository.findLatestVersion(submission.getId());
+        assertThat(version).as("submission version was created").isNotEmpty();
+        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
+
+        submission.setText(submission.getText() + " Even more.");
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", submission, HttpStatus.OK);
+        database.changeUser("student2");
+        Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
+        assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
+
+        exerciseRepo.save(textExerciseBeforeDueDate.participations(Set.of()));
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
     }
@@ -266,7 +316,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student2", roles = "USER")
+    @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_notStudentInCourse() throws Exception {
         request.post("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
     }
@@ -288,8 +338,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextSubmissionWithTextBlocks() throws Exception {
+        textSubmission.setText("Lorem Ipsum dolor sit amet");
         textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
-        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 9), ModelFactory.generateTextBlock(10, 19), ModelFactory.generateTextBlock(20, 29));
+        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 11), ModelFactory.generateTextBlock(12, 21), ModelFactory.generateTextBlock(22, 26));
         database.addTextBlocksToTextSubmission(blocks, textSubmission);
 
         request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);

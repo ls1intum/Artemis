@@ -1,14 +1,12 @@
 <div class="row mb-1" *ngIf="nextRelevantExercise">
     <div class="col">
         <h3>
-            {{
-                'artemisApp.studentDashboard.exerciseTitle'
-                    | translate
-                        : {
-                              date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm',
-                              course: nextRelevantCourse.title
-                          }
-            }}
+            <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
+                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | translate: { date: nextRelevantExercise.dueDate | artemisDate, course: nextRelevantCourse.title } }}
+            </span>
+            <ng-template #noDueDate>
+                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | translate: { course: nextRelevantCourse.title } }}
+            </ng-template>
         </h3>
     </div>
 </div>

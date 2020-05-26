@@ -15,27 +15,38 @@ import de.tum.in.www1.artemis.repository.NotificationRepository;
 @Service
 public class NotificationService {
 
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-    private GroupNotificationRepository groupNotificationRepository;
+    private final GroupNotificationRepository groupNotificationRepository;
 
     public NotificationService(NotificationRepository notificationRepository, GroupNotificationRepository groupNotificationRepository) {
         this.notificationRepository = notificationRepository;
         this.groupNotificationRepository = groupNotificationRepository;
     }
 
+    /**
+     * Get all notifications for current user by pages.
+     * @param currentUser the current user with the groups he belongs to
+     * @param pageable Pagination information for fetching the notifications
+     * @return notification Page
+     */
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
-        return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), pageable, currentUser.getLogin());
+        return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
     }
 
-    public List<Notification> findAllRecentExceptSystem(User currentUser) {
-        return notificationRepository.findAllRecentNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getLastNotificationRead());
-    }
-
+    /**
+     * Get all notifications for a specific course.
+     * @param course the course for which notifications should be retrieved
+     * @return list of notifications
+     */
     public List<GroupNotification> findAllNotificationsForCourse(Course course) {
         return groupNotificationRepository.findAllByCourseId(course.getId());
     }
 
+    /**
+     * Delete the specified notification.
+     * @param notification group notification that should be deleted
+     */
     public void deleteNotification(GroupNotification notification) {
         notificationRepository.delete(notification);
     }
