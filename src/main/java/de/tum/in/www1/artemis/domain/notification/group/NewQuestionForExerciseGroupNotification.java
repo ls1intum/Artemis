@@ -28,7 +28,7 @@ public class NewQuestionForExerciseGroupNotification extends GroupNotification i
     }
 
     public NewQuestionForExerciseGroupNotification(User author, GroupNotificationType groupNotificationType, StudentQuestion question) {
-        super("Exercise \"" + question.getExercise().getTitle() + "\" got a new question.", author, question.getExercise().getCourse(), groupNotificationType);
+        super(null, author, question.getExercise().getCourse(), groupNotificationType);
         this.setNotificationTarget(question);
     }
 

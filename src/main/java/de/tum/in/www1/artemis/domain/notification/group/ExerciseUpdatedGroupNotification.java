@@ -28,11 +28,8 @@ public class ExerciseUpdatedGroupNotification extends GroupNotification implemen
     }
 
     public ExerciseUpdatedGroupNotification(User author, GroupNotificationType groupNotificationType, String notificationText, Exercise exercise) {
-        super("Exercise \"" + exercise.getTitle() + "\" updated.", author, exercise.getCourse(), groupNotificationType);
+        super(notificationText, author, exercise.getCourse(), groupNotificationType);
         this.setNotificationTarget(exercise);
-        if (notificationText != null) {
-            this.setText(notificationText);
-        }
     }
 
     public Exercise getNotificationTarget() {

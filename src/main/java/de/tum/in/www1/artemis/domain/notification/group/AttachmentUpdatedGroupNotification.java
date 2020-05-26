@@ -28,11 +28,8 @@ public class AttachmentUpdatedGroupNotification extends GroupNotification implem
     }
 
     public AttachmentUpdatedGroupNotification(User author, GroupNotificationType groupNotificationType, String notificationText, Attachment attachment) {
-        super("Attachment \"" + attachment.getName() + "\" updated.", author, attachment.getLecture().getCourse(), groupNotificationType);
+        super(notificationText, author, attachment.getLecture().getCourse(), groupNotificationType);
         this.setNotificationTarget(attachment);
-        if (notificationText != null) {
-            this.setText(notificationText);
-        }
     }
 
     public Attachment getNotificationTarget() {

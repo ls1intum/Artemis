@@ -28,7 +28,7 @@ public class NewAnswerForLectureGroupNotification extends GroupNotification impl
     }
 
     public NewAnswerForLectureGroupNotification(User author, GroupNotificationType groupNotificationType, StudentQuestionAnswer answer) {
-        super("Lecture \"" + answer.getQuestion().getLecture().getTitle() + "\" got a new answer.", author, answer.getQuestion().getLecture().getCourse(), groupNotificationType);
+        super(null, author, answer.getQuestion().getLecture().getCourse(), groupNotificationType);
         this.setNotificationTarget(answer);
     }
 
