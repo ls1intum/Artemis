@@ -135,13 +135,13 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Notification click', () => {
-        it('should interpret notification target when user clicks notification', () => {
-            sinon.spy(notificationService, 'interpretNotification');
+        it('should navigate to target when user clicks notification', () => {
+            sinon.spy(notificationService, 'navigateToTarget');
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponentFixture.detectChanges();
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
-            expect(notificationService.interpretNotification).to.be.calledOnce;
+            expect(notificationService.navigateToTarget).to.be.calledOnce;
         });
     });
 
@@ -244,6 +244,7 @@ describe('Notification Sidebar Component', () => {
         it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.recentNotificationCount = 2;
+            notificationSidebarComponent.notificationsPerPage = 1;
             notificationSidebarComponentFixture.detectChanges();
             const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.badge-danger > span'));
             expect(plus).to.be.not.null;

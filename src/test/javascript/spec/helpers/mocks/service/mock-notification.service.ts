@@ -9,4 +9,7 @@ export class MockNotificationService {
     subscribeToSocketMessages = (): BehaviorSubject<Notification | null> => new BehaviorSubject(null);
     interpretNotification = (notification: GroupNotification): void => {};
     cleanUp = () => {};
+    notificationTitle = (notification: Notification): string => notification.title;
+    notificationText = (notification: Notification): string => notification.text;
+    navigateToTarget = (notification: Notification): void => {};
 }
