@@ -5,7 +5,7 @@
 .jhipster/
 build/
 coverage/
-doc/
+docs/
 gradle/
 node_modules/
 out/

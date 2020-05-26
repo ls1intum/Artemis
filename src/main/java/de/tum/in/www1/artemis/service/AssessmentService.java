@@ -30,7 +30,7 @@ public class AssessmentService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ResultService resultService;
+    protected final ResultService resultService;
 
     private final SubmissionRepository submissionRepository;
 
@@ -144,7 +144,7 @@ public class AssessmentService {
      * @return The example result, which is linked to the submission
      */
     public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
-        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+        return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 

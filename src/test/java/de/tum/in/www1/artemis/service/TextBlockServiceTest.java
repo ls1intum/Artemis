@@ -7,17 +7,22 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 public class TextBlockServiceTest {
+
+    @Autowired
+    private TextBlockRepository textBlockRepository;
 
     TextBlockService textBlockService;
 
     @BeforeEach
     public void prepareFreshService() {
-        textBlockService = new TextBlockService();
+        textBlockService = new TextBlockService(textBlockRepository);
     }
 
     @Test
