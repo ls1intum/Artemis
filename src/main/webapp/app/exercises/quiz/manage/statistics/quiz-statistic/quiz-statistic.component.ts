@@ -144,14 +144,10 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
 }
 
 export interface DataSetProvider {
-    /**
-     * get data sets
-     */
+    // tslint:disable-next-line:completed-docs
     getDataSets(): DataSet[];
 
-    /**
-     * get participants
-     */
+    // tslint:disable-next-line:completed-docs
     getParticipants(): number;
 }
 
@@ -197,7 +193,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     }
 
     /**
-     * ngOnInit
+     * sets subscription on init
      */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -232,22 +228,18 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     }
 
     /**
-     * ngOnDestroy
+     * unsubscribes on destroy
      */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
-    /**
-     * get data sets
-     */
+    // tslint:disable-next-line:completed-docs
     getDataSets() {
         return this.datasets;
     }
 
-    /**
-     * get participants
-     */
+    // tslint:disable-next-line:completed-docs
     getParticipants() {
         return this.participants;
     }

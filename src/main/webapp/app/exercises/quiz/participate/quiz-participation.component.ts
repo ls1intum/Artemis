@@ -123,7 +123,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * ngOnInit
+     * sets subscription data and interval on init
      */
     ngOnInit() {
         // set correct mode
@@ -155,7 +155,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * ngOnDestroy
+     * clears interval and timeouts and unsubscribes form all services on destroy
      */
     ngOnDestroy() {
         clearInterval(this.interval);

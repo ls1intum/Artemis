@@ -61,7 +61,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     }
 
     /**
-     * ngOnInit
+     * sets subscription and interval on init
      */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -159,16 +159,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
-    /**
-     * Get data sets
-     */
+    // tslint:disable-next-line:completed-docs
     getDataSets() {
         return this.datasets;
     }
 
-    /**
-     * Get participants
-     */
+    // tslint:disable-next-line:completed-docs
     getParticipants() {
         return this.participants;
     }

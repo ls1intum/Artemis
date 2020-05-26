@@ -53,7 +53,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * ngOnInit
+     * sets subscription and interval on init
      */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -112,7 +112,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * ngOnDestroy
+     * clears interval and unsubscribes on destroy
      */
     ngOnDestroy() {
         clearInterval(this.interval);

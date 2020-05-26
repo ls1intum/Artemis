@@ -40,7 +40,7 @@ export class QuizParticipationService {
     }
 
     /**
-     * Convert HttpResponse.
+     * Converts HttpResponse.
      */
     private convertResponse<T>(res: HttpResponse<T>): HttpResponse<T> {
         const body: T = this.convertItemFromServer(res.body!);
@@ -48,7 +48,7 @@ export class QuizParticipationService {
     }
 
     /**
-     * Convert Array HttpResponse.
+     * Converts Array of HttpResponses.
      */
     private convertArrayResponse(res: HttpResponse<QuizSubmission[]>): HttpResponse<QuizSubmission[]> {
         const jsonResponse: QuizSubmission[] = res.body!;

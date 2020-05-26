@@ -80,7 +80,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * ngOnInit
+     * sets subscription on init
      */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -125,16 +125,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         resizeImage(true);
     }
 
-    /**
-     * Get data sets
-     */
+    // tslint:disable-next-line:completed-docs
     getDataSets() {
         return this.datasets;
     }
 
-    /**
-     * Get participants
-     */
+    // tslint:disable-next-line:completed-docs
     getParticipants() {
         return this.participants;
     }

@@ -84,7 +84,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     ) {}
 
     /**
-     * ngOnInit
+     * on init creates backup question, splits text and assigns status booleans
      */
     ngOnInit(): void {
         /** Create question backup for resets. We convert it first to JSON and then back to make sure we get a real copy of the object **/

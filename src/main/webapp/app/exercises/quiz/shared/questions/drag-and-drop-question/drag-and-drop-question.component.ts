@@ -85,7 +85,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     }
 
     /**
-     * ngOnChanges
+     * counts correct mappings on change
      */
     ngOnChanges(): void {
         this.countCorrectMappings();

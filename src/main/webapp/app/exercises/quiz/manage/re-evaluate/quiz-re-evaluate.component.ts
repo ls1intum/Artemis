@@ -47,7 +47,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     ) {}
 
     /**
-     * ngOnInit
+     * sets subscription on init and initializes services and constants
      */
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
@@ -68,7 +68,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * ngOnChanges
+     * SimpleChanges applied on change to model
      * @param changes SimpleChanges
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -222,7 +222,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * ngOnInit
+     * Unsubscribes on destroy
      */
     ngOnDestroy(): void {
         this.subscription.unsubscribe();

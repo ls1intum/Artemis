@@ -82,7 +82,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * ngOnInit
+     * sets subscription on init
      */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -114,22 +114,18 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * ngOnDestroy
+     * unsubscribes on destroy
      */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
-    /**
-     * Get data sets
-     */
+    // tslint:disable-next-line:completed-docs
     getDataSets() {
         return this.datasets;
     }
 
-    /**
-     * Get participants
-     */
+    // tslint:disable-next-line:completed-docs
     getParticipants() {
         return this.participants;
     }
