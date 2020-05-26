@@ -11,9 +11,10 @@ import { Rating } from 'app/entities/rating.model';
     styleUrls: ['./rating.component.scss'],
 })
 export class RatingComponent {
-    // public ratingValue = 2;
     public rating: Rating;
     private _result: Result;
+
+    constructor(public ratingService: RatingService) {}
 
     /**
      * Result Input of the result that the rating is for
@@ -35,8 +36,6 @@ export class RatingComponent {
         );
     }
 
-    constructor(public ratingService: RatingService) {}
-
     /**
      * Update/Create new Rating for the result
      * @param $event - starRating component that holds new rating value
@@ -51,7 +50,7 @@ export class RatingComponent {
                 this.rating = rating;
             });
         } else {
-            this.ratingService.setRating(this.rating).subscribe((rating) => {
+            this.ratingService.createRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
             });
         }

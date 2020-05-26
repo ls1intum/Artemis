@@ -64,8 +64,8 @@ public class RatingService {
      * @return updated rating
      */
     public Rating updateRating(Long resultId, Integer ratingValue) {
-        Rating update = this.ratingRepository.findById(resultId).orElseThrow();
-        update.setRating(ratingValue);
-        return ratingRepository.save(update);
+        Rating updatedRating = this.ratingRepository.findById(resultId).orElseThrow();
+        updatedRating.setRating(ratingValue);
+        return ratingRepository.save(updatedRating);
     }
 }

@@ -13,19 +13,19 @@ export class RatingService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Update the student rating for feedback on the server.
+     * Create the student rating for feedback on the server.
      * @param rating - Rating for the result
      */
-    setRating(rating: Rating): Observable<Rating> {
-        return this.http.post<Rating>(this.ratingResourceUrl + `${rating.id}/rating/${rating.rating}`, rating);
+    createRating(rating: Rating): Observable<Rating> {
+        return this.http.post<Rating>(this.ratingResourceUrl + `${rating.result.id}/rating/${rating.rating}`, rating);
     }
 
     /**
      * Get rating for "resultId" Result
      * @param resultId - Id of Result who's rating is received
      */
-    getRating(resultId: number): Observable<Rating> {
-        return this.http.get<Rating>(this.ratingResourceUrl + `${resultId}/rating`);
+    getRating(ratingId: number): Observable<Rating> {
+        return this.http.get<Rating>(this.ratingResourceUrl + `${ratingId}/rating`);
     }
 
     /**

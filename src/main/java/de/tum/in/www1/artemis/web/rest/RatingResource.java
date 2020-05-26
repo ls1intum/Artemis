@@ -93,8 +93,8 @@ public class RatingResource {
             return forbidden();
         }
 
-        Rating result = this.ratingService.saveRating(resultId, ratingValue);
-        return ResponseEntity.created(new URI("/api/results/" + result.getId() + "/rating")).body(result);
+        Rating savedRating = ratingService.saveRating(resultId, ratingValue);
+        return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating);
     }
 
     /**
@@ -114,7 +114,7 @@ public class RatingResource {
             return forbidden();
         }
 
-        Rating result = this.ratingService.updateRating(resultId, ratingValue);
-        return ResponseEntity.ok(result);
+        Rating savedRating = ratingService.updateRating(resultId, ratingValue);
+        return ResponseEntity.ok(savedRating);
     }
 }

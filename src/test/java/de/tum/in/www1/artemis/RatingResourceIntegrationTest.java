@@ -110,8 +110,8 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser() throws Exception {
-        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
-        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        request.get("/api/results/" + savedRating.getId() + "/rating", HttpStatus.OK, Rating.class);
     }
 
     @Test
@@ -123,14 +123,14 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testUpdateRating_asUser() throws Exception {
-        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
-        request.put("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.OK);
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        request.put("/api/results/" + savedRating.getId() + "/rating/" + rating.getRating(), null, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
-        Rating result = ratingService.saveRating(this.result.getId(), rating.getRating());
-        request.put("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        request.put("/api/results/" + savedRating.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
 }
