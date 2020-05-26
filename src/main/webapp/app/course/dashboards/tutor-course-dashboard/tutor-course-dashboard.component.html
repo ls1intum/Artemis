@@ -101,7 +101,7 @@
                             class="badge badge-warning"
                             *ngIf="!exercise.visibleToStudents"
                             placement="right"
-                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | date: 'MMM d, y H:mm' }}"
+                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                         >
                             {{ 'artemisApp.tutorCourseDashboard.notReleased' | translate }}</span
                         >
@@ -122,12 +122,12 @@
                         </jhi-tutor-participation-graph>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | amTimeAgo }}
                         </span>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
                             {{ exercise.assessmentDueDate | amTimeAgo }}
                         </span>
                     </td>

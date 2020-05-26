@@ -30,8 +30,8 @@
                     </td>
                     <td>{{ lecture.title }}</td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
-                    <td>{{ lecture.startDate | date: 'medium' }}</td>
-                    <td>{{ lecture.endDate | date: 'medium' }}</td>
+                    <td>{{ lecture.startDate | artemisDate }}</td>
+                    <td>{{ lecture.endDate | artemisDate }}</td>
                     <td>
                         <div *ngIf="lecture.course">
                             <a [routerLink]="['../view']">{{ lecture.course?.title }}</a>
