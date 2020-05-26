@@ -19,6 +19,10 @@
                     Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
                     >:
                 </p>
+                <p *ngIf="feedback.type === 'AUTOMATIC_STATIC_ASSESSMENT'">
+                    Static Assessment error found by&nbsp;<span class="code-error">{{ feedback.text }}</span
+                    >:
+                </p>
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined && showTestNames">
                     No result information for &nbsp;<span class="code-warning">{{ feedback.text }}:</span>
                 </p>
@@ -28,7 +32,8 @@
                 <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
                     <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
                 </p>
-                <pre *ngIf="feedback.detailText">{{ feedback.detailText }}</pre>
+                <pre *ngIf="feedback.detailText && feedback.type !== 'AUTOMATIC_STATIC_ASSESSMENT'">{{ feedback.detailText }}</pre>
+                <pre *ngIf="feedback.detailText && feedback.type === 'AUTOMATIC_STATIC_ASSESSMENT'">{{ feedback | staticAssessmentDetailText }}</pre>
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
