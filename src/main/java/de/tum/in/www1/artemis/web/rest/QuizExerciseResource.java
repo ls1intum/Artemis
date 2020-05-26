@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -274,8 +275,8 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now
-                quizExercise.setReleaseDate(ZonedDateTime.now());
+                // set release date to now, truncated to seconds because the database only stores seconds
+                quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 quizExercise.setIsPlannedToStart(true);
                 groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
                 break;
@@ -314,7 +315,7 @@ public class QuizExerciseResource {
         // save quiz exercise
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
-        quizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExercise.getId()).get();
+        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         QuizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
