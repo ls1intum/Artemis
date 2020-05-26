@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
+import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -534,9 +535,6 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
         result.setParticipation((Participation) participation);
 
-        //TODO: Add Static Assessment Feedback only if the exercise was configured that way
-        addStaticAssessmentFeedbackToResult(result, buildResult.getBuild().getJobs());
-
         return addFeedbackToResultNew(result, buildResult.getBuild().getJobs());
     }
 
@@ -642,7 +640,7 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param result the result for which the feedback should be added
      * @param jobs   the jobs list of the requestBody
-     * @return a list of feedbacks itemsstored in a result
+     * @return a list of feedback items stored in a result
      */
     @SuppressWarnings("unchecked")
     private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
@@ -675,6 +673,8 @@ public class BambooService implements ContinuousIntegrationService {
 
                     createAutomaticFeedback(result, methodName, true, null);
                 }
+                // 3) add static assessment feedback
+                addStaticAssessmentFeedbackToResult(result, job.getStaticAssessmentReports());
 
                 if (!job.getFailedTests().isEmpty()) {
                     result.setHasFeedback(true);
@@ -689,14 +689,16 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
+     * Transforms build result static assessment reports to feedback.
+     * The feedback is stored in a transient attribute of the result object.
      *
-     * @param result
-     * @param jobs
+     * @param result The result to which the static assessment feedback will be added
+     * @param reports Static assessment reports to be transformed
      */
-    private void addStaticAssessmentFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
-        for (final var job : jobs) {
-            var feedbackList = feedbackService.createFeedbackFromStaticAssessmentReports(job.getStaticAssessmentReports());
-            result.addStaticAssessmentFeedback(feedbackList);
+    private void addStaticAssessmentFeedbackToResult(Result result, List<StaticAssessmentReportDTO> reports) {
+        if (reports != null) {
+            var feedbackList = feedbackService.createFeedbackFromStaticAssessmentReports(reports);
+            result.addAllStaticAssessmentFeedback(feedbackList);
         }
     }
 

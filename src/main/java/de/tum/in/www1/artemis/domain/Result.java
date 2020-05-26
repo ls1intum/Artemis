@@ -384,7 +384,7 @@ public class Result implements Serializable {
         return !Objects.equals(existingText, newText);
     }
 
-    public void addStaticAssessmentFeedback(List<Feedback> staticAssessmentFeedback) {
+    public void addAllStaticAssessmentFeedback(List<Feedback> staticAssessmentFeedback) {
         this.staticAssessmentFeedback.addAll(staticAssessmentFeedback);
     }
 
