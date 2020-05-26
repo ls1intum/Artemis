@@ -25,7 +25,7 @@ public class NewAnswerForLectureSingleUserNotification extends SingleUserNotific
     }
 
     public NewAnswerForLectureSingleUserNotification(StudentQuestionAnswer answer) {
-        super("Your Question got answered.", answer.getAuthor(), answer.getQuestion().getAuthor(), answer.getQuestion().getLecture().getCourse());
+        super(null, answer.getAuthor(), answer.getQuestion().getAuthor(), answer.getQuestion().getLecture().getCourse());
         this.setNotificationTarget(answer);
     }
 

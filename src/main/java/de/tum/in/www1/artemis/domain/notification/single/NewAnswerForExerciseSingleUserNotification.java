@@ -22,7 +22,7 @@ public class NewAnswerForExerciseSingleUserNotification extends SingleUserNotifi
     }
 
     public NewAnswerForExerciseSingleUserNotification(StudentQuestionAnswer answer) {
-        super("Your Question got answered.", answer.getAuthor(), answer.getQuestion().getAuthor(), answer.getQuestion().getExercise().getCourse());
+        super(null, answer.getAuthor(), answer.getQuestion().getAuthor(), answer.getQuestion().getExercise().getCourse());
         this.setNotificationTarget(answer);
     }
 
