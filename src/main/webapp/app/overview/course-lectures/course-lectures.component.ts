@@ -98,14 +98,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                 indexKeys.push(dateIndex);
                 if (dateValue) {
                     groupedLectures[dateIndex] = {
-                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
+                        start: moment(dateValue).startOf('week'),
+                        end: moment(dateValue).endOf('week'),
                         isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         lectures: [],
                     };
                 } else {
                     groupedLectures[dateIndex] = {
-                        label: `No date associated`,
                         isCollapsed: false,
                         isCurrentWeek: false,
                         lectures: [],
