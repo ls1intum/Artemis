@@ -194,9 +194,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // listen to connect / disconnect events
         this.onConnected = () => {
             if (this.disconnected) {
-                // if the disconnect happened during the live quiz and we still have unsaved changes, we send the submission automatically to the server
+                // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
                 if (this.unsavedChanges && this.sendWebsocket) {
-                    this.sendWebsocket(this.submission);
+                    this.onSelectionChanged();
                 }
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizExercise && !this.quizExercise.started) {
