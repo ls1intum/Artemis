@@ -1,4 +1,5 @@
 <div class="quiz-header container" *ngIf="quizExercise">
+    <jhi-alert></jhi-alert>
     <h2 [ngSwitch]="mode">
         {{ quizExercise.course!.title }} - {{ quizExercise.title }}
         <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
@@ -119,8 +120,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'live' && !waitingForQuizStart">
-                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.isSaving">Saving answers...</span>
-                    <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="!isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | artemisDate: 'long':true }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
@@ -128,7 +128,7 @@
                         <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
                     </span>
                     <!-- Only display save and submission hint without time stamps for mobile -->
-                    <span *ngIf="!isSaving && isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | artemisDate: 'long':true }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
@@ -158,6 +158,16 @@
             <div *ngIf="mode === 'solution'">
                 <span jhiTranslate="artemisApp.quizExercise.solution"></span>
             </div>
+            <jhi-button
+                *ngIf="mode === 'live' && !quizExercise.started && !quizExercise.isPlannedToStart"
+                id="refresh-quiz"
+                (click)="refreshQuiz(true)"
+                [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                [btnType]="ButtonType.PRIMARY"
+                [title]="'artemisApp.exercise.refresh'"
+                [disabled]="refreshingQuiz"
+                [icon]="'sync'"
+            ></jhi-button>
             <div class="submit-button">
                 <jhi-button
                     *ngIf="!showingResult"
@@ -188,4 +198,7 @@
         <br />
         <span>({{ quizExercise.releaseDate!.format('LT') }})</span>
     </div>
+</div>
+<div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
+    <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
 </div>

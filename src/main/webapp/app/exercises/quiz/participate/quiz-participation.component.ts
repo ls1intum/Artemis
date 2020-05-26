@@ -58,21 +58,23 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private subscriptionData: Subscription;
 
+    // Difference between server and client time
     timeDifference = 0;
-    outstandingWebsocketResponses = 0;
+    // outstandingWebsocketResponses = 0;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
     isSubmitting = false;
-    isSaving = false;
+    // isSaving = false;
     lastSavedTimeText = '';
     justSaved = false;
     waitingForQuizStart = false;
+    refreshingQuiz = false;
 
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     timeUntilStart = '0';
-    disconnected = true;
+    disconnected = false;
     unsavedChanges = false;
 
     sendWebsocket: (submission: QuizSubmission) => void;
@@ -89,6 +91,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     result: Result;
     questionScores = {};
     quizId: number;
+    courseId: number;
     interval: any;
 
     /**
@@ -127,7 +130,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
             this.subscription = this.route.params.subscribe((params) => {
-                this.quizId = params['exerciseId'];
+                this.quizId = Number(params['exerciseId']);
+                this.courseId = Number(params['courseId']);
                 // init according to mode
                 switch (this.mode) {
                     case 'practice':
@@ -140,7 +144,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.initShowSolution();
                         break;
                     case 'live':
-                        this.init();
+                        this.initLiveMode();
                         break;
                 }
             });
@@ -186,24 +190,34 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * loads latest submission from server and sets up socket connection
      */
-    init() {
+    initLiveMode() {
         // listen to connect / disconnect events
         this.onConnected = () => {
-            this.disconnected = false;
-            if (this.unsavedChanges && this.sendWebsocket) {
-                this.sendWebsocket(this.submission);
+            if (this.disconnected) {
+                // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
+                if (this.unsavedChanges && this.sendWebsocket) {
+                    this.onSelectionChanged();
+                }
+                // if the quiz was not yet started, we might have missed the quiz start => refresh
+                if (this.quizExercise && !this.quizExercise.started) {
+                    this.refreshQuiz(true);
+                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(moment())) {
+                    // if the quiz has ended, we might have missed to load the results => refresh
+                    this.refreshQuiz(true);
+                }
             }
+            this.disconnected = false;
         };
         this.jhiWebsocketService.bind('connect', () => {
             this.onConnected();
         });
         this.onDisconnected = () => {
             this.disconnected = true;
-            if (this.outstandingWebsocketResponses > 0) {
-                this.outstandingWebsocketResponses = 0;
-                this.isSaving = false;
-                this.unsavedChanges = true;
-            }
+            // if (this.outstandingWebsocketResponses > 0) {
+            //     this.outstandingWebsocketResponses = 0;
+            //     this.isSaving = false;
+            //     this.unsavedChanges = true;
+            // }
         };
         this.jhiWebsocketService.bind('disconnect', () => {
             this.onDisconnected();
@@ -301,22 +315,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
                 (payload) => {
-                    if (payload === 'the quiz is not active') {
-                        this.onSaveSuccess(null, payload);
-                    } else if (payload === 'you have already submitted the quiz') {
-                        this.onSaveSuccess(null, payload);
-                    } else {
-                        this.onSaveSuccess(payload as QuizSubmission, null);
+                    if (payload.error) {
+                        this.onSaveError(payload.error);
                     }
                 },
                 (error) => {
-                    this.onSubmitError(error);
+                    this.onSaveError(error);
                 },
             );
 
             // save answers (submissions) through websocket
             this.sendWebsocket = (submission: QuizSubmission) => {
-                this.outstandingWebsocketResponses++;
+                // this.outstandingWebsocketResponses++;
                 this.jhiWebsocketService.send(this.submissionChannel, submission);
             };
         }
@@ -340,14 +350,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         if (!this.quizExerciseChannel) {
-            this.quizExerciseChannel = '/topic/quizExercise/' + this.quizId;
+            this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                (payload) => {
-                    if (this.waitingForQuizStart) {
-                        this.applyQuizFull(payload);
+                (quiz) => {
+                    if (this.waitingForQuizStart && this.quizId === quiz.id) {
+                        this.applyQuizFull(quiz);
                     }
                 },
                 () => {},
@@ -616,15 +626,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
                 // apply randomized order where necessary
                 this.randomizeOrder(this.quizExercise);
-
-                // alert user 5 seconds after quiz has ended (in case websocket didn't work)
-                this.runningTimeouts.push(
-                    setTimeout(() => {
-                        if (this.disconnected && !this.showingResult) {
-                            alert('Loading results failed. Please wait a few seconds and refresh the page manually.');
-                        }
-                    }, (this.quizExercise.remainingTime + 5) * 1000),
-                );
             }
         } else {
             // quiz hasn't started yet
@@ -792,8 +793,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.applySelection();
         if (this.sendWebsocket) {
             if (!this.disconnected) {
-                this.isSaving = true;
+                // this.isSaving = true;
+                this.submission.submissionDate = moment().add(this.timeDifference, 'seconds');
                 this.sendWebsocket(this.submission);
+                this.unsavedChanges = false;
+                this.updateSubmissionTime();
             } else {
                 this.unsavedChanges = true;
             }
@@ -815,47 +819,48 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * Callback function for handling quiz submission after saving submission to server
-     * @param quizSubmission The quiz submission data from the server
      * @param error a potential error during save
      */
-    onSaveSuccess(quizSubmission: QuizSubmission | null, error: string | null) {
-        if (!quizSubmission || error) {
-            alert('Saving Answers failed: ' + error);
+    onSaveError(error: string) {
+        if (error) {
+            const errorMessage = 'Saving answers failed: ' + error;
+            // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+            const jhiAlert = this.jhiAlertService.error(errorMessage);
+            jhiAlert.msg = errorMessage;
             this.unsavedChanges = true;
             this.isSubmitting = false;
-            if (this.outstandingWebsocketResponses > 0) {
-                this.outstandingWebsocketResponses--;
-            }
-            if (this.outstandingWebsocketResponses === 0) {
-                this.isSaving = false;
-            }
-            return;
+            // if (this.outstandingWebsocketResponses > 0) {
+            //     this.outstandingWebsocketResponses--;
+            // }
+            // if (this.outstandingWebsocketResponses === 0) {
+            //     this.isSaving = false;
+            // }
         }
-        if (quizSubmission.submitted) {
-            this.outstandingWebsocketResponses = 0;
-            this.isSaving = false;
-            this.unsavedChanges = false;
-            this.isSubmitting = false;
-            this.submission = quizSubmission;
-            this.updateSubmissionTime();
-            this.applySubmission();
-        } else if (this.outstandingWebsocketResponses === 0) {
-            this.isSaving = false;
-            this.unsavedChanges = false;
-            this.submission = quizSubmission;
-            this.updateSubmissionTime();
-            this.applySubmission();
-        } else {
-            this.outstandingWebsocketResponses--;
-            if (this.outstandingWebsocketResponses === 0) {
-                this.isSaving = false;
-                this.unsavedChanges = false;
-                if (quizSubmission) {
-                    this.submission.submissionDate = quizSubmission.submissionDate;
-                    this.updateSubmissionTime();
-                }
-            }
-        }
+        // if (quizSubmission.submitted) {
+        //     // this.outstandingWebsocketResponses = 0;
+        //     this.isSaving = false;
+        //     this.unsavedChanges = false;
+        //     this.isSubmitting = false;
+        //     this.submission = quizSubmission;
+        //     this.updateSubmissionTime();
+        //     this.applySubmission();
+        // } else if (this.outstandingWebsocketResponses === 0) {
+        //     this.isSaving = false;
+        //     this.unsavedChanges = false;
+        //     this.submission = quizSubmission;
+        //     this.updateSubmissionTime();
+        //     this.applySubmission();
+        // } else {
+        //     this.outstandingWebsocketResponses--;
+        //     if (this.outstandingWebsocketResponses === 0) {
+        //         this.isSaving = false;
+        //         this.unsavedChanges = false;
+        //         if (quizSubmission) {
+        //             this.submission.submissionDate = quizSubmission.submissionDate;
+        //             this.updateSubmissionTime();
+        //         }
+        //     }
+        // }
     }
 
     /**
@@ -897,6 +902,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             confirmSubmit = window.confirm(warningText);
         }
         if (confirmSubmit) {
+            // TODO: use a REST Call because this should be more reliable
             this.isSubmitting = true;
             switch (this.mode) {
                 case 'practice':
@@ -905,7 +911,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                            (error: HttpErrorResponse) => this.onSubmitError(error),
                         );
                     }
                     break;
@@ -915,24 +921,24 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
+                            (error: HttpErrorResponse) => this.onSubmitError(error),
                         );
                     }
                     break;
                 case 'live':
-                    if (this.disconnected || !this.submissionChannel) {
-                        alert(
-                            "Cannot Submit while disconnected. Don't worry, answers that were saved" +
-                                'while you were still connected will be submitted automatically when the quiz ends.',
-                        );
-                        this.isSubmitting = false;
-                        return;
-                    }
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
                     quizSubmission.submitted = true;
-                    this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
+                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe(
+                        (response: HttpResponse<QuizSubmission>) => {
+                            this.submission = response.body!;
+                            this.isSubmitting = false;
+                            this.updateSubmissionTime();
+                            this.applySubmission();
+                        },
+                        (error: HttpErrorResponse) => this.onSubmitError(error),
+                    );
                     break;
             }
         }
@@ -956,9 +962,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Callback function for handling error when submitting
      * @param error
      */
-    onSubmitError(error: string) {
-        console.error(error);
-        alert('Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.');
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
+        // console.error(error);
+        // alert('Submitting was not possible. If your answers have been saved, you can also wait until the quiz has finished.');
         this.isSubmitting = false;
     }
 
@@ -977,5 +987,26 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     isMobile(): boolean {
         return this.deviceService.isMobile();
+    }
+
+    /**
+     * Refresh quiz
+     */
+    refreshQuiz(refresh = false) {
+        this.refreshingQuiz = refresh;
+        this.quizExerciseService.findForStudent(this.quizId).subscribe(
+            (res: HttpResponse<QuizExercise>) => {
+                const quizExercise = res.body!;
+                if (quizExercise.started) {
+                    this.quizExercise = quizExercise;
+                    this.initLiveMode();
+                }
+                setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+            },
+            () => {
+                // error case
+                setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+            },
+        );
     }
 }
