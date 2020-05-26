@@ -35,7 +35,7 @@ public class ProgrammingExerciseTestCaseService {
 
     /**
      * Returns all test cases for a programming exercise.
-     * 
+     *
      * @param id of a programming exercise.
      * @return test cases of a programming exercise.
      */
@@ -45,7 +45,7 @@ public class ProgrammingExerciseTestCaseService {
 
     /**
      * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
-     * 
+     *
      * @param id of a programming exercise.
      * @return active test cases of a programming exercise.
      */
@@ -106,7 +106,7 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
      * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
-     * 
+     *
      * @param feedbacks list of build log output.
      * @param exercise  programming exercise.
      * @return Returns true if the test cases have changed, false if they haven't.
