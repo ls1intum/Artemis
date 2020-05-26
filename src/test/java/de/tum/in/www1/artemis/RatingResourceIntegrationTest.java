@@ -117,7 +117,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser_NOT_FOUND() throws Exception {
-        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.NOT_FOUND, Rating.class);
+        request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
     }
 
     @Test

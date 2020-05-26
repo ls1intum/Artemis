@@ -20,14 +20,13 @@ export class RatingComponent implements OnInit {
         if (!this.result || !this.result.submission) {
             return;
         }
-        this.ratingService.getRating(this.result.id).subscribe(
-            (rating) => {
+        this.ratingService.getRating(this.result.id).subscribe((rating) => {
+            if (rating) {
                 this.rating = rating;
-            },
-            () => {
+            } else {
                 this.rating = new Rating(this.result, 0);
-            },
-        );
+            }
+        });
     }
 
     /**

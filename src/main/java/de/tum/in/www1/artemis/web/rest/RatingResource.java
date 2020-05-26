@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
@@ -67,12 +65,9 @@ public class RatingResource {
      */
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> getRatingForResult(@PathVariable Long resultId) {
+    public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
-        if (rating.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating does not exist!");
-        }
-        return ResponseEntity.ok(rating.get());
+        return ResponseEntity.ok(rating);
     }
 
     /**
