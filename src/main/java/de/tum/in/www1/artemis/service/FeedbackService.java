@@ -11,7 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticAssessmentTool;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -43,6 +46,14 @@ public class FeedbackService {
     }
 
     // TODO: Move this to a StaticAssessmentService, implement it as a Helper Entity or directly in Feedback?
+    /**
+     * Transforms static assessment reports to feedback objects.
+     * As we reuse the Feedback entity to store static code analysis issues, a mapping to those attributes
+     * has to be defined, violating the first normal form.
+     *
+     * @param reports Static Assessment reports to be transformed
+     * @return Feedback objects storing the static assessment issues
+     */
     public List<Feedback> createFeedbackFromStaticAssessmentReports(List<StaticAssessmentReportDTO> reports) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (final var report : reports) {
