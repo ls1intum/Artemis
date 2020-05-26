@@ -202,7 +202,7 @@ public class QuizExerciseService {
             }
         }
 
-        quizScheduleService.scheduleQuizStart(quizExercise);
+        quizScheduleService.scheduleQuizStart(quizExercise.getId());
 
         return quizExercise;
     }
@@ -294,7 +294,7 @@ public class QuizExerciseService {
      *
      * @return the list of quiz exercises
      */
-    public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
+    public List<QuizExercise> findAllPlannedToStartInTheFuture() {
         return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
     }
 

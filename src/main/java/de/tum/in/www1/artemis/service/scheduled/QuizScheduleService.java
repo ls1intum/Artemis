@@ -218,7 +218,7 @@ public class QuizScheduleService {
 
     /**
      * stores the quiz exercise in a HashMap for faster retrieval during the quiz
-     * @param quizExercise should include questions and statistics
+     * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public static void updateQuizExercise(QuizExercise quizExercise) {
         log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
@@ -240,10 +240,11 @@ public class QuizScheduleService {
             log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
 
             // schedule quiz start for all existing quizzes that are planned to start in the future
-            List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
+            List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFuture();
+            log.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
             for (QuizExercise quizExercise : quizExercises) {
-                scheduleQuizStart(quizExercise);
-                updateQuizExercise(quizExercise);
+                // Note: the quiz exercise does not include questions and statistics, so we pass the id
+                scheduleQuizStart(quizExercise.getId());
             }
         }
         else {
@@ -275,13 +276,15 @@ public class QuizScheduleService {
     }
 
     /**
-     * Start scheduler of quiz
+     * Start scheduler of quiz and update the quiz exercise in the hash map
      *
-     * @param quizExercise that should be scheduled
+     * @param quizExerciseId the id of the quiz exercise that should be scheduled for being started automatically
      */
-    public void scheduleQuizStart(final QuizExercise quizExercise) {
+    public void scheduleQuizStart(final long quizExerciseId) {
         // first remove and cancel old scheduledFuture if it exists
-        cancelScheduledQuizStart(quizExercise.getId());
+        cancelScheduledQuizStart(quizExerciseId);
+        // reload from database to make sure there are no proxy objects
+        final var quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         updateQuizExercise(quizExercise);
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
@@ -554,7 +557,7 @@ public class QuizScheduleService {
                 results.add(result);
             }
             catch (Exception e) {
-                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for {} in quiz {}: \n{}", username, quizExercise.getId(), e.getMessage());
+                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
             }
         }
 
