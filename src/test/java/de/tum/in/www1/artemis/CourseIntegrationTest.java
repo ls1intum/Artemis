@@ -765,9 +765,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
         database.addCourseWithDifferentModelingExercises();
+        Course course = courseRepo.findAll().get(0);
         ModelingExercise classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
 
-        List<Submission> lockedSubmissions = request.get("/api/courses/" + classExercise.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        List<Submission> lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").hasSize(0);
 
@@ -782,7 +783,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student3", "tutor1");
 
-        lockedSubmissions = request.get("/api/courses/" + classExercise.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
     }
