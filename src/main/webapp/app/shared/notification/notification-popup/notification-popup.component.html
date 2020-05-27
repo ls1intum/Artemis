@@ -1,0 +1,14 @@
+<div class="notification-popup-container">
+    <div *ngFor="let notification of notifications; let i = index" [ngClass]="notification.visible ? 'show' : 'hide'">
+        <div class="icon-container d-flex flex-column justify-content-center p-4">
+            <fa-icon [icon]="notification.icon"></fa-icon>
+        </div>
+        <div class="pr-4 py-3">
+            <button class="m-0 px-1 py-0" (click)="close(i)">
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <h5 class="pr-4">{{ notification.notification.title }}</h5>
+            {{ notification.notification.text }}
+        </div>
+    </div>
+</div>
