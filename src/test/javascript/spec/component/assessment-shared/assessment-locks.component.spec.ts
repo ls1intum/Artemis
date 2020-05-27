@@ -1,7 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -9,7 +8,7 @@ import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assess
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-describe('AssessmentGeneralFeedbackComponent2', () => {
+describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
     let fixture: ComponentFixture<AssessmentLocksComponent>;
 
