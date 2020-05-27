@@ -82,6 +82,9 @@ public class TextAssessmentService extends AssessmentService {
         // deleted in the database because of the 'orphanRemoval = true' flag.
         result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
+            if (feedback.getCredits() == null) {
+                feedback.setCredits(0.0);
+            }
             feedback.setPositive(feedback.getCredits() >= 0);
             result.addFeedback(feedback);
         }
