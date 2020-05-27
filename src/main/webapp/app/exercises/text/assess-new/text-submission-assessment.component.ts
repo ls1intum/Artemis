@@ -15,7 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,6 +50,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     noNewSubmissions: boolean;
 
     private cancelConfirmationText: string;
+    unreferencedFeedback: Feedback[] = [];
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -57,14 +58,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private get assessments(): Feedback[] {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback];
+            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
         } else {
-            return this.referencedFeedback;
+            return [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
     }
 
-    private get textBlocks(): TextBlock[] {
-        return this.textBlockRefs.map(({ block }) => block);
+    private get textBlocksWithFeedback(): TextBlock[] {
+        return this.textBlockRefs.filter(({ feedback }) => feedback !== undefined).map(({ block }) => block);
     }
 
     constructor(
@@ -163,7 +164,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -183,7 +184,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -229,7 +230,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocks, complaintResponse, this.submission?.id!).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
             (error: HttpErrorResponse) => {
                 console.error(error);
@@ -249,9 +250,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
+        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
 
         this.computeTotalScore();
     }
@@ -261,7 +263,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        const generalFeedbackIndex = feedbacks.findIndex(({ reference }) => reference == null);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);

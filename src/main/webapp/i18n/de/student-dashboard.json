@@ -63,6 +63,7 @@
                 "userNotParticipatedShort": "Nicht teilgenommen.",
                 "userParticipatingShort": "Aktuelle Teilnahme",
                 "userSubmittedShort": "Bereits abgegeben.",
+                "noDateAssociated": "Ohne Datum",
                 "details": {
                     "courseInformation": "Kurs Informationen:",
                     "totalExercises": "Aufgaben insgesamt:",

@@ -17,6 +17,7 @@ module.exports = {
         '<rootDir>/src/test/javascript/spec/component/**/*.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
         '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/pipe/**/*.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.ts',
     ],
     moduleNameMapper: {
