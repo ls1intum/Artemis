@@ -79,7 +79,7 @@ A student can submit multiple solutions by committing and pushing the source cod
 In addition, teaching assistants can assess student solutions and "manually" create results.
 The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
-![Data Model](docs/dev/system-designDataModel.svg "Data Model")
+![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
 
 
 ## Server Architecture

@@ -92,9 +92,11 @@ public class QuizStatisticService {
 
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
+        quizPointStatisticRepository.flush();
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
+                quizQuestionStatisticRepository.flush();
             }
         }
     }
