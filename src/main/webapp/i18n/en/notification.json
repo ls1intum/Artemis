@@ -16,6 +16,12 @@
                 "exerciseCreated": "View exercise",
                 "exerciseUpdated": "View exercise",
                 "attachmentUpdated": "View lecture"
+            },
+            "group": {
+                "quizStarted": {
+                    "title": "Quiz started",
+                    "text": "Quiz \"{{ targetTitle }}\" just started."
+                }
             }
         },
         "systemNotification": {

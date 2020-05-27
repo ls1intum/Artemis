@@ -16,6 +16,12 @@
                 "exerciseCreated": "Übung ansehen",
                 "exerciseUpdated": "Übung ansehen",
                 "attachmentUpdated": "Vorlesung ansehen"
+            },
+            "group": {
+                "quizStarted": {
+                    "title": "Quiz gestartet",
+                    "text": "Das Quiz \"{{ targetTitle }}\" wurde gerade gestartet."
+                }
             }
         },
         "systemNotification": {

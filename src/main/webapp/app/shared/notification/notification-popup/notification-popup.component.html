@@ -7,8 +7,10 @@
             <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <h5 class="pr-4">{{ notification.title }}</h5>
-            {{ notification.text }}
+            <h5 class="pr-4">
+                {{ 'artemisApp.notification.group.quizStarted.title' | translate }}
+            </h5>
+            {{ 'artemisApp.notification.group.quizStarted.text' | translate: { targetTitle: 'TODO' } }}
         </div>
     </div>
 </div>
