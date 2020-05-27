@@ -67,7 +67,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return the number of unaccepted complaints
      */
     @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.team.shortName = :#{#teamShortName} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
-    long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamId") String teamShortName, @Param("courseId") Long courseId);
+    long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
 
     /**
      * This magic method counts the number of complaints by complaint type associated to an exercise id
