@@ -14,12 +14,7 @@ import { Notification } from 'app/entities/notification.model';
 export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
-    constructor(private accountService: AccountService, private notificationService: NotificationService, private router: Router) {
-        // TODO: remove
-        this.notifications.push({ id: 1, title: 'Quiz just started', text: 'Lorem ipsum dolor sit amet, consetetur sadipscing.' } as Notification);
-        this.notifications.push({ id: 2, title: 'Quiz just started', text: 'Lorem ipsum dolor sit amet, consetetur sadipscing.' } as Notification);
-        this.notifications.push({ id: 3, title: 'Quiz just started', text: 'Lorem ipsum dolor sit amet, consetetur sadipscing.' } as Notification);
-    }
+    constructor(private accountService: AccountService, private notificationService: NotificationService, private router: Router) {}
 
     /**
      * Subscribe to notification updates that are received via websocket if the user is logged in.
@@ -59,9 +54,6 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     private subscribeToNotificationUpdates(): void {
-        setTimeout(() => {
-            this.notificationService.subscribeUserNotifications(); // TODO: listen here too? Maybe remove for now
-        }, 500);
         this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
             if (notification && notification.notificationDate) {
                 this.addNotification(notification);
@@ -72,8 +64,10 @@ export class NotificationPopupComponent implements OnInit {
     private addNotification(notification: Notification): void {
         notification.notificationDate = moment(notification.notificationDate);
         if (!this.notifications.some(({ id }) => id === notification.id)) {
-            // TODO: only add if it is a notification about quiz exercise start
-            this.notifications.unshift(notification);
+            // For now only notifications about a started quiz should be displayed
+            if (notification.title === 'Quiz started') {
+                this.notifications.unshift(notification);
+            }
         }
     }
 }
