@@ -42,9 +42,9 @@
                         <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
-                    <td>{{ modelingExercise.releaseDate | date: 'medium' }}</td>
-                    <td>{{ modelingExercise.dueDate | date: 'medium' }}</td>
-                    <td>{{ modelingExercise.assessmentDueDate | date: 'medium' }}</td>
+                    <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
+                    <td>{{ modelingExercise.dueDate | artemisDate }}</td>
+                    <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ modelingExercise.maxScore }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>

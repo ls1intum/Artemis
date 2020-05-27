@@ -215,6 +215,31 @@
     }
 }
 
+.quiz-refresh-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    z-index: 12;
+    pointer-events: none;
+    transition: 0.1s ease-out opacity;
+
+    &.active {
+        background-color: rgba(255, 255, 255, 0.6);
+        opacity: 1;
+        pointer-events: none;
+        transition: 0.2s ease-in opacity;
+    }
+    .ng-fa-icon {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
 .btn-circle.btn-circle {
     width: 30px;
     height: 30px;

@@ -14,6 +14,7 @@ import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule, ArtemisSharedComponentModule],
@@ -28,6 +29,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
         AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
         ExternalSubmissionDialogComponent,
+        UnreferencedFeedbackComponent,
     ],
     exports: [
         AssessmentLayoutComponent,
@@ -37,6 +39,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
         AssessmentFiltersComponent,
         AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
+        UnreferencedFeedbackComponent,
     ],
 })
 export class ArtemisAssessmentSharedModule {}

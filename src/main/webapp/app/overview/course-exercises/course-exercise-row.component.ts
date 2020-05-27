@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
@@ -77,7 +77,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
-
             quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
             this.exercise = quizExercise;
         }
