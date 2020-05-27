@@ -11,6 +11,7 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -146,6 +147,15 @@ public class Complaint implements Serializable {
         this.result = Result;
     }
 
+    public User getStudent() {
+        return student;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    @JsonIgnore
     public Participant getParticipant() {
         return Optional.ofNullable((Participant) student).orElse(team);
     }
