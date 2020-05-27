@@ -5,6 +5,8 @@
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
             "description": "Du kannst insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen.",
             "descriptionExtended": "Jeder Student darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
+            "descriptionTeam": "Ihr könnt ingesamt bis zu {{ maxComplaintNumber }} Beschwerden als Team in diesem Kurs einreichen.",
+            "descriptionTeamExtended": "Jedes Team darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann von einem zweiten Reviewer überprüft.",
             "alreadySubmitted": "Du hast eine Beschwerde eingereicht",
             "submit": "Eine Beschwerde einreichen",

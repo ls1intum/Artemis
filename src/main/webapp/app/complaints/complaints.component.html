@@ -11,12 +11,12 @@
                 <p>
                     <span
                         *ngIf="allowedComplaints === undefined"
-                        jhiTranslate="artemisApp.complaint.description"
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                     ></span>
                     <span
                         *ngIf="allowedComplaints >= 0"
-                        jhiTranslate="artemisApp.complaint.descriptionExtended"
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
                     <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>

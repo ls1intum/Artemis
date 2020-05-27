@@ -59,6 +59,17 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
+     * Count the number of unaccepted complaints of a team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
+     * of complaints for a team in a course. Requests for more feedback are not counted here.
+     *
+     * @param teamShortName the short name of the team
+     * @param courseId  the id of the course
+     * @return the number of unaccepted
+     */
+    @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.team.shortName = :#{#teamShortName} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamId") String teamShortName, @Param("courseId") Long courseId);
+
+    /**
      * This magic method counts the number of complaints by complaint type associated to an exercise id
      *
      * @param exerciseId    - the id of the course we want to filter by

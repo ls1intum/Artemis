@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -49,15 +51,18 @@ public class ComplaintResource {
 
     private final UserService userService;
 
+    private final TeamService teamService;
+
     private final ComplaintService complaintService;
 
     private final CourseService courseService;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, ComplaintService complaintService,
-            CourseService courseService) {
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, TeamService teamService,
+            ComplaintService complaintService, CourseService courseService) {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.userService = userService;
+        this.teamService = teamService;
         this.complaintService = complaintService;
         this.courseService = courseService;
     }
@@ -147,22 +152,31 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /:courseId/allowed-complaints get the number of complaints that a student is still allowed to submit in the given course. It is determined by the max. complaint limit
-     * and the current number of open or rejected complaints of the student in the course.
+     * Get /:courseId/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
+     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
+     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
+     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
      *
      * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
     @GetMapping("/courses/{courseId}/allowed-complaints")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        var course = courseService.findOne(courseId);
+        User user = userService.getUser();
+        Participant participant = user;
+        Course course = courseService.findOne(courseId);
         if (!course.getComplaintsEnabled()) {
             throw new BadRequestAlertException("Complaints are disabled for this course", ENTITY_NAME, "complaintsDisabled");
         }
-        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
-        return ResponseEntity.ok(Math.max(course.getMaxComplaints() - unacceptedComplaints, 0));
+        if (teamMode) {
+            Optional<Team> team = teamService.findLatestTeamByCourseAndUser(course, user);
+            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", ENTITY_NAME, "noAssignedTeamInCourse"));
+        }
+        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
     }
 
     /**
@@ -328,7 +342,7 @@ public class ComplaintResource {
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {
-        complaint.setStudent(null);
+        complaint.setParticipant(null);
         complaint.setResultBeforeComplaint(null);
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
@@ -413,7 +427,7 @@ public class ComplaintResource {
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);
                 studentParticipation.setExercise(null);
-                complaint.setStudent(null);
+                complaint.setParticipant(null);
                 complaint.setResultBeforeComplaint(null);
 
                 responseComplaints.add(complaint);
