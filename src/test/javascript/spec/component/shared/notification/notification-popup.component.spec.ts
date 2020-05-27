@@ -52,14 +52,12 @@ describe('Notification Popup Component', () => {
         it('should get authentication state', fakeAsync(() => {
             sinon.spy(accountService, 'getAuthenticationState');
             notificationPopupComponent.ngOnInit();
-            tick(500);
             expect(accountService.getAuthenticationState).to.have.been.calledOnce;
         }));
 
         it('should subscribe to notification updates', fakeAsync(() => {
             sinon.spy(notificationService, 'subscribeToSocketMessages');
             notificationPopupComponent.ngOnInit();
-            tick(500);
             expect(notificationService.subscribeToSocketMessages).to.have.been.calledOnce;
         }));
     });
