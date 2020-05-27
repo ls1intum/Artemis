@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -60,16 +61,20 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private final TaskScheduler taskScheduler;
 
-    private final ParticipationService participationService;
+    private ParticipationService participationService;
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
     public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            TaskScheduler taskScheduler, ParticipationService participationService) {
+            TaskScheduler taskScheduler) {
         this.env = env;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.taskScheduler = taskScheduler;
+    }
+
+    @Autowired
+    public void setParticipationService(ParticipationService participationService) {
         this.participationService = participationService;
     }
 

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../course/manage/course-management.service';
+import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
@@ -11,6 +11,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -34,6 +35,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
     constructor(
         private courseService: CourseManagementService,
+        private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute,
         private teamService: TeamService,
@@ -76,18 +78,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     subscribeForQuizChanges() {
         // subscribe to quizzes which get visible
         if (!this.quizExercisesChannel) {
-            this.quizExercisesChannel = '/topic/' + this.courseId + '/quizExercises';
+            this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
             this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe(
-                (quizExercise) => {
-                    // the quiz was set to visible, we should add it to the exercise list and display it at the top
+                (quizExercise: QuizExercise) => {
+                    quizExercise = this.courseExerciseService.convertDateFromServer(quizExercise);
+                    // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                     if (this.course) {
                         this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
                         this.course.exercises.push(quizExercise);
-                        // this lines makes sure the quiz is sorted correctly
-                        this.courseService.courseWasUpdated(this.course);
                     }
                 },
                 () => {},
