@@ -6,7 +6,6 @@ import { Rating } from 'app/entities/rating.model';
 
 @Component({
     selector: 'jhi-rating',
-    providers: [RatingService],
     templateUrl: './rating.component.html',
     styleUrls: ['./rating.component.scss'],
 })
