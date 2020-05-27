@@ -160,7 +160,6 @@ public class QuizScheduleService {
             }
             participationHashMap.get(quizExerciseId).put(participation.getParticipantIdentifier(), participation);
         }
-
     }
 
     /**
@@ -465,8 +464,12 @@ public class QuizScheduleService {
 
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
         if (participation.getExercise() != null) {
+            var quizExercise = (QuizExercise) participation.getExercise();
             // we do not need the course and lectures
-            participation.getExercise().setCourse(null);
+            quizExercise.setCourse(null);
+            // students should not see statistics
+            quizExercise.setQuizPointStatistic(null);
+            quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
@@ -561,11 +564,10 @@ public class QuizScheduleService {
             }
         }
 
-        // TODO: should we use a transaction here?
         // save all participations, results and quizSubmissions
-        studentParticipationRepository.saveAll(participations);
+        participations = studentParticipationRepository.saveAll(participations);
         quizSubmissionRepository.saveAll(submissions);
-        resultRepository.saveAll(results);
+        results = resultRepository.saveAll(results);
 
         // add the participation to the participationHashMap for the send out at the end of the quiz
         addParticipations(quizExercise.getId(), participations);
