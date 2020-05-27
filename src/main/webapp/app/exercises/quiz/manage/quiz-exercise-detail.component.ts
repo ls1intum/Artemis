@@ -1031,10 +1031,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     changeValuesForMinAndMaxSecondsInput(): void {
         const secondsInput = document.getElementById('quiz-duration-seconds')! as HTMLInputElement;
-        if ( secondsInput.value  === secondsInput.max) {
+        if (secondsInput.value === secondsInput.max) {
             secondsInput.value = '0';
         }
-        if ( secondsInput.value  === secondsInput.min) {
+        if (secondsInput.value === secondsInput.min) {
             secondsInput.value = '59';
         }
     }
