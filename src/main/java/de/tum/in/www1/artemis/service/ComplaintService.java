@@ -103,6 +103,14 @@ public class ComplaintService {
         return complaintRepository.findByResult_Id(resultId);
     }
 
+    /**
+     * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
+     * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
+     *
+     * @param participant the participant (student or team)
+     * @param courseId  the id of the course
+     * @return the number of unaccepted complaints
+     */
     @Transactional(readOnly = true)
     public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
         if (participant instanceof User) {

@@ -53,7 +53,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      *
      * @param studentId the id of the student
      * @param courseId  the id of the course
-     * @return the number of unaccepted
+     * @return the number of unaccepted complaints
      */
     @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
@@ -64,7 +64,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      *
      * @param teamShortName the short name of the team
      * @param courseId  the id of the course
-     * @return the number of unaccepted
+     * @return the number of unaccepted complaints
      */
     @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.team.shortName = :#{#teamShortName} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
     long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamId") String teamShortName, @Param("courseId") Long courseId);
