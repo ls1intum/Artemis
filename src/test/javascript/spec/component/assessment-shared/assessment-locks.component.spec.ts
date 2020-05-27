@@ -1,39 +1,37 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
-import { ArtemisTestModule } from '../../test.module';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisAppRoutingModule } from 'app/app-routing.module';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ArtemisAppModule } from 'app/app.module';
 
-describe('AssessmentGeneralFeedbackComponent', () => {
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+
+describe('AssessmentGeneralFeedbackComponent2', () => {
     let component: AssessmentLocksComponent;
     let fixture: ComponentFixture<AssessmentLocksComponent>;
 
-    beforeEach(() => {
+    beforeEach(async(() => {
         TestBed.configureTestingModule({
-            declarations: [AssessmentLocksComponent],
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAppRoutingModule, RouterTestingModule, ArtemisAppModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
+            declarations: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AssessmentLocksComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+    }));
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(AssessmentLocksComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     it('should create', () => {
-        console.log(component);
         expect(component).toBeTruthy();
     });
 

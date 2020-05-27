@@ -53,7 +53,7 @@ export class AssessmentLocksComponent implements OnInit {
     }
 
     /**
-     * Get all locked submissions.
+     * Get all locked submissions for course and user.
      */
     getAllLockedSubmissions() {
         this.courseService.findAllLockedSubmissionsOfCourse(this.courseId).subscribe(
@@ -69,7 +69,6 @@ export class AssessmentLocksComponent implements OnInit {
      * @param canceledSubmission submission
      */
     cancelAssessment(canceledSubmission: Submission) {
-        console.log(canceledSubmission);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             switch (canceledSubmission.submissionExerciseType) {
