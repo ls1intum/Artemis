@@ -19,7 +19,7 @@
                     <td>{{ activity.userLogin }}</td>
                     <td>{{ activity.ipAddress }}</td>
                     <td>{{ activity.page }}</td>
-                    <td>{{ activity.time | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>{{ activity.time | artemisDate: 'long':true }}</td>
                 </tr>
             </tbody>
         </table>

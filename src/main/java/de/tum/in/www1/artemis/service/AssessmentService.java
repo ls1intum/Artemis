@@ -30,7 +30,7 @@ public class AssessmentService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ResultService resultService;
+    protected final ResultService resultService;
 
     private final SubmissionRepository submissionRepository;
 
@@ -144,20 +144,8 @@ public class AssessmentService {
      * @return The example result, which is linked to the submission
      */
     public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
-        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+        return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
-     *
-     * @param assessment the assessment to check
-     */
-    void checkGeneralFeedback(List<Feedback> assessment) {
-        final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
-        if (generalFeedbackCount > 1) {
-            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
-        }
     }
 
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {

@@ -79,18 +79,18 @@
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.releaseDate">{{ programmingExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="programmingExercise.releaseDate">{{ programmingExercise.releaseDate | artemisDate }}</span>
                     <span *ngIf="!programmingExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.dueDate">{{ programmingExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="programmingExercise.dueDate">{{ programmingExercise.dueDate | artemisDate }}</span>
                     <span *ngIf="!programmingExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>

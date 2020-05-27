@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -60,10 +58,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     ResultRepository resultRepository;
 
+    int multiplier = 100;
+
     @BeforeEach
     public void init() {
         quizScheduleService.stopSchedule();
-        database.addUsers(10, 5, 1);
+        database.addUsers(10 * multiplier, 5, 1);
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
     }
 
@@ -80,24 +80,23 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(2));
-        quizExercise.setDuration(2);
+        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(1));
+        quizExercise.setDuration(1);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExerciseService.save(quizExercise);
 
-        int numberOfParticipants = 10;
-        QuizSubmission quizSubmission = new QuizSubmission();
+        int numberOfParticipants = 10 * multiplier;
+        QuizSubmission quizSubmission;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            for (int j = 1; j <= 10; j++) {
-                database.generateSubmission(quizExercise, i, false, null);
-            }
+            quizSubmission = database.generateSubmission(quizExercise, i, false, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
+            // NOTE: the communication back to the client is currently deactivated
+            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
@@ -106,11 +105,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // submit
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
+            // NOTE: the communication back to the client is currently deactivated
+            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // before the quiz submissions are processed, none of them ends up in the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+
+        // wait some time so that the quiz results are also sent to subscribed users
+        Thread.sleep(5000);
 
         quizScheduleService.processCachedQuizSubmissions();
 
@@ -127,15 +130,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
+            else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else {
@@ -146,13 +149,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(5);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
             }
             else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(3);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
             }
             else {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(2);
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
             }
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
@@ -165,8 +168,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPractice() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
-        quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(2));
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
+        quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
         quizExercise.setDuration(2);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
