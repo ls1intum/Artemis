@@ -150,6 +150,11 @@ public class Complaint implements Serializable {
         return Optional.ofNullable((Participant) student).orElse(team);
     }
 
+    public Complaint participant(Participant participant) {
+        setParticipant(participant);
+        return this;
+    }
+
     /**
      * allows to set the participant independent whether it is a team or user
      * @param participant either a team or user
