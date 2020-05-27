@@ -32,31 +32,33 @@ export class ComplaintInteractionsComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
-        if (this.course.complaintsEnabled) {
-            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                this.numberOfAllowedComplaints = allowedComplaints;
-            });
-        } else {
-            this.numberOfAllowedComplaints = 0;
-        }
-
-        if (this.participation.submissions && this.participation.submissions.length > 0) {
-            if (this.result && this.result.completionDate) {
-                this.complaintService.findByResultId(this.result.id).subscribe((res) => {
-                    if (res.body) {
-                        if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
-                            this.hasComplaint = true;
-                        } else {
-                            this.hasRequestMoreFeedback = true;
-                        }
-                    }
+        if (this.course) {
+            if (this.course!.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                    this.numberOfAllowedComplaints = allowedComplaints;
                 });
+            } else {
+                this.numberOfAllowedComplaints = 0;
+            }
+
+            if (this.participation.submissions && this.participation.submissions.length > 0) {
+                if (this.result && this.result.completionDate) {
+                    this.complaintService.findByResultId(this.result.id).subscribe((res) => {
+                        if (res.body) {
+                            if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                                this.hasComplaint = true;
+                            } else {
+                                this.hasRequestMoreFeedback = true;
+                            }
+                        }
+                    });
+                }
             }
         }
     }
 
-    get course(): Course {
-        return this.exercise.course!;
+    get course(): Course | null {
+        return this.exercise.course;
     }
 
     /**
