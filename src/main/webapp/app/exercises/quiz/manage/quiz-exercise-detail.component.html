@@ -52,8 +52,8 @@
                             type="number"
                             min="0"
                             max="600"
-                            (ngModelChange)="onDurationChange()"
                             [(ngModel)]="duration.minutes"
+                            (ngModelChange)="onDurationChange()"
                             (blur)="onDurationChange()"
                         />
                         <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
@@ -65,8 +65,8 @@
                             type="number"
                             max="60"
                             min="-1"
-                            (ngModelChange)="onDurationChange()"
                             [(ngModel)]="duration.seconds"
+                            (ngModelChange)="onDurationChange()"
                             (blur)="onDurationChange()"
                         />
                         <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
