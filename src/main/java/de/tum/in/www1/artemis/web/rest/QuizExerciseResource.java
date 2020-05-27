@@ -273,7 +273,7 @@ public class QuizExerciseResource {
                 // set release date to now
                 quizExercise.setReleaseDate(ZonedDateTime.now());
                 quizExercise.setIsPlannedToStart(true);
-                groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
+                groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
                 break;
             case "set-visible":
                 // check if quiz is already visible

@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
 @Service
@@ -53,12 +54,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an exercise started.
+     * Notify student groups about a started quiz exercise.
      *
-     * @param exercise that has been started
+     * @param quizExercise that has been started
      */
-    public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED, null));
+    public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
+        saveAndSend(createNotification(quizExercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null));
     }
 
     /**
