@@ -468,8 +468,9 @@ public class QuizScheduleService {
             // we do not need the course and lectures
             quizExercise.setCourse(null);
             // students should not see statistics
-            quizExercise.setQuizPointStatistic(null);
-            quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
+            // TODO: this would be useful, but leads to problems when the quiz schedule service wants to access the statistics again later on
+            // quizExercise.setQuizPointStatistic(null);
+            // quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
