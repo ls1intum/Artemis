@@ -56,7 +56,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     }
 
     get course(): Course {
-        return this.course!;
+        return this.exercise.course!;
     }
 
     /**
