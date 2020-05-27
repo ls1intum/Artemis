@@ -1,17 +1,19 @@
 .notification-popup-container {
     position: fixed;
-    bottom: 70px;
+    bottom: 50px;
     right: 0;
     z-index: 998;
 }
 
 .notification-popup-container > div {
+    position: relative;
     color: #aaaaaa;
     display: flex;
+    max-width: 360px;
+    margin-bottom: 10px;
+    background-color: #292929;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
-    max-width: 360px;
-    background-color: #292929;
     box-shadow: 0 3px 5px 0 rgba(0, 0, 0, 0.5);
 }
 .notification-popup-container > div.hide {
