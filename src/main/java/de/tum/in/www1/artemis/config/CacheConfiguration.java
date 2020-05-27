@@ -92,18 +92,18 @@ public class CacheConfiguration {
             // The serviceId is by default the application's name,
             // see the "spring.application.name" standard Spring property
             String serviceId = registration.getServiceId();
-            log.debug("Configuring Hazelcast clustering for instanceId: {}", serviceId);
+            log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
             // In development, everything goes through 127.0.0.1, with a different port
             // TODO: Simon Leiß: Remove' || true' once deployment is distributed over multiple VMs.
             if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) || true) {
-                log.debug("Application is running with the \"dev\" profile, Hazelcast " + "cluster will only work with localhost instances");
+                log.info("Application is running with the \"dev\" profile, Hazelcast " + "cluster will only work with localhost instances");
 
                 System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
                 config.getNetworkConfig().setPort(serverProperties.getPort() + 5701);
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     String clusterMember = "127.0.0.1:" + (instance.getPort() + 5701);
-                    log.debug("Adding Hazelcast (dev) cluster member {}", clusterMember);
+                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
             }
@@ -112,7 +112,7 @@ public class CacheConfiguration {
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     String clusterMember = instance.getHost() + ":5701";
-                    log.debug("Adding Hazelcast (prod) cluster member {}", clusterMember);
+                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
             }
