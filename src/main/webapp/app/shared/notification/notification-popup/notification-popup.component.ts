@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import * as moment from 'moment';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
-import * as moment from 'moment';
 
+// TODO: visible not necessary --> simple remove notification from array
 type NotificationUIState = {
     notification: Notification;
     icon: string;
@@ -25,7 +27,7 @@ export class NotificationPopupComponent implements OnInit {
         },
     ];
 
-    constructor(private accountService: AccountService, private notificationService: NotificationService) {}
+    constructor(private accountService: AccountService, private notificationService: NotificationService, private router: Router) {}
 
     /**
      * Subscribe to notification updates that are received via websocket if the user is logged in.
@@ -38,11 +40,21 @@ export class NotificationPopupComponent implements OnInit {
         });
     }
 
-    close(index: number) {
-        console.log(index);
-        console.log(this.notifications[index]);
+    /**
+     * TODO
+     * @param index
+     */
+    close(index: number): void {
         this.notifications[index].visible = false;
-        console.log(this.notifications[index]);
+    }
+
+    /**
+     * Navigate to the target (view) of the notification the user clicked on.
+     * @param notification {Notification}
+     */
+    navigateToTarget(notification: Notification): void {
+        const target = JSON.parse(notification.target);
+        this.router.navigate([target.mainPage, target.course, target.entity, target.id]);
     }
 
     private subscribeToNotificationUpdates(): void {

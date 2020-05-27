@@ -1,5 +1,5 @@
 <div class="notification-popup-container">
-    <div *ngFor="let notification of notifications; let i = index" [ngClass]="notification.visible ? 'show' : 'hide'">
+    <div *ngFor="let notification of notifications; let i = index" [ngClass]="notification.visible ? 'show' : 'hide'" (click)="navigateToTarget(notification)">
         <div class="icon-container d-flex flex-column justify-content-center p-4">
             <fa-icon [icon]="notification.icon"></fa-icon>
         </div>
