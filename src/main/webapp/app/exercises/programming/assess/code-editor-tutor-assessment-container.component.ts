@@ -26,7 +26,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { AssessmentActionState, AssessmentSubmitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
@@ -51,6 +51,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     repositoryIsLocked = false;
+    assessmentActionState: AssessmentActionState;
 
     constructor(
         private resultService: ResultService,
@@ -76,6 +77,8 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
+            console.log('ParticipationId in der richtigen Klasse');
+            console.log(participationId);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
@@ -137,5 +140,10 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
+    }
+
+    setActionState(changedAssessmentActionState: AssessmentActionState) {
+        console.log('Step2');
+        this.assessmentActionState = changedAssessmentActionState;
     }
 }
