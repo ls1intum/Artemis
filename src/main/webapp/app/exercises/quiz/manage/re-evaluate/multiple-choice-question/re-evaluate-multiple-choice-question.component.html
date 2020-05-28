@@ -63,9 +63,9 @@
     </div>
     <div class="markupEditorArea">
         <div class="question-content" style="padding-bottom: 12px;">
-            <div class="input-group" style="height: 100px;">
+            <div class="row">
                 <jhi-markdown-editor
-                    [markdown]="questionEditorText"
+                    [(markdown)]="questionEditorText"
                     [editorMode]="editorMode"
                     [metaCommands]="[]"
                     [defaultCommands]="[]"
@@ -75,20 +75,10 @@
                     [showEditButton]="false"
                     [showPreviewButton]="false"
                     (markdownChange)="onQuestionChange($event)"
-                    style="height: 100px; width: 90%; overflow: auto;"
+                    class="editor col"
+                    style="width: 90%;"
                 ></jhi-markdown-editor>
-                <!--<ace-editor
-                    #questionEditor
-                    [text]="questionEditorText"
-                    [theme]="'chrome'"
-                    [mode]="editorMode"
-                    [autoUpdateContent]="true"
-                    [options]="editorOptions"
-                    style="min-height: 40px; width: 90%; overflow: auto;"
-                    class="form-control"
-                >
-                </ace-editor>-->
-                <span class="input-group-btn d-flex">
+                <span class="col-auto input-group-btn d-flex align-items-center">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                         <fa-icon [icon]="'undo'"></fa-icon>
                     </button>
@@ -102,19 +92,8 @@
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%;" dnd-sortable-handle>
                     <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
                 </span>
-                <!--<ace-editor
-                    #answerEditor
-                    [text]="answerEditorText[i]"
-                    [theme]="'chrome'"
-                    [mode]="editorMode"
-                    [autoUpdateContent]="true"
-                    [options]="editorOptions"
-                    style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
-                    class="form-control"
-                >
-                </ace-editor>-->
                 <jhi-markdown-editor
-                    [markdown]="answerEditorText[i]"
+                    [markdown]="generateAnswerMarkdown(answer)"
                     [editorMode]="editorMode"
                     [metaCommands]="[]"
                     [defaultCommands]="[]"
@@ -124,7 +103,8 @@
                     [showEditButton]="false"
                     [showPreviewButton]="false"
                     (markdownChange)="onAnswerOptionChange($event, i)"
-                    style="height: 100px; width: 65%; overflow: auto;"
+                    class="editor"
+                    style="width: 65%;"
                 ></jhi-markdown-editor>
                 <div class="form-group text-center" style="width: 25%;">
                     <button
