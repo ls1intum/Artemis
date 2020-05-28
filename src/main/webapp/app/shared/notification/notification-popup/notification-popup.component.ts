@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, UrlTree, NavigationEnd } from '@angular/router';
 import * as moment from 'moment';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
@@ -49,8 +49,12 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
+        this.router.navigateByUrl(this.notificationTargetRoute(notification));
+    }
+
+    private notificationTargetRoute(notification: Notification): UrlTree {
         const target = JSON.parse(notification.target);
-        this.router.navigate([target.mainPage, target.course, target.entity, target.id]);
+        return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
     }
 
     private subscribeToNotificationUpdates(): void {
@@ -63,11 +67,23 @@ export class NotificationPopupComponent implements OnInit {
 
     private addNotification(notification: Notification): void {
         notification.notificationDate = moment(notification.notificationDate);
+        // Only add a notification if it does not already exist
         if (!this.notifications.some(({ id }) => id === notification.id)) {
             // For now only notifications about a started quiz should be displayed
             if (notification.title === 'Quiz started') {
-                this.notifications.unshift(notification);
+                this.addQuizNotification(notification);
             }
+        }
+    }
+
+    /**
+     * Will add a notification about a started quiz to the component's state.
+     * The notification will only be added if the user is not already on the target page.
+     * @param notification {Notification}
+     */
+    private addQuizNotification(notification: Notification): void {
+        if (!this.router.isActive(this.notificationTargetRoute(notification), true)) {
+            this.notifications.unshift(notification);
         }
     }
 }
