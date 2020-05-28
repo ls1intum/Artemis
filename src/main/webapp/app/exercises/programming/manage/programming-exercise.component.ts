@@ -18,6 +18,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -40,6 +41,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private router: Router,
         private javaBridge: OrionConnectorService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
+        private sortService: SortService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -107,7 +109,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         return 'programmingExerciseListModification';
     }
 
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
+    }
 
     openImportModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
