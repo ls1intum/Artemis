@@ -112,11 +112,16 @@ public class QuizSubmissionService {
      * @param exerciseId the exerciseID to the corresponding QuizExercise
      * @param quizSubmission the submission which should be saved
      * @param username the username of the user who has initiated the request
+     * @param submitted whether the user has pressed the submit button or not
      *
      * @return the updated quiz submission object
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
-    public QuizSubmission submitForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username) throws QuizSubmissionException {
+    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username, boolean submitted) throws QuizSubmissionException {
+
+        // TODO: what happens if a user executes this call twice in the same moment (using 2 threads)
+
+        String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
         // check if submission is still allowed
@@ -125,12 +130,12 @@ public class QuizSubmissionService {
             // Fallback solution
             Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
             if (optionalQuizExercise.isEmpty()) {
-                log.warn("Could not save quiz exercise for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
+                log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
                 throw new QuizSubmissionException("The quiz could not be found");
             }
             quizExercise = optionalQuizExercise.get();
         }
-        log.debug("submitForLiveMode: Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug(logText + "Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
@@ -140,7 +145,7 @@ public class QuizSubmissionService {
 
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
-        log.debug("submitForLiveMode: Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug(logText + "Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!participation.getSubmissions().isEmpty()) {
             log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked
@@ -162,7 +167,7 @@ public class QuizSubmissionService {
         // save submission to HashMap
         QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
-        log.info("submitForLiveMode: Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 }
