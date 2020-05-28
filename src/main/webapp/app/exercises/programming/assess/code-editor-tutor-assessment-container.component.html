@@ -13,7 +13,7 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
+<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-programming-assessment-repo-export
@@ -46,6 +46,17 @@
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
         <!--<jhi-code-editor-tutor-actions></jhi-code-editor-tutor-actions> -->
+        <jhi-code-editor-tutor-actions
+            [disableActions]="repositoryIsLocked"
+            [unsavedFiles]="unsavedFiles"
+            [(editorState)]="editorState"
+            [(commitState)]="commitState"
+            [result]="participation.results[participation.results.length - 1]"
+            [participation]="participation"
+            (assessmentActionStateChange)="setActionState($event)"
+            (onSavedFiles)="onSavedFiles($event)"
+            (onError)="onError($event)"
+        ></jhi-code-editor-tutor-actions>
         <!--<jhi-code-editor-actions
             [disableActions]="repositoryIsLocked"
             [unsavedFiles]="unsavedFiles"
@@ -85,6 +96,13 @@
         (onToggleCollapse)="onToggleCollapse($event)"
         (onError)="onError($event)"
     ></jhi-code-editor-instructions>
+    <jhi-programming-assessment-manual-result-in-code-editor
+        editorBottom
+        [participationId]="participation.id"
+        [result]="participation.results[participation.results.length - 1]"
+        [exercise]="exercise"
+        [assessmentActionState]="assessmentActionState"
+    ></jhi-programming-assessment-manual-result-in-code-editor>
     <jhi-code-editor-build-output
         editorBottomArea
         [participation]="participation"
