@@ -74,7 +74,6 @@ public abstract class QuizQuestion implements Serializable {
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
-    @JsonView(QuizView.After.class)
     private QuizQuestionStatistic quizQuestionStatistic;
 
     @ManyToOne
