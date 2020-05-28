@@ -258,6 +258,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     public sortRows() {
-        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.otherSubmissions, this.predicate, this.reverse);
     }
 }
