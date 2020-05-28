@@ -71,6 +71,8 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         try {
+            // we set the submitted flag to true on the server side
+            quizSubmission.setSubmitted(true);
             QuizSubmission updatedQuizSubmission = quizSubmissionService.submitForLiveMode(exerciseId, quizSubmission, principal.getName());
             return ResponseEntity.ok(updatedQuizSubmission);
         }
