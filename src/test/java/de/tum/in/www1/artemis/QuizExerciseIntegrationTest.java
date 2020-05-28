@@ -529,7 +529,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
-    @Test
+    // SKIPPED
+    // TODO: this is a flaky test and it's unclear why. We skip it for now.
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {
 
@@ -546,6 +547,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // generate unrated submissions for each student
         int numberOfParticipants = 10;
+
+        // TODO: maybe the test is flaky because the submissions and results are directly added to the database instead of using the REST calls?
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {

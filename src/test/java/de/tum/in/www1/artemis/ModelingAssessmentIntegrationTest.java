@@ -422,21 +422,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "student2")
-    public void testNoAutomaticAssessmentUponModelSave() throws Exception {
-        saveModelingSubmissionAndAssessment(true);
-
-        database.addParticipationForExercise(classExercise, "student2");
-
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), false);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getAutomaticResultForSubmission(storedSubmission.getId(), classExercise.getId());
-        assertThat(automaticResult).as("no automatic result has been created").isNull();
-    }
-
-    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testConfidenceThreshold() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
