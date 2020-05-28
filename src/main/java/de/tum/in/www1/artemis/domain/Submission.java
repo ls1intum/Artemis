@@ -93,15 +93,14 @@ public abstract class Submission implements Serializable {
     public Long durationInMinutes;
 
     public Long getDurationInMinutes() {
+        if (this.participation == null || this.participation.getInitializationDate() == null || this.submissionDate == null) {
+            return null;
+        }
+
         ZonedDateTime initilizationDate = this.participation.getInitializationDate();
         ZonedDateTime submissionDate = this.getSubmissionDate();
 
-        if (initilizationDate != null && submissionDate != null) {
-            return Duration.between(initilizationDate, submissionDate).toMinutes();
-        }
-        else {
-            return null;
-        }
+        return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
     public Result getResult() {
