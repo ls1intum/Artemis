@@ -62,7 +62,6 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(unique = true)
-    @JsonView(QuizView.After.class)
     private QuizPointStatistic quizPointStatistic;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
