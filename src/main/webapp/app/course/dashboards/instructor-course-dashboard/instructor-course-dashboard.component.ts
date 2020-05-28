@@ -9,6 +9,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -31,7 +32,13 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
 
-    constructor(private courseService: CourseManagementService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
+    constructor(
+        private courseService: CourseManagementService,
+        private resultService: ResultService,
+        private route: ActivatedRoute,
+        private jhiAlertService: AlertService,
+        private sortService: SortService,
+    ) {}
 
     /**
      * On init fetch the course from the server.
@@ -107,10 +114,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         return 'bg-success';
     }
 
-    /**
-     * Empty callback function.
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.course.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
 
     /**
      * Pass an error to the jhiAlertService.

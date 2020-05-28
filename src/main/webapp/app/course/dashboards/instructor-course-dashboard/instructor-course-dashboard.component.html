@@ -66,13 +66,18 @@
 
             <table class="table" *ngIf="course.exercises.length >= 0">
                 <thead>
-                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
-                        <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
+                        <th jhiSortBy="id">
+                            <a class="th-link">#</a>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
                         <th jhiSortBy="title">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a>
+                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="dueDate">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a>
+                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="assessmentDueDate">
                             <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a>
@@ -95,7 +100,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exercise of course.exercises | sortBy: exercisesSortingPredicate:exercisesReverseOrder">
+                    <tr *ngFor="let exercise of course.exercises">
                         <td>
                             {{ exercise.id }}
                             <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
