@@ -65,7 +65,7 @@ public class TextClusteringService {
         this.textSegmentationService = textSegmentationService;
     }
 
-    private List<TextEmbedding> computeEmbeddings(List<TextBlock> blocks) {
+    private List<TextEmbedding> computeEmbeddings(List<TextBlock> blocks, TextExercise exercise) {
         final AtomicInteger counter = new AtomicInteger();
 
         Map<Integer, List<TextBlock>> chunks = blocks.stream().collect(groupingBy(block -> counter.getAndIncrement() / embeddingChunkSize, toList()));
@@ -76,7 +76,7 @@ public class TextClusteringService {
         chunks.forEach((i, chunk) -> {
             log.debug("Computing Language Embeddigns for Chunk " + i + " / " + chunks.size() + ".");
             try {
-                textEmbeddings.addAll(textEmbeddingService.embedTextBlocks(chunk, 2));
+                textEmbeddings.addAll(textEmbeddingService.embedTextBlocks(chunk, exercise, 2));
             }
             catch (NetworkingError networkingError) {
                 networkingError.printStackTrace();
@@ -106,7 +106,7 @@ public class TextClusteringService {
             networkingError.printStackTrace();
             return;
         }
-        List<TextEmbedding> embeddings = computeEmbeddings(new ArrayList<>(textBlockMap.values()));
+        List<TextEmbedding> embeddings = computeEmbeddings(new ArrayList<>(textBlockMap.values()), exercise);
 
         // Invoke clustering for Text Blocks
         final Map<Integer, TextCluster> clusters;

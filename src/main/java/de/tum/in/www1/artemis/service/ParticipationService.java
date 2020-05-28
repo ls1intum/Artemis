@@ -1,4 +1,3 @@
-
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
@@ -7,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -61,8 +59,6 @@ public class ParticipationService {
 
     private final TeamRepository teamRepository;
 
-    private final QuizSubmissionService quizSubmissionService;
-
     private final UserService userService;
 
     private final GitService gitService;
@@ -80,9 +76,8 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            TeamRepository teamRepository, QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            TeamRepository teamRepository, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -94,7 +89,6 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.teamRepository = teamRepository;
-        this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -385,10 +379,6 @@ public class ParticipationService {
 
             if (result != null) {
                 participation.addResult(result);
-                if (!Hibernate.isInitialized(result.getSubmission())) {
-                    Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
-                    result.setSubmission(submission);
-                }
             }
 
             return participation;
@@ -1127,6 +1117,17 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
+     *
+     * @param courseId the id of the course for which the participations should be found
+     * @param teamShortName the short name of the team for which participations should be found
+     * @return participations of team
+     */
+    public List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(long courseId, String teamShortName) {
+        return studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(courseId, teamShortName);
     }
 
     /**

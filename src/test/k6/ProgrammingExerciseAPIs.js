@@ -30,33 +30,40 @@ export function setup() {
 
     let artemis, exerciseId, course, userId;
 
-    // Create course
-    artemis = login(adminUsername, adminPassword);
+    if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
+        console.log('Creating new course and exercise as no parameters are given');
 
-    course = newCourse(artemis);
+        // Create course
+        artemis = login(adminUsername, adminPassword);
 
-    createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course);
+        course = newCourse(artemis);
 
-    const instructorUsername = baseUsername.replace('USERID', '1');
-    const instructorPassword = basePassword.replace('USERID', '1');
+        createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course);
 
-    // Login to Artemis
-    artemis = login(instructorUsername, instructorPassword);
+        const instructorUsername = baseUsername.replace('USERID', '1');
+        const instructorPassword = basePassword.replace('USERID', '1');
 
-    // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
-    const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
-    if (timeoutExercise > 0) {
-        console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
-        sleep(timeoutExercise);
+        // Login to Artemis
+        artemis = login(instructorUsername, instructorPassword);
+
+        // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
+        const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
+        if (timeoutExercise > 0) {
+            console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
+            sleep(timeoutExercise);
+        }
+
+        // Create new exercise
+        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
+
+        // Wait some time for builds to finish and test results to come in
+        sleep(20);
+
+        return { exerciseId: exerciseId, courseId: course.id };
+    } else {
+        console.log('Using existing course and exercise');
+        return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
     }
-
-    // Create new exercise
-    exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
-
-    // Wait some time for builds to finish and test results to come in
-    sleep(20);
-
-    return { exerciseId: exerciseId, courseId: course.id };
 }
 
 export default function (data) {
@@ -92,7 +99,13 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            somePassedString = '4 of 20 passed';
+            /*
+             * TODO: The C template currently only contains compile test cases that will never pass only partly,
+             *   so there can only be either a build failure or everything passes. This should be changed in the future,
+             *   but to make the simulation work again with the template, that's our solution here.
+             * */
+            // somePassedString = '1 of 4 passed';
+            somePassedString = '4 of 4 passed';
             break;
     }
 
@@ -101,13 +114,19 @@ export default function (data) {
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
             let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);
-            simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
+            if (programmingLanguage === 'C') {
+                // Due to the problems with the C template described above, the C tests can't partly fail right now
+                // TODO:  Remove the if-else once the template has been adjusted
+                simulateSubmission(artemis, simulation, TestResult.SUCCESS);
+            } else {
+                simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
+            }
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
             if (programmingLanguage === 'C') {
-                // C builds do never fail - they will only show 0/20 passed
-                simulateSubmission(artemis, simulation, TestResult.FAIL, '0 of 20 passed');
+                // C builds do never fail - they will only show 0/4 passed
+                simulateSubmission(artemis, simulation, TestResult.FAIL, '0 of 4 passed');
             } else {
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }

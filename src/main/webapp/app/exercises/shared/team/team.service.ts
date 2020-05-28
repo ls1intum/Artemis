@@ -12,6 +12,7 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { createRequestOption } from 'app/shared/util/request-util';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -43,8 +44,9 @@ export interface ITeamService {
     /**
      * Get all teams belonging to a given exercise
      * @param {number} exerciseId - Exercise to search through
+     * @param {number} teamOwnerId - Optional team owner id by which to filter exercises
      */
-    findAllByExerciseId(exerciseId: number): Observable<HttpResponse<Team[]>>;
+    findAllByExerciseId(exerciseId: number, teamOwnerId?: number): Observable<HttpResponse<Team[]>>;
 
     /**
      * Delete a team
@@ -76,6 +78,11 @@ export interface ITeamService {
      */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
+    /**
+     * Finds a course with all its team exercises and participations in which the given team exists
+     * @param {Course} course - Course which to find
+     * @param {Team} team - Team for which to find exercises and participations (by team short name)
+     */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
 }
 
@@ -130,10 +137,15 @@ export class TeamService implements ITeamService {
     /**
      * Get all teams belonging to a given exercise
      * @param {number} exerciseId - Exercise to search through
+     * @param {number} teamOwnerId - Optional team owner id by which to filter exercises
      */
-    findAllByExerciseId(exerciseId: number): Observable<TeamArrayResponse> {
+    findAllByExerciseId(exerciseId: number, teamOwnerId?: number): Observable<TeamArrayResponse> {
+        const options = createRequestOption(teamOwnerId ? { teamOwnerId } : {});
         return this.http
-            .get<Team[]>(TeamService.resourceUrl(exerciseId), { observe: 'response' })
+            .get<Team[]>(TeamService.resourceUrl(exerciseId), {
+                params: options,
+                observe: 'response',
+            })
             .pipe(map((res: TeamArrayResponse) => TeamService.convertDateArrayFromServer(res)));
     }
 
@@ -180,6 +192,11 @@ export class TeamService implements ITeamService {
         );
     }
 
+    /**
+     * Finds a course with all its team exercises and participations in which the given team exists
+     * @param {Course} course - Course which to find
+     * @param {Team} team - Team for which to find exercises and participations (by team short name)
+     */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
     }

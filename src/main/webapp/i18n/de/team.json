@@ -20,7 +20,13 @@
                     "name": "Name",
                     "email": "Email"
                 },
-                "noOwner": "Kein Tutor"
+                "noOwner": "Kein Tutor",
+                "participationsTable": {
+                    "title": "Teilnahmen in \"{{ courseTitle }}\" für",
+                    "columns": {
+                        "assessment": "Bewertung"
+                    }
+                }
             },
             "team": "Team",
             "name": {
@@ -38,9 +44,14 @@
                 "label": "Tutor",
                 "tooltip": "Nur Instruktoren können die Tutor-Zuweisung für Teams ändern."
             },
+            "ownerChangeWarning": "Wichtig: Der Tutor für das Team {{ shortName }} wird hiermit für den ganzen Kurs geändert!",
             "image": "Bild",
             "students": "Studenten",
             "tutor": "Tutor",
+            "filters": {
+                "all": "Alle Teams",
+                "own": "Eigene Teams"
+            },
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {

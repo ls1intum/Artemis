@@ -3,6 +3,7 @@
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
             "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
+            "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
@@ -34,6 +35,7 @@
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
+                "currentExerciseGroupHeaderWithoutDueDate": "Aktuelle Übung:",
                 "sortExercises": "Aufgaben sortieren",
                 "newFirst": "Neueste zuerst",
                 "oldFirst": "Älteste zuerst",
@@ -61,6 +63,7 @@
                 "userNotParticipatedShort": "Nicht teilgenommen.",
                 "userParticipatingShort": "Aktuelle Teilnahme",
                 "userSubmittedShort": "Bereits abgegeben.",
+                "noDateAssociated": "Ohne Datum",
                 "details": {
                     "courseInformation": "Kurs Informationen:",
                     "totalExercises": "Aufgaben insgesamt:",

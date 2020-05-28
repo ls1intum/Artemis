@@ -6,23 +6,19 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 
 @Service
 public class QuizStatisticService {
 
     private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -32,24 +28,39 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+    private SimpMessageSendingOperations messagingTemplate;
+
+    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
-        this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
     }
 
+    @Autowired
+    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
+
     /**
-     * 1. Go through all Results in the Participation and recalculate the score 2. recalculate the statistics of the given quizExercise
+     * 1. Go through all Results in the Participation and recalculate the score
+     * 2. Recalculate the statistics of the given quizExercise
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
     public void recalculateStatistics(QuizExercise quizExercise) {
 
         // reset all statistics
-        quizExercise.getQuizPointStatistic().resetStatistic();
+        if (quizExercise.getQuizPointStatistic() != null) {
+            quizExercise.getQuizPointStatistic().resetStatistic();
+        }
+        else {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
+            quizExercise.recalculatePointCounters();
+        }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestion.getQuizQuestionStatistic().resetStatistic();
@@ -77,13 +88,15 @@ public class QuizStatisticService {
             // update statistics with latest rated und unrated Result
             this.addResultToAllStatistics(quizExercise, latestRatedResult);
             this.addResultToAllStatistics(quizExercise, latestUnratedResult);
-
         }
+
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
+        quizPointStatisticRepository.flush();
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
+                quizQuestionStatisticRepository.flush();
             }
         }
     }

@@ -92,7 +92,7 @@
                             class="badge badge-warning"
                             *ngIf="!exercise.visibleToStudents"
                             placement="right"
-                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | date: 'MMM d, y H:mm' }}"
+                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                         >
                             {{ 'artemisApp.tutorCourseDashboard.notReleased' | translate }}</span
                         >
@@ -113,24 +113,35 @@
                         </jhi-tutor-participation-graph>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | amTimeAgo }}
                         </span>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
                             {{ exercise.assessmentDueDate | amTimeAgo }}
                         </span>
                     </td>
 
-                    <td class="text-center">
+                    <td>
                         <button
+                            *ngIf="!exercise.teamMode; else teamsLink"
                             [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'tutor-dashboard']"
                             class="btn btn-info btn-sm mr-1"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                         </button>
+                        <ng-template #teamsLink>
+                            <button
+                                [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
+                                [queryParams]="{ filter: TeamFilterProp.OWN }"
+                                class="btn btn-info btn-sm mr-1"
+                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                            >
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.tutorCourseDashboard.exerciseTeams">Exercise Teams</span>
+                            </button>
+                        </ng-template>
                     </td>
                 </tr>
             </tbody>

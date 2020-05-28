@@ -30,7 +30,7 @@
             </thead>
             <tr *ngFor="let audit of getAudits()">
                 <td>
-                    <span>{{ audit.timestamp | date: 'medium' }}</span>
+                    <span>{{ audit.timestamp | artemisDate: 'long':true }}</span>
                 </td>
                 <td>
                     <small>{{ audit.principal }}</small>
