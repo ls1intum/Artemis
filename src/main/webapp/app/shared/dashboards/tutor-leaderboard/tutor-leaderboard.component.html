@@ -1,16 +1,19 @@
 <div class="row table-responsive mt-3">
     <table class="table">
         <thead>
-            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="callback">
+            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="sortRows.bind(this)">
                 <th>#</th>
                 <th jhiSortBy="name">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="points">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.points' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.points' | translate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfAssessments">
-                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th jhiSortBy="numberOfAcceptedComplaints">
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
@@ -29,7 +32,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of tutorsData | sortBy: sortPredicate:reverseOrder; let i = index">
+            <tr *ngFor="let tutor of tutorsData; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ tutor.name }}</td>
                 <td>{{ tutor.points }}</td>
