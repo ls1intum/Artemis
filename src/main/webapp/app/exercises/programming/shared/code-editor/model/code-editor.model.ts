@@ -72,6 +72,32 @@ export enum EditorState {
 }
 
 /**
+ * Enumeration defining the state of assessment action
+ */
+export enum AssessmentActionState {
+    TO_SAVE = 'TO_SAVE',
+    TO_SUBMIT = 'TO_SUBMIT',
+}
+
+/**
+ * Enumeration defining the save state of the assessment
+ */
+export enum AssessmentSaveState {
+    IS_SAVING = 'IS_SAVING',
+    SAVED = 'SAVED',
+    FAILED = 'FAILED',
+}
+
+/**
+ * Enumeration defining the submit state of the assessment
+ */
+export enum AssessmentSubmitState {
+    IS_SUBMITTING = 'IS_SUBMITTING',
+    SUBMITTED = 'SUBMITTED',
+    FAILED = 'FAILED',
+}
+
+/**
  * Enumeration defining type of the resize operation.
  */
 export enum ResizeType {
