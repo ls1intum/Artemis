@@ -11,11 +11,10 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     styleUrls: ['./exercise-details.component.scss'],
 })
 export class ExerciseDetailsComponent implements OnInit {
-    @Input() exerciseDetails: Exercise;
+    @Input() superExerciseDetails: Exercise;
 
     AssessmentType = AssessmentType;
 
-    superExerciseDetails: Exercise;
     formattedProblemStatement: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
@@ -24,7 +23,6 @@ export class ExerciseDetailsComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit() {
-        this.superExerciseDetails = this.exerciseDetails;
         this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.superExerciseDetails.gradingInstructions);
         this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.superExerciseDetails.problemStatement);
     }

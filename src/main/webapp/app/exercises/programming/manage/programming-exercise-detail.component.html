@@ -35,69 +35,13 @@
                 </button>
             </div>
             <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-                <dd>
-                    <div *ngIf="programmingExercise.course">
-                        <a [routerLink]="['/course-management', programmingExercise.course?.id, 'view']">{{ programmingExercise.course?.title }}</a>
-                    </div>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.title }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.shortName">Short Name</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.shortName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-                <dd *ngIf="programmingExercise.categories">
-                    <span class="custom-tag" *ngFor="let item of programmingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-                        <span>{{ item.category }}</span>
-                    </span>
-                </dd>
-                <dd *ngIf="!programmingExercise.categories">
-                    <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
-                <dd>
-                    <span *ngIf="programmingExercise.difficulty">{{ programmingExercise.difficulty }}</span>
-                    <span *ngIf="!programmingExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.mode }}</span>
-                </dd>
-                <ng-container *ngIf="programmingExercise.teamAssignmentConfig">
-                    <dt><span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team Size</span></dt>
-                    <dd>
-                        <span>Min.</span>
-                        <span>{{ programmingExercise.teamAssignmentConfig.minTeamSize }}</span>
-                        <span>Max.</span>
-                        <span>{{ programmingExercise.teamAssignmentConfig.maxTeamSize }}</span>
-                        <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
-                    </dd>
-                </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
-                <dd>
-                    <span *ngIf="programmingExercise.releaseDate">{{ programmingExercise.releaseDate | artemisDate }}</span>
-                    <span *ngIf="!programmingExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
-                <dd>
-                    <span *ngIf="programmingExercise.dueDate">{{ programmingExercise.dueDate | artemisDate }}</span>
-                    <span *ngIf="!programmingExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
+                <jhi-exercise-details [superExerciseDetails]="programmingExercise"></jhi-exercise-details>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
                     </dd>
                 </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
-                <dd>
-                    <span *ngIf="programmingExercise.assessmentDueDate">{{ programmingExercise.assessmentDueDate | date: 'medium' }}</span>
-                    <span *ngIf="!programmingExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>

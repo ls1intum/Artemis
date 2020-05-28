@@ -8,8 +8,14 @@
 <dd>
     <span>{{ superExerciseDetails.title }}</span>
 </dd>
+<ng-container *ngIf="superExerciseDetails.type === 'programming'">
+    <dt><span jhiTranslate="artemisApp.exercise.shortName">short Name</span></dt>
+    <dd>
+        <span>{{ superExerciseDetails.shortName }}</span>
+    </dd>
+</ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-<dd *ngIf="exerciseDetails.categories">
+<dd *ngIf="superExerciseDetails.categories">
     <span class="custom-tag" *ngFor="let item of superExerciseDetails.categories" [ngStyle]="{ backgroundColor: item.color }">
         <span>{{ item.category }}</span>
     </span>
@@ -51,17 +57,22 @@
     <span *ngIf="superExerciseDetails.assessmentDueDate">{{ superExerciseDetails.assessmentDueDate | artemisDate }}</span>
     <span *ngIf="!superExerciseDetails.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
 </dd>
-<dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
-<dd>
-    <span>{{ superExerciseDetails.maxScore }}</span>
-</dd>
-<dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-<dd>
-    <span *ngIf="superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-    <span *ngIf="!superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-</dd>
-<dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
-<dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
-<dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-<dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
-<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="superExerciseDetails.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+<ng-container *ngIf="superExerciseDetails.type !== 'programming'">
+    <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
+    <dd>
+        <span>{{ superExerciseDetails.maxScore }}</span>
+    </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
+    <dd>
+        <span *ngIf="superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
+        <span *ngIf="!superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
+    </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
+    <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
+    <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+    <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
+    <jhi-structured-grading-instructions-assessment-layout
+        [readonly]="true"
+        [criteria]="superExerciseDetails.gradingCriteria"
+    ></jhi-structured-grading-instructions-assessment-layout>
+</ng-container>
