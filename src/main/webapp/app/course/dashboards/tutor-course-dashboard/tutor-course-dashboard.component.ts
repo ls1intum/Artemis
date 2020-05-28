@@ -12,6 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/entities/course.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -57,6 +58,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         private route: ActivatedRoute,
         private router: Router,
         private guidedTourService: GuidedTourService,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -161,8 +163,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         this.router.navigate(['course-management']);
     }
 
-    /**
-     * Empty callback function.
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
 }
