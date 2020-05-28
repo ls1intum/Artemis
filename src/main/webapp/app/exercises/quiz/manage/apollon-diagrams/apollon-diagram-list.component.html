@@ -19,7 +19,7 @@
 <div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
     <table class="table table-striped">
         <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                 <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
@@ -28,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate:reverse; trackBy: trackId">
+            <tr *ngFor="let apollonDiagram of apollonDiagrams; trackBy: trackId">
                 <td>
                     <a [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
