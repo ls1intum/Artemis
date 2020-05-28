@@ -174,7 +174,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // set dates to UTC and round to milliseconds for comparison
         textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result", "blocks");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
@@ -338,8 +338,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextSubmissionWithTextBlocks() throws Exception {
+        textSubmission.setText("Lorem Ipsum dolor sit amet");
         textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
-        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 9), ModelFactory.generateTextBlock(10, 19), ModelFactory.generateTextBlock(20, 29));
+        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 11), ModelFactory.generateTextBlock(12, 21), ModelFactory.generateTextBlock(22, 26));
         database.addTextBlocksToTextSubmission(blocks, textSubmission);
 
         request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);

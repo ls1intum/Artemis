@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextEmbedding;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 @Service
@@ -25,8 +26,14 @@ public class TextEmbeddingService {
 
         public List<TextBlock> blocks;
 
-        Request(List<TextBlock> blocks) {
+        public Long courseId;
+
+        public Long exerciseId;
+
+        Request(List<TextBlock> blocks, Long courseId, long exerciseId) {
             this.blocks = blocks;
+            this.courseId = courseId;
+            this.exerciseId = exerciseId;
         }
     }
 
@@ -44,20 +51,28 @@ public class TextEmbeddingService {
 
     private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
-    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks) throws NetworkingError {
-        return embedTextBlocks(blocks, 1);
+    /**
+     * Calls the remote embedding service to embedd a List of textBlocks
+     * @param blocks a List of TextBlocks which should be embedded
+     * @param exercise the exercise from which the text blocks are extracted
+     * @return a List of TextEmbedding corresponding to the given TextBlocks
+     * @throws NetworkingError if the request isn't successful
+     */
+    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, TextExercise exercise) throws NetworkingError {
+        return embedTextBlocks(blocks, exercise, 1);
     }
 
     /**
      * Calls the remote embedding service to embedd a List of textBlocks
      * @param blocks a List of TextBlocks which should be embedded
+     * @param exercise the exercise from which the text blocks are extracted
      * @param maxRetries number of retries before the request will be canceled
      * @return a List of TextEmbedding corresponding to the given TextBlocks
      * @throws NetworkingError if the request isn't successful
      */
-    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
+    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, TextExercise exercise, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to embed " + blocks.size() + " student text answer blocks.");
-        final Request request = new Request(blocks);
+        final Request request = new Request(blocks, exercise.getCourse().getId(), exercise.getId());
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
 
         return response.embeddings;

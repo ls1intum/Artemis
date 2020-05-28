@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,6 +56,30 @@ public class QuizSubmissionResource {
         this.messagingService = messagingService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+    }
+
+    /**
+     * POST /exercises/:exerciseId/submissions/live : Submit a new quizSubmission for live mode.
+     *
+     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param quizSubmission the quizSubmission to submit
+     * @param principal      refers to the user who initiated the request
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("/exercises/{exerciseId}/submissions/live")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
+        log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
+        try {
+            // we set the submitted flag to true on the server side
+            quizSubmission.setSubmitted(true);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.submitForLiveMode(exerciseId, quizSubmission, principal.getName());
+            return ResponseEntity.ok(updatedQuizSubmission);
+        }
+        catch (QuizSubmissionException e) {
+            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal + " in quiz " + exerciseId);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
+        }
     }
 
     /**

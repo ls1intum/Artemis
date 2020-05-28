@@ -78,8 +78,8 @@
                         ></jhi-programming-exercise-test-cases-dirty-warning>
                     </td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
-                    <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
-                    <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
+                    <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
+                    <td>{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
