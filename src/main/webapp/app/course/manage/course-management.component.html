@@ -26,16 +26,16 @@
     <div class="table-responsive" *ngIf="courses">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th class="d-none d-md-table-cell"></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
-                        <span>{{ 'global.field.id' | translate }}</span
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <span>{{ 'global.field.id' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
 
                     <th jhiSortBy="title">
-                        <span>{{ 'artemisApp.course.title' | translate }}</span
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <span>{{ 'artemisApp.course.title' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell">
                         <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
@@ -60,10 +60,12 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let course of courses | sortBy: predicate:reverse; trackBy: trackId">
+                <tr *ngFor="let course of courses; trackBy: trackId">
                     <ng-container *ngIf="!showOnlyActive || !course.endDate || (course.endDate | amIsAfter: today:'second')">
                         <td class="d-none d-md-table-cell">
-                            <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
+                            <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">
+                                &nbsp;
+                            </div>
                         </td>
                         <td class="d-none d-md-table-cell">
                             <a [routerLink]="['/course-management', course.id, 'view']">{{ course.id }}</a>
@@ -72,7 +74,7 @@
                             <span class="bold">{{ course.title }}</span
                             ><br />
                             <span *ngIf="course.shortName">
-                                <span class="bold">{{ 'artemisApp.course.shortName' | translate }}:</span> {{ course.shortName }}
+                                <span class="bold">{{ 'artemisApp.course.shortName' | translate }} :</span> {{ course.shortName }}
                             </span>
                         </td>
                         <td class="d-none d-md-table-cell">
