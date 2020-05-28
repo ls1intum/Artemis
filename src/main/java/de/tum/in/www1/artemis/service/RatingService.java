@@ -42,6 +42,10 @@ public class RatingService {
 
     /**
      * Persist a new Rating
+     * <p>
+     * The @Transactional is needed because the Id of the serverRating is set automatically once the
+     * result is set. BE CAREFUL TO EXTEND THIS METHOD, @TRANSACTIONAL CAN HAVE UNWANTED SIDE
+     * EFFECTS!
      *
      * @param resultId    - Id of the rating that should be persisted
      * @param ratingValue - Value of the rating that should be persisted
