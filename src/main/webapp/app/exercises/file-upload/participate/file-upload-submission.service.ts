@@ -6,14 +6,12 @@ import { map } from 'rxjs/operators';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { Submission } from 'app/entities/submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient) {}
 
     /**
      * Updates File Upload submission on the server
@@ -100,7 +98,6 @@ export class FileUploadSubmissionService {
      */
     private convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
         const convertedFileUploadSubmission = Object.assign({}, fileUploadSubmission);
-        convertedFileUploadSubmission.durationInMinutes = this.submissionService.calculateDurationInMinutes(convertedFileUploadSubmission);
         return convertedFileUploadSubmission;
     }
 

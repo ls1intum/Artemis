@@ -7,7 +7,6 @@ import { map } from 'rxjs/operators';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -15,7 +14,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 export class ModelingSubmissionService {
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient) {}
 
     /**
      * Create a new modeling submission
@@ -109,7 +108,6 @@ export class ModelingSubmissionService {
      */
     private convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
         const copy: ModelingSubmission = Object.assign({}, modelingSubmission);
-        copy.durationInMinutes = this.submissionService.calculateDurationInMinutes(copy);
         return copy;
     }
 

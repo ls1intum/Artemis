@@ -97,12 +97,4 @@ export class SubmissionService {
         }
         return res;
     }
-
-    calculateDurationInMinutes(submission: Submission) {
-        if (has(submission, 'participation.submissionDate') && has(submission, 'participation.initializationDate')) {
-            return this.differencePipe.transform(submission.submissionDate!, submission.participation.initializationDate!, 'minutes');
-        } else {
-            return null;
-        }
-    }
 }

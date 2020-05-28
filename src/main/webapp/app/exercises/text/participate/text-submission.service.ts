@@ -5,13 +5,12 @@ import { map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
@@ -73,7 +72,6 @@ export class TextSubmissionService {
      */
     private convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
         const convertedSubmission = Object.assign({}, textSubmission);
-        convertedSubmission.durationInMinutes = this.submissionService.calculateDurationInMinutes(convertedSubmission);
         return convertedSubmission;
     }
 
