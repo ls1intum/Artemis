@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -24,6 +25,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         courseService: CourseManagementService,
         translateService: TranslateService,
         private jhiAlertService: AlertService,
+        private sortService: SortService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
@@ -79,8 +81,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         return 'textExerciseListModification';
     }
 
-    /**
-     * Used in the template for jhiSort
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
+    }
 }
