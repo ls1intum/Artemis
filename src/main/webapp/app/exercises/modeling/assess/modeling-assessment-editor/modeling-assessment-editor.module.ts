@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -20,7 +19,6 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
         ArtemisAssessmentSharedModule,
         ArtemisModelingAssessmentEditorRoutingModule,
         ModelingAssessmentModule,
-        SortByModule,
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     exports: [ModelingAssessmentEditorComponent],

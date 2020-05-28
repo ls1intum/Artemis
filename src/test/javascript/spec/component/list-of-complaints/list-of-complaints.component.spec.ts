@@ -3,7 +3,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -28,7 +27,7 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([]), SortByModule],
+            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [ListOfComplaintsComponent],
             providers: [
                 {

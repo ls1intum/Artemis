@@ -7,7 +7,6 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { textExerciseRoute } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
@@ -24,7 +23,6 @@ const ENTITY_STATES = [...textExerciseRoute];
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,

@@ -10,7 +10,6 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercise-scores/exercise-scores-routing.module';
 
@@ -21,7 +20,6 @@ import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercis
         ArtemisExerciseScoresRoutingModule,
         NgbModule,
         ArtemisResultModule,
-        SortByModule,
         FormDateTimePickerModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
