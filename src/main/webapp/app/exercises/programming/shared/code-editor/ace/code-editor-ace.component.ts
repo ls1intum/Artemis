@@ -40,7 +40,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         return this.buildLogErrorsValue;
     }
     @Input()
-    isTutorAssessment: boolean;
+    isTutorAssessment = false;
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
