@@ -92,6 +92,11 @@ public abstract class Submission implements Serializable {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Long durationInMinutes;
 
+    /**
+     * Calculates the duration of a submission in minutes
+     *
+     * @return duration in minutes or null if it can not be determined
+     */
     public Long getDurationInMinutes() {
         if (this.participation == null || this.participation.getInitializationDate() == null || this.submissionDate == null) {
             return null;
