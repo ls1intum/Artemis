@@ -40,7 +40,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { DifferencePipe } from 'ngx-moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -89,7 +88,6 @@ describe('TutorExerciseDashboardComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                DifferencePipe,
                 {
                     provide: ExerciseService,
                     useValue: {

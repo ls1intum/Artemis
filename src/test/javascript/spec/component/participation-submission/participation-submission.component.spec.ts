@@ -33,7 +33,6 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { DifferencePipe } from 'ngx-moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,7 +63,6 @@ describe('ParticipationSubmissionComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
-                DifferencePipe,
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
