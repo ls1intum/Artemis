@@ -15,17 +15,22 @@
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="user.name">
                         <span jhiTranslate="instructorDashboard.name">Name</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="user.login">
+                        <span jhiTranslate="instructorDashboard.username">Username</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="numberOfParticipatedExercises">
-                        <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfSuccessfulExercises">
-                        <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="pointsPerExerciseType.{{ exerciseType }}">
@@ -60,7 +65,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let student of students | sortBy: predicate:reverse">
+                <tr *ngFor="let student of students">
                     <td>{{ student.user.name }}</td>
                     <td>{{ student.user.login }}</td>
                     <td>{{ student.numberOfParticipatedExercises }} ({{ toLocaleString((student.numberOfParticipatedExercises / exercises.length) * 100) }}%)</td>
