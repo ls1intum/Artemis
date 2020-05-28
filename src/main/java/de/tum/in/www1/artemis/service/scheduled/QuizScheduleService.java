@@ -500,9 +500,6 @@ public class QuizScheduleService {
     private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 
         int count = 0;
-        List<StudentParticipation> participations = new ArrayList<>();
-        List<QuizSubmission> submissions = new ArrayList<>();
-        List<Result> results = new ArrayList<>();
 
         for (String username : userSubmissionMap.keySet()) {
             try {
@@ -555,24 +552,23 @@ public class QuizScheduleService {
                 // add submission to participation
                 participation.addSubmissions(quizSubmission);
 
-                participations.add(participation);
-                submissions.add(quizSubmission);
-                results.add(result);
+                // save all participations, results and quizSubmissions
+                // NOTE: we save the single participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student
+                // answers
+                participation = studentParticipationRepository.save(participation);
+                quizSubmissionRepository.save(quizSubmission);
+                result = resultRepository.save(result);
+
+                // add the participation to the participationHashMap for the send out at the end of the quiz
+                addParticipation(quizExercise.getId(), participation);
+                // add the result of the participation resultHashMap for the statistic-Update
+                addResultForStatisticUpdate(quizExercise.getId(), result);
             }
             catch (Exception e) {
                 log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
             }
         }
 
-        // save all participations, results and quizSubmissions
-        participations = studentParticipationRepository.saveAll(participations);
-        quizSubmissionRepository.saveAll(submissions);
-        results = resultRepository.saveAll(results);
-
-        // add the participation to the participationHashMap for the send out at the end of the quiz
-        addParticipations(quizExercise.getId(), participations);
-        // add the result of the participation resultHashMap for the statistic-Update
-        addResultsForStatisticUpdate(quizExercise.getId(), results);
         return count;
     }
 }
