@@ -1010,7 +1010,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Reach to changes of duration inputs by updating model and ui
      */
     onDurationChange(): void {
-        this.changeValuesForMinAndMaxSecondsInput();
         const duration = moment.duration(this.duration);
         this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
         this.updateDuration();
@@ -1022,23 +1021,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
+        this.changeDetector.detectChanges()
         this.duration.minutes = 60 * duration.hours() + duration.minutes();
         this.duration.seconds = duration.seconds();
-    }
-
-    /**
-     * Changes values of the seconds input from 60 (max) to 0 and from -1 (min) to 59 to ensure that the duration is calculated correctly
-     */
-    changeValuesForMinAndMaxSecondsInput(): void {
-        const secondsInput = document.getElementById('quiz-duration-seconds')! as HTMLInputElement | undefined;
-        if (secondsInput) {
-            if (secondsInput.value === secondsInput.max) {
-                secondsInput.value = '0';
-            }
-            if (secondsInput.value === secondsInput.min) {
-                secondsInput.value = '59';
-            }
-        }
     }
 
     /**
