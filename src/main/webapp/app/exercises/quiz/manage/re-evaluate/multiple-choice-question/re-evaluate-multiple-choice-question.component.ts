@@ -71,9 +71,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         this.questionUpdated.emit();
     }
 
-    onAnswerOptionChange(text: string, i: number): void {
-        const updatedAnswer = Object.assign({}, this.question.answerOptions![i]);
-        this.parseAnswerMarkdown(text.trim(), updatedAnswer);
+    onAnswerOptionChange(text: string, answer: AnswerOption): void {
+        const answerIndex = this.question.answerOptions?.findIndex((answerOption) => {
+            return answerOption.id === answer.id;
+        });
+        this.parseAnswerMarkdown(text.trim(), this.question.answerOptions![answerIndex!]);
         // this.question.answerOptions![i] = updatedAnswer;
         this.questionUpdated.emit();
     }
@@ -174,9 +176,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions!.forEach((answer, i) => {
-            this.resetAnswer(answer, i);
-        });
+        this.question.answerOptions = this.backupQuestion.answerOptions;
         // Reset answer editors
         this.resetQuestionText();
         this.questionUpdated.emit();
@@ -186,11 +186,14 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * Resets the whole answer
      * @param answer {AnswerOption} the answer, which will be reset
      */
-    resetAnswer(answer: AnswerOption, index: number) {
+    resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
+        const answerIndex = this.question.answerOptions?.findIndex((answerOption) => {
+            return answerOption.id === answer.id;
+        });
         const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![index] = backupAnswer;
+        this.question.answerOptions![answerIndex!] = backupAnswer;
         this.questionUpdated.emit();
     }
 

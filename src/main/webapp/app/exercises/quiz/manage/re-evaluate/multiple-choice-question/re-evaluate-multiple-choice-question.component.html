@@ -102,7 +102,7 @@
                     [colorCommands]="[]"
                     [showEditButton]="false"
                     [showPreviewButton]="false"
-                    (markdownChange)="onAnswerOptionChange($event, i)"
+                    (markdownChange)="onAnswerOptionChange($event, answer)"
                     class="editor"
                     style="width: 65%;"
                 ></jhi-markdown-editor>
@@ -120,7 +120,7 @@
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
                     ></button
                     >&nbsp;
-                    <span class="re-evaluate-button" (click)="resetAnswer(answer, i)">
+                    <span class="re-evaluate-button" (click)="resetAnswer(answer)">
                         <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                     </span>
                     <span class="re-evaluate-button" (click)="deleteAnswer(answer)">
