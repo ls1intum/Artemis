@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, UrlTree, NavigationEnd } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import * as moment from 'moment';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
@@ -72,6 +72,7 @@ export class NotificationPopupComponent implements OnInit {
             // For now only notifications about a started quiz should be displayed
             if (notification.title === 'Quiz started') {
                 this.addQuizNotification(notification);
+                this.setRemovalTimeout(notification);
             }
         }
     }
@@ -85,5 +86,11 @@ export class NotificationPopupComponent implements OnInit {
         if (!this.router.isActive(this.notificationTargetRoute(notification), true)) {
             this.notifications.unshift(notification);
         }
+    }
+
+    private setRemovalTimeout(notification: Notification): void {
+        setTimeout(() => {
+            this.notifications = this.notifications.filter(({ id }) => id !== notification.id);
+        }, 30000);
     }
 }
