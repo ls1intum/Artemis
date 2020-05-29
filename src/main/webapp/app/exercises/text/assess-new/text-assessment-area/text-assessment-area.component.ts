@@ -1,11 +1,18 @@
-import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { WordCountService } from 'app/exercises/text/participate/word-count.service';
+import { get } from 'lodash';
 
 @Component({
     selector: 'jhi-text-assessment-area',
     template: `
+        <div>
+            <span class="badge badge-primary mb-2 ">
+                {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+            </span>
+        </div>
         <jhi-textblock-assessment-card
             *ngFor="let ref of textBlockRefs"
             [textBlockRef]="ref"
@@ -27,11 +34,21 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() textBlockRefs: TextBlockRef[];
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     selectedRef: TextBlockRef | null = null;
+    wordCount = 0;
+
+    constructor(private wordCountService: WordCountService) {}
 
     /**
      * Life cycle hook to indicate component change
      */
-    ngOnChanges(): void {
+    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
+        for (const propName in changes) {
+            if (propName === 'submission') {
+                const changedSubmission = changes[propName].currentValue;
+                this.wordCount = this.wordCountService.countWords(get(changedSubmission, 'text'));
+            }
+        }
+
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
     }
 
