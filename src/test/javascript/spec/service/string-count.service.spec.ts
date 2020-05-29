@@ -1,7 +1,7 @@
-import { WordCountService } from 'app/exercises/text/participate/word-count.service';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 describe('WordCountService', () => {
-    let service: WordCountService;
+    let service: StringCountService;
 
     const TEXT_WITH_63_WORDS =
         'Deutsches Ipsum Dolor quo Grimms Märchen posidonium Kaftfahrzeug-Haftpflichtversicherung adhuc Schnaps sadipscing Krankenschwester at, ' +
@@ -12,7 +12,7 @@ describe('WordCountService', () => {
     const EMPTY_TEXT = '';
 
     beforeEach(() => {
-        service = new WordCountService();
+        service = new StringCountService();
     });
 
     it('should be created', () => {
@@ -33,5 +33,17 @@ describe('WordCountService', () => {
 
     it('Undefined should contain 0 words', () => {
         expect(service.countWords(undefined)).toBe(0);
+    });
+
+    it('Null should contain 0 characters', () => {
+        expect(service.countCharacters(null)).toBe(0);
+    });
+
+    it('Undefined should contain 0 characters', () => {
+        expect(service.countCharacters(undefined)).toBe(0);
+    });
+
+    it('"Hello" should contain 5 characters', () => {
+        expect(service.countCharacters('Hello')).toBe(5);
     });
 });

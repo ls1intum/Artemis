@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange } from 
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import { WordCountService } from 'app/exercises/text/participate/word-count.service';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { get } from 'lodash';
 
 @Component({
@@ -36,7 +36,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     selectedRef: TextBlockRef | null = null;
     wordCount = 0;
 
-    constructor(private wordCountService: WordCountService) {}
+    constructor(private wordCountService: StringCountService) {}
 
     /**
      * Life cycle hook to indicate component change

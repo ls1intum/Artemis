@@ -23,7 +23,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { WordCountService } from 'app/exercises/text/participate/word-count.service';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -60,7 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private wordCountService: WordCountService,
+        private wordCountService: StringCountService,
     ) {
         this.isSaving = false;
     }
