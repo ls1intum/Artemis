@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -16,6 +15,11 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import * as moment from 'moment';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import * as sinonChai from 'sinon-chai';
+import * as chai from 'chai';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -78,22 +82,40 @@ describe('QuizExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(courseManagementService.find).toHaveBeenCalled();
-            expect(quizExerciseService.find).toHaveBeenCalled();
+            expect(courseManagementService.find).to.have.been.called;
+            expect(quizExerciseService.find).to.have.been.called;
         });
     });
 
     describe('onDurationChange', () => {
-        it('Should update this.duration and this.quizExercise.duration with same values', () => {
-            // setup
+        // setup
+        beforeEach(() => {
             comp.quizExercise = quizExercise;
-            comp.ngOnInit();
+        });
+
+        it('Should update duration and quizExercise.duration with same values', () => {
             comp.duration = { minutes: 15, seconds: 30 };
             comp.onDurationChange();
 
-            // compare this.duration with quizExercise.duration
+            // compare duration with quizExercise.duration
             const durationAsSeconds = moment.duration(comp.duration).asSeconds();
-            expect(durationAsSeconds).toEqual(comp.quizExercise.duration);
+            expect(durationAsSeconds).to.equal(comp.quizExercise.duration);
+        });
+
+        it('Should increase minutes when reaching 60 seconds', () => {
+            comp.duration = { minutes: 0, seconds: 60 };
+            comp.onDurationChange();
+
+            expect(comp.duration.minutes).to.equal(1)
+            expect(comp.duration.seconds).to.equal(0);
+        });
+
+        it('Should decrease minutes when reaching -1 seconds', () => {
+            comp.duration = { minutes: 1, seconds: -1 };
+            comp.onDurationChange();
+
+            expect(comp.duration.minutes).to.equal(0)
+            expect(comp.duration.seconds).to.equal(59);
         });
     });
 });
