@@ -106,7 +106,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.duration = { minutes: 0, seconds: 60 };
             comp.onDurationChange();
 
-            expect(comp.duration.minutes).to.equal(1)
+            expect(comp.duration.minutes).to.equal(1);
             expect(comp.duration.seconds).to.equal(0);
         });
 
@@ -114,7 +114,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.duration = { minutes: 1, seconds: -1 };
             comp.onDurationChange();
 
-            expect(comp.duration.minutes).to.equal(0)
+            expect(comp.duration.minutes).to.equal(0);
             expect(comp.duration.seconds).to.equal(59);
         });
     });
