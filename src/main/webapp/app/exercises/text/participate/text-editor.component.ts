@@ -101,7 +101,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             if (this.submission) {
                 newSubmission = this.submission;
             }
-            newSubmission.submitted = false;
             newSubmission.text = this.answer;
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
@@ -197,7 +196,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.isSaving = true;
         this.submission = this.submissionForAnswer(this.answer);
-        this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             (response) => {
                 this.submission = response.body!;
@@ -220,7 +218,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             },
             () => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                this.submission.submitted = false;
                 this.isSaving = false;
             },
         );

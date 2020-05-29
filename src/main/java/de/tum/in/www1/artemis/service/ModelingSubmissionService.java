@@ -211,6 +211,8 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setResult(null);
 
         // update submission properties
+        // NOTE: from now on we always set submitted to true to prevent problems here!
+        modelingSubmission.setSubmitted(true);
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
@@ -228,15 +230,13 @@ public class ModelingSubmissionService extends SubmissionService {
 
         participation.addSubmissions(modelingSubmission);
 
-        if (modelingSubmission.isSubmitted()) {
-            try {
-                notifyCompass(modelingSubmission, modelingExercise);
-            }
-            catch (Exception ex) {
-                log.error(ex.getMessage(), ex);
-            }
-            participation.setInitializationState(InitializationState.FINISHED);
+        try {
+            notifyCompass(modelingSubmission, modelingExercise);
         }
+        catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
+        participation.setInitializationState(InitializationState.FINISHED);
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
