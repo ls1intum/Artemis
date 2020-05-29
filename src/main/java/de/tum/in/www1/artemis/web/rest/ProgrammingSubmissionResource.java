@@ -198,7 +198,7 @@ public class ProgrammingSubmissionResource {
         // the correct build for the given commit hash.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
-            resultService.notifyUserAboutNewResult(result.get(), result.get().getParticipation());
+            resultService.notifyUserAboutNewResult(result.get(), participation);
             return ResponseEntity.ok().build();
         }
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
