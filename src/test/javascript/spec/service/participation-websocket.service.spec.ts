@@ -65,7 +65,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         expect(subscribeSpy).to.have.been.calledOnce;
         expect(receiveStub).to.have.been.calledOnce;
         expect(unsubscribeSpy).not.to.have.been.called;
@@ -75,16 +75,16 @@ describe('ParticipationWebsocketService', () => {
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
-        expect(participationWebsocketService.openWebsocketSubscriptions.size).to.equal(1);
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(1);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
 
-        expect(participationWebsocketService.participationObservable).to.be.undefined;
+        expect(participationWebsocketService.participationObservableAll).to.be.undefined;
     });
 
     it('should emit rated result when received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -96,7 +96,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit unrated result received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -108,7 +108,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should also emit participation update with new result when new rated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -127,7 +127,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit participation update with new result when unrated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -135,7 +135,7 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
         const participationObservable = new BehaviorSubject(null);
         const participationSpy = spy(participationObservable, 'next');
-        participationWebsocketService.participationObservable = participationObservable;
+        participationWebsocketService.participationObservableAll = participationObservable;
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
@@ -146,8 +146,8 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to right participation if multiple participations are cached', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.addParticipation(participation2);
         participationWebsocketService.subscribeForParticipationChanges();
@@ -174,7 +174,7 @@ describe('ParticipationWebsocketService', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { results, ...participationWithoutResult } = participation;
 
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id, true);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -182,7 +182,7 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.resultObservables.set(participationWithoutResult.id, resultObservable);
         const participationObservable = new BehaviorSubject(null);
         const participationSpy = spy(participationObservable, 'next');
-        participationWebsocketService.participationObservable = participationObservable;
+        participationWebsocketService.participationObservableAll = participationObservable;
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);

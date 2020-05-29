@@ -120,13 +120,13 @@ describe('UpdatingResultComponent', () => {
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, null);
         expect(comp.result!.id).to.equal(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, null);
         expect(comp.result!.id).to.equal(ungradedResult2.id);
     });
 
@@ -155,8 +155,8 @@ describe('UpdatingResultComponent', () => {
         expect(unsubscribeSpy).to.have.been.calledOnceWithExactly();
         expect(comp.result!.id).to.equal(newParticipation.results[0].id);
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(initialParticipation.id);
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(newParticipation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(initialParticipation.id, true, null);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(newParticipation.id, true, null);
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
         expect(comp.result!.id).to.equal(newGradedResult.id);
@@ -165,7 +165,7 @@ describe('UpdatingResultComponent', () => {
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.false;
     });
 
@@ -173,7 +173,7 @@ describe('UpdatingResultComponent', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.true;
     });
 
@@ -182,7 +182,7 @@ describe('UpdatingResultComponent', () => {
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.equal(false);
     });
 

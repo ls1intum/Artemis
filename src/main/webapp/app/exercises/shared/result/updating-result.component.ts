@@ -33,7 +33,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
     @Input() showTestNames = false;
-    @Input() personal: boolean;
+    @Input() personal = true;
 
     result: Result | null;
     isBuilding: boolean;
@@ -87,7 +87,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personal, this.exercise.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personal, this.exercise ? this.exercise.id : null)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),

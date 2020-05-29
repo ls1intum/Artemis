@@ -122,7 +122,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true);
         expect(comp.participationSubscription).not.to.equal(oldSubscription);
         expect(comp.isInitial).to.be.true;
         expect(getHintsForExerciseStub).to.have.been.calledOnceWithExactly(exercise.id);
