@@ -57,12 +57,16 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                 ((this.stats.numberOfAssessments.inTime - this.stats.numberOfAutomaticAssistedAssessments.inTime) / this.stats.numberOfSubmissions.inTime) * 100,
             );
             this.totalAutomaticAssessmentPercentage.inTime = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.inTime / this.stats.numberOfSubmissions.inTime) * 100);
+        } else {
+            this.totalManualAssessmentPercentage.inTime = 100;
         }
         if (this.stats.numberOfSubmissions.late > 0) {
             this.totalManualAssessmentPercentage.late = Math.floor(
                 ((this.stats.numberOfAssessments.late - this.stats.numberOfAutomaticAssistedAssessments.late) / this.stats.numberOfSubmissions.late) * 100,
             );
             this.totalAutomaticAssessmentPercentage.late = Math.floor((this.stats.numberOfAutomaticAssistedAssessments.late / this.stats.numberOfSubmissions.late) * 100);
+        } else {
+            this.totalManualAssessmentPercentage.late = 100;
         }
 
         this.dataForAssessmentPieChart = [
