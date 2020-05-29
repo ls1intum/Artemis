@@ -6,6 +6,7 @@
                 "createLabel": "Create new Text Exercise",
                 "editLabel": "Edit Text Exercise"
             },
+            "wordCount": "Number of words: {{count}}",
             "created": "A new Text Exercise is created with identifier {{ param }}",
             "updated": "A Text Exercise is updated with identifier {{ param }}",
             "deleted": "A Text Exercise is deleted with identifier {{ param }}",
