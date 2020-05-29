@@ -34,7 +34,15 @@
     </div>
 
     <div class="grid-area-main">
-        <div>{{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}</div>
+        <div>
+            <span class="badge badge-primary mb-2">
+                {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+            </span>
+            <span class="badge badge-primary mb-2">
+                {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+            </span>
+        </div>
+
         <ng-container *ngIf="!result; else hasFeedback">
             <textarea
                 #textEditor

@@ -60,7 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private wordCountService: StringCountService,
+        private stringCountService: StringCountService,
     ) {
         this.isSaving = false;
     }
@@ -176,7 +176,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get wordCount() {
-        return this.wordCountService.countWords(this.answer);
+        return this.stringCountService.countWords(this.answer);
+    }
+
+    get characterCount() {
+        return this.stringCountService.countCharacters(this.answer);
     }
 
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
