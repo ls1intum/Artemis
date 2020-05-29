@@ -9,8 +9,11 @@ import { get } from 'lodash';
     selector: 'jhi-text-assessment-area',
     template: `
         <div>
-            <span class="badge badge-primary mb-2 ">
+            <span class="badge badge-primary mb-2">
                 {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+            </span>
+            <span class="badge badge-primary mb-2">
+                {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
             </span>
         </div>
         <jhi-textblock-assessment-card
@@ -35,8 +38,9 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     selectedRef: TextBlockRef | null = null;
     wordCount = 0;
+    characterCount = 0;
 
-    constructor(private wordCountService: StringCountService) {}
+    constructor(private stringCountService: StringCountService) {}
 
     /**
      * Life cycle hook to indicate component change
@@ -45,7 +49,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
         for (const propName in changes) {
             if (propName === 'submission') {
                 const changedSubmission = changes[propName].currentValue;
-                this.wordCount = this.wordCountService.countWords(get(changedSubmission, 'text'));
+                this.wordCount = this.stringCountService.countWords(get(changedSubmission, 'text'));
+                this.characterCount = this.stringCountService.countCharacters(get(changedSubmission, 'text'));
             }
         }
 
