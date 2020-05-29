@@ -19,11 +19,19 @@ describe('WordCountService', () => {
         expect(service).toBeTruthy();
     });
 
-    it('german text should contain 63 words', () => {
+    it('German text should contain 63 words', () => {
         expect(service.countWords(TEXT_WITH_63_WORDS)).toBe(63);
     });
 
     it('Empty Text should contain 0 words', () => {
         expect(service.countWords(EMPTY_TEXT)).toBe(0);
+    });
+
+    it('Null should contain 0 words', () => {
+        expect(service.countWords(null)).toBe(0);
+    });
+
+    it('Undefined should contain 0 words', () => {
+        expect(service.countWords(undefined)).toBe(0);
     });
 });

@@ -11,11 +11,13 @@ export class WordCountService {
 
     constructor() {}
 
-    public countWords(text: string): number {
-        const match = text.match(this.wordMatchRegex);
+    public countWords(text: string | null | undefined): number {
         let wordCount = 0;
-        if (match) {
-            wordCount = match.length;
+        if (text) {
+            const match = text.match(this.wordMatchRegex);
+            if (match) {
+                wordCount = match.length;
+            }
         }
         return wordCount;
     }
