@@ -10,7 +10,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -56,7 +55,7 @@ public class QuizSubmissionWebsocketService {
         SecurityUtils.setAuthorizationObject();
         String username = principal.getName();
         try {
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.submitForLiveMode(exerciseId, quizSubmission, username);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, username, false);
             // send updated submission over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
             // to improve the performance, this is currently deactivated: slow clients might lead to bottlenecks so that more important messages can not be distributed any more
             // new Thread(() -> sendSubmissionToUser(username, exerciseId, quizSubmission)).start();

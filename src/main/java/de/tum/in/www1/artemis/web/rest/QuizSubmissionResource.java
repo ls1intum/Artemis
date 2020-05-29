@@ -71,11 +71,13 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         try {
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.submitForLiveMode(exerciseId, quizSubmission, principal.getName());
+            // we set the submitted flag to true on the server side
+            quizSubmission.setSubmitted(true);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, principal.getName(), true);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal + " in quiz " + exerciseId);
+            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal.getName() + " in quiz " + exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
