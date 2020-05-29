@@ -17,6 +17,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
+import { stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,18 +63,17 @@ describe('QuizExercise Management Detail Component', () => {
     describe('OnInit', () => {
         it('Should call courseExerciseService.find and quizExerciseService.find', () => {
             // GIVEN
-            spyOn(courseManagementService, 'find').and.returnValue(
+            const quizExerciseServiceStub = stub(quizExerciseService, 'find');
+            const courseManagementServiceStub = stub(courseManagementService, 'find');
+
+            quizExerciseServiceStub.returns(
                 of(
-                    new HttpResponse({
-                        body: course,
-                    }),
+                    new HttpResponse<QuizExercise>({ body: quizExercise }),
                 ),
             );
-            spyOn(quizExerciseService, 'find').and.returnValue(
+            courseManagementServiceStub.returns(
                 of(
-                    new HttpResponse({
-                        body: quizExercise,
-                    }),
+                    new HttpResponse<Course>({ body: course }),
                 ),
             );
 
@@ -82,8 +82,8 @@ describe('QuizExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(courseManagementService.find).to.have.been.called;
-            expect(quizExerciseService.find).to.have.been.called;
+            expect(quizExerciseServiceStub).to.have.been.called;
+            expect(courseManagementServiceStub).to.have.been.called;
         });
     });
 
