@@ -534,8 +534,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, submission));
         }
 
-        String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
-        messagingTemplate.convertAndSend(exerciseTopic, submission);
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+            messagingTemplate.convertAndSend(exerciseTopic, submission);
+        }
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
@@ -545,8 +547,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, error));
         }
 
-        String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
-        messagingTemplate.convertAndSend(exerciseTopic, error);
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+            messagingTemplate.convertAndSend(exerciseTopic, error);
+        }
     }
 
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
