@@ -74,15 +74,8 @@ public class ComplaintResponseService {
         User assessor = originalResult.getAssessor();
         User reviewer = this.userService.getUser();
 
-        // Only tutors who are not the original assessor of the submission can reply to a complaint
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise())
-                || (assessor.equals(reviewer) && (originalComplaint.getComplaintType() == null || originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT)))) {
-            throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
-        }
-
-        // Only tutors who are the original assessor of the submission can reply to more feedback request
-        else if (!assessor.equals(reviewer) && (originalComplaint.getComplaintType() != null && originalComplaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK))) {
+        if (!isUserAuthorizedToRespondToComplaint(studentParticipation, originalComplaint, assessor, reviewer)) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
@@ -95,5 +88,39 @@ public class ComplaintResponseService {
         // potential changes on the client side (e.g. remove student id) should not be saved
         complaintResponse.setComplaint(originalComplaint);
         return complaintResponseRepository.save(complaintResponse);
+    }
+
+    /**
+     * Checks whether the reviewer is authorized to respond to this complaint
+     *
+     * 1. Team Exercises
+     *    => The team tutor assesses the submissions and responds to complaints and more feedback requests
+     *
+     * 2. Individual Exercises
+     *    => Complaints can only be handled by a tutor who is not the original assessor
+     *    => More feedback requests are handled by the assessor himself
+     *
+     * @param participation Participation to which the complaint belongs to
+     * @param complaint Complaint for which to check
+     * @param assessor Assessor of the submission whose assessment was complained about
+     * @param reviewer Reviewer who is trying to create a response to the complaint
+     * @return true if the tutor is allowed to respond to the complaint, false otherwise
+     */
+    private boolean isUserAuthorizedToRespondToComplaint(StudentParticipation participation, Complaint complaint, User assessor, User reviewer) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+            return false;
+        }
+        if (complaint.getParticipant() instanceof Team) {
+            return assessor.equals(reviewer);
+        }
+        else if (complaint.getParticipant() instanceof User) {
+            if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
+                return !assessor.equals(reviewer);
+            }
+            else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {
+                return assessor.equals(reviewer);
+            }
+        }
+        return false;
     }
 }
