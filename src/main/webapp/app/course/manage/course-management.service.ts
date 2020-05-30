@@ -488,6 +488,7 @@ export class CourseExerciseService {
             res.body.forEach((exercise: T) => {
                 exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
                 exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+                exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
             });
         }
         return res;
