@@ -65,7 +65,7 @@
         <div class="question-content" style="padding-bottom: 12px;">
             <div class="row">
                 <jhi-markdown-editor
-                    [(markdown)]="questionEditorText"
+                    [markdown]="getQuestionText(question)"
                     [editorMode]="editorMode"
                     [metaCommands]="[]"
                     [defaultCommands]="[]"

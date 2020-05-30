@@ -40,13 +40,8 @@ export class ArtemisMarkdownService {
             }
         } else if (markdownText.indexOf(HintCommand.identifier) !== -1) {
             targetObject.hint = markdownTextParts[1].trim();
-            targetObject.explanation = null;
         } else if (markdownText.indexOf(ExplanationCommand.identifier) !== -1) {
-            targetObject.hint = null;
             targetObject.explanation = markdownTextParts[1].trim();
-        } else {
-            targetObject.hint = null;
-            targetObject.explanation = null;
         }
     }
 

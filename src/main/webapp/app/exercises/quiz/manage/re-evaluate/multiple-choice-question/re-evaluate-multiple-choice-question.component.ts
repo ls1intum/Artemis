@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -13,7 +13,7 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
     providers: [ArtemisMarkdownService],
 })
-export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
+export class ReEvaluateMultipleChoiceQuestionComponent {
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
 
@@ -34,9 +34,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Output()
     questionMoveDown = new EventEmitter<object>();
 
-    /** Ace Editor configuration constants **/
-    questionEditorText = '';
-
     editorMode = 'markdown';
 
     // Create Backup Question for resets
@@ -50,34 +47,33 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
-     * Setup content
+     * generate the question using the markdown service
+     * @param {MultipleChoiceQuestion} question
+     * @return string
      */
-    ngOnInit(): void {
-        this.setQuestionText();
+    getQuestionText(question: MultipleChoiceQuestion): string {
+        const questionToSet = { text: question.text, hint: question.hint, explanation: question.explanation };
+        return this.artemisMarkdown.generateTextHintExplanation(questionToSet);
     }
 
-    private setQuestionText(): void {
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-    }
-
+    /**
+     * parse the new question text, hint and explanation using the markdown service
+     * @param {string} text
+     */
     onQuestionChange(text: string): void {
-        const updatedQuestion = Object.assign({}, this.question);
-        const questionParts = this.splitByCorrectIncorrectTag(text.trim());
-        const questionText = questionParts[0];
-        this.artemisMarkdown.parseTextHintExplanation(questionText, updatedQuestion);
-        this.question.text = updatedQuestion.text;
-        this.question.explanation = updatedQuestion.explanation;
-        this.question.hint = updatedQuestion.hint;
-        this.questionUpdated.emit();
+        this.artemisMarkdown.parseTextHintExplanation(text, this.question);
     }
 
+    /**
+     * parse the new text, hint and explanation using the markdown service and assign it to the passed answer
+     * @param {string} text
+     * @param {AnswerOption} answer
+     */
     onAnswerOptionChange(text: string, answer: AnswerOption): void {
-        const answerIndex = this.question.answerOptions?.findIndex((answerOption) => {
+        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
             return answerOption.id === answer.id;
         });
-        this.parseAnswerMarkdown(text.trim(), this.question.answerOptions![answerIndex!]);
-        // this.question.answerOptions![i] = updatedAnswer;
-        this.questionUpdated.emit();
+        this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
     }
 
     /**
@@ -108,7 +104,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param answer {AnswerOption} the answer, where to save the result
      */
     parseAnswerMarkdown(text: string, answer: AnswerOption) {
-        const answerParts = this.splitByCorrectIncorrectTag(text.trim());
+        const answerParts = this.splitByCorrectIncorrectTag(text);
         // Find the box (text in-between the parts)
         const answerOptionText = answerParts[1];
         const startOfThisPart = text.indexOf(answerOptionText);
@@ -154,7 +150,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      */
     resetQuestionTitle() {
         this.question.title = this.backupQuestion.title;
-        this.questionUpdated.emit();
     }
 
     /**
@@ -164,8 +159,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setQuestionText();
-        this.questionUpdated.emit();
     }
 
     /**
@@ -173,13 +166,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      */
     resetQuestion() {
         this.resetQuestionTitle();
-        this.question.invalid = this.backupQuestion.invalid;
-        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
-        this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions = this.backupQuestion.answerOptions;
-        // Reset answer editors
         this.resetQuestionText();
-        this.questionUpdated.emit();
+        this.question.answerOptions = this.backupQuestion.answerOptions;
     }
 
     /**
@@ -188,13 +176,15 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const answerIndex = this.question.answerOptions?.findIndex((answerOption) => {
+        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
             return answerOption.id === answer.id;
         });
-        const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
+        // Find correct backup answer
+        const backupAnswerIndex = this.backupQuestion.answerOptions!.findIndex((answerBackup) => {
+            return answer.id === answerBackup.id;
+        });
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex!] = backupAnswer;
-        this.questionUpdated.emit();
+        this.question.answerOptions![answerIndex] = this.backupQuestion.answerOptions![backupAnswerIndex];
     }
 
     /**
