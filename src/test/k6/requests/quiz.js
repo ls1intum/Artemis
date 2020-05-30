@@ -166,7 +166,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         // Wait for new result
         socket.on('message', function (message) {
             if (message.startsWith('MESSAGE\ndestination:/user/topic/exercise/' + exerciseId + '/participation')) {
-                console.log(`RECEIVED callback from server for ${currentUsername}: ${message}`);
+                console.log(`RECEIVED callback from server for ${currentUsername}`);
                 sleep(5);
                 socket.close();
             }
@@ -194,5 +194,45 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
             console.log('Connection timed out');
             socket.close();
         }, timeout * 1000);
+    });
+}
+
+export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUsername, courseId) {
+    artemis.websocket(function (socket) {
+        function subscribe() {
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/topic/courses/' + courseId + '/quizExercises\n\n\u0000');
+        }
+
+        socket.setTimeout(function () {
+            subscribe();
+        }, 1000);
+
+        // Wait for new result
+        socket.on('message', function (message) {
+            if (message.startsWith('MESSAGE\ndestination:/topic/courses/' + courseId + '/quizExercises')) {
+                // console.log(`RECEIVED quiz start for user ${currentUsername}: ${message}`);
+                //console.log(message.match('MESSAGE\ndestination:\/topic\/courses\/(?:\d)*\/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\w|\d|-)*\ncontent-length:(?:\d)*\n\n(.*)'));
+                let receivedPayload = message.match(
+                    'MESSAGE\ndestination:/topic/courses/(?:\\d*)/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\\w|\\d|-)*\ncontent-length:(?:\\d)*\n\n(.*)\u0000',
+                )[1];
+                let parsedQuiz = JSON.parse(receivedPayload);
+
+                if (parsedQuiz.started) {
+                    // Quiz started
+                    console.log(`Quiz start received for user ${currentUsername}, will send answers`);
+                    const questions = parsedQuiz.quizQuestions;
+                    socket.close();
+                    simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername);
+                } else {
+                    // Quiz is now visible, but not started
+                    console.log(`Quiz visible received for user ${currentUsername}, will wait for quiz start`);
+                }
+            }
+        });
+
+        // Send heartbeat to server so session is kept alive
+        socket.setInterval(function timeout() {
+            socket.send('\n');
+        }, 20000);
     });
 }
