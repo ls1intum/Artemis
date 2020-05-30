@@ -8,6 +8,7 @@
             "descriptionTeam": "Ihr könnt ingesamt bis zu {{ maxComplaintNumber }} Beschwerden als Team in diesem Kurs einreichen.",
             "descriptionTeamExtended": "Jedes Team darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann von einem zweiten Reviewer überprüft.",
+            "beDescriptiveTeam": "Bitte beschreibt ausführlich, warum die Bewertung falsch ist. Eure Einreichung wird dann von eurem Tutor nochmal neu bewertet.",
             "alreadySubmitted": "Du hast eine Beschwerde eingereicht",
             "submit": "Eine Beschwerde einreichen",
             "created": "Deine Beschwerde wurde eingereicht!",
@@ -42,7 +43,9 @@
         "moreFeedback": {
             "title": "Weiteres Feedback anfragen",
             "description": "Bitte den Reviewer, dir weiteres Feedback zu geben, wenn etwas nicht klar genug ist oder du weitere Erklärungen benötigst.",
+            "descriptionTeam": "Bittet euren Tutor, euch weiteres Feedback zu geben, wenn etwas nicht klar genug ist oder ihr weitere Erklärungen benötigt.",
             "beDescriptive": "Bitte beschreibe ausführlich, was für dich in der Bewertung unklar ist. Deine Anfrage wird dann von demselben Reviewer bewertet.",
+            "beDescriptiveTeam": "Bitte beschreibt ausführlich, was für euch in der Bewertung unklar ist. Euer Tutor wird dann seine Bewertung näher erläutern.",
             "created": "Deine Antwort auf die Feedbackanfrage wurde eingereicht!",
             "button": "Weiteres Feedback anfragen",
             "info": "Das Absenden einer Feedbackanfrage hat keinen Einfluss auf die Anzahl der maximalen Beschwerden, aber deine Punktzahl bleibt unverändert.",
