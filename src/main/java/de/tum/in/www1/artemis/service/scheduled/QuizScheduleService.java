@@ -392,19 +392,18 @@ public class QuizScheduleService {
 
                 // check if the quiz has ended
                 if (quizExercise.isEnded()) {
-                    // send the participation with containing result and quiz back to the users via websocket
-                    // and remove the participation from the ParticipationHashMap
-                    int counter = 0;
-                    for (StudentParticipation participation : participationHashMap.remove(quizExerciseId).values()) {
+                    // send the participation with containing result and quiz back to the users via websocket and remove the participation from the ParticipationHashMap
+                    Collection<StudentParticipation> finishedParticipations = participationHashMap.remove(quizExerciseId).values();
+                    finishedParticipations.parallelStream().forEach(participation -> {
                         if (participation.getParticipant() == null || participation.getParticipantIdentifier() == null) {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
-                            continue;
                         }
-                        sendQuizResultToUser(quizExerciseId, participation);
-                        counter++;
-                    }
-                    if (counter > 0) {
-                        log.info("Sent out {} participations in {} for quiz {}", counter, printDuration(start), quizExercise.getTitle());
+                        else {
+                            sendQuizResultToUser(quizExerciseId, participation);
+                        }
+                    });
+                    if (finishedParticipations.size() > 0) {
+                        log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), printDuration(start), quizExercise.getTitle());
                     }
                 }
             }
@@ -458,7 +457,6 @@ public class QuizScheduleService {
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        // TODO: use a proper result here
         messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
