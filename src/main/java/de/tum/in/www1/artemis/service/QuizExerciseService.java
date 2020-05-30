@@ -28,8 +28,6 @@ public class QuizExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
-    private final QuizStatisticService quizStatisticService;
-
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
@@ -42,18 +40,19 @@ public class QuizExerciseService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final UserService userService;
 
     private final ObjectMapper objectMapper;
 
     private QuizScheduleService quizScheduleService;
 
+    private QuizStatisticService quizStatisticService;
+
+    private SimpMessageSendingOperations messagingTemplate;
+
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate, QuizStatisticService quizStatisticService,
-            MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+            QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
@@ -61,14 +60,22 @@ public class QuizExerciseService {
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.messagingTemplate = messagingTemplate;
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
+    }
+
+    @Autowired
+    public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
         this.quizStatisticService = quizStatisticService;
     }
 
     @Autowired
     public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
         this.quizScheduleService = quizScheduleService;
+    }
+
+    @Autowired
+    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -78,7 +85,6 @@ public class QuizExerciseService {
      * @return the saved quiz exercise
      */
     public QuizExercise save(QuizExercise quizExercise) {
-        log.debug("Request to save QuizExercise : {}", quizExercise);
 
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
 
@@ -94,14 +100,15 @@ public class QuizExerciseService {
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof MultipleChoiceQuestion) {
-                var multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
-                var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
+                var mcQuestion = (MultipleChoiceQuestion) quizQuestion;
+                var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
-                    multipleChoiceQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    quizQuestionStatistic.setQuizQuestion(mcQuestion);
                 }
 
-                for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+                for (var answerOption : mcQuestion.getAnswerOptions()) {
                     quizQuestionStatistic.addAnswerOption(answerOption);
                 }
 
@@ -109,7 +116,7 @@ public class QuizExerciseService {
                 Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
                 for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
                     if (answerCounter.getId() != null) {
-                        if (!(multipleChoiceQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
+                        if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
                             answerCounter.setAnswer(null);
                             answerCounterToDelete.add(answerCounter);
                         }
@@ -118,14 +125,15 @@ public class QuizExerciseService {
                 quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
             }
             else if (quizQuestion instanceof DragAndDropQuestion) {
-                var dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
-                var quizQuestionStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+                var dndQuestion = (DragAndDropQuestion) quizQuestion;
+                var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new DragAndDropQuestionStatistic();
-                    dragAndDropQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    quizQuestionStatistic.setQuizQuestion(dndQuestion);
                 }
 
-                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
+                for (var dropLocation : dndQuestion.getDropLocations()) {
                     quizQuestionStatistic.addDropLocation(dropLocation);
                 }
 
@@ -133,7 +141,7 @@ public class QuizExerciseService {
                 Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
                 for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
                     if (dropLocationCounter.getId() != null) {
-                        if (!(dragAndDropQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
+                        if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
                             dropLocationCounter.setDropLocation(null);
                             dropLocationCounterToDelete.add(dropLocationCounter);
                         }
@@ -142,17 +150,19 @@ public class QuizExerciseService {
                 quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
 
                 // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndices(dragAndDropQuestion);
+                saveCorrectMappingsInIndices(dndQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion) {
-                var shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
-                var quizQuestionStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+                var saQuestion = (ShortAnswerQuestion) quizQuestion;
+                var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new ShortAnswerQuestionStatistic();
-                    shortAnswerQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    quizQuestionStatistic.setQuizQuestion(quizQuestion);
                 }
 
-                for (var spot : shortAnswerQuestion.getSpots()) {
+                for (var spot : saQuestion.getSpots()) {
+                    spot.setQuestion(saQuestion);
                     quizQuestionStatistic.addSpot(spot);
                 }
 
@@ -160,7 +170,7 @@ public class QuizExerciseService {
                 Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
                 for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
                     if (spotCounter.getId() != null) {
-                        if (!(shortAnswerQuestion.getSpots().contains(spotCounter.getSpot()))) {
+                        if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
                             spotCounter.setSpot(null);
                             spotCounterToDelete.add(spotCounter);
                         }
@@ -169,12 +179,13 @@ public class QuizExerciseService {
                 quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
 
                 // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
+                saveCorrectMappingsInIndicesShortAnswer(saQuestion);
             }
         }
 
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
+        log.debug("Save quiz to database: {}", quizExercise);
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
@@ -191,8 +202,7 @@ public class QuizExerciseService {
             }
         }
 
-        quizScheduleService.scheduleQuizStart(quizExercise);
-
+        quizScheduleService.scheduleQuizStart(quizExercise.getId());
         return quizExercise;
     }
 
@@ -251,10 +261,10 @@ public class QuizExerciseService {
      * Get one quiz exercise by id and eagerly load questions and statistics
      *
      * @param quizExerciseId the id of the entity
-     * @return the entity
+     * @return the quiz exercise entity
      */
     public QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        log.debug("Request to find one Quiz Exercise with questions and statistics : {}", quizExerciseId);
+        log.debug("Find quiz exercise {} with questions and statistics", quizExerciseId);
         Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExerciseId);
         return optionalQuizExercise.orElse(null);
     }
@@ -283,7 +293,7 @@ public class QuizExerciseService {
      *
      * @return the list of quiz exercises
      */
-    public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
+    public List<QuizExercise> findAllPlannedToStartInTheFuture() {
         return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
     }
 
@@ -292,12 +302,15 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
-    private void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
+    private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        log.debug("Found " + results.size() + " results to update for quiz re-evaluate");
+        List<QuizSubmission> submissions = new ArrayList<>();
+        for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed
@@ -313,13 +326,14 @@ public class QuizExerciseService {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.setSubmission(quizSubmission);
             result.evaluateSubmission();
 
-            // save the updated Result and its Submission
-            quizSubmissionRepository.save(quizSubmission);
-            resultRepository.save(result);
+            submissions.add(quizSubmission);
         }
+        // save the updated submissions and results
+        quizSubmissionRepository.saveAll(submissions);
+        resultRepository.saveAll(results);
+        log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
     }
 
     /**
@@ -332,15 +346,11 @@ public class QuizExerciseService {
             long start = System.currentTimeMillis();
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
-            if (quizChange.equals("set-visible")) {
-                // the quiz id is not yet known to the client, we need to use a more generic topic
-                messagingTemplate.send("/topic/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
-                // TODO: start-now would also be interesting to be supported in the client, but needs to be handled differently in the client
+            // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
+            if (quizExercise.isVisibleToStudents()) {
+                messagingTemplate.send("/topic/courses/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
+                log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
-            else {
-                messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
-            }
-            log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
             log.error("Exception occurred while serializing quiz exercise", e);
@@ -527,16 +537,17 @@ public class QuizExerciseService {
         quizExercise.reconnectJSONIgnoreAttributes();
 
         // adjust existing results if an answer or a question was deleted and recalculate them
-        adjustResultsOnQuizChanges(quizExercise);
+        updateResultsOnQuizChanges(quizExercise);
 
         quizExercise = save(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            quizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExercise.getId()).get();
+            quizExercise = findOneWithQuestionsAndStatistics(quizExercise.getId());
             quizStatisticService.recalculateStatistics(quizExercise);
         }
-        return quizExercise;
+        // fetch the quiz exercise again to make sure the latest changes are included
+        return findOneWithQuestionsAndStatistics(quizExercise.getId());
     }
 
     /**
