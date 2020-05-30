@@ -117,7 +117,7 @@ export function getQuizQuestions(artemis, courseId, exerciseId) {
 export function simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername) {
     artemis.websocket(function (socket) {
         function subscribe() {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
         }
 
         function submitRandomAnswer(numberOfQuestions) {
@@ -165,12 +165,17 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission')) {
+            if (message.startsWith('MESSAGE\ndestination:/user/topic/exercise/' + exerciseId + '/participation')) {
                 console.log(`RECEIVED callback from server for ${currentUsername}: ${message}`);
                 sleep(5);
                 socket.close();
             }
         });
+
+        // Send heartbeat to server so session is kept alive
+        socket.setInterval(function timeout() {
+            socket.send('\n');
+        }, 20000);
 
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
