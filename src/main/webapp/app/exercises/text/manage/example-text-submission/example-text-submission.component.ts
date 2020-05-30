@@ -10,7 +10,7 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import Interactable from '@interactjs/core/Interactable';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';

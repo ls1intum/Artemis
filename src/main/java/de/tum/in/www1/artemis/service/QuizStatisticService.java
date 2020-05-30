@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,6 @@ public class QuizStatisticService {
 
     private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
@@ -29,13 +28,19 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+    private SimpMessageSendingOperations messagingTemplate;
+
+    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
-        this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
+    }
+
+    @Autowired
+    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -87,9 +92,11 @@ public class QuizStatisticService {
 
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
+        quizPointStatisticRepository.flush();
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
+                quizQuestionStatisticRepository.flush();
             }
         }
     }

@@ -3,6 +3,7 @@
         "assessment": {
             "assessment": "Bewertung",
             "generalFeedback": "Allgemeines Feedback",
+            "unreferencedFeedback": "Feedback für fehlende Elemente",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
