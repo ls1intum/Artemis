@@ -76,7 +76,7 @@ export default function (data) {
     const delay = Math.floor(__VU / 50);
     sleep(delay);
 
-    group('Artemis Programming Exercise Participation Websocket Stresstest', function () {
+    group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
         const userId = parseInt(__VU) + userOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
