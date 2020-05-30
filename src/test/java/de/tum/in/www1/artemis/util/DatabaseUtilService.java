@@ -887,6 +887,15 @@ public class DatabaseUtilService {
         return submission;
     }
 
+    public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
+        StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        modelingSubmissionRepo.save(submission);
+        studentParticipationRepo.save(participation);
+        return submission;
+    }
+
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
@@ -1177,6 +1186,15 @@ public class DatabaseUtilService {
             Result dummyResult = new Result().participation(participation);
             dummyResult = resultRepo.save(dummyResult);
             Complaint complaint = new Complaint().participant(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
+            complaintRepo.save(complaint);
+        }
+    }
+
+    public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+        for (int i = 0; i < numberOfComplaints; i++) {
+            Result dummyResult = new Result().participation(participation);
+            dummyResult = resultRepo.save(dummyResult);
+            Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
     }

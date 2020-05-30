@@ -74,7 +74,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        // Initialize with 5 max complaints and 2 weeks max complaint deadline
+        // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         saveModelingSubmissionAndAssessment();
@@ -120,7 +120,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 5, ComplaintType.COMPLAINT);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
