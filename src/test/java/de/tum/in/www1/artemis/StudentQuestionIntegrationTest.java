@@ -220,11 +220,9 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asInstructor() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        studentQuestion.setVotes(42);
-
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class,
                 HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(42));
+        assertThat(updatedStudentQuestion.getVotes().equals(1));
     }
 
     @Test
@@ -232,11 +230,9 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asTA() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        studentQuestion.setVotes(42);
-
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", -1, StudentQuestion.class,
                 HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(42));
+        assertThat(updatedStudentQuestion.getVotes().equals(-1));
     }
 
     @Test
@@ -245,10 +241,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         List<StudentQuestion> questions = database.createCourseWithExerciseAndStudentQuestions();
         StudentQuestion studentQuestion = questions.get(0);
 
-        studentQuestion.setVotes(42);
-
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 0, StudentQuestion.class,
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class,
                 HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(42));
+        assertThat(updatedStudentQuestion.getVotes().equals(2));
     }
 }
