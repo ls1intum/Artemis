@@ -110,7 +110,7 @@ public class ComplaintResponseService {
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             return false;
         }
-        if (complaint.getParticipant() instanceof Team) {
+        if (participation.getParticipant() instanceof Team) {
             return assessor.equals(reviewer);
         }
         else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
