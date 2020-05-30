@@ -113,13 +113,11 @@ public class ComplaintResponseService {
         if (complaint.getParticipant() instanceof Team) {
             return assessor.equals(reviewer);
         }
-        else if (complaint.getParticipant() instanceof User) {
-            if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
-                return !assessor.equals(reviewer);
-            }
-            else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {
-                return assessor.equals(reviewer);
-            }
+        else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
+            return !assessor.equals(reviewer);
+        }
+        else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {
+            return assessor.equals(reviewer);
         }
         return false;
     }
