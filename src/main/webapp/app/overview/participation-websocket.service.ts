@@ -27,8 +27,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
     openPersonalWebsocketSubscription: string | null; /* url of websocket connection */
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
-    participationObservables: Map<number /* ID of participation */, BehaviorSubject<Participation | null>> = new Map<number, BehaviorSubject<Participation>>();
-    participationObservableAll: BehaviorSubject<Participation | null> | null;
+    participationObservable: BehaviorSubject<Participation | null> | null;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
@@ -42,8 +41,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
-        this.participationObservables = new Map<number, BehaviorSubject<Participation>>();
-        this.participationObservableAll = null;
+        this.participationObservable = null;
     }
 
     /**
@@ -51,10 +49,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
-        if (!this.participationObservableAll) {
-            this.participationObservableAll = new BehaviorSubject(participation);
+        if (!this.participationObservable) {
+            this.participationObservable = new BehaviorSubject(participation);
         } else {
-            this.participationObservableAll.next(participation);
+            this.participationObservable.next(participation);
         }
     };
 
@@ -184,10 +182,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If no observable exists a new one will be created.
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | null> {
-        if (!this.participationObservableAll) {
-            this.participationObservableAll = new BehaviorSubject<Participation | null>(null);
+        if (!this.participationObservable) {
+            this.participationObservable = new BehaviorSubject<Participation | null>(null);
         }
-        return this.participationObservableAll;
+        return this.participationObservable;
     }
 
     /**

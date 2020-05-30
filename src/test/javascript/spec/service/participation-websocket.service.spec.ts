@@ -30,15 +30,15 @@ describe('ParticipationWebsocketService', () => {
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
 
-    const participationResultTopic = `/topic/participation/${participation.id}/newResults`;
-    const participationTopic = `/user/topic/exercise/${participation.exercise.id}/participation`;
+    const participationResultTopic = `/user/topic/newResults`;
+    const participationTopic = `/user/topic/exercise/${participation.exercise!.id}/participation`;
 
     const participation2 = { id: 2, exercise: { id: 40 } } as Participation;
     const currentResult2 = { id: 13, participation: participation2 } as Result;
     participation2.results = [currentResult2];
 
-    const participation2ResultTopic = `/topic/participation/${participation2.id}/newResults`;
-    const participation2Topic = `/user/topic/exercise/${participation2.exercise.id}/participation`;
+    const participation2ResultTopic = `/user/topic/newResults`;
+    const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
 
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
@@ -80,7 +80,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
 
-        expect(participationWebsocketService.participationObservableAll).to.be.undefined;
+        expect(participationWebsocketService.participationObservable).to.be.undefined;
     });
 
     it('should emit rated result when received through websocket', () => {
@@ -135,7 +135,7 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
         const participationObservable = new BehaviorSubject(null);
         const participationSpy = spy(participationObservable, 'next');
-        participationWebsocketService.participationObservableAll = participationObservable;
+        participationWebsocketService.participationObservable = participationObservable;
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
@@ -182,7 +182,7 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.resultObservables.set(participationWithoutResult.id, resultObservable);
         const participationObservable = new BehaviorSubject(null);
         const participationSpy = spy(participationObservable, 'next');
-        participationWebsocketService.participationObservableAll = participationObservable;
+        participationWebsocketService.participationObservable = participationObservable;
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
