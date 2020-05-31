@@ -211,11 +211,15 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        if (quizExercise == null) {
+            return notFound();
+        }
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
+        // fetch the quiz exercise again to make sure the latest changes are included
+        return ResponseEntity.ok(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId()));
     }
 
     /**

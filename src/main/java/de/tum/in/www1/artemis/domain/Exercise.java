@@ -88,10 +88,12 @@ public abstract class Exercise implements Serializable {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
+    @JsonView(QuizView.Before.class)
     private Set<String> categories = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
+    @JsonView(QuizView.Before.class)
     private DifficultyLevel difficulty;
 
     @Enumerated(EnumType.STRING)

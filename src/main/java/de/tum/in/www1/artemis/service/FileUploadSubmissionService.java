@@ -185,6 +185,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.onDelete();
 
         // update submission properties
+        // NOTE: from now on we always set submitted to true to prevent problems here!
+        fileUploadSubmission.setSubmitted(true);
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
@@ -193,10 +195,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
-
-        if (fileUploadSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-        }
+        participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (fileUploadSubmission.getId() == null) {
             Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
