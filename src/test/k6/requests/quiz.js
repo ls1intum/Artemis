@@ -180,7 +180,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
             socket.setTimeout(function () {
-                if (questionCount === 50) {
+                if (questionCount === 60) { // TODO: Change back to 50
                     console.log('Submitting via REST for ' + currentUsername);
                     submitRandomAnswerREST(10);
                 } else {
