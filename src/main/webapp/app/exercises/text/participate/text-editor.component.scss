@@ -45,3 +45,17 @@
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
 }
+div {
+    &.positive-feedback {
+        color: green;
+        background-color: #f2f9f2;
+    }
+    &.negative-feedback {
+        color: #c7254e;
+        background-color: #f9f2f4;
+    }
+    &.neutral-feedback {
+        color: #1a1a1a;
+        background-color: #f2f2f2;
+    }
+}
