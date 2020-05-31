@@ -1,7 +1,9 @@
 <div>
-    <div class="d-flex">
-        <h4 id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
-        <div class="ml-auto d-flex">
+    <div class="row">
+        <div class="col-12 col-sm">
+            <h4 id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
+        </div>
+        <div class="col-12 col-sm-auto d-flex">
             <label class="d-flex align-items-center mb-0 mr-2">
                 <input type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
                 <span class="ml-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
@@ -19,6 +21,9 @@
                 </span>
             </button>
         </div>
+    </div>
+    <div *ngIf="!courses" [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
+        <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
     </div>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
