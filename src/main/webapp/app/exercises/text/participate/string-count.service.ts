@@ -7,7 +7,7 @@ export class StringCountService {
     /**
      * includes Latin-1 Supplement 00C0 to 00FF to support german "umlaute"
      */
-    private wordMatchRegex = /[\w\u00C0-\u00ff]+/g;
+    private readonly wordMatchRegex = /[\w\u00C0-\u00ff]+/g;
 
     constructor() {}
 
