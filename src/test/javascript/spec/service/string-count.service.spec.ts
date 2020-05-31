@@ -15,11 +15,11 @@ describe('WordCountService', () => {
         service = new StringCountService();
     });
 
-    it('should be created', () => {
+    it('Should be created', () => {
         expect(service).toBeTruthy();
     });
 
-    it('German text should contain 63 words', () => {
+    it('Text should contain 63 words', () => {
         expect(service.countWords(TEXT_WITH_63_WORDS)).toBe(63);
     });
 
