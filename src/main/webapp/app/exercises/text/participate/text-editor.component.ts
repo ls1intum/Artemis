@@ -175,11 +175,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return null;
     }
 
-    get wordCount() {
+    get wordCount(): number {
         return this.stringCountService.countWords(this.answer);
     }
 
-    get characterCount() {
+    get characterCount(): number {
         return this.stringCountService.countCharacters(this.answer);
     }
 
