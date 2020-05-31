@@ -21,6 +21,9 @@
     </div>
     <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
+<div *ngIf="!courses" [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
+    <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+</div>
 <div class="row">
     <jhi-overview-course-card
         *ngFor="let course of courses"
