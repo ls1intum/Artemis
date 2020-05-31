@@ -6,8 +6,8 @@
                 "createLabel": "Neue Textaufgabe erstellen",
                 "editLabel": "Textaufgabe bearbeiten"
             },
-            "wordCount": "Anzahl der Wörter: {{count}}",
-            "characterCount": "Anzahl der Zeichen: {{count}}",
+            "wordCount": "Anzahl der Wörter: {{ count }}",
+            "characterCount": "Anzahl der Zeichen: {{ count }}",
             "created": "Textaufgabe mit ID {{ param }} erstellt",
             "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
             "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
