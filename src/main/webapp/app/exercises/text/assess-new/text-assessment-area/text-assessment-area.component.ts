@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { get } from 'lodash';
 
 @Component({
     selector: 'jhi-text-assessment-area',
@@ -45,13 +44,11 @@ export class TextAssessmentAreaComponent implements OnChanges {
     /**
      * Life cycle hook to indicate component change
      */
-    ngOnChanges(changes: { [propKey: string]: SimpleChange }): void {
-        for (const propName in changes) {
-            if (propName === 'submission') {
-                const changedSubmission = changes[propName].currentValue;
-                this.wordCount = this.stringCountService.countWords(get(changedSubmission, 'text'));
-                this.characterCount = this.stringCountService.countCharacters(get(changedSubmission, 'text'));
-            }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.submission) {
+            const { text } = changes.submission.currentValue as TextSubmission;
+            this.wordCount = this.stringCountService.countWords(text);
+            this.characterCount = this.stringCountService.countCharacters(text);
         }
 
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
