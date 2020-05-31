@@ -27,15 +27,12 @@ jhi-category-selector {
     }
 }
 
-.category-name:hover + .tag-options {
-    transform: scale(1.5);
-    transform-origin: 50% 50%;
-}
-
 .tag-options {
     position: absolute;
     transition: all 0.2s ease-in-out;
 }
+
+.category-name:hover + .tag-options,
 .tag-options:hover {
     transform: scale(1.5);
     transform-origin: 50% 50%;
