@@ -18,7 +18,7 @@ export class CategorySelectorComponent implements OnChanges {
     @Input() existingCategories: ExerciseCategory[];
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
     uniqueCategories: ExerciseCategory[] = [];
-    private readonly colorSelectorHeight = 100;
+    private readonly colorSelectorHeight = 150;
 
     /**
      * set unique categories on changes

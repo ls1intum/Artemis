@@ -22,6 +22,10 @@ jhi-category-selector {
                 padding: 0 0.45rem;
                 background: #cccccc;
                 border-radius: 0.25rem;
+
+                &:hover {
+                    opacity: 0.8;
+                }
             }
         }
     }
@@ -34,10 +38,10 @@ jhi-category-selector {
 
 .category-name:hover + .tag-options,
 .tag-options:hover {
-    transform: scale(1.5);
+    transform: scale(2);
     transform-origin: 50% 50%;
 }
 
 .delete {
-    margin-left: 5px;
+    margin-left: 15px;
 }

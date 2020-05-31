@@ -29,7 +29,6 @@
             <span class="category-name" (click)="openColorSelector($event, item)">
                 {{ item.category }}
             </span>
-            <span class="tag-options" (click)="openColorSelector($event, item)">&#8942;</span>
             <delete-icon class="delete" (click)="categoryInput.onRemoveRequested(item, index)"></delete-icon>
         </div>
     </ng-template>
