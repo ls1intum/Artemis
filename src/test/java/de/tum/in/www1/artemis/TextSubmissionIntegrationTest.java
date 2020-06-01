@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,9 +72,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() {
         student = database.addUsers(2, 1, 1).get(0);
-        database.addCourseWithOneTextExerciseDueDateReached();
+        Course course = database.addCourseWithOneTextExerciseDueDateReached();
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
-        textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
+        textExerciseAfterDueDate = (TextExercise) new ArrayList<>(course.getExercises()).get(0);
         afterDueDateParticipation = database.addParticipationForExercise(textExerciseAfterDueDate, student.getLogin());
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(afterDueDateParticipation);

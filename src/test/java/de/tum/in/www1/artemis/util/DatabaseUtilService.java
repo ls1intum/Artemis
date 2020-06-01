@@ -96,9 +96,6 @@ public class DatabaseUtilService {
     StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    StudentParticipationRepository participationRepo;
-
-    @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
 
     @Autowired
@@ -198,8 +195,8 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         submissionVersionRepository.deleteAll();
         studentQuestionRepository.deleteAll();
-        participationRepo.deleteAll();
-        assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        studentParticipationRepo.deleteAll();
+        assertThat(studentParticipationRepo.findAll()).as("participation data has been cleared").isEmpty();
         teamRepo.deleteAll();
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
@@ -445,9 +442,9 @@ public class DatabaseUtilService {
             modelingSubmission2.setResult(result2);
             textSubmission.setResult(result3);
 
-            participation1 = participationRepo.save(participation1);
-            participation2 = participationRepo.save(participation2);
-            participation3 = participationRepo.save(participation3);
+            participation1 = studentParticipationRepo.save(participation1);
+            participation2 = studentParticipationRepo.save(participation2);
+            participation3 = studentParticipationRepo.save(participation3);
 
             modelingSubmission1.setParticipation(participation1);
             textSubmission.setParticipation(participation2);
@@ -679,7 +676,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public void addCourseWithOneTextExerciseDueDateReached() {
+    public Course addCourseWithOneTextExerciseDueDateReached() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course);
         course.addExercises(textExercise);
@@ -690,6 +687,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        return course;
     }
 
     public void addCourseWithOneModelingAndOneTextExercise() {
@@ -843,7 +841,7 @@ public class DatabaseUtilService {
         return fileUploadExercises;
     }
 
-    public void addCourseWithTwoFileUploadExercise() {
+    public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         exerciseRepo.save(fileUploadExercises.get(0));
         exerciseRepo.save(fileUploadExercises.get(1));
@@ -853,6 +851,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        return courseRepoContent.get(0);
     }
 
     /**
@@ -914,7 +913,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         result = resultRepo.save(result);
         participation.addResult(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -925,7 +924,7 @@ public class DatabaseUtilService {
         submission.setResult(result);
         programmingSubmissionRepo.save(submission);
         participation.addResult(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -953,7 +952,7 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -961,7 +960,7 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 

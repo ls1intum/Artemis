@@ -82,9 +82,9 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         course = database.addCourseWithModelingAndTextExercise();
 
         // Make both source and destination exercise team exercises
-        sourceExercise = exerciseRepo.findAll().get(0);
+        sourceExercise = new ArrayList<>(course.getExercises()).get(0);
         sourceExercise = exerciseRepo.save(sourceExercise.mode(ExerciseMode.TEAM));
-        destinationExercise = exerciseRepo.findAll().get(1);
+        destinationExercise = new ArrayList<>(course.getExercises()).get(1);
         destinationExercise = exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
 
         // Select a tutor for the teams
