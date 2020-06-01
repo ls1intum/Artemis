@@ -115,46 +115,51 @@ public class UserService {
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
 
-        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-            Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
-            if (existingInternalAdmin.isPresent()) {
-                log.info("Update internal admin user " + artemisInternalAdminUsername.get());
-                existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
-                // needs to be mutable --> new HashSet<>(Set.of(...))
-                existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
-                userRepository.save(existingInternalAdmin.get());
-                updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
-            }
-            else {
-                log.info("Create internal admin user " + artemisInternalAdminUsername.get());
-                ManagedUserVM userDto = new ManagedUserVM();
-                userDto.setLogin(artemisInternalAdminUsername.get());
-                userDto.setPassword(artemisInternalAdminPassword.get());
-                userDto.setActivated(true);
-                userDto.setFirstName("Administrator");
-                userDto.setLastName("Administrator");
-                userDto.setEmail("admin@localhost");
-                userDto.setLangKey("en");
-                userDto.setCreatedBy("system");
-                userDto.setLastModifiedBy("system");
-                // needs to be mutable --> new HashSet<>(Set.of(...))
-                userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
-                userDto.setGroups(new HashSet<>());
-                createUser(userDto);
-            }
-        }
-
-        if (ldapUserService.isPresent()) {
-            // fetch the registration number of all students
-            long start = System.currentTimeMillis();
-            List<User> users = userRepository.findAllByRegistrationNumberIsNull();
-            for (User user : users) {
-                if (TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
-                    loadUserDetailsFromLdap(user);
+        try {
+            if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
+                Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
+                if (existingInternalAdmin.isPresent()) {
+                    log.info("Update internal admin user " + artemisInternalAdminUsername.get());
+                    existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
+                    // needs to be mutable --> new HashSet<>(Set.of(...))
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
+                    userRepository.save(existingInternalAdmin.get());
+                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
+                }
+                else {
+                    log.info("Create internal admin user " + artemisInternalAdminUsername.get());
+                    ManagedUserVM userDto = new ManagedUserVM();
+                    userDto.setLogin(artemisInternalAdminUsername.get());
+                    userDto.setPassword(artemisInternalAdminPassword.get());
+                    userDto.setActivated(true);
+                    userDto.setFirstName("Administrator");
+                    userDto.setLastName("Administrator");
+                    userDto.setEmail("admin@localhost");
+                    userDto.setLangKey("en");
+                    userDto.setCreatedBy("system");
+                    userDto.setLastModifiedBy("system");
+                    // needs to be mutable --> new HashSet<>(Set.of(...))
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
+                    userDto.setGroups(new HashSet<>());
+                    createUser(userDto);
                 }
             }
-            long end = System.currentTimeMillis();
-            log.info("LDAP search took " + (end - start) + "ms");
+
+            if (ldapUserService.isPresent()) {
+                // fetch the registration number of all students
+                long start = System.currentTimeMillis();
+                List<User> users = userRepository.findAllByRegistrationNumberIsNull();
+                for (User user : users) {
+                    if (TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
+                        loadUserDetailsFromLdap(user);
+                    }
+                }
+                long end = System.currentTimeMillis();
+                log.info("LDAP search took " + (end - start) + "ms");
+            }
+        }
+        catch (Exception ex) {
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
         }
     }
 

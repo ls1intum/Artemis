@@ -65,9 +65,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.quizExercise && changes.quizExercise.currentValue != null) {
+        if (changes.quizExercise && changes.quizExercise.currentValue !== null) {
             this.prepareEntity(this.quizExercise);
-            this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
+            this.backupQuiz = this.quizExercise;
         }
     }
 
@@ -115,7 +115,11 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      *  -> if canceled: close Modal
      */
     save(): void {
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise);
+        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise).then((res) => {
+            res.result.then(() => {
+                this.backupQuiz = this.quizExercise;
+            });
+        });
     }
 
     /**

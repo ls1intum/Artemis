@@ -20,6 +20,7 @@ const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
+let userOffset = parseInt(__ENV.USER_OFFSET);
 let programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
 
 export function setup() {
@@ -38,7 +39,7 @@ export function setup() {
 
         course = newCourse(artemis);
 
-        createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course);
+        createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
         const instructorUsername = baseUsername.replace('USERID', '1');
         const instructorPassword = basePassword.replace('USERID', '1');
@@ -68,7 +69,7 @@ export function setup() {
 
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
-    const userId = __VU;
+    const userId = parseInt(__VU) + userOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);
