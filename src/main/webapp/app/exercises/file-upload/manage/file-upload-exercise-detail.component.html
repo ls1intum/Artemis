@@ -1,5 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-8">
+        <div *ngIf="!fileUploadExercise" [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
+            <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+        </div>
         <div *ngIf="fileUploadExercise">
             <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{ fileUploadExercise.id }}</h2>
             <hr />
