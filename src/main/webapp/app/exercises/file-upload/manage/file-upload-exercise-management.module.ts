@@ -14,6 +14,7 @@ import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
         SortByModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
+        ExerciseDetailsModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],
