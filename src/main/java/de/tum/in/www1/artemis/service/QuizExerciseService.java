@@ -44,6 +44,8 @@ public class QuizExerciseService {
 
     private final ObjectMapper objectMapper;
 
+    private final GroupNotificationService groupNotificationService;
+
     private QuizScheduleService quizScheduleService;
 
     private QuizStatisticService quizStatisticService;
@@ -52,7 +54,8 @@ public class QuizExerciseService {
 
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+            QuizSubmissionRepository quizSubmissionRepository, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter,
+            GroupNotificationService groupNotificationService) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
@@ -61,6 +64,7 @@ public class QuizExerciseService {
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
+        this.groupNotificationService = groupNotificationService;
     }
 
     @Autowired
@@ -337,7 +341,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Sends a QuizExercise to all subscribed clients
+     * Sends a QuizExercise to all subscribed clients and creates notification if quiz has started.
      * @param quizExercise the QuizExercise which will be sent
      * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
      */
@@ -348,6 +352,11 @@ public class QuizExerciseService {
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents()) {
+                // Create a group notification if actions is 'start-now'.
+                if (quizChange.equals("start-now")) {
+                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
+                }
+                // Send quiz via websocket.
                 messagingTemplate.send("/topic/courses/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }

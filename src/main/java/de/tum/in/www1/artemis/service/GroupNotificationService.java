@@ -54,12 +54,16 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about a started quiz exercise.
+     * Notify student groups about a started quiz exercise. The notification is not sent via websocket.
      *
      * @param quizExercise that has been started
      */
     public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
-        saveAndSend(createNotification(quizExercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null));
+        groupNotificationRepository.save(createNotification(quizExercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null)); // TODO:
+                                                                                                                                                                                // revert
+                                                                                                                                                                                // type
+                                                                                                                                                                                // to
+                                                                                                                                                                                // STUDENT
     }
 
     /**

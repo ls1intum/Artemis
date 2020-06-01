@@ -282,7 +282,6 @@ public class QuizExerciseResource {
                 // set release date to now, truncated to seconds because the database only stores seconds
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 quizExercise.setIsPlannedToStart(true);
-                groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
                 break;
             case "set-visible":
                 // check if quiz is already visible
