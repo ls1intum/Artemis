@@ -29,7 +29,7 @@
 </ng-container>
 
 <ng-template #loading>
-    <h2>
-        <span style="color: grey;"><fa-icon [icon]="'spinner'"></fa-icon>&nbsp;<span>Please wait while Artemis is finding the course.</span></span>
-    </h2>
+    <div [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
+        <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+    </div>
 </ng-template>

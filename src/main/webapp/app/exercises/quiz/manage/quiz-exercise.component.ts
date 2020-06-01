@@ -53,6 +53,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.quizExercises.length);
                 this.setQuizExercisesStatus();
+                this.isLoading = false;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

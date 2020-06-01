@@ -17,6 +17,9 @@
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
     <br />
+    <div *ngIf="isLoading" [style]="{ height: '120px' }" class="d-flex align-items-center justify-content-center">
+        <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+    </div>
     <div class="table-responsive" *ngIf="fileUploadExercises && fileUploadExercises.length > 0">
         <table class="table table-striped">
             <thead>

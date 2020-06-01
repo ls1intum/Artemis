@@ -65,6 +65,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
+                this.isLoading = false;
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );

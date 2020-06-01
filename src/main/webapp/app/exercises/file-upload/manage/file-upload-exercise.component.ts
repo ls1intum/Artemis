@@ -46,6 +46,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                         exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
+                    this.isLoading = false;
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
