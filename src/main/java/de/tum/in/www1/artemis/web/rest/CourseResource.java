@@ -690,7 +690,7 @@ public class CourseResource {
         }
 
         long end = System.currentTimeMillis();
-        log.info("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
         return ResponseEntity.ok(submissions);
     }
 

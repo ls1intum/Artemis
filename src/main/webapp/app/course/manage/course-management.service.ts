@@ -258,7 +258,6 @@ export class CourseManagementService {
         return this.http
             .get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' })
             .pipe(
-                // map((res) => this.convertDateArrayFromServer(res)),
                 filter((res) => !!res.body),
                 tap((res) =>
                     res.body!.forEach((submission: Submission) => {
