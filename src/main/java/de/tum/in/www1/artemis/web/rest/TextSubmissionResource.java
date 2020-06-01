@@ -271,7 +271,9 @@ public class TextSubmissionResource {
             textSubmission = optionalTextSubmission.get();
         }
 
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+        if (lockSubmission) {
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+        }
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
