@@ -44,7 +44,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         seconds = false,
     ): string {
         // Return empty string if given dateTime equals null or is not convertible to moment.
-        if (dateTime === null || !moment(dateTime).isValid()) {
+        if (!dateTime || !moment(dateTime).isValid()) {
             return '';
         }
         this.dateTime = moment(dateTime);
