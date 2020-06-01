@@ -87,6 +87,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         result = database.addResultToSubmission(submission);
 
         rating = new Rating();
+        rating.setId(result.getId());
         rating.setResult(result);
         rating.setRating(2);
     }

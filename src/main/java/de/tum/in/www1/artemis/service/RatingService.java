@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Optional;
 
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,19 +40,16 @@ public class RatingService {
 
     /**
      * Persist a new Rating
-     * <p>
-     * The @Transactional is needed because the Id of the serverRating is set automatically once the
-     * result is set. BE CAREFUL TO EXTEND THIS METHOD, @TRANSACTIONAL CAN HAVE UNWANTED SIDE
-     * EFFECTS!
      *
      * @param resultId    - Id of the rating that should be persisted
      * @param ratingValue - Value of the rating that should be persisted
      * @return persisted Rating
      */
-    @Transactional
     public Rating saveRating(Long resultId, Integer ratingValue) {
         Result result = resultRepository.findById(resultId).orElseThrow();
         Rating serverRating = new Rating();
+        // set the id of rating equal to the id of the result
+        serverRating.setId(resultId);
         serverRating.setRating(ratingValue);
         serverRating.setResult(result);
         return ratingRepository.save(serverRating);
