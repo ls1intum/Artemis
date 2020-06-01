@@ -24,20 +24,23 @@ describe('ParticipationWebsocketService', () => {
 
     let participationWebsocketService: ParticipationWebsocketService;
 
-    const participation = { id: 1, exercise: { id: 20 } } as Participation;
+    const exerciseId1 = 20;
+    const exerciseId2 = 40;
+
+    const participation = { id: 1, exercise: { id: exerciseId1 } } as Participation;
     const currentResult = { id: 10, participation } as Result;
     participation.results = [currentResult];
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
 
-    const participationResultTopic = `/user/topic/newResults`;
+    const participationPersonalResultTopic = `/user/topic/newResults`;
     const participationTopic = `/user/topic/exercise/${participation.exercise!.id}/participation`;
 
-    const participation2 = { id: 2, exercise: { id: 40 } } as Participation;
+    const participation2 = { id: 2, exercise: { id: exerciseId2 } } as Participation;
     const currentResult2 = { id: 13, participation: participation2 } as Result;
     participation2.results = [currentResult2];
 
-    const participation2ResultTopic = `/user/topic/newResults`;
+    const participationInstructorResultTopic = `/topic/exercise/40/newResults`;
     const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
 
     beforeEach(async(() => {
@@ -53,9 +56,9 @@ describe('ParticipationWebsocketService', () => {
         receiveParticipationSubject = new Subject();
         receiveParticipation2Subject = new Subject();
         receiveStub.withArgs(participationResultTopic).returns(receiveResultForParticipationSubject);
-        receiveStub.withArgs(participation2ResultTopic).returns(receiveResultForParticipation2Subject);
+        // receiveStub.withArgs(participation2ResultTopic).returns(receiveResultForParticipation2Subject);
         receiveStub.withArgs(participationTopic).returns(receiveParticipationSubject);
-        receiveStub.withArgs(participation2Topic).returns(receiveParticipation2Subject);
+        // receiveStub.withArgs(participation2Topic).returns(receiveParticipation2Subject);
     }));
 
     afterEach(() => {
@@ -65,7 +68,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, false, 40);
         expect(subscribeSpy).to.have.been.calledOnce;
         expect(receiveStub).to.have.been.calledOnce;
         expect(unsubscribeSpy).not.to.have.been.called;
