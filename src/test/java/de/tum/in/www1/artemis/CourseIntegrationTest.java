@@ -124,11 +124,22 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.post("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
-
         course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("shortName");
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setStudentGroupName("StudentGroupName");
+        course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
+        course.setInstructorGroupName("InstructorGroupName");
+        request.post("/api/courses", course, HttpStatus.CREATED);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
     }
 
     @Test
