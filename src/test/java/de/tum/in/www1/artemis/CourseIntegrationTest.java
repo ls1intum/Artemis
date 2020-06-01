@@ -132,6 +132,64 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithModifiedMaxComplainNumbers() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaints(-1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithModifiedMaxComplainTimeDays() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaintTimeDays(-1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaintTimeDays(0);
+        course.setMaxComplaints(1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplainsSecondCase() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaintTimeDays(1);
+        course.setMaxComplaints(0);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setStudentGroupName("StudentGroupName");
