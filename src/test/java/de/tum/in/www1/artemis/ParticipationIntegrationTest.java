@@ -296,7 +296,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/100/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/10000/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
     }
 
