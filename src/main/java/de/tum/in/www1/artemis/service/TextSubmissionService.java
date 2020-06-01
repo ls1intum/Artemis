@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,11 +190,7 @@ public class TextSubmissionService extends SubmissionService {
             return Optional.empty();
         }
 
-        // only select from in-time submissions if there are any
-        boolean hasInTimeSubmissions = submissionsWithoutResult.stream().anyMatch(s -> s.getSubmissionDate().isBefore(textExercise.getDueDate()));
-        if (hasInTimeSubmissions) {
-            submissionsWithoutResult = submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate().isBefore(textExercise.getDueDate())).collect(Collectors.toList());
-        }
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, textExercise.getDueDate());
 
         var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);

@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,5 +183,22 @@ public class SubmissionService {
                 participation.setSubmissions(Set.of());
             }
         });
+    }
+
+    /**
+     * Filters the submissions to contain only in-time submissions if there are any.
+     * If not, the original list is returned.
+     * @param submissions The submissions to filter
+     * @param dueDate The due-date to filter by
+     * @return The filtered list of submissions
+     */
+    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+        boolean hasInTimeSubmissions = submissions.stream().anyMatch(s -> s.getSubmissionDate().isBefore(dueDate));
+        if (hasInTimeSubmissions) {
+            return submissions.stream().filter(s -> s.getSubmissionDate().isBefore(dueDate)).collect(Collectors.toList());
+        }
+        else {
+            return submissions;
+        }
     }
 }

@@ -144,11 +144,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             return Optional.empty();
         }
 
-        // only select from in-time submissions if there are any
-        boolean hasInTimeSubmissions = submissionsWithoutResult.stream().anyMatch(s -> s.getSubmissionDate().isBefore(fileUploadExercise.getDueDate()));
-        if (hasInTimeSubmissions) {
-            submissionsWithoutResult = submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate().isBefore(fileUploadExercise.getDueDate())).collect(Collectors.toList());
-        }
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
 
         var submissionWithoutResult = (FileUploadSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
