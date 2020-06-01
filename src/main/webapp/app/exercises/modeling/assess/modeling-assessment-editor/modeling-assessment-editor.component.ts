@@ -264,12 +264,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onSubmitAssessment() {
         if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
-            const confirm = window.confirm(confirmationMessage);
-            if (confirm) {
+
+            // if the assessment is before the assessment due date, don't show the confirm submission button
+            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+            if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
-                this.highlightMissingFeedback = true;
-                this.highlightElementsWithMissingFeedback();
+                const confirm = window.confirm(confirmationMessage);
+                if (confirm) {
+                    this.submitAssessment();
+                } else {
+                    this.highlightMissingFeedback = true;
+                    this.highlightElementsWithMissingFeedback();
+                }
             }
         } else {
             this.submitAssessment();
