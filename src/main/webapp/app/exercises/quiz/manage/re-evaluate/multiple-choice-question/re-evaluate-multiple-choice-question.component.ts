@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -14,12 +13,6 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
     providers: [ArtemisMarkdownService],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent {
-    @ViewChild('questionEditor', { static: false })
-    private questionEditor: AceEditorComponent;
-
-    @ViewChildren('answerEditor')
-    aceEditorComponents!: QueryList<AceEditorComponent>;
-
     @Input()
     question: MultipleChoiceQuestion;
     @Input()
