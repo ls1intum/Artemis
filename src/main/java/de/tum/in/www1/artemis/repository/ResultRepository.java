@@ -26,8 +26,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
-    List<Result> findByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
-
+    @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
     // TODO: cleanup unused queries

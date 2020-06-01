@@ -902,7 +902,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             confirmSubmit = window.confirm(warningText);
         }
         if (confirmSubmit) {
-            // TODO: use a REST Call because this should be more reliable
             this.isSubmitting = true;
             switch (this.mode) {
                 case 'practice':
@@ -929,7 +928,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                    quizSubmission.submitted = true;
                     this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe(
                         (response: HttpResponse<QuizSubmission>) => {
                             this.submission = response.body!;

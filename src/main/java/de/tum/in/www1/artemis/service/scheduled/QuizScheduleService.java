@@ -160,7 +160,6 @@ public class QuizScheduleService {
             }
             participationHashMap.get(quizExerciseId).put(participation.getParticipantIdentifier(), participation);
         }
-
     }
 
     /**
@@ -355,7 +354,7 @@ public class QuizScheduleService {
             // create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
             for (long quizExerciseId : submissionHashMap.keySet()) {
 
-                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
+                QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
                     submissionHashMap.remove(quizExerciseId);
@@ -383,8 +382,8 @@ public class QuizScheduleService {
             // Send out Participations from ParticipationHashMap to each user if the quiz has ended
             for (long quizExerciseId : participationHashMap.keySet()) {
 
-                // get the Quiz without the statistics and questions from the database
-                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
+                // get the quiz exercise with questions but without the statistics from the database
+                QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
                     participationHashMap.remove(quizExerciseId);
@@ -414,8 +413,8 @@ public class QuizScheduleService {
             // Update Statistics with Results from ResultHashMap (DB Read and DB Write) and remove from ResultHashMap
             for (long quizExerciseId : resultHashMap.keySet()) {
 
-                // get the Quiz with the statistic from the database
-                QuizExercise quizExercise = getQuizExercise(quizExerciseId);
+                // get the quiz exercise with the statistic from the database
+                QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
                 // check if quiz has been deleted (edge case), then do nothing!
                 if (quizExercise == null) {
                     log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
@@ -465,8 +464,13 @@ public class QuizScheduleService {
 
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
         if (participation.getExercise() != null) {
+            var quizExercise = (QuizExercise) participation.getExercise();
             // we do not need the course and lectures
-            participation.getExercise().setCourse(null);
+            quizExercise.setCourse(null);
+            // students should not see statistics
+            // TODO: this would be useful, but leads to problems when the quiz schedule service wants to access the statistics again later on
+            // quizExercise.setQuizPointStatistic(null);
+            // quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
@@ -496,9 +500,6 @@ public class QuizScheduleService {
     private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 
         int count = 0;
-        List<StudentParticipation> participations = new ArrayList<>();
-        List<QuizSubmission> submissions = new ArrayList<>();
-        List<Result> results = new ArrayList<>();
 
         for (String username : userSubmissionMap.keySet()) {
             try {
@@ -532,6 +533,7 @@ public class QuizScheduleService {
                 user.ifPresent(participation::setParticipant);
                 // add the quizExercise to the participation
                 participation.setExercise(quizExercise);
+                participation.setInitializationState(InitializationState.FINISHED);
 
                 // create new result
                 Result result = new Result().participation(participation).submission(quizSubmission);
@@ -549,28 +551,24 @@ public class QuizScheduleService {
 
                 // add submission to participation
                 participation.addSubmissions(quizSubmission);
-                participation.setInitializationState(InitializationState.FINISHED);
-                participation.setExercise(quizExercise);
 
-                participations.add(participation);
-                submissions.add(quizSubmission);
-                results.add(result);
+                // save all participations, results and quizSubmissions
+                // NOTE: we save the single participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student
+                // answers
+                participation = studentParticipationRepository.save(participation);
+                quizSubmissionRepository.save(quizSubmission);
+                result = resultRepository.save(result);
+
+                // add the participation to the participationHashMap for the send out at the end of the quiz
+                addParticipation(quizExercise.getId(), participation);
+                // add the result of the participation resultHashMap for the statistic-Update
+                addResultForStatisticUpdate(quizExercise.getId(), result);
             }
             catch (Exception e) {
                 log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
             }
         }
 
-        // TODO: should we use a transaction here?
-        // save all participations, results and quizSubmissions
-        studentParticipationRepository.saveAll(participations);
-        quizSubmissionRepository.saveAll(submissions);
-        resultRepository.saveAll(results);
-
-        // add the participation to the participationHashMap for the send out at the end of the quiz
-        addParticipations(quizExercise.getId(), participations);
-        // add the result of the participation resultHashMap for the statistic-Update
-        addResultsForStatisticUpdate(quizExercise.getId(), results);
         return count;
     }
 }
