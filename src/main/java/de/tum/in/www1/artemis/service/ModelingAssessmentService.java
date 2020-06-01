@@ -80,7 +80,6 @@ public class ModelingAssessmentService extends AssessmentService {
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
-        checkGeneralFeedback(modelingAssessment);
 
         result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());

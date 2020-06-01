@@ -285,7 +285,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * Checks whether a build artifact exists for a submission.
      */
     hasBuildArtifact() {
-        if (this.result && this.submission instanceof ProgrammingSubmission) {
+        if (this.result && this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING) {
             const submission = this.submission as ProgrammingSubmission;
             return submission.buildArtifact;
         }

@@ -55,6 +55,18 @@ while (( "$#" )); do
       programmingLanguage=$2
       shift 2
       ;;
+    -uo|--user-offset)
+      userOffset=$2
+      shift 2
+      ;;
+    -ci|--course-id)
+      courseId=$2
+      shift 2
+      ;;
+    -ei|--exercise-id)
+      exerciseId=$2
+      shift 2
+      ;;
     --) # end argument parsing
       shift
       break
@@ -85,12 +97,15 @@ iterations=${iterations:-10}
 timeoutParticipation=${timeoutParticipation:-60}
 timeoutExercise=${timeoutExercise:-10}
 programmingLanguage=${programmingLanguage:-"JAVA"}
+userOffset=${userOffset:-0}
+courseId=${courseId:-0}
+exerciseId=${exerciseId:-0}
 
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmingLanguage" -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" -e CLEANUP="$cleanup" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
-  -e PROGRAMMING_LANGUAGE="$programmingLanguage" \
+  -e PROGRAMMING_LANGUAGE="$programmingLanguage" -e USER_OFFSET="$userOffset" -e COURSE_ID="$courseId" -e EXERCISE_ID="$exerciseId" \
   loadimpact/k6 run --address localhost:0 /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
