@@ -240,6 +240,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
+    goToExerciseDashboard() {
+        if (this.exercise && this.exercise.course) {
+            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
+    }
+
     private computeTotalScore() {
         const credits = this.assessments.map((feedback) => feedback.credits);
         this.totalScore = credits.reduce((a, b) => a + b, 0);
