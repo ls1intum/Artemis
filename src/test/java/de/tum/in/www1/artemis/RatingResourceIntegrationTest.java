@@ -87,7 +87,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         result = database.addResultToSubmission(submission);
 
         rating = new Rating();
-        rating.setId(result.getId());
         rating.setResult(result);
         rating.setRating(2);
     }
@@ -132,8 +131,8 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getId() + "/rating/" + 5, null, HttpStatus.OK);
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getId()).get();
+        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
         assertThat(updatedRating.getRating()).isEqualTo(5);
     }
 
@@ -141,10 +140,10 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
+        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
 
         // check that rating is not updated
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
         assertThat(updatedRating.getRating()).isNotEqualTo(5);
     }
 }

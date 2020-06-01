@@ -35,7 +35,7 @@ public class RatingService {
      * @return Rating if it exists else null
      */
     public Optional<Rating> findRatingByResultId(Long resultId) {
-        return ratingRepository.findById(resultId);
+        return ratingRepository.findRatingByResultId(resultId);
     }
 
     /**
@@ -48,8 +48,6 @@ public class RatingService {
     public Rating saveRating(Long resultId, Integer ratingValue) {
         Result result = resultRepository.findById(resultId).orElseThrow();
         Rating serverRating = new Rating();
-        // set the id of rating equal to the id of the result
-        serverRating.setId(resultId);
         serverRating.setRating(ratingValue);
         serverRating.setResult(result);
         return ratingRepository.save(serverRating);
@@ -63,7 +61,7 @@ public class RatingService {
      * @return updated rating
      */
     public Rating updateRating(Long resultId, Integer ratingValue) {
-        Rating updatedRating = this.ratingRepository.findById(resultId).orElseThrow();
+        Rating updatedRating = this.ratingRepository.findRatingByResultId(resultId).orElseThrow();
         updatedRating.setRating(ratingValue);
         return ratingRepository.save(updatedRating);
     }
