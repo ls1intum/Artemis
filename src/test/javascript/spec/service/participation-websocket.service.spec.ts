@@ -40,7 +40,7 @@ describe('ParticipationWebsocketService', () => {
     const currentResult2 = { id: 13, participation: participation2 } as Result;
     participation2.results = [currentResult2];
 
-    const participationInstructorResultTopic = `/topic/exercise/40/newResults`;
+    const participationInstructorResultTopic = `/topic/exercise/${participation2.exercise!.id}/newResults`;
     const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
 
     beforeEach(async(() => {
@@ -55,10 +55,10 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipation2Subject = new Subject();
         receiveParticipationSubject = new Subject();
         receiveParticipation2Subject = new Subject();
-        receiveStub.withArgs(participationResultTopic).returns(receiveResultForParticipationSubject);
-        // receiveStub.withArgs(participation2ResultTopic).returns(receiveResultForParticipation2Subject);
+        receiveStub.withArgs(participationPersonalResultTopic).returns(receiveResultForParticipationSubject);
+        receiveStub.withArgs(participationInstructorResultTopic).returns(receiveResultForParticipation2Subject);
         receiveStub.withArgs(participationTopic).returns(receiveParticipationSubject);
-        // receiveStub.withArgs(participation2Topic).returns(receiveParticipation2Subject);
+        receiveStub.withArgs(participation2Topic).returns(receiveParticipation2Subject);
     }));
 
     afterEach(() => {
@@ -67,18 +67,39 @@ describe('ParticipationWebsocketService', () => {
         receiveStub.restore();
     });
 
-    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, false, 40);
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, false, exerciseId2);
         expect(subscribeSpy).to.have.been.calledOnce;
         expect(receiveStub).to.have.been.calledOnce;
         expect(unsubscribeSpy).not.to.have.been.called;
 
-        expect(subscribeSpy).to.have.been.calledWithExactly(participationResultTopic);
-        expect(receiveStub).to.have.been.calledWithExactly(participationResultTopic);
+        expect(subscribeSpy).to.have.been.calledWithExactly(participationInstructorResultTopic);
+        expect(receiveStub).to.have.been.calledWithExactly(participationInstructorResultTopic);
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
         expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(1);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.be.undefined;
+
+        expect(participationWebsocketService.resultObservables.size).to.equal(1);
+        expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
+
+        expect(participationWebsocketService.participationObservable).to.be.undefined;
+    });
+
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        expect(subscribeSpy).to.have.been.calledOnce;
+        expect(receiveStub).to.have.been.calledOnce;
+        expect(unsubscribeSpy).not.to.have.been.called;
+
+        expect(subscribeSpy).to.have.been.calledWithExactly(participationPersonalResultTopic);
+        expect(receiveStub).to.have.been.calledWithExactly(participationPersonalResultTopic);
+
+        expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
+
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(0);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.equal(participationPersonalResultTopic);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
