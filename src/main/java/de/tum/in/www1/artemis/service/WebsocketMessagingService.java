@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -51,5 +55,31 @@ public class WebsocketMessagingService {
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);
+    }
+
+    /**
+     * Returns true if the given destination should be handled by this service
+     *
+     * @param destination Websocket destination topic which to check
+     * @return flag whether the destination belongs to this controller
+     */
+    public static boolean isResultNonPersonalDestination(String destination) {
+        return Optional.ofNullable(getExerciseIdFromResultDestination(destination)).isPresent();
+    }
+
+    /**
+     * Returns the exercise id from the destination route
+     *
+     * @param destination Websocket destination topic from which to extract the exercise id
+     * @return exercise id
+     */
+    public static Long getExerciseIdFromResultDestination(String destination) {
+        Pattern pattern = Pattern.compile("^" + getResultDestination("(\\d*)"));
+        Matcher matcher = pattern.matcher(destination);
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+    }
+
+    private static String getResultDestination(String exerciseId) {
+        return "/topic/exercise/" + exerciseId + "/newResults";
     }
 }
