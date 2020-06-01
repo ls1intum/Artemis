@@ -1,6 +1,5 @@
 import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AbstractControl, NgForm } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
@@ -45,7 +44,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
     readonly shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
 
-    constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
+    constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal) {}
 
     /**
      * Life cycle hook to indicate component creation is done
