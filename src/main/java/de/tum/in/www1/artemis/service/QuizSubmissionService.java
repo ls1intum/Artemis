@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -146,12 +145,12 @@ public class QuizSubmissionService {
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
         log.debug(logText + "Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
-        if (!participation.getSubmissions().isEmpty()) {
+        if (!participation.getResults().isEmpty()) {
             log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked
             // if the quiz is active, so there is no way the student could have already practiced
-            Submission previousSubmission = participation.getSubmissions().iterator().next();
-            if (previousSubmission.isSubmitted()) {
+            Result result = participation.getResults().iterator().next();
+            if (result.getSubmission().isSubmitted()) {
                 throw new QuizSubmissionException("You have already submitted the quiz");
             }
         }
