@@ -2,7 +2,7 @@
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
-            <a ngbNavLink class="btn-sm text-dark">{{ 'entity.action.edit' | translate }}</a>
+            <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | translate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
                     <ace-editor
@@ -43,7 +43,7 @@
                         <fa-icon [icon]="command.buttonIcon"></fa-icon>
                     </button>
                     <!--style command -->
-                    <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                    <div *ngIf="headerCommands.length > 0" class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                         <button class="btn btn-sm" type="button" id="dropdownBasic1" ngbDropdownToggle>
                             {{ 'artemisApp.multipleChoiceQuestion.editor.style' | translate }}
                         </button>
@@ -54,7 +54,7 @@
                         </div>
                     </div>
                     <!--color picker command -->
-                    <div class="btn-group col-xs-6">
+                    <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
                         <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">
                             Color
                         </div>
