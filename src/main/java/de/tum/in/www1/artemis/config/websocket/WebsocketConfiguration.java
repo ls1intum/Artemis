@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 
 @Configuration
 public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
@@ -71,6 +72,8 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private AuthorizationCheckService authorizationCheckService;
 
+    private UserService userService;
+
     private ExerciseService exerciseService;
 
     private static final int LOGGING_DELAY_SECONDS = 10;
@@ -84,10 +87,12 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     }
 
     @Autowired
-    public void setParticipationService(ParticipationService participationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService) {
+    public void setParticipationService(ParticipationService participationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
+            UserService userService) {
         this.participationService = participationService;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseService = exerciseService;
+        this.userService = userService;
     }
 
     /**
@@ -247,7 +252,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Long exerciseId) {
         Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = (User) principal;
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastInstructorForExercise(exercise, user);
     }
 }
