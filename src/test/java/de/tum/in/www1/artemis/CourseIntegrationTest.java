@@ -229,6 +229,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetCourseForDashboard() throws Exception {
+        var courses = database.createCoursesWithExercisesAndLectures(true);
+        var receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        assertThat(receivedCourse).isEqualTo(courses.get(0));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
