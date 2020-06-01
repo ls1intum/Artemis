@@ -256,6 +256,7 @@ public class TextSubmissionResource {
         final TextSubmission textSubmission;
         if (lockSubmission) {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
@@ -269,10 +270,6 @@ public class TextSubmissionResource {
                 return notFound();
             }
             textSubmission = optionalTextSubmission.get();
-        }
-
-        if (lockSubmission) {
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
