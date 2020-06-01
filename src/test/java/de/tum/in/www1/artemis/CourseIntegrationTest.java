@@ -114,6 +114,25 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithSameShortName() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setShortName("shortName");
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        request.post("/api/courses", course, HttpStatus.CREATED);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
+
+        course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setShortName("shortName");
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 14, false);
