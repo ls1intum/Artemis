@@ -85,6 +85,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {array} containing all colorPickerCommands
      * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
      * because the class definitions are saved within that method*/
+    @Input()
     colorCommands: Command[] = [new ColorPickerCommand()];
 
     /**
@@ -95,6 +96,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
+    @Input()
     defaultCommands: Command[] = [
         new BoldCommand(),
         new ItalicCommand(),
@@ -108,6 +110,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     ];
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/
+    @Input()
     headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
@@ -122,6 +125,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * 1. true -> the preview of the editor is used
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
+
+    @Input() showEditButton = true;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
     previewTextAsHtml: SafeHtml | null;
