@@ -486,8 +486,8 @@ export class CourseExerciseService {
     protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
             });
         }
