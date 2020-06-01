@@ -54,6 +54,8 @@
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
                     <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.absoluteScore' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
+                    <h4 id="current-max-score">{{ 'artemisApp.courseOverview.statistics.currentMaxScore' | translate: { number: exerciseGroup.totalCurrentMaxScore } }}</h4>
+                    <h4 id="current-relative-score">{{ 'artemisApp.courseOverview.statistics.currentRelativeScore' | translate: { number: exerciseGroup.currentRelativeScore } }}</h4>
                     <h4 id="max-score">{{ 'artemisApp.courseOverview.statistics.maxScore' | translate: { number: exerciseGroup.totalMaxScore } }}</h4>
                     <h4 id="relative-score">{{ 'artemisApp.courseOverview.statistics.relativeScore' | translate: { number: exerciseGroup.relativeScore } }}</h4>
                     <h4 *ngIf="exerciseGroup.presentationScoreEnabled && course.presentationScore !== 0" id="presentation-score">

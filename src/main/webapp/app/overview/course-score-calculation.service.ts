@@ -11,6 +11,8 @@ export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
 export const MAX_SCORE = 'maxScore';
 export const PRESENTATION_SCORE = 'presentationScore';
+export const CURRENT_MAX_SCORE = 'currentMaxScore';
+export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
@@ -23,6 +25,7 @@ export class CourseScoreCalculationService {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
+        let currentMaxScore = 0;
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
@@ -36,8 +39,11 @@ export class CourseScoreCalculationService {
                             score = 0;
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                        currentMaxScore = currentMaxScore + exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
+                } else {
+                    currentMaxScore = currentMaxScore + exercise.maxScore;
                 }
             }
         }
@@ -47,8 +53,14 @@ export class CourseScoreCalculationService {
         } else {
             scores.set(RELATIVE_SCORE, 0);
         }
+        if (currentMaxScore > 0) {
+            scores.set(CURRENT_RELATIVE_SCORE, CourseScoreCalculationService.round((absoluteScore / currentMaxScore) * 100, 1));
+        } else {
+            scores.set(CURRENT_RELATIVE_SCORE, 0);
+        }
         scores.set(MAX_SCORE, maxScore);
         scores.set(PRESENTATION_SCORE, presentationScore);
+        scores.set(CURRENT_MAX_SCORE, currentMaxScore);
         return scores;
     }
 

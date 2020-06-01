@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
+import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, CURRENT_MAX_SCORE, CURRENT_RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
@@ -50,6 +50,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     // max score
     totalMaxScore = 0;
     totalMaxScores = {};
+
+    // current max score
+    totalCurrentMaxScore = 0;
+    totalCurrentMaxScores = {};
+
+    // current max score
+    currentRelativeScore = 0;
+    currentRelativeScores = {};
 
     // presentation score
     totalPresentationScore = 0;
@@ -229,9 +237,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.courseExercises = this.course!.exercises;
         this.calculateMaxScores();
+        this.calculateCurrentMaxScores();
         this.calculateAbsoluteScores();
         this.calculateRelativeScores();
         this.calculatePresentationScores();
+        this.calculateCurrentRelativeScores();
         this.groupExercisesByType();
     }
 
@@ -260,6 +270,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
                         notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [] },
+                        totalCurrentMaxScore: 0,
+                        totalCurrentRelativeScore: 0,
                     };
                 }
 
@@ -316,6 +328,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 }
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
+                groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type];
+                groupedExercises[index].totalCurrentMaxScore = this.totalCurrentMaxScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
                 // check if presentation score is enabled for at least one exercise
@@ -422,6 +436,38 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScores = relativeScores;
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
+    }
+
+    calculateCurrentMaxScores() {
+        const quizzesTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_MAX_SCORE);
+        const programmingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_MAX_SCORE);
+        const modelingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_MAX_SCORE);
+        const textExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_MAX_SCORE);
+        const fileUploadExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_MAX_SCORE);
+        const totalCurrentMaxScores = {};
+        totalCurrentMaxScores[ExerciseType.QUIZ] = quizzesTotalCurrentMaxScore;
+        totalCurrentMaxScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalCurrentMaxScore;
+        totalCurrentMaxScores[ExerciseType.MODELING] = modelingExerciseTotalCurrentMaxScore;
+        totalCurrentMaxScores[ExerciseType.TEXT] = textExerciseTotalCurrentMaxScore;
+        totalCurrentMaxScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalCurrentMaxScore;
+        this.totalCurrentMaxScores = totalCurrentMaxScores;
+        this.totalCurrentMaxScore = this.calculateTotalScoreForTheCourse('currentMaxScore');
+    }
+
+    calculateCurrentRelativeScores(): void {
+        const quizzesCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_RELATIVE_SCORE);
+        const programmingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_RELATIVE_SCORE);
+        const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_RELATIVE_SCORE);
+        const textExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_RELATIVE_SCORE);
+        const fileUploadExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_RELATIVE_SCORE);
+        const currentRelativeScores = {};
+        currentRelativeScores[ExerciseType.QUIZ] = quizzesCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.PROGRAMMING] = programmingExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.MODELING] = modelingExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
+        this.currentRelativeScores = currentRelativeScores;
+        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(CURRENT_RELATIVE_SCORE);
     }
 
     calculatePresentationScores(): void {
