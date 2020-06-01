@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
@@ -53,8 +54,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 1, 1);
-        database.addCourseWithOneModelingExercise();
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithOneModelingExercise();
+        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
