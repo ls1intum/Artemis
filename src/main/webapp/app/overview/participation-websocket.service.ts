@@ -10,8 +10,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as moment from 'moment';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
-const RESULTS_WEBSOCKET = 'results_';
-const PARTICIPATION_WEBSOCKET = 'participation_';
+const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
+const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${exerciseId}/newResults`;
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
@@ -28,6 +28,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     openPersonalWebsocketSubscription: string | null; /* url of websocket connection */
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation | null> | null;
+    subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
+    participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the particiation was subscribed in personal mode */> = new Map<number, boolean>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
@@ -37,11 +39,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     public resetLocalCache() {
         const participations = this.getAllParticipations();
         participations.forEach((participation) => {
+            this.cachedParticipations.delete(participation.id);
             this.removeParticipation(participation.id, participation.exercise.id);
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
         this.participationObservable = null;
+        this.subscribedExercises = new Map<number, Set<number>>();
+        this.participationSubscriptionTypes = new Map<number, boolean>();
     }
 
     /**
@@ -131,42 +136,67 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     }
 
     /**
-     * Removes all participation information locally from all cached data maps.
+     * Unsubscribes from the topics used by the participationId, if possible
      *
      * @param participationId ID of the participation that should not be tracked anymore
      * @param exerciseId optional the participationId an exercise that should not be tracked anymore
      */
     private removeParticipation(participationId: number, exerciseId?: number) {
-        this.cachedParticipations.delete(participationId);
-        // removing results observable
-        /*const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
-        this.jhiWebsocketService.unsubscribe(participationResultTopic);
-        this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
-        // removing exercise observable
-        if (exerciseId) {
-            const participationTopic = this.openWebsocketSubscriptions.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)!;
-            this.jhiWebsocketService.unsubscribe(participationTopic);
-            this.openWebsocketSubscriptions.delete(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
-        }*/
+        const subscriptionTypePersonal = this.participationSubscriptionTypes.get(participationId);
+        this.participationSubscriptionTypes.delete(participationId);
+
+        // We are only interested if there is a value
+        if (subscriptionTypePersonal !== undefined && subscriptionTypePersonal !== null) {
+            if (subscriptionTypePersonal) {
+                // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
+                const numberOfOpenPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
+                if (numberOfOpenPersonalSubscriptions === 0) {
+                    this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.openPersonalWebsocketSubscription = null;
+                }
+            } else {
+                // The subscriptions was an non-personal subscriptions, so it should only be removed if it was the last for this exercise
+                const openSubscriptionsForExercise = this.subscribedExercises.get(exerciseId!);
+                if (openSubscriptionsForExercise) {
+                    openSubscriptionsForExercise.delete(participationId);
+                    if (openSubscriptionsForExercise.size === 0) {
+                        this.subscribedExercises.delete(exerciseId!);
+                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(participationId);
+                        if (subscribedTopic) {
+                            this.jhiWebsocketService.unsubscribe(subscribedTopic);
+                            this.openResultWebsocketSubscriptions.delete(participationId);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
      * Checks if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
+     * @param participationId the id of the participation for which the subscription should be opened
      * @param personal whether the current user is a participant in the participation.
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    private openResultWebsocketSubscriptionIfNotExisting(personal: boolean, exerciseId: number | null) {
+    private openResultWebsocketSubscriptionIfNotExisting(participationId: number, personal: boolean, exerciseId?: number) {
         if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
             let participationResultTopic: string;
             if (personal) {
-                participationResultTopic = `/user/topic/newResults`;
+                participationResultTopic = PERSONAL_PARTICIPATION_TOPIC;
                 this.openPersonalWebsocketSubscription = participationResultTopic;
             } else {
-                participationResultTopic = `/topic/exercise/${exerciseId}/newResults`;
+                participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
                 this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
             }
+            this.participationSubscriptionTypes.set(participationId, personal);
+            if (!this.subscribedExercises.has(exerciseId!)) {
+                this.subscribedExercises.set(exerciseId!, new Set<number>());
+            }
+            const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
+            subscribedParticipations!.add(participationId);
+
             this.jhiWebsocketService.subscribe(participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
@@ -198,8 +228,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param personal whether the current user is a participant in the participation.
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId: number | null = null): BehaviorSubject<Result | null> {
-        this.openResultWebsocketSubscriptionIfNotExisting(personal, exerciseId);
+    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | null> {
+        this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result | null>(null);
@@ -222,9 +252,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment());
         }
         if (isInactiveProgrammingExercise || (exercise.dueDate && moment(exercise.dueDate).isBefore(moment()))) {
-            /*const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
-            this.jhiWebsocketService.unsubscribe(participationResultTopic);
-            this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);*/
+            this.removeParticipation(participationId, exercise.id);
         }
     }
 }
