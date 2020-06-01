@@ -299,38 +299,8 @@ Jenkins Server Setup
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Copy the following content in a file named ``Dockerfile``, e.g. in
+   Create a dockerfile with the content found [here](src/main/docker/jenkins/Dockerfile). Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
-
-   ::
-
-       FROM jenkins/jenkins:lts
-
-       LABEL description="Jenkins with maven pre-installed for Artemis"
-
-       USER root
-
-       RUN apt update
-
-       # Install Java and Maven dependencies
-       RUN apt-get install -y maven
-       RUN cd /usr/lib/jvm && \
-           wget https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14%2B36.1_openj9-0.19.0/OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz && \
-           tar -zxf OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz \
-           && mv jdk-14+36 java-14-openjdk-amd64 \
-           && rm OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz
-       RUN chown -R root:root /usr/lib/jvm/java-14-openjdk-amd64
-       RUN JAVA_HOME="/usr/lib/jvm/java-14-openjdk-amd64" && export JAVA_HOME
-       ENV JAVA_HOME /usr/lib/jvm/java-14-openjdk-amd64
-
-       # Install Python dependecies
-       RUN apt install -y python3 python3-pip
-       # Install C dependencies
-       RUN apt install -y gcc-8 gdb make libasan5 libubsan0 liblsan0 libtsan0
-       # Install pytest for python exercises
-       RUN pip3 install -U pytest
-
-       USER jenkins
 
    Now run the command ``docker build --no-cache -t jenkins-artemis .``
 
