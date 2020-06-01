@@ -276,7 +276,7 @@ export class CourseManagementService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
@@ -477,7 +477,7 @@ export class CourseExerciseService {
         return participation;
     }
 
-    protected convertDateFromServer<T extends Exercise>(res: T): T {
+    convertDateFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
         res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
         return res;
@@ -486,8 +486,9 @@ export class CourseExerciseService {
     protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+                exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
             });
         }
         return res;

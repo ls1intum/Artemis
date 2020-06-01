@@ -8,14 +8,14 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
-import { Subject, merge } from 'rxjs';
+import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
@@ -23,6 +23,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -59,6 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private stringCountService: StringCountService,
     ) {
         this.isSaving = false;
     }
@@ -101,7 +103,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             if (this.submission) {
                 newSubmission = this.submission;
             }
-            newSubmission.submitted = false;
             newSubmission.text = this.answer;
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
@@ -151,13 +152,35 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null) || null;
+            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null && f.type !== FeedbackType.MANUAL_UNREFERENCED) || null;
             if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
                 return feedbackWithoutReference;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Find "Unreferenced Feedback" item for Result, if it exists.
+     */
+    get unreferencedFeedback(): Feedback[] | null {
+        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
+            const feedbackWithoutReference = this.result.feedbacks.filter(
+                (feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
+            );
+            return feedbackWithoutReference;
+        }
+
+        return null;
+    }
+
+    get wordCount(): number {
+        return this.stringCountService.countWords(this.answer);
+    }
+
+    get characterCount(): number {
+        return this.stringCountService.countCharacters(this.answer);
     }
 
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
@@ -183,7 +206,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.isSaving = true;
         this.submission = this.submissionForAnswer(this.answer);
-        this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             (response) => {
                 this.submission = response.body!;
@@ -206,7 +228,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             },
             () => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                this.submission.submitted = false;
                 this.isSaving = false;
             },
         );
