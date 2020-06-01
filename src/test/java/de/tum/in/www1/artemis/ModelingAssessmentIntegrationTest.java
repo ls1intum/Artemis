@@ -12,10 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -88,11 +85,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
-        database.addCourseWithDifferentModelingExercises();
-        classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
-        objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
-        useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        Course course = database.addCourseWithDifferentModelingExercises();
+        classExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
+        activityExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(1);
+        objectExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(2);
+        useCaseExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(3);
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
