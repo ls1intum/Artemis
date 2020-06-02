@@ -190,8 +190,8 @@ describe('CourseStatisticsComponent', () => {
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).to.exist;
+        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#relative-score')).nativeElement.textContent).to.exist;
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
         const exercise: any = comp.groupedExercises[0];
         expect(exercise.presentationScore).to.equal(2);
