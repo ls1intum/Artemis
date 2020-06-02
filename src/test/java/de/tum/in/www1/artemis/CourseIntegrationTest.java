@@ -434,6 +434,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllCoursesWithUserStats() throws Exception {
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
+        List<Course> receivedCourse = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
+        assertThat(testCourses).isEqualTo(receivedCourse);
+        assertThat(receivedCourse.get(0).getNumberOfStudents()).isEqualTo(numberOfStudents);
+        assertThat(receivedCourse.get(0).getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
+        assertThat(receivedCourse.get(0).getNumberOfInstructors()).isEqualTo(numberOfInstructors);
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
