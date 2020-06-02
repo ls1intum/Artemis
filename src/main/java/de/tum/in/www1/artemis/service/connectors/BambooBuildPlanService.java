@@ -8,7 +8,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -32,6 +31,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.Job;
 import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
 import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
@@ -131,11 +131,10 @@ public class BambooBuildPlanService {
                 }
 
                 if (useStaticCodeAnalysis) {
-                    defaultJob.finalTasks(new MavenTask().goal("spotbugs:spotbugs checkstyle:checkstyle").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis"));
-                    defaultJob.artifacts(
-                        new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml"),
-                        new Artifact().name("checkstyle").location("target").copyPattern("checkstyle.xml")
-                    );
+                    defaultJob
+                            .finalTasks(new MavenTask().goal("spotbugs:spotbugs checkstyle:checkstyle").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis"));
+                    defaultJob.artifacts(new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml"),
+                            new Artifact().name("checkstyle").location("target").copyPattern("checkstyle.xml"));
                 }
 
                 if (!sequentialBuildRuns) {

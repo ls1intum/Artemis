@@ -237,7 +237,6 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
-
     public Boolean isUseStaticCodeAnalysis() {
         return useStaticCodeAnalysisTransient;
     }
@@ -245,7 +244,6 @@ public class ProgrammingExercise extends Exercise {
     public void setUseStaticCodeAnalysis(Boolean useStaticCodeAnalysis) {
         this.useStaticCodeAnalysisTransient = useStaticCodeAnalysis;
     }
-
 
     public String getProjectKey() {
         return this.projectKey;
