@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,7 +34,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @Autowired
     ParticipationTeamWebsocketService participationTeamWebsocketService;
 
-    ModelingExercise exercise;
+    ModelingExercise modelingExercise;
 
     StudentParticipation participation;
 
@@ -47,8 +46,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     void init() {
         database.addUsers(3, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
-        exercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
-        participation = database.addParticipationForExercise(exercise, "student1");
+        modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        participation = database.addParticipationForExercise(modelingExercise, "student1");
 
         MockitoAnnotations.initMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();

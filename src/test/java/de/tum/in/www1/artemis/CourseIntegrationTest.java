@@ -470,7 +470,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
-        Course testCourse = database.addCourseWithOneTextExercise();
+        Course testCourse = database.addCourseWithOneReleasedTextExercise();
         var points = withPoints ? 15L : null;
         var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());
         tutorLeaderboardComplaintsViewRepo.save(new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
