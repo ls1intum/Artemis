@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map, tap } from 'rxjs/operators';
+import { map, filter, tap } from 'rxjs/operators';
+
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -19,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
@@ -249,6 +251,28 @@ export class CourseManagementService {
     }
 
     /**
+     * Find all locked submissions of a given course for user
+     * @param {number} courseId - The id of the course to be searched for
+     */
+    findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
+        return this.http
+            .get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' })
+            .pipe(
+                filter((res) => !!res.body),
+                tap((res) =>
+                    res.body!.forEach((submission: Submission) => {
+                        // reconnect some associations
+                        if (submission.result) {
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                        }
+                    }),
+                ),
+            );
+    }
+
+    /**
      * adds a user to the given courseGroup of the course corresponding to the given unique identifier using a POST request
      * @param courseId - the id of the course
      * @param courseGroup - the course group we want to add a user to
@@ -276,7 +300,7 @@ export class CourseManagementService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
@@ -477,7 +501,7 @@ export class CourseExerciseService {
         return participation;
     }
 
-    protected convertDateFromServer<T extends Exercise>(res: T): T {
+    convertDateFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
         res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
         return res;
@@ -486,8 +510,9 @@ export class CourseExerciseService {
     protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+                exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
             });
         }
         return res;

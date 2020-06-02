@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.GradingCriterionService;
+import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -71,6 +72,8 @@ public class TextSubmissionResource {
 
     private final TextSubmissionService textSubmissionService;
 
+    private final TextAssessmentService textAssessmentService;
+
     private final UserService userService;
 
     private final GradingCriterionService gradingCriterionService;
@@ -79,7 +82,7 @@ public class TextSubmissionResource {
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
+            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -89,6 +92,7 @@ public class TextSubmissionResource {
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
         this.textClusteringScheduleService = textClusteringScheduleService;
+        this.textAssessmentService = textAssessmentService;
     }
 
     /**
@@ -227,9 +231,8 @@ public class TextSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -253,6 +256,7 @@ public class TextSubmissionResource {
         final TextSubmission textSubmission;
         if (lockSubmission) {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
@@ -267,6 +271,9 @@ public class TextSubmissionResource {
             }
             textSubmission = optionalTextSubmission.get();
         }
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
 
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();

@@ -4,19 +4,19 @@
         <div class="col-12">
             <h3>{{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}</h3>
             <p *ngIf="complaintType === ComplaintType.MORE_FEEDBACK; else complaintDescription">
-                {{ 'artemisApp.moreFeedback.description' | translate }}
+                {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | translate }}
                 <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
             </p>
             <ng-template #complaintDescription>
                 <p>
                     <span
                         *ngIf="allowedComplaints === undefined"
-                        jhiTranslate="artemisApp.complaint.description"
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                     ></span>
                     <span
                         *ngIf="allowedComplaints >= 0"
-                        jhiTranslate="artemisApp.complaint.descriptionExtended"
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
                     <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
@@ -28,14 +28,23 @@
     <div class="row" *ngIf="loaded; else loading">
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted">
-                {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.beDescriptive' | translate) : ('artemisApp.complaint.beDescriptive' | translate) }}
+                <span *ngIf="!exercise.teamMode">
+                    {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.beDescriptive' | translate) : ('artemisApp.complaint.beDescriptive' | translate) }}
+                </span>
+                <span *ngIf="exercise.teamMode">
+                    {{
+                        complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.beDescriptiveTeam' | translate)
+                            : ('artemisApp.complaint.beDescriptiveTeam' | translate)
+                    }}
+                </span>
             </p>
 
             <p *ngIf="alreadySubmitted" class="mt-4">
                 {{
                     complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.alreadySubmitted' | translate) : ('artemisApp.complaint.alreadySubmitted' | translate)
                 }}
-                <span [ngbTooltip]="submittedDate | date: 'dd.MM.yy HH:mm'">{{ submittedDate | amTimeAgo }}</span>
+                <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
                 <span *ngIf="handled && accepted" class="text-light bg-success">
                     &nbsp;{{
                         complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.acceptedLong' | translate) : ('artemisApp.complaint.acceptedLong' | translate)
@@ -66,7 +75,7 @@
         <div class="col-12 col-md-6">
             <p class="col-12" *ngIf="complaintResponse" class="mt-4">
                 {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.responseExists' | translate) : ('artemisApp.complaint.responseExists' | translate) }}
-                <span [ngbTooltip]="complaintResponse.submittedTime | date: 'dd.MM.yy HH:mm'">{{ complaintResponse.submittedTime! | amTimeAgo }}</span
+                <span [ngbTooltip]="complaintResponse.submittedTime | artemisDate">{{ complaintResponse.submittedTime! | amTimeAgo }}</span
                 >:<br />
             </p>
 

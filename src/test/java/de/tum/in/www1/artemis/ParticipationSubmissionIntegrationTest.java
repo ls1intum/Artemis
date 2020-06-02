@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -42,8 +44,8 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
-        database.addCourseWithOneTextExercise();
-        textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithOneTextExercise();
+        textExercise = (TextExercise) new ArrayList<>(course.getExercises()).get(0);
     }
 
     @AfterEach

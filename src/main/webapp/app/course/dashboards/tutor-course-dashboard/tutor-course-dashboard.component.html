@@ -24,7 +24,7 @@
             </div>
             <div class="col-4 text-center">
                 <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ totalAssessmentPercentage }}%)</p>
+                <p class="h3">{{ numberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
             </div>
         </div>
 
@@ -52,6 +52,15 @@
                 <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}:</p>
                 <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
             </div>
+        </div>
+        <div class="row justify-content-around">
+            <div class="col-4 text-center">
+                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessmentLocks' | translate }}:</p>
+                    <p class="h3">{{ numberOfAssessmentLocks }}</p>
+                </a>
+            </div>
+            <div class="col-4 text-center"></div>
         </div>
     </div>
 
@@ -92,7 +101,7 @@
                             class="badge badge-warning"
                             *ngIf="!exercise.visibleToStudents"
                             placement="right"
-                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | date: 'MMM d, y H:mm' }}"
+                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                         >
                             {{ 'artemisApp.tutorCourseDashboard.notReleased' | translate }}</span
                         >
@@ -103,7 +112,7 @@
                             [exercise]="exercise"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                             [tutorParticipation]="exercise.tutorParticipations[0]"
-                            [numberOfParticipations]="exercise.numberOfParticipations"
+                            [numberOfSubmissions]="exercise.numberOfSubmissions"
                             [numberOfAssessments]="exercise.numberOfAssessments"
                             [numberOfComplaints]="exercise.numberOfComplaints"
                             [numberOfOpenComplaints]="exercise.numberOfOpenComplaints"
@@ -113,12 +122,12 @@
                         </jhi-tutor-participation-graph>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | amTimeAgo }}
                         </span>
                     </td>
                     <td>
-                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | date: 'MMM d, y H:mm' }}">
+                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
                             {{ exercise.assessmentDueDate | amTimeAgo }}
                         </span>
                     </td>
