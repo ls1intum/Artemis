@@ -96,7 +96,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
-        return JSON.stringify(this.quizExercise).toLowerCase() !== JSON.stringify(this.backupQuiz).toLowerCase();
+        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.backupQuiz);
     }
 
     /**
