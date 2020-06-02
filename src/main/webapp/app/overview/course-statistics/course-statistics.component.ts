@@ -8,7 +8,15 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, REACHABLE_SCORE, CURRENT_RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
+import {
+    ABSOLUTE_SCORE,
+    CourseScoreCalculationService,
+    MAX_SCORE,
+    PRESENTATION_SCORE,
+    RELATIVE_SCORE,
+    REACHABLE_SCORE,
+    CURRENT_RELATIVE_SCORE,
+} from 'app/overview/course-score-calculation.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
