@@ -3,6 +3,8 @@ import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'ng-starrating';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-rating',
@@ -14,12 +16,18 @@ export class RatingComponent implements OnInit {
     public disableRating = false;
     @Input() result: Result;
 
-    constructor(public ratingService: RatingService) {}
+    constructor(private ratingService: RatingService, private accountService: AccountService) {}
 
     ngOnInit(): void {
-        if (!this.result || !this.result.submission) {
+        if (
+            !this.result ||
+            !this.result.submission ||
+            !this.result.participation ||
+            !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)
+        ) {
             return;
         }
+
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
             if (rating) {
                 this.rating = rating;
