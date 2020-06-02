@@ -225,6 +225,10 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors"
 
+    // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
+    implementation "io.projectreactor.netty:reactor-netty"
+    implementation "io.netty:netty-all"
+
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
