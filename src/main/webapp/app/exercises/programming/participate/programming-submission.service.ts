@@ -189,9 +189,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
                                 return;
                             }
-                            this.emitBuildingSubmission(submission.participation.id, exerciseId, submission);
+                            const programmingSubmission = submission as ProgrammingSubmission;
+                            this.emitBuildingSubmission(programmingSubmission.participation.id, exerciseId, submission);
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
-                            this.startResultWaitingTimer(submission.participation.id);
+                            this.startResultWaitingTimer(programmingSubmission.participation.id);
                         }),
                     )
                     .subscribe();

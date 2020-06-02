@@ -528,7 +528,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        String topic = "/user/topic/newSubmission";
+        String topic = "/topic/newSubmission";
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, submission));
@@ -541,7 +541,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        String topic = "/user/topic/newSubmission";
+        String topic = "/topic/newSubmission";
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, error));

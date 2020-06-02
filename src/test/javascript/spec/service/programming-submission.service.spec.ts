@@ -42,8 +42,8 @@ describe('ProgrammingSubmissionService', () => {
 
     const participationId = 1;
     const submissionTopic = `/user/topic/newSubmission`;
-    const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds') } as any;
-    const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds') } as any;
+    const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
+    const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
     const result = { id: 31, submission: currentSubmission } as any;
     const result2 = { id: 32, submission: currentSubmission2 } as any;
 
