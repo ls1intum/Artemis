@@ -120,7 +120,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {

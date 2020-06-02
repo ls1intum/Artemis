@@ -174,23 +174,29 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             } else {
                 newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%exerciseId%', exerciseId.toString());
             }
-            this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
-            this.websocketService.subscribe(newSubmissionTopic);
+
             this.resultTimerSubjects.set(participationId, new Subject<null>());
-            this.websocketService
-                .receive(newSubmissionTopic)
-                .pipe(
-                    tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
-                        if (checkIfSubmissionIsError(submission)) {
-                            this.emitFailedSubmission(participationId, exerciseId);
-                            return;
-                        }
-                        this.emitBuildingSubmission(participationId, exerciseId, submission);
-                        // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
-                        this.startResultWaitingTimer(participationId);
-                    }),
-                )
-                .subscribe();
+
+            // Only subscribe if not subscription to same topic exists (e.g. from different participation)
+            if (!Array.from(this.submissionTopicsSubscribed.values()).includes(newSubmissionTopic)) {
+                this.websocketService.subscribe(newSubmissionTopic);
+                this.websocketService
+                    .receive(newSubmissionTopic)
+                    .pipe(
+                        tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
+                            if (checkIfSubmissionIsError(submission)) {
+                                const programmingSubmissionError = submission as ProgrammingSubmissionError;
+                                this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
+                                return;
+                            }
+                            this.emitBuildingSubmission(submission.participation.id, exerciseId, submission);
+                            // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
+                            this.startResultWaitingTimer(submission.participation.id);
+                        }),
+                    )
+                    .subscribe();
+            }
+            this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
     };
 

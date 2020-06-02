@@ -120,13 +120,13 @@ describe('UpdatingResultComponent', () => {
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, null);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, undefined);
         expect(comp.result!.id).to.equal(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, null);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id, true, undefined);
         expect(comp.result!.id).to.equal(ungradedResult2.id);
     });
 
@@ -155,8 +155,8 @@ describe('UpdatingResultComponent', () => {
         expect(unsubscribeSpy).to.have.been.calledOnceWithExactly();
         expect(comp.result!.id).to.equal(newParticipation.results[0].id);
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(initialParticipation.id, true, null);
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(newParticipation.id, true, null);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(initialParticipation.id, true, undefined);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(newParticipation.id, true, undefined);
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
         expect(comp.result!.id).to.equal(newGradedResult.id);

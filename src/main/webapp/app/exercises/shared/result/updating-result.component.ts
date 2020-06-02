@@ -87,7 +87,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personal, this.exercise ? this.exercise.id : null)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personal, this.exercise ? this.exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
