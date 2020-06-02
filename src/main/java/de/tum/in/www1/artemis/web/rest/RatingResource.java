@@ -66,6 +66,7 @@ public class RatingResource {
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+        // TODO allow for Instructors
         if (!checkIfUserIsOwnerOfSubmission(resultId) && !authCheckService.isAdmin()) {
             return forbidden();
         }
