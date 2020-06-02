@@ -30,6 +30,18 @@ describe('ArtemisDatePipe', () => {
         pipe = new ArtemisDatePipe(translateService);
     });
 
+    it('Return empty string if given date time is null', () => {
+        let localizedDateTime = pipe.transform(null);
+        expect(localizedDateTime).to.be.equal('');
+        localizedDateTime = pipe.transform(moment(null));
+        expect(localizedDateTime).to.be.equal('');
+    });
+
+    it('Return empty string if given date time is invalid moment object', () => {
+        const localizedDateTime = pipe.transform(moment('2019-02-333'));
+        expect(localizedDateTime).to.be.equal('');
+    });
+
     describe('en locale', () => {
         beforeEach(() => {
             dateTime.locale('en');
