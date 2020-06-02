@@ -13,6 +13,7 @@ import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -21,7 +22,13 @@ export class NotificationService {
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private router: Router,
+        private http: HttpClient,
+        private accountService: AccountService,
+        private courseManagementService: CourseManagementService,
+    ) {
         this.initNotificationObserver();
     }
 
@@ -176,6 +183,46 @@ export class NotificationService {
         const target = JSON.parse(notification.target);
         const courseId = target.course || notification.course.id;
         this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+    }
+
+    /**
+     * TODO
+     */
+    subscribeToQuizUpdates(): void {
+        /*
+        console.log('here 1');
+        // TODO: Will duplicated subscriptions be handled?
+        this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+            // TODO: implement subscription to quiz updates
+            console.log(courses);
+            // TODO: when received --> create notification from it and pass it to receiving component
+        });
+        */
+    }
+
+    /**
+     * Listen to updates of quiz exercises and create a notification.
+     * @returns {GroupNotification}
+     */
+    createNotificationOnQuizExerciseUpdate(): GroupNotification {
+        /*
+        const quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
+
+        // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+        this.jhiWebsocketService.subscribe(quizExerciseChannel);
+        this.jhiWebsocketService.receive(quizExerciseChannel).subscribe(
+            (quiz) => {
+                if (this.waitingForQuizStart && this.quizId === quiz.id) {
+                    this.applyQuizFull(quiz);
+                }
+            },
+            () => {},
+        );
+        */
+        return {
+            title: 'Quiz started',
+            text: 'Quiz "TODO" just started.',
+        } as GroupNotification;
     }
 
     /**

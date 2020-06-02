@@ -25,6 +25,7 @@ export class NotificationPopupComponent implements OnInit {
                 this.subscribeToNotificationUpdates();
             }
         });
+        this.notificationService.subscribeToQuizUpdates();
     }
 
     /**

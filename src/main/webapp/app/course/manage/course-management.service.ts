@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -30,6 +30,9 @@ export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
     private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
+
+    private coursesForNotifications: BehaviorSubject<Course[] | null> = new BehaviorSubject<Course[] | null>(null);
+    private fetchingCoursesForNotifications = false;
 
     constructor(
         private http: HttpClient,
@@ -97,11 +100,13 @@ export class CourseManagementService {
      * finds all courses using a GET request
      */
     findAllForDashboard(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -195,10 +200,12 @@ export class CourseManagementService {
      */
     getAll(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -208,10 +215,12 @@ export class CourseManagementService {
      */
     getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -266,6 +275,45 @@ export class CourseManagementService {
      */
     removeUserFromCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
+    }
+
+    /**
+     * Gets the cached courses. If there none the courses for the current user will be fetched.
+     * @returns {BehaviorSubject<Course[] | null>}
+     */
+    getCoursesForNotifications(): BehaviorSubject<Course[] | null> {
+        // The timeout is set to ensure that the request for retrieving courses
+        // here is only made if there was no similar request made before.
+        console.log('here 2');
+        setTimeout(() => {
+            console.log('here 3');
+            if (!this.fetchingCoursesForNotifications) {
+                console.log('here 4');
+                this.fetchingCoursesForNotifications = true;
+                // TODO: replace with dedicated REST call that has a smaller payload (and that get's courses specifically for the current user)
+                this.findAllForDashboard().subscribe(
+                    (res: HttpResponse<Course[]>) => {
+                        console.log('here 5');
+                        this.coursesForNotifications.next(res.body);
+                    },
+                    () => (this.fetchingCoursesForNotifications = false),
+                );
+            }
+        }, 1000);
+        return this.coursesForNotifications;
+    }
+
+    /**
+     * Set cached courses for notifications when received via http request.
+     * @param res {HttpResponse<Course[]>}
+     * @returns {HttpResponse<Course[]>}
+     */
+    setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            this.coursesForNotifications.next(res.body);
+            this.fetchingCoursesForNotifications = false;
+        }
+        return res;
     }
 
     private convertDateFromClient(course: Course): Course {
