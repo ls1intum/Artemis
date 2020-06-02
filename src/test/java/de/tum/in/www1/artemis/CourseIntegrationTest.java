@@ -127,19 +127,19 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithSameShortName() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setShortName("shortName");
+        Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course1.setShortName("shortName");
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
-        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
-        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
-        request.post("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
-        course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setShortName("shortName");
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultInstructorGroupName());
+        request.post("/api/courses", course1, HttpStatus.CREATED);
+        assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(1);
+
+        Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course2.setShortName("shortName");
+        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
+        assertThat(courseRepo.findAll().size()).as("Course has not been stored").isEqualTo(1);
     }
 
     @Test
