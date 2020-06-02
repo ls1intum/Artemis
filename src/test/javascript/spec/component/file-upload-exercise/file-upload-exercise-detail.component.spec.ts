@@ -20,6 +20,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +37,15 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot(), AssessmentInstructionsModule],
+            imports: [
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisAssessmentSharedModule,
+                RouterTestingModule,
+                TranslateModule.forRoot(),
+                AssessmentInstructionsModule,
+                ExerciseDetailsModule,
+            ],
             declarations: [FileUploadExerciseDetailComponent],
             providers: [
                 JhiLanguageHelper,

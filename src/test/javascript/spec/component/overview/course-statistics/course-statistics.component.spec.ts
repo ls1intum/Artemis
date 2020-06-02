@@ -19,6 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,8 +54,8 @@ describe('CourseStatisticsComponent', () => {
                 },
             ],
             diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
+            numberOfSubmissions: new DueDateStat(),
+            numberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
             presentationScoreEnabled: true,
         },
@@ -81,8 +82,8 @@ describe('CourseStatisticsComponent', () => {
                 },
             ],
             diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
+            numberOfSubmissions: new DueDateStat(),
+            numberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
         {
@@ -93,8 +94,8 @@ describe('CourseStatisticsComponent', () => {
             maxScore: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
+            numberOfSubmissions: new DueDateStat(),
+            numberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
         {
@@ -133,8 +134,8 @@ describe('CourseStatisticsComponent', () => {
                 },
             ],
             diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
+            numberOfSubmissions: new DueDateStat(),
+            numberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
     ] as ModelingExercise[];

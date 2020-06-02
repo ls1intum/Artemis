@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -26,9 +28,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
 
     @Autowired
     DatabaseUtilService database;
-
-    @Autowired
-    ModelingExerciseRepository exerciseRepo;
 
     @Autowired
     StudentParticipationRepository participationRepo;
@@ -47,8 +46,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @BeforeEach
     void init() {
         database.addUsers(3, 0, 0);
-        database.addCourseWithOneModelingExercise();
-        exercise = exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithOneModelingExercise();
+        exercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
         participation = database.addParticipationForExercise(exercise, "student1");
 
         MockitoAnnotations.initMocks(this);
