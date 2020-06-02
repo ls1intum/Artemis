@@ -12,7 +12,7 @@ import * as moment from 'moment';
  * Examples (for locale == 'en'):
  *   {{ course.startDate | artemisDate }}
  *   formats to: Dec 17, 2019 12:43 AM
- *   {{ course.startDate | artemisDate:'short-date' }}
+ *   {{ course.startDate | artemisDate: 'short-date' }}
  *   formats to: 17/12/19
  */
 @Pipe({
@@ -129,9 +129,9 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         if (long && !showSeconds) {
             format = 'LT';
         } else if (!long && showSeconds) {
-            format = 'H:m:s';
+            format = 'HH:mm:ss';
         } else if (!long && !showSeconds) {
-            format = 'H:m';
+            format = 'HH:mm';
         }
         return format;
     }
