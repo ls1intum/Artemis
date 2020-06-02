@@ -148,6 +148,8 @@ public class ModelingSubmissionService extends SubmissionService {
             return Optional.empty();
         }
 
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, modelingExercise.getDueDate());
+
         Random random = new Random();
         var submissionWithoutResult = (ModelingSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);

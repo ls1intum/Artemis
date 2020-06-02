@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
  * A Exercise.
@@ -154,10 +155,10 @@ public abstract class Exercise implements Serializable {
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
-    private Long numberOfParticipationsTransient;
+    private DueDateStat numberOfSubmissionsTransient;
 
     @Transient
-    private Long numberOfAssessmentsTransient;
+    private DueDateStat numberOfAssessmentsTransient;
 
     @Transient
     private Long numberOfComplaintsTransient;
@@ -814,19 +815,19 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public Long getNumberOfParticipations() {
-        return numberOfParticipationsTransient;
+    public DueDateStat getNumberOfSubmissions() {
+        return numberOfSubmissionsTransient;
     }
 
-    public void setNumberOfParticipations(Long numberOfParticipations) {
-        this.numberOfParticipationsTransient = numberOfParticipations;
+    public void setNumberOfSubmissions(DueDateStat numberOfSubmissions) {
+        this.numberOfSubmissionsTransient = numberOfSubmissions;
     }
 
-    public Long getNumberOfAssessments() {
+    public DueDateStat getNumberOfAssessments() {
         return numberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(Long numberOfAssessments) {
+    public void setNumberOfAssessments(DueDateStat numberOfAssessments) {
         this.numberOfAssessmentsTransient = numberOfAssessments;
     }
 

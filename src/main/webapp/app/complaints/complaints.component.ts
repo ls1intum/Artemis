@@ -8,6 +8,7 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -16,6 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
     providers: [],
 })
 export class ComplaintsComponent implements OnInit {
+    @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
