@@ -132,7 +132,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testCreateCourseWithModifiedMaxComplainNumbers() throws Exception {
+    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
@@ -146,7 +146,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testCreateCourseWithModifiedMaxComplainTimeDays() throws Exception {
+    public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
