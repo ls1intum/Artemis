@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
@@ -78,7 +77,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         database.addCourseWithOneTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
-        Participation participation = database.addParticipationForExercise(exercise, student1.getLogin());
+        database.addParticipationForExercise(exercise, student1.getLogin());
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = database.addTextSubmission(exercise, submission, student1.getLogin());
@@ -101,7 +100,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
-        // result and rating always have the same Id
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
@@ -117,7 +115,14 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.get("/api/results/" + savedRating.getId() + "/rating", HttpStatus.OK, Rating.class);
+        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetRating_asUser_FORBIDDEN() throws Exception {
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test

@@ -66,6 +66,9 @@ public class RatingResource {
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+        if (checkIfUserIsOwnerOfSubmission(resultId)) {
+            return forbidden();
+        }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
         return ResponseEntity.ok(rating);
     }
@@ -81,10 +84,7 @@ public class RatingResource {
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) throws URISyntaxException {
-        User user = userService.getUser();
-        Result res = resultService.findOne(resultId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
-        if (!authCheckService.isOwnerOfParticipation(participation, user)) {
+        if (checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
 
@@ -102,14 +102,24 @@ public class RatingResource {
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) {
-        User user = userService.getUser();
-        Result res = resultService.findOne(resultId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
-        if (!authCheckService.isOwnerOfParticipation(participation, user)) {
+        if (checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
 
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
         return ResponseEntity.ok(savedRating);
+    }
+
+    /**
+     * Check if currently logged in user in the owner of the participation
+     *
+     * @param resultId - Id of the result that the participation belongs to
+     * @return True if User is not Owner, False otherwise
+     */
+    private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
+        User user = userService.getUser();
+        Result res = resultService.findOne(resultId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
+        return !authCheckService.isOwnerOfParticipation(participation, user);
     }
 }
