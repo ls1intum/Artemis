@@ -10,11 +10,11 @@ This application was generated using JHipster 6.9.0. ([Documentation and help](h
 
 ## Main features
 Artemis supports the following exercises:
-1. **Programming exercises(docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises(docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions 
-3. **Modeling exercises(docs/user/exercises/modeling.rst)** with semi-automatic assessment using machine learning concepts
-4. **Text exercises(docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
-5. **File upload exercises(docs/user/exercises/file-upload.rst)** with manual assessment
+1. **[Programming exercises](docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
+2. **[Quiz exercises](docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions
+3. **[Modeling exercises](docs/user/exercises/modeling.rst)** with semi-automatic assessment using machine learning concepts
+4. **[Text exercises](docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
+5. **[File upload exercises](docs/user/exercises/file-upload.rst)** with manual assessment
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
