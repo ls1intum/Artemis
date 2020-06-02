@@ -28,6 +28,8 @@ export class RatingComponent implements OnInit {
             return;
         }
 
+        // delete participation to prevent circular dependency
+        this.result.participation = null;
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
             if (rating) {
                 this.rating = rating;
