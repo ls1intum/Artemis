@@ -63,7 +63,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         // Load the course.
         const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
             map((res: HttpResponse<Course>) => res.body!),
-            tap((course: Course) => (this.course = course)),
+            tap((course: Course) => {
+                this.course = Course.from(course);
+            }),
             catchError((response: HttpErrorResponse) => {
                 this.onError(response.message);
                 return of(null);
@@ -74,8 +76,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
         const loadStatsObservable = this.courseService.getStatsForInstructors(courseId).pipe(
             map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
             tap((stats) => {
-                this.stats = stats;
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+                this.stats = StatsForDashboard.from(stats);
+                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total, this.stats.numberOfAssessments.total];
             }),
             catchError((response: string) => {
                 this.onError(response);

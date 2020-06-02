@@ -6,11 +6,11 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfStudents;
 
-    private Long numberOfSubmissions;
+    private DueDateStat numberOfSubmissions;
 
-    private Long numberOfAssessments;
+    private DueDateStat numberOfAssessments;
 
-    private Long numberOfAutomaticAssistedAssessments;
+    private DueDateStat numberOfAutomaticAssistedAssessments;
 
     private Long numberOfComplaints;
 
@@ -35,27 +35,27 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfStudents = numberOfStudents;
     }
 
-    public Long getNumberOfSubmissions() {
+    public DueDateStat getNumberOfSubmissions() {
         return numberOfSubmissions;
     }
 
-    public void setNumberOfSubmissions(Long numberOfSubmissions) {
+    public void setNumberOfSubmissions(DueDateStat numberOfSubmissions) {
         this.numberOfSubmissions = numberOfSubmissions;
     }
 
-    public Long getNumberOfAssessments() {
+    public DueDateStat getNumberOfAssessments() {
         return numberOfAssessments;
     }
 
-    public void setNumberOfAssessments(Long numberOfAssessments) {
+    public void setNumberOfAssessments(DueDateStat numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
     }
 
-    public Long getNumberOfAutomaticAssistedAssessments() {
+    public DueDateStat getNumberOfAutomaticAssistedAssessments() {
         return numberOfAutomaticAssistedAssessments;
     }
 
-    public void setNumberOfAutomaticAssistedAssessments(Long numberOfAutomaticAssistedAssessments) {
+    public void setNumberOfAutomaticAssistedAssessments(DueDateStat numberOfAutomaticAssistedAssessments) {
         this.numberOfAutomaticAssistedAssessments = numberOfAutomaticAssistedAssessments;
     }
 

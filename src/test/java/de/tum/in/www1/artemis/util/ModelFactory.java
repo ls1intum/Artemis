@@ -177,6 +177,15 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    public static TextSubmission generateLateTextSubmission(String text, Language language) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(true);
+        textSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
+        return textSubmission;
+    }
+
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
@@ -192,6 +201,13 @@ public class ModelFactory {
         if (submitted) {
             fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
+        return fileUploadSubmission;
+    }
+
+    public static FileUploadSubmission generateLateFileUploadSubmission() {
+        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+        fileUploadSubmission.setSubmitted(true);
+        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         return fileUploadSubmission;
     }
 
@@ -305,7 +321,7 @@ public class ModelFactory {
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
-        toBeImported.setNumberOfParticipations(template.getNumberOfParticipations());
+        toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
