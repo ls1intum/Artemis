@@ -19,6 +19,9 @@ import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { Rating } from 'app/entities/rating.model';
 import { of } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { Participation } from 'app/entities/participation/participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,6 +41,7 @@ describe('RatingComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: UserService, useClass: MockUserService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
@@ -48,6 +52,7 @@ describe('RatingComponent', () => {
 
                 ratingComponent.result = { id: 89 } as Result;
                 ratingComponent.result.submission = { id: 1 } as Submission;
+                ratingComponent.result.participation = { id: 1 } as Participation;
             });
     });
 
@@ -58,7 +63,7 @@ describe('RatingComponent', () => {
         expect(ratingComponent.result.id).to.equal(89);
     });
 
-    it('should return', () => {
+    it('should return due to missing submission', () => {
         sinon.spy(ratingService, 'getRating');
         ratingComponent.result.submission = null;
         ratingComponent.ngOnInit();
