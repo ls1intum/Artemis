@@ -30,7 +30,7 @@ public class Rating implements Serializable {
     @Column(name = "rating")
     private Integer rating;
 
-    @OneToOne()
+    @OneToOne
     @JoinColumn(name = "result_id")
     private Result result;
 
