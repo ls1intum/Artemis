@@ -1030,8 +1030,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
-        this.duration.minutes = 60 * duration.hours() + duration.minutes();
-        this.duration.seconds = duration.seconds();
+        this.changeDetector.detectChanges();
+        // when input fields are empty do not update their values
+        if (this.duration.minutes !== null) {
+            this.duration.minutes = 60 * duration.hours() + duration.minutes();
+        }
+        if (this.duration.seconds !== null) {
+            this.duration.seconds = duration.seconds();
+        }
     }
 
     /**

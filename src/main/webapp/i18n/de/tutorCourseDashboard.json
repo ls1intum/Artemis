@@ -10,6 +10,7 @@
             "complaintsAboutYourAssessments": "Beschwerden über deine Bewertungen",
             "totalComplaints": "Gesamtzahl der Beschwerden",
             "moreFeedbackRequestsForYourAssessments": "Feedbackanfragen über deine Bewertungen",
+            "yourAssessmentLocks": "Von dir gesperrte Bewertungen",
             "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
             "showFinishedExercises": "Beendete Übungen anzeigen",
             "exercise": "Übungen",
@@ -22,6 +23,7 @@
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
             "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
+            "assessStudentsLateSubmissions": "Bewerte die verspäteten Einreichungen der Studenten",
             "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studenten",
             "numberOfOpenComplaints": "Anzahl an offenen Beschwerden",
             "exerciseTeams": "Teams der Übung"

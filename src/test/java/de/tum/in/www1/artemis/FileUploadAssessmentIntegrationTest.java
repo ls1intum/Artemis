@@ -28,18 +28,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
 
     @Autowired
-    CourseRepository courseRepo;
-
-    @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    ModelAssessmentConflictRepository conflictRepo;
-
-    @Autowired
-    UserRepository userRepo;
-
-    @Autowired
     RequestUtilService request;
 
     @Autowired
@@ -47,9 +35,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     FileUploadSubmissionService fileUploadSubmissionService;
-
-    @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     @Autowired
     ResultRepository resultRepo;

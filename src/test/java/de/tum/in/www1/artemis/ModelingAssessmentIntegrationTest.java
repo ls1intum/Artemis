@@ -86,10 +86,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
         Course course = database.addCourseWithDifferentModelingExercises();
-        classExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
-        activityExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(1);
-        objectExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(2);
-        useCaseExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(3);
+        List<Exercise> exercises = new ArrayList<>(course.getExercises());
+        classExercise = (ModelingExercise) exercises.get(0);
+        activityExercise = (ModelingExercise) exercises.get(1);
+        objectExercise = (ModelingExercise) exercises.get(2);
+        useCaseExercise = (ModelingExercise) exercises.get(3);
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
