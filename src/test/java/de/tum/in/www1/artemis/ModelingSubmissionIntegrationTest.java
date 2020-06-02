@@ -107,7 +107,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
-        Course course2 = database.addCourseWithOneTextExercise();
+        Course course2 = database.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).get(0);
 
         // Add users that are not in the course
