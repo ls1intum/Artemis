@@ -54,6 +54,9 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
+            if (this.textExercise.categories) {
+                this.textExercise.categories = this.textExercise.categories.map((category) => JSON.parse(category));
+            }
         });
     }
 
