@@ -38,18 +38,14 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
      */
-    transform(
-        dateTime: Date | moment.Moment | string | number | null,
-        format: 'short' | 'long' | 'short-date' | 'long-date' | 'short-time' | 'long-time' = 'long',
-        seconds = false,
-    ): string {
+    transform(dateTime: Date | moment.Moment | string | number | null, format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
         // Return empty string if given dateTime equals null or is not convertible to moment.
         if (!dateTime || !moment(dateTime).isValid()) {
             return '';
         }
         this.dateTime = moment(dateTime);
-        this.long = format === 'long' || format === 'long-date' || format === 'long-time';
-        this.showDate = format !== 'short-time' && format !== 'long-time';
+        this.long = format === 'long' || format === 'long-date';
+        this.showDate = format !== 'time';
         this.showTime = format !== 'short-date' && format !== 'long-date';
         this.showSeconds = seconds;
 
@@ -77,12 +73,12 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
      */
-    static format(locale = 'en', format: 'short' | 'long' | 'short-date' | 'long-date' | 'short-time' | 'long-time' = 'long', seconds = false): string {
-        const long = format === 'long' || format === 'long-date' || format === 'long-time';
-        const showDate = format !== 'short-time' && format !== 'long-time';
+    static format(locale = 'en', format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+        const long = format === 'long' || format === 'long-date';
+        const showDate = format !== 'time';
         const showTime = format !== 'short-date' && format !== 'long-date';
         const dateFormat = ArtemisDatePipe.dateFormat(long, showDate, locale);
-        const timeFormat = ArtemisDatePipe.timeFormat(long, showTime, seconds);
+        const timeFormat = ArtemisDatePipe.timeFormat(showTime, seconds);
         return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
     }
 
@@ -100,7 +96,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
 
     private format(): string {
         const dateFormat = ArtemisDatePipe.dateFormat(this.long, this.showDate, this.locale);
-        const timeFormat = ArtemisDatePipe.timeFormat(this.long, this.showTime, this.showSeconds);
+        const timeFormat = ArtemisDatePipe.timeFormat(this.showTime, this.showSeconds);
         return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
     }
 
@@ -121,17 +117,13 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         return format;
     }
 
-    private static timeFormat(long: boolean, showTime: boolean, showSeconds: boolean): string {
+    private static timeFormat(showTime: boolean, showSeconds: boolean): string {
         if (!showTime) {
             return '';
         }
-        let format = 'LTS';
-        if (long && !showSeconds) {
-            format = 'LT';
-        } else if (!long && showSeconds) {
+        let format = 'HH:mm';
+        if (showSeconds) {
             format = 'HH:mm:ss';
-        } else if (!long && !showSeconds) {
-            format = 'HH:mm';
         }
         return format;
     }
