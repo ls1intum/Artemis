@@ -55,6 +55,15 @@
                     "showAll": "Show all",
                     "showLocked": "Show locked"
                 }
+            },
+            "locks": {
+                "home": {
+                    "title": "Locked Assessments"
+                },
+                "title": "Assessments locked by you",
+                "exercise": "Exercise",
+                "type": "Type",
+                "empty": "No assessments locked by you!"
             }
         }
     }

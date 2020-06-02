@@ -1,10 +1,11 @@
 <jhi-assessment-layout
-    [hideBackButton]="true"
+    (navigateBack)="goToExerciseDashboard()"
     [isLoading]="isLoading"
     [saveBusy]="saveBusy"
     [submitBusy]="submitBusy"
     [cancelBusy]="cancelBusy"
     [nextSubmissionBusy]="nextSubmissionBusy"
+    [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"

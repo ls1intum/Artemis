@@ -12,10 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -88,11 +85,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
-        database.addCourseWithDifferentModelingExercises();
-        classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
-        objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
-        useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        Course course = database.addCourseWithDifferentModelingExercises();
+        classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = database.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
@@ -422,21 +419,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "student2")
-    public void testNoAutomaticAssessmentUponModelSave() throws Exception {
-        saveModelingSubmissionAndAssessment(true);
-
-        database.addParticipationForExercise(classExercise, "student2");
-
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), false);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getAutomaticResultForSubmission(storedSubmission.getId(), classExercise.getId());
-        assertThat(automaticResult).as("no automatic result has been created").isNull();
-    }
-
-    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testConfidenceThreshold() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
@@ -611,15 +593,23 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> manualFeedback = new ArrayList<>();
         List<Feedback> automaticFeedback = new ArrayList<>();
         List<Feedback> adaptedFeedback = new ArrayList<>();
+        List<Feedback> manualUnreferencedFeedback = new ArrayList<>();
+
         storedResult.getFeedbacks().forEach(storedFeedback -> {
-            if (storedFeedback.getType().equals(FeedbackType.MANUAL)) {
-                manualFeedback.add(storedFeedback);
-            }
-            else if (storedFeedback.getType().equals(FeedbackType.AUTOMATIC)) {
-                automaticFeedback.add(storedFeedback);
-            }
-            else {
-                adaptedFeedback.add(storedFeedback);
+            switch (storedFeedback.getType()) {
+                case MANUAL:
+                    manualFeedback.add(storedFeedback);
+                    break;
+                case AUTOMATIC:
+                    automaticFeedback.add(storedFeedback);
+                    break;
+                case MANUAL_UNREFERENCED:
+                    manualUnreferencedFeedback.add(storedFeedback);
+                    break;
+                case AUTOMATIC_ADAPTED:
+                    adaptedFeedback.add(storedFeedback);
+                    break;
+
             }
         });
         assertThat(storedResult.getAssessmentType()).as("type of result is MANUAL").isEqualTo(AssessmentType.MANUAL);

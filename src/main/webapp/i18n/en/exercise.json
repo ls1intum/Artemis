@@ -61,9 +61,11 @@
             },
             "teamAssignmentConfig": {
                 "teamSize": "Team Size",
-                "teamSizeTooltip": "Recommendation for tutors regarding the minimum and maximum number of students per team."
+                "teamSizeTooltip": "Recommendation for tutors regarding the minimum and maximum number of students per team.",
+                "participants": "Participants"
             },
             "categories": "Categories",
+            "noCategory": "No Category",
             "participations": "Participations",
             "teams": "Teams",
             "exportNames": "Export Names",
@@ -93,7 +95,8 @@
             "showManual": "Show Manual",
             "showAutomatic": "Show Automatic",
             "showAll": "Show All",
-            "tagPlaceholder": "Enter a new category",
+            "tagPlaceholder": "+Category",
+            "tagSecondaryPlaceholder": "Enter a new category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modeling exercise",
             "isQuiz": "This is a quiz exercise",
