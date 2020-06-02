@@ -839,23 +839,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
-        // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
-
-        // Mock remove requests
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
-
-        // Remove users from their group
-        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.OK);
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
-        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.OK);
-
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
     }
 
@@ -874,7 +858,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course);
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -882,21 +866,22 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course);
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
-    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course) throws Exception {
+    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
+        // Retrieve users from whom to remove groups
         User student = userRepo.findOneWithGroupsByLogin("student1").get();
         User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
-
+        // Mock remove requests
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
-
-        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.FORBIDDEN);
+        // Remove users from their group
+        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), httpStatus);
     }
 }
