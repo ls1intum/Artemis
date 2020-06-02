@@ -1,6 +1,0 @@
-version: '2'
-services:
-  activemq-broker:
-    image: webcenter/activemq:latest
-    ports:
-    - 61613:61613

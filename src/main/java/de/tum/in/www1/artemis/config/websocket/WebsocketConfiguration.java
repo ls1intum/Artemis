@@ -34,7 +34,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
@@ -46,8 +47,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.ParticipationService;
 
 @Configuration
-// See https://stackoverflow.com/a/34337731/3802758
-public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
+public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
 
     private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
@@ -104,8 +104,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
         // increase the limit of concurrent connections (default is 1024 which is much too low)
         // config.setCacheLimit(10000);
-        //
-        config.enableStompBrokerRelay("/topic");
     }
 
     @Override
