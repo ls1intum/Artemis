@@ -74,7 +74,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1);
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
         database.addParticipationForExercise(exercise, student1.getLogin());
