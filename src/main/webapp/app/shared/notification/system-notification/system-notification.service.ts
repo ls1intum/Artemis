@@ -7,8 +7,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
@@ -17,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     public resourceUrl = SERVER_API_URL + 'api/system-notifications';
 
-    constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private notificationService: NotificationService) {}
+    constructor(private router: Router, private http: HttpClient) {}
 
     /**
      * Create a notification on the server using a POST request.
