@@ -83,9 +83,9 @@
                 "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
                 "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{ type }}",
-                "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
-                "maxScore": "Maximale Punktzahl: {{ number }} Pts",
-                "relativeScore": "Relative Punktzahl: {{ number }}%",
+                "yourPoints": "Deine Punktzahl: {{ number }}",
+                "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
+                "totalPoints": "Maximale Punktzahl: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Präsentationsergebnis: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden.",
                 "exerciseAchievedScore": "Erreichte Wertung: {{ points }} Punkte ({{ percentage }}%)",
@@ -94,9 +94,7 @@
                 "exerciseNotParticipated": "Du hast an {{ exercise }} nicht teilgenommen.",
                 "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach dem Abgabedatum.",
                 "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten.",
-                "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist.",
-                "currentMaxScore": "Aktuelle maximale Punktzahl: {{ number }} Pts",
-                "currentRelativeScore": "Aktuelle relative Punktzahl: {{ number }}%"
+                "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

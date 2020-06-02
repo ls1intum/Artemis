@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, CURRENT_MAX_SCORE, CURRENT_RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
+import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, REACHABLE_SCORE, CURRENT_RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
@@ -52,8 +52,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     totalMaxScores = {};
 
     // current max score
-    totalCurrentMaxScore = 0;
-    totalCurrentMaxScores = {};
+    reachableScore = 0;
+    reachableScores = {};
 
     // current max score
     currentRelativeScore = 0;
@@ -237,7 +237,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.courseExercises = this.course!.exercises;
         this.calculateMaxScores();
-        this.calculateCurrentMaxScores();
+        this.calculateReachableScores();
         this.calculateAbsoluteScores();
         this.calculateRelativeScores();
         this.calculatePresentationScores();
@@ -270,8 +270,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
                         notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [] },
-                        totalCurrentMaxScore: 0,
-                        totalCurrentRelativeScore: 0,
+                        reachableScore: 0,
+                        currentRelativeScore: 0,
                     };
                 }
 
@@ -329,7 +329,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
                 groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type];
-                groupedExercises[index].totalCurrentMaxScore = this.totalCurrentMaxScores[exercise.type];
+                groupedExercises[index].reachableScore = this.reachableScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
                 // check if presentation score is enabled for at least one exercise
@@ -438,20 +438,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
     }
 
-    calculateCurrentMaxScores() {
-        const quizzesTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_MAX_SCORE);
-        const programmingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_MAX_SCORE);
-        const modelingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_MAX_SCORE);
-        const textExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_MAX_SCORE);
-        const fileUploadExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_MAX_SCORE);
-        const totalCurrentMaxScores = {};
-        totalCurrentMaxScores[ExerciseType.QUIZ] = quizzesTotalCurrentMaxScore;
-        totalCurrentMaxScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalCurrentMaxScore;
-        totalCurrentMaxScores[ExerciseType.MODELING] = modelingExerciseTotalCurrentMaxScore;
-        totalCurrentMaxScores[ExerciseType.TEXT] = textExerciseTotalCurrentMaxScore;
-        totalCurrentMaxScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalCurrentMaxScore;
-        this.totalCurrentMaxScores = totalCurrentMaxScores;
-        this.totalCurrentMaxScore = this.calculateTotalScoreForTheCourse('currentMaxScore');
+    calculateReachableScores() {
+        const quizzesTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, REACHABLE_SCORE);
+        const programmingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, REACHABLE_SCORE);
+        const modelingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, REACHABLE_SCORE);
+        const textExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, REACHABLE_SCORE);
+        const fileUploadExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, REACHABLE_SCORE);
+        const reachableScores = {};
+        reachableScores[ExerciseType.QUIZ] = quizzesTotalCurrentMaxScore;
+        reachableScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.MODELING] = modelingExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.TEXT] = textExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalCurrentMaxScore;
+        this.reachableScores = reachableScores;
+        this.reachableScore = this.calculateTotalScoreForTheCourse('reachableScores');
     }
 
     calculateCurrentRelativeScores(): void {

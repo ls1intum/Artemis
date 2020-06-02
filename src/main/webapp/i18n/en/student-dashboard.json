@@ -85,9 +85,9 @@
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
-                "absoluteScore": "Absolute score: {{ number }} Pts",
-                "maxScore": "Total max score: {{ number }} Pts",
-                "relativeScore": "Relative score: {{ number }}%",
+                "yourPoints": "Your points: {{ number }}",
+                "reachablePoints": "Reachable points: {{ number }} ({{ relative }}%)",
+                "totalPoints": "Total points: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course.",
                 "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
@@ -96,9 +96,7 @@
                 "exerciseNotParticipated": "You have not participated in {{ exercise }}.",
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
                 "noPointsForExercise": "You can't receive points for this exercise.",
-                "description": "Here you see all results that influence your score of the course, where the assessment due date is over.",
-                "currentMaxScore": "Current max score: {{ number }} Pts",
-                "currentRelativeScore": "Current relative score: {{ number }}%"
+                "description": "Here you see all results that influence your score of the course, where the assessment due date is over."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
