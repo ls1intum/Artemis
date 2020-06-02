@@ -66,7 +66,7 @@ public class RatingResource {
     @GetMapping("/results/{resultId}/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
-        if (checkIfUserIsOwnerOfSubmission(resultId)) {
+        if (!checkIfUserIsOwnerOfSubmission(resultId) && !authCheckService.isAdmin()) {
             return forbidden();
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
@@ -84,7 +84,7 @@ public class RatingResource {
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) throws URISyntaxException {
-        if (checkIfUserIsOwnerOfSubmission(resultId)) {
+        if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
 
@@ -102,7 +102,7 @@ public class RatingResource {
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) {
-        if (checkIfUserIsOwnerOfSubmission(resultId)) {
+        if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
 
@@ -114,12 +114,12 @@ public class RatingResource {
      * Check if currently logged in user in the owner of the participation
      *
      * @param resultId - Id of the result that the participation belongs to
-     * @return True if User is not Owner, False otherwise
+     * @return False if User is not Owner, True otherwise
      */
     private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
         User user = userService.getUser();
         Result res = resultService.findOne(resultId);
         StudentParticipation participation = participationService.findOneStudentParticipation(res.getParticipation().getId());
-        return !authCheckService.isOwnerOfParticipation(participation, user);
+        return authCheckService.isOwnerOfParticipation(participation, user);
     }
 }
