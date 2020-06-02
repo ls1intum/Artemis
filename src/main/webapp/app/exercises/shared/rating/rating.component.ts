@@ -11,6 +11,7 @@ import { Rating } from 'app/entities/rating.model';
 })
 export class RatingComponent implements OnInit {
     public rating: Rating;
+    public disableRating = false;
     @Input() result: Result;
 
     constructor(public ratingService: RatingService) {}
@@ -33,6 +34,11 @@ export class RatingComponent implements OnInit {
      * @param $event - starRating component that holds new rating value
      */
     onRate($event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
+        // block rating to prevent double sending of post request
+        if (this.disableRating) {
+            return;
+        }
+
         // update feedback locally
         this.rating.rating = $event.newValue;
 
@@ -42,8 +48,10 @@ export class RatingComponent implements OnInit {
                 this.rating = rating;
             });
         } else {
+            this.disableRating = true;
             this.ratingService.createRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
+                this.disableRating = false;
             });
         }
     }

@@ -86,6 +86,17 @@ describe('RatingComponent', () => {
             sinon.spy(ratingService, 'updateRating');
         });
 
+        it('should return', () => {
+            ratingComponent.disableRating = true;
+            ratingComponent.onRate({
+                oldValue: 0,
+                newValue: 2,
+                starRating: new StarRatingComponent(),
+            });
+            expect(ratingService.createRating).to.not.have.been.called;
+            expect(ratingService.updateRating).to.not.have.been.called;
+        });
+
         it('should create new rating', () => {
             ratingComponent.onRate({
                 oldValue: 0,
