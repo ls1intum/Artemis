@@ -229,14 +229,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testGetCourseForDashboard() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures(true);
-        var receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-        assertThat(receivedCourse).isEqualTo(courses.get(0));
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
@@ -360,6 +352,45 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         for (Exercise exercise : courses.get(0).getExercises()) {
             assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
             assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetCourseForDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+
+        // Test that the received course has five exercises
+        assertThat(receivedCourse.getExercises().size()).as("Five exercises are returned").isEqualTo(5);
+        // Test that the received course has two lectures
+        assertThat(receivedCourse.getLectures().size()).as("Two lectures are returned").isEqualTo(2);
+
+        // Iterate over all exercises of the remaining course
+        for (Exercise exercise : courses.get(0).getExercises()) {
+            // Test that the exercise does not have more than one participation.
+            assertThat(exercise.getStudentParticipations().size()).as("At most one participation for exercise").isLessThanOrEqualTo(1);
+            if (exercise.getStudentParticipations().size() > 0) {
+                // Buffer participation so that null checking is easier.
+                Participation participation = exercise.getStudentParticipations().iterator().next();
+                if (participation.getSubmissions().size() > 0) {
+                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
+                    assertThat(participation.getSubmissions().size()).as("At most one submission for participation").isLessThanOrEqualTo(1);
+                    Submission submission = participation.getSubmissions().iterator().next();
+                    if (submission != null) {
+                        // Test that the correct text submission was filtered.
+                        if (submission instanceof TextSubmission) {
+                            TextSubmission textSubmission = (TextSubmission) submission;
+                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
+                        }
+                        // Test that the correct modeling submission was filtered.
+                        if (submission instanceof ModelingSubmission) {
+                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                        }
+                    }
+                }
+            }
         }
     }
 
