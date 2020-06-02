@@ -34,7 +34,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -579,6 +582,9 @@ public class CourseResource {
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
 
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
+
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
@@ -667,6 +673,35 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
+     */
+    @GetMapping("/courses/{courseId}/lockedSubmissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get all locked submissions for course : {}", courseId);
+        long start = System.currentTimeMillis();
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
+
+        for (Submission submission : submissions) {
+            submissionService.hideDetails(submission, user);
+        }
+
+        long end = System.currentTimeMillis();
+        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        return ResponseEntity.ok(submissions);
+    }
+
+    /**
      * GET /courses/:courseId/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
@@ -707,6 +742,9 @@ public class CourseResource {
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
+
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long startT = System.currentTimeMillis();
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);

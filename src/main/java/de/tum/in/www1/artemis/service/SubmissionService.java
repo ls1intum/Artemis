@@ -52,6 +52,26 @@ public class SubmissionService {
     }
 
     /**
+     * Get the number of simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return number of locked submissions for the current user in the given course
+     */
+    public long countSubmissionLocks(long courseId) {
+        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+    }
+
+    /**
+     * Get simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return number of locked submissions for the current user in the given course
+     */
+    public List<Submission> getLockedSubmissions(long courseId) {
+        return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+    }
+
+    /**
      * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *

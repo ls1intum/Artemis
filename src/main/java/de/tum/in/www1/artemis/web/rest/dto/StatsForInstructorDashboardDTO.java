@@ -20,6 +20,8 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfOpenMoreFeedbackRequests;
 
+    private Long numberOfAssessmentLocks;
+
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
     public StatsForInstructorDashboardDTO() {
@@ -87,6 +89,14 @@ public class StatsForInstructorDashboardDTO {
 
     public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
         this.numberOfOpenMoreFeedbackRequests = numberOfOpenMoreFeedbackRequests;
+    }
+
+    public Long getNumberOfAssessmentLocks() {
+        return numberOfAssessmentLocks;
+    }
+
+    public void setNumberOfAssessmentLocks(long numberOfAssessmentLocks) {
+        this.numberOfAssessmentLocks = numberOfAssessmentLocks;
     }
 
     public List<TutorLeaderboardDTO> getTutorLeaderboardEntries() {

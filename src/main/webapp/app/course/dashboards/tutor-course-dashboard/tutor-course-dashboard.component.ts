@@ -35,6 +35,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
 
@@ -113,6 +114,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
+                this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;

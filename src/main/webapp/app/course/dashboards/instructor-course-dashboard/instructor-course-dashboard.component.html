@@ -42,6 +42,11 @@
                                 </a>
                                 ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
                             </li>
+                            <li>
+                                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: instructor.id }">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | translate }}:</b> {{ stats.numberOfAssessmentLocks }}
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -122,9 +127,17 @@
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-primary" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
-                                {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
-                            </button>
+                            <div class="btn-group flex-btn-group-container">
+                                <button class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
+                                    {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
+                                </button>
+                                <button
+                                    class="btn btn-primary btn-sm mr-1"
+                                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
+                                >
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

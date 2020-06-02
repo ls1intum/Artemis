@@ -53,6 +53,15 @@
                 <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
             </div>
         </div>
+        <div class="row justify-content-around">
+            <div class="col-4 text-center">
+                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessmentLocks' | translate }}:</p>
+                    <p class="h3">{{ numberOfAssessmentLocks }}</p>
+                </a>
+            </div>
+            <div class="col-4 text-center"></div>
+        </div>
     </div>
 
     <div class="table-responsive">

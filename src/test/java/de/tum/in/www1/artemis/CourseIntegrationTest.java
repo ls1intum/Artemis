@@ -46,6 +46,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     CourseRepository courseRepo;
 
     @Autowired
+    ExerciseRepository exerciseRepo;
+
+    @Autowired
+    ParticipationRepository participationRepo;
+
+    @Autowired
+    SubmissionRepository submissionRepo;
+
+    @Autowired
+    ResultRepository resultRepo;
+
+    @Autowired
     CustomAuditEventRepository auditEventRepo;
 
     @Autowired
@@ -747,5 +759,39 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
+        database.addCourseWithDifferentModelingExercises();
+        Course course = courseRepo.findAll().get(0);
+        ModelingExercise classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+
+        List<Submission> lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
+        assertThat(lockedSubmissions).as("Locked Submissions length is 0").hasSize(0);
+
+        String validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student2", "tutor1");
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student3", "tutor1");
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
+        assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
+        List<Submission> lockedSubmissions = request.get("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, List.class);
+        assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
     }
 }
