@@ -773,9 +773,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
-        database.addCourseWithDifferentModelingExercises();
-        Course course = courseRepo.findAll().get(0);
-        ModelingExercise classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithDifferentModelingExercises();
+        ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
         List<Submission> lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();

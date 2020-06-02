@@ -18,6 +18,7 @@ export class CategorySelectorComponent implements OnChanges {
     @Input() existingCategories: ExerciseCategory[];
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
     uniqueCategories: ExerciseCategory[] = [];
+    private readonly colorSelectorHeight = 150;
 
     /**
      * set unique categories on changes
@@ -44,7 +45,7 @@ export class CategorySelectorComponent implements OnChanges {
      */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
-        this.colorSelector.openColorSelector(event);
+        this.colorSelector.openColorSelector(event, undefined, this.colorSelectorHeight);
     }
 
     /**
