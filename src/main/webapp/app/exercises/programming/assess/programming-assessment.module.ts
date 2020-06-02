@@ -10,6 +10,7 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
+import { ProgrammingAssessmentManualResultInCodeEditorComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-in-code-editor.component';
 
 @NgModule({
     imports: [
@@ -26,8 +27,14 @@ import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/program
         ProgrammingAssessmentManualResultDialogComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
+        ProgrammingAssessmentManualResultInCodeEditorComponent,
     ],
     entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
-    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
+    exports: [
+        ProgrammingAssessmentManualResultButtonComponent,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ProgrammingAssessmentManualResultDialogComponent,
+        ProgrammingAssessmentManualResultInCodeEditorComponent,
+    ],
 })
 export class ArtemisProgrammingAssessmentModule {}
