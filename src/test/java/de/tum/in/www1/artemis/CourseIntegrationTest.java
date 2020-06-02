@@ -116,7 +116,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 14, false);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false);
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());

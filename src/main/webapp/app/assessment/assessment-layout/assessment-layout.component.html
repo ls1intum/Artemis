@@ -30,6 +30,6 @@
     *ngIf="complaint"
     [zeroIndent]="false"
     [complaint]="complaint"
-    [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
+    [isAllowedToRespond]="isAllowedToRespond"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
 ></jhi-complaints-for-tutor-form>

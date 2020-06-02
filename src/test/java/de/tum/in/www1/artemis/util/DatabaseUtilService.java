@@ -824,15 +824,13 @@ public class DatabaseUtilService {
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
-        FileUploadExercise afterDueDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
-        FileUploadExercise afterAssessmentDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
-        course.addExercises(fileUploadExercise);
-        course.addExercises(afterDueDateFileUploadExercise);
-        course.addExercises(afterAssessmentDateFileUploadExercise);
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise afterDueDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise afterAssessmentDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
         fileUploadExercises.add(fileUploadExercise);
@@ -879,6 +877,15 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        modelingSubmissionRepo.save(submission);
+        studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
+        StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -1029,7 +1036,7 @@ public class DatabaseUtilService {
 
     public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
-        return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<Feedback>());
+        return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
     public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
@@ -1175,7 +1182,16 @@ public class DatabaseUtilService {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);
             dummyResult = resultRepo.save(dummyResult);
-            Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
+            Complaint complaint = new Complaint().participant(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
+            complaintRepo.save(complaint);
+        }
+    }
+
+    public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+        for (int i = 0; i < numberOfComplaints; i++) {
+            Result dummyResult = new Result().participation(participation);
+            dummyResult = resultRepo.save(dummyResult);
+            Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
     }
