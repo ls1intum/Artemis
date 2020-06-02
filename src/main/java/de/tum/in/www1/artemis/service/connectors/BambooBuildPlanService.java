@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -94,7 +95,7 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isUseStaticCodeAnalysis()));
 
         bambooServer.publish(plan);
 
@@ -110,7 +111,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns, Boolean useStaticCodeAnalysis) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
@@ -128,6 +129,15 @@ public class BambooBuildPlanService {
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
                 }
+
+                if (useStaticCodeAnalysis) {
+                    defaultJob.finalTasks(new MavenTask().goal("spotbugs:spotbugs checkstyle:checkstyle").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis"));
+                    defaultJob.artifacts(
+                        new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml"),
+                        new Artifact().name("checkstyle").location("target").copyPattern("checkstyle.xml")
+                    );
+                }
+
                 if (!sequentialBuildRuns) {
                     return defaultStage
                             .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));

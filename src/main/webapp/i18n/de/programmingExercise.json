@@ -45,6 +45,7 @@
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
+            "useStaticCodeAnalysis": "Benutze Statische Code Analyse",
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",

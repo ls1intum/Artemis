@@ -89,6 +89,9 @@ public class ProgrammingExercise extends Exercise {
     @Transient
     private boolean isLocalSimulationTransient;
 
+    @Transient
+    private boolean useStaticCodeAnalysisTransient;
+
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -233,6 +236,16 @@ public class ProgrammingExercise extends Exercise {
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
     }
+
+
+    public Boolean isUseStaticCodeAnalysis() {
+        return useStaticCodeAnalysisTransient;
+    }
+
+    public void setUseStaticCodeAnalysis(Boolean useStaticCodeAnalysis) {
+        this.useStaticCodeAnalysisTransient = useStaticCodeAnalysis;
+    }
+
 
     public String getProjectKey() {
         return this.projectKey;
