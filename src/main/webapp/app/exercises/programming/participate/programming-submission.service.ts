@@ -568,9 +568,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {
         if (this.submissionTopicsSubscribed.get(participationId)) {
             const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
-            this.websocketService.unsubscribe(newSubmissionTopic);
-            this.resultTimerSubjects.delete(participationId);
             this.submissionTopicsSubscribed.delete(participationId);
+            this.resultTimerSubjects.delete(participationId);
+
+            const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === newSubmissionTopic).length;
+            // Only unsubscribe if no other participations are using this topic
+            if (openSubscriptionsForTopic === 0) {
+                this.websocketService.unsubscribe(newSubmissionTopic);
+            }
         }
     }
 }

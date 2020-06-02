@@ -149,8 +149,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         if (subscriptionTypePersonal !== undefined && subscriptionTypePersonal !== null) {
             if (subscriptionTypePersonal) {
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
-                const numberOfOpenPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
-                if (numberOfOpenPersonalSubscriptions === 0) {
+                const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
+                if (openPersonalSubscriptions === 0) {
                     this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
                     this.openPersonalWebsocketSubscription = null;
                 }
