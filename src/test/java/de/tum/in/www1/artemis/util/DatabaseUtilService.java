@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -709,21 +710,31 @@ public class DatabaseUtilService {
     public Course addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);
+
         ModelingExercise activityExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ActivityDiagram, course);
+        activityExercise.setTitle("ActivityDiagram");
         course.addExercises(activityExercise);
+
         ModelingExercise objectExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ObjectDiagram, course);
+        objectExercise.setTitle("ObjectDiagram");
         course.addExercises(objectExercise);
+
         ModelingExercise useCaseExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.UseCaseDiagram, course);
+        useCaseExercise.setTitle("UseCaseDiagram");
         course.addExercises(useCaseExercise);
-        ModelingExercise afterDueDateExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
-        course.addExercises(afterDueDateExercise);
+
+        ModelingExercise finishedExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        finishedExercise.setTitle("finished");
+        course.addExercises(finishedExercise);
+
         course = courseRepo.save(course);
         exerciseRepo.save(classExercise);
         exerciseRepo.save(activityExercise);
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
-        exerciseRepo.save(afterDueDateExercise);
+        exerciseRepo.save(finishedExercise);
         Course storedCourse = courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises.size()).as("five exercises got stored").isEqualTo(5);
@@ -828,22 +839,23 @@ public class DatabaseUtilService {
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
 
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
-        FileUploadExercise afterDueDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
-        FileUploadExercise afterAssessmentDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
+        releasedFileUploadExercise.setTitle("released");
+        FileUploadExercise finishedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        finishedFileUploadExercise.setTitle("finished");
+        FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
-        fileUploadExercises.add(fileUploadExercise);
-        fileUploadExercises.add(afterDueDateFileUploadExercise);
-        fileUploadExercises.add(afterAssessmentDateFileUploadExercise);
+        fileUploadExercises.add(releasedFileUploadExercise);
+        fileUploadExercises.add(finishedFileUploadExercise);
+        fileUploadExercises.add(assessedFileUploadExercise);
         return fileUploadExercises;
     }
 
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
-        exerciseRepo.save(fileUploadExercises.get(0));
-        exerciseRepo.save(fileUploadExercises.get(1));
-        exerciseRepo.save(fileUploadExercises.get(2));
+        exerciseRepo.saveAll(fileUploadExercises);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
@@ -1447,5 +1459,37 @@ public class DatabaseUtilService {
         quizSubmission.submissionDate(submissionDate);
 
         return quizSubmission;
+    }
+
+    @NotNull
+    public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
+        Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
+        if (exercise.isEmpty()) {
+            fail("Could not find file upload exercise with title " + title);
+        }
+        else {
+            if (exercise.get() instanceof FileUploadExercise) {
+                return (FileUploadExercise) exercise.get();
+            }
+        }
+        fail("Could not find file upload exercise with title " + title);
+        // just to prevent compiler errors, we have failed anyway
+        return new FileUploadExercise();
+    }
+
+    @NotNull
+    public ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
+        Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
+        if (exercise.isEmpty()) {
+            fail("Could not find modeling exercise with title " + title);
+        }
+        else {
+            if (exercise.get() instanceof ModelingExercise) {
+                return (ModelingExercise) exercise.get();
+            }
+        }
+        fail("Could not find modeling exercise with title " + title);
+        // just to prevent compiler errors, we have failed anyway
+        return new ModelingExercise();
     }
 }
