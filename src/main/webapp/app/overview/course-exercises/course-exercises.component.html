@@ -42,8 +42,8 @@
                 >
                     <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
-                        <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'short-date' }}</strong> -
-                        <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'short-date' }}</strong>
+                        <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
+                        <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
                     </span>
                     <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | translate }}
