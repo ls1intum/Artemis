@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -86,8 +87,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getFileUploadExercise() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -98,34 +99,29 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise_asInstructor() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
-        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
-
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.OK);
-
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        for (var exercise : course.getExercises()) {
+            request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
+        }
         assertThat(exerciseRepo.findAll().isEmpty());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void deleteFileUploadExercise_asStudent() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
-        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        for (var exercise : course.getExercises()) {
+            request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
+        }
 
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.FORBIDDEN);
-
-        assertThat(exerciseRepo.findAll().size() == 2);
+        assertThat(exerciseRepo.findAll().size() == course.getExercises().size());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateFileUploadExercise_asInstructor() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
 
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
@@ -136,7 +132,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
+        database.addCourseWithThreeFileUploadExercise();
         long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
 
         List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.OK, FileUploadExercise.class);
@@ -149,7 +145,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
+        database.addCourseWithThreeFileUploadExercise();
         long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
 
         List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.FORBIDDEN,

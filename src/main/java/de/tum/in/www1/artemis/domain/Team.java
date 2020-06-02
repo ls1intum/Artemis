@@ -179,6 +179,10 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
         return owner;
     }
 
+    public boolean isOwner(User user) {
+        return this.owner != null && this.owner.equals(user);
+    }
+
     public Team owner(User owner) {
         this.owner = owner;
         return this;

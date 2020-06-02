@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -529,7 +530,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
-    // SKIPPED
+    @Disabled
     // TODO: this is a flaky test and it's unclear why. We skip it for now.
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {

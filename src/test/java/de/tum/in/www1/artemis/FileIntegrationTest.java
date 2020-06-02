@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,8 +159,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetFileUploadSubmission() throws Exception {
-        database.addCourseWithTwoFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
