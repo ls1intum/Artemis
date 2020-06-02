@@ -264,12 +264,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onSubmitAssessment() {
         if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
-            const confirm = window.confirm(confirmationMessage);
-            if (confirm) {
+
+            // if the assessment is before the assessment due date, don't show the confirm submission button
+            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+            if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
-                this.highlightMissingFeedback = true;
-                this.highlightElementsWithMissingFeedback();
+                const confirm = window.confirm(confirmationMessage);
+                if (confirm) {
+                    this.submitAssessment();
+                } else {
+                    this.highlightMissingFeedback = true;
+                    this.highlightElementsWithMissingFeedback();
+                }
             }
         } else {
             this.submitAssessment();
@@ -493,7 +500,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        const credits = (this.feedback || []).map((feedback) => feedback.credits);
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = (this.feedback || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
     }
 }

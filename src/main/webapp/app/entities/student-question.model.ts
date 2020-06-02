@@ -14,6 +14,7 @@ export class StudentQuestion implements BaseEntity {
     public author: User;
     public exercise: Exercise;
     public lecture: Lecture;
+    public votes = 0; // default value
 
     constructor() {}
 }

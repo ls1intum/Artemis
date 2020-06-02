@@ -80,7 +80,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
         course = database.addCourseWithOneTextExercise();
-        textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        textExercise = (TextExercise) new ArrayList<>(course.getExercises()).get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
     }
@@ -543,8 +543,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", asList(feedback));
         feedbackRepository.save(feedback);
 
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("lock", "true");
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class);
+                TextSubmission.class, parameters);
 
         request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission1.getId() + "/cancel-assessment", null, HttpStatus.OK);
 

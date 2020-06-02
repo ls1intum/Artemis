@@ -120,6 +120,38 @@ public class StudentQuestionResource {
     }
 
     /**
+     * PUT /student-questions/{questionId}/votes : Updates votes for a studentQuestion.
+     *
+     * @param questionId the ID of the question to update
+     * @param voteChange value by which votes are increased / decreased
+     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
+     *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/student-questions/{questionId}/votes")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long questionId, @RequestBody Integer voteChange) throws URISyntaxException {
+        if (voteChange < -2 || voteChange > 2) {
+            return forbidden();
+        }
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
+        if (optionalStudentQuestion.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
+            StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
+            Integer newVotes = updatedStudentQuestion.getVotes() + voteChange;
+            updatedStudentQuestion.setVotes(newVotes);
+            StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
+            return ResponseEntity.ok().body(result);
+        }
+        else {
+            return forbidden();
+        }
+    }
+
+    /**
      * GET /exercises/{exerciseId}/student-questions : get all student questions for exercise.
      *
      * @param exerciseId the exercise that the student questions belong to
@@ -217,5 +249,19 @@ public class StudentQuestionResource {
         Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(studentQuestion.getCourse(), user);
         Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
         return hasCourseTAAccess || isUserAuthor;
+    }
+
+    private boolean mayUpdateStudentQuestionVotes(StudentQuestion studentQuestion, User user) {
+        Course course = studentQuestion.getCourse();
+        Exercise exercise = studentQuestion.getExercise();
+        if (course != null) {
+            return authorizationCheckService.isAtLeastStudentInCourse(course, user);
+        }
+        else if (exercise != null) {
+            return authorizationCheckService.isAtLeastStudentForExercise(exercise, user);
+        }
+        else {
+            return false;
+        }
     }
 }

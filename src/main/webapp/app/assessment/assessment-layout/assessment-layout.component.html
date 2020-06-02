@@ -7,6 +7,7 @@
     [submitBusy]="submitBusy"
     [cancelBusy]="cancelBusy"
     [nextSubmissionBusy]="nextSubmissionBusy"
+    [isTeamMode]="isTeamMode"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
@@ -30,6 +31,6 @@
     *ngIf="complaint"
     [zeroIndent]="false"
     [complaint]="complaint"
-    [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
+    [isAllowedToRespond]="isAllowedToRespond"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
 ></jhi-complaints-for-tutor-form>
