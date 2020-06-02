@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
@@ -69,6 +71,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     private FileUploadSubmission notSubmittedFileUploadSubmission;
 
+    private FileUploadSubmission lateFileUploadSubmission;
+
     private MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
     private StudentParticipation participation;
@@ -76,11 +80,12 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
-        database.addCourseWithTwoFileUploadExercise();
-        fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
-        afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
+        afterDueDateFileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(1);
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
+        lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
         database.addParticipationForExercise(fileUploadExercise, "student3");
         participation = database.addParticipationForExercise(afterDueDateFileUploadExercise, "student3");
     }
@@ -204,12 +209,37 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getSubmissionWithoutAssessment() throws Exception {
         FileUploadSubmission submission = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+        database.addFileUploadSubmission(fileUploadExercise, lateFileUploadSubmission, "student2"); // tests prioritizing in-time submissions over late submissions
+
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(submittedFileUploadSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(fileUploadExercise.getDueDate());
+        assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(fileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getLateSubmissionWithoutAssessment() throws Exception {
+
+        database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+        FileUploadSubmission lateSubmission = database.addFileUploadSubmission(fileUploadExercise, lateFileUploadSubmission, "student1");
+
+        database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(submittedFileUploadSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(fileUploadExercise.getDueDate());
+        assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(fileUploadExercise.getDueDate());
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+                FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
@@ -234,9 +264,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
-        database.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
-
+        Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
         request.get("/api/exercises/" + modelingExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.BAD_REQUEST, FileUploadSubmission.class);
     }
 
@@ -286,8 +315,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student1")
     public void getDataForFileUpload_wrongExcerciseType() throws Exception {
-        database.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = (ModelingExercise) new ArrayList<>(course.getExercises()).get(0);
         Participation modelingExerciseParticipation = database.addParticipationForExercise(modelingExercise, "student1");
         FileUploadSubmission submission = request.get("/api/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
                 FileUploadSubmission.class);

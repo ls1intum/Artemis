@@ -6,6 +6,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
+import { LocalStorageService } from 'ngx-webstorage';
 import { QuestionAnswerActionName, StudentQuestionAnswerAction } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { QuestionActionName, StudentQuestionAction } from 'app/overview/student-questions/student-question/student-question.component';
@@ -17,6 +18,7 @@ export interface StudentQuestionRowAction {
 
 export enum QuestionRowActionName {
     DELETE,
+    VOTE_CHANGE,
 }
 
 @Component({
@@ -38,7 +40,11 @@ export class StudentQuestionRowComponent implements OnInit {
     approvedQuestionAnswers: StudentQuestionAnswer[];
     EditorMode = EditorMode;
 
-    constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
+    constructor(
+        private studentQuestionAnswerService: StudentQuestionAnswerService,
+        private studentQuestionService: StudentQuestionService,
+        private localStorage: LocalStorageService,
+    ) {}
 
     /**
      * sort answers when component is initialized
@@ -77,6 +83,12 @@ export class StudentQuestionRowComponent implements OnInit {
             case QuestionActionName.EXPAND:
                 this.isExpanded = !this.isExpanded;
                 break;
+            case QuestionActionName.VOTE_CHANGE:
+                this.interactQuestionRow.emit({
+                    name: QuestionRowActionName.VOTE_CHANGE,
+                    studentQuestion: action.studentQuestion,
+                });
+                break;
         }
     }
 
@@ -112,6 +124,7 @@ export class StudentQuestionRowComponent implements OnInit {
      */
     deleteQuestion(): void {
         this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
+            this.localStorage.clear(`q${this.studentQuestion.id}u${this.user.id}`);
             this.interactQuestionRow.emit({
                 name: QuestionRowActionName.DELETE,
                 studentQuestion: this.studentQuestion,

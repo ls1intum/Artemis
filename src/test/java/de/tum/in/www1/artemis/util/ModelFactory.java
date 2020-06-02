@@ -84,7 +84,6 @@ public class ModelFactory {
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
             Course course) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
-        fileUploadExercise = (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
@@ -178,6 +177,15 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    public static TextSubmission generateLateTextSubmission(String text, Language language) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(true);
+        textSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
+        return textSubmission;
+    }
+
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
@@ -193,6 +201,13 @@ public class ModelFactory {
         if (submitted) {
             fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
+        return fileUploadSubmission;
+    }
+
+    public static FileUploadSubmission generateLateFileUploadSubmission() {
+        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+        fileUploadSubmission.setSubmitted(true);
+        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         return fileUploadSubmission;
     }
 
@@ -216,11 +231,12 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 7, true);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeDays, Boolean studentQuestionsEnabled) {
+            String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
+            Boolean studentQuestionsEnabled) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
@@ -228,6 +244,7 @@ public class ModelFactory {
         // must start with a letter
         course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
+        course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
         course.setStudentGroupName(studentGroupName);
@@ -304,7 +321,7 @@ public class ModelFactory {
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
-        toBeImported.setNumberOfParticipations(template.getNumberOfParticipations());
+        toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());

@@ -113,6 +113,14 @@ $background-color: #353d47;
     content: ' ';
 }
 
+.vote {
+    color: rgba(0, 0, 0, 0.4);
+
+    &.vote-active {
+        color: initial;
+    }
+}
+
 @media screen and (max-width: 992px) {
     .expanded-questions {
         width: 94vw;

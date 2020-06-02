@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -64,6 +65,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     private TextSubmission textSubmission;
 
+    private TextSubmission lateTextSubmission;
+
     private StudentParticipation afterDueDateParticipation;
 
     private User student;
@@ -71,15 +74,16 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() {
         student = database.addUsers(2, 1, 1).get(0);
-        database.addCourseWithOneTextExerciseDueDateReached();
+        Course course = database.addCourseWithOneTextExerciseDueDateReached();
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
-        textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
+        textExerciseAfterDueDate = (TextExercise) new ArrayList<>(course.getExercises()).get(0);
         afterDueDateParticipation = database.addParticipationForExercise(textExerciseAfterDueDate, student.getLogin());
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(afterDueDateParticipation);
         database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        lateTextSubmission = ModelFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
 
         // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
@@ -178,6 +182,23 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_selectInTime() throws Exception {
+
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        lateTextSubmission = database.addTextSubmission(textExerciseAfterDueDate, lateTextSubmission, "student2");
+
+        assertThat(textSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(textExerciseAfterDueDate.getDueDate());
+        assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(textExerciseAfterDueDate.getDueDate());
+
+        TextSubmission storedSubmission = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class);
+
+        assertThat(storedSubmission).as("text submission without assessment was found").isNotNull();
+        assertThat(storedSubmission.getId()).as("in-time text submission was found").isEqualTo(textSubmission.getId());
     }
 
     @Test
