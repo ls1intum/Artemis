@@ -303,6 +303,10 @@ public class CourseResource {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaints(3);
         }
+        if (course.getMaxTeamComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            course.setMaxTeamComplaints(3);
+        }
         if (course.getMaxComplaintTimeDays() == null) {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaintTimeDays(7);
@@ -310,14 +314,17 @@ public class CourseResource {
         if (course.getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
+        if (course.getMaxTeamComplaints() < 0) {
+            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
+        }
         if (course.getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() == 0 && course.getMaxComplaints() != 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() == 0 && (course.getMaxComplaints() != 0 || course.getMaxTeamComplaints() != 0)) {
+            throw new BadRequestAlertException("If complaints are allowed, the complaint time in days must be positive.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() != 0 && (course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0)) {
+            throw new BadRequestAlertException("If no complaints are allowed, the complaint time in days should be set to zero.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
     }
 
