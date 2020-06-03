@@ -34,6 +34,7 @@ describe('ProgrammingSubmissionService', () => {
 
     let httpGetStub: SinonStub;
     let wsSubscribeStub: SinonStub;
+    let wsUnsubscribeStub: SinonStub;
     let wsReceiveStub: SinonStub;
     let participationWsLatestResultStub: SinonStub;
 
@@ -55,6 +56,7 @@ describe('ProgrammingSubmissionService', () => {
 
         httpGetStub = stub(httpService, 'get');
         wsSubscribeStub = stub(websocketService, 'subscribe');
+        wsUnsubscribeStub = stub(websocketService, 'unsubscribe');
         wsSubmissionSubject = new Subject<Submission | null>();
         wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
         wsLatestResultSubject = new Subject<Result | null>();
@@ -67,6 +69,7 @@ describe('ProgrammingSubmissionService', () => {
     afterEach(() => {
         httpGetStub.restore();
         wsSubscribeStub.restore();
+        wsUnsubscribeStub.restore();
         wsReceiveStub.restore();
         participationWsLatestResultStub.restore();
     });
@@ -263,5 +266,19 @@ describe('ProgrammingSubmissionService', () => {
 
         // With 340 submissions, the eta should now have increased.
         expect(resultEta).to.equal(2000 * 60 + 3 * 4000 * 60);
+    });
+
+    it('should only unsubscribe if no other participations use the topic', () => {
+        httpGetStub.returns(of(currentSubmission));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true);
+        submissionService.getLatestPendingSubmissionByParticipationId(2, 10, true);
+
+        // Should not unsubscribe as participation 2 still uses the same topic
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+        expect(wsUnsubscribeStub).to.not.have.been.called;
+
+        // Should now unsubscribe as last participation for topic was unsubscribed
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
+        expect(wsUnsubscribeStub).to.have.been.called;
     });
 });

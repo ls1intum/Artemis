@@ -43,7 +43,7 @@ export interface IProgrammingSubmissionService {
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
-    unsubscribeForLatestSubmissionOfParticipation: (participationId: number, exercise: Exercise) => void;
+    unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -567,15 +567,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      */
     public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {
-        if (this.submissionTopicsSubscribed.get(participationId)) {
-            const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
+        const submissionTopic = this.submissionTopicsSubscribed.get(participationId);
+        if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);
             this.resultTimerSubjects.delete(participationId);
 
-            const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === newSubmissionTopic).length;
+            const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === submissionTopic).length;
             // Only unsubscribe if no other participations are using this topic
             if (openSubscriptionsForTopic === 0) {
-                this.websocketService.unsubscribe(newSubmissionTopic);
+                this.websocketService.unsubscribe(submissionTopic);
             }
         }
     }

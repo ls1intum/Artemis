@@ -161,10 +161,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     openSubscriptionsForExercise.delete(participationId);
                     if (openSubscriptionsForExercise.size === 0) {
                         this.subscribedExercises.delete(exerciseId!);
-                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(participationId);
+                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
                         if (subscribedTopic) {
                             this.jhiWebsocketService.unsubscribe(subscribedTopic);
-                            this.openResultWebsocketSubscriptions.delete(participationId);
+                            this.openResultWebsocketSubscriptions.delete(exerciseId!);
                         }
                     }
                 }

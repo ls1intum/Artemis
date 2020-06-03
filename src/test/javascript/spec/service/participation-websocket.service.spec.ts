@@ -218,4 +218,27 @@ describe('ParticipationWebsocketService', () => {
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participationWithoutResult, results: [newRatedResult] });
     });
     /* eslint-enable no-unused-vars */
+
+    it('should reset the local cache', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id, false, participation2.exercise!.id);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.equal(participationPersonalResultTopic);
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(1);
+
+        participationWebsocketService.resetLocalCache();
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.be.null;
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(0);
+    });
+
+    it('should return the cached participation after adding it', () => {
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id)).to.be.null;
+
+        participationWebsocketService.addParticipation(participation);
+
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id)).to.deep.equal(participation);
+    });
 });
