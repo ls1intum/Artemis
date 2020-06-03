@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-//import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-//import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -14,13 +13,24 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
 
 public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Autowired
@@ -33,7 +43,7 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
+    private JenkinsRequestMockProvider jenkinsRequestMockProvider;
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
@@ -75,7 +85,7 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
         database.addUsers(numberOfStudents, 1, 1);
         course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -122,5 +132,47 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
         doReturn(studentTeamRepoName).when(versionControlService).getRepositorySlugFromUrl(studentTeamRepoTestUrl.getURL());
 
         doReturn(projectKey).when(versionControlService).getProjectKeyFromUrl(any());
+    }
+
+    @AfterEach
+    public void tearDown() throws IOException {
+        database.resetDatabase();
+        reset(gitService);
+        reset(jenkinsServer);
+        gitlabRequestMockProvider.reset();
+        jenkinsRequestMockProvider.reset();
+        exerciseRepo.resetLocalRepo();
+        testRepo.resetLocalRepo();
+        solutionRepo.resetLocalRepo();
+        studentRepo.resetLocalRepo();
+        studentTeamRepo.resetLocalRepo();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+        exercise.setMode(mode);
+        mockConnectorRequestsForSetup(exercise);
+        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        exercise.setId(generatedExercise.getId());
+        assertThat(exercise).isEqualTo(generatedExercise);
+        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+    }
+
+    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+        final var projectKey = exercise.getProjectKey();
+        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, false);
+        gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, false);
+        gitlabRequestMockProvider.mockCreateProjectForExercise(exercise);
+        gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        gitlabRequestMockProvider.mockAddWebHooks(exercise);
+        jenkinsRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
     }
 }

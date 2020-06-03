@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis;
 
-import com.atlassian.bamboo.specs.util.BambooServer;
 import com.offbytwo.jenkins.JenkinsServer;
-import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
@@ -49,6 +48,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
     protected GitService gitService;
 
     // TODO: activate jenkins, gitlab profiles and add mocking services for them
+    @SpyBean
+    protected GitLabUserManagementService userManagementService;
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
@@ -67,7 +68,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, jenkinsServer, gitService, groupNotificationService, websocketMessagingService,
+        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, jenkinsServer, gitService, groupNotificationService, websocketMessagingService, userManagementService,
             plantUmlService, messagingTemplate, programmingSubmissionService);
     }
 }

@@ -295,6 +295,28 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
+    /**
+     * Gets the project key from the given URL
+     *
+     * TODO: rework this!
+     *
+     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The project key
+     * @throws GitLabException if the URL is invalid and no project key could be extracted
+     */
+    public String getProjectKeyFromUrl(URL repositoryUrl) throws GitLabException {
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        if (urlParts.length > 2) {
+            return urlParts[2];
+        }
+
+        log.error("No project key could be found for repository {}", repositoryUrl);
+        throw new GitLabException("No project key could be found");
+    }
+
     @Override
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {

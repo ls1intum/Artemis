@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
