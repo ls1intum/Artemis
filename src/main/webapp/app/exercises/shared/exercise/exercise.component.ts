@@ -17,7 +17,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     predicate: string;
     reverse: boolean;
-    isLoading = true;
 
     // These two variables are used to emit errors to the delete dialog
     protected dialogErrorSource = new Subject<string>();

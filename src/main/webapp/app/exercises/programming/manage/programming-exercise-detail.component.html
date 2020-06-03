@@ -1,8 +1,5 @@
 <div class="row justify-content-center">
     <div class="col-8">
-        <div *ngIf="!programmingExercise" [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
-            <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
-        </div>
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />

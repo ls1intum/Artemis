@@ -1,6 +1,3 @@
-<div *ngIf="!quizExercise" [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
-    <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
-</div>
 <div class="container-fluid" *ngIf="quizExercise">
     <h4>
         <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>

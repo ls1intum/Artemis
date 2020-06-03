@@ -1,4 +1,4 @@
-<ng-container *ngIf="course; else loading">
+<ng-container *ngIf="course">
     <h3>
         <span
             >{{ course.title }} - {{ quizExercisesCount + programmingExercisesCount + modelingExercisesCount + fileUploadExercisesCount + textExercisesCount }}
@@ -27,9 +27,3 @@
         <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
 </ng-container>
-
-<ng-template #loading>
-    <div [style]="{ height: '320px' }" class="d-flex align-items-center justify-content-center">
-        <fa-icon class="ml-2" size="2x" [icon]="'circle-notch'" [spin]="true"></fa-icon>
-    </div>
-</ng-template>
