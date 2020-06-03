@@ -5,6 +5,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -160,7 +161,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     resetQuestion() {
         this.resetQuestionTitle();
         this.resetQuestionText();
-        this.question.answerOptions = this.backupQuestion.answerOptions;
+        this.question.answerOptions = cloneDeep(this.backupQuestion.answerOptions);
     }
 
     /**
@@ -177,7 +178,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
             return answer.id === answerBackup.id;
         });
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex] = this.backupQuestion.answerOptions![backupAnswerIndex];
+        this.question.answerOptions![answerIndex] = cloneDeep(this.backupQuestion.answerOptions![backupAnswerIndex]);
     }
 
     /**

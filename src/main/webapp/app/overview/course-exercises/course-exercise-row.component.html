@@ -48,7 +48,7 @@
                 </h4>
             </div>
             <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">
-                <span class="d-none d-sm-inline"> {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | artemisDate: 'short-date' }} </span>
+                <span class="d-none d-sm-inline"> {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | artemisDate: 'long-date' }} </span>
                 ({{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate!) | amTimeAgo }})
             </div>
             <ng-template #noDate>
