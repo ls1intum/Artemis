@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -109,7 +111,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks(), textExercise);
+        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
@@ -359,9 +361,10 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     private void saveTextBlocks(List<TextBlock> textBlocks, TextSubmission textSubmission) {
         if (textBlocks != null) {
-            textBlocks.forEach(tb -> {
+            final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
+            textBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
                 tb.setSubmission(textSubmission);
-            });
+            }).collect(toList());
             textBlockRepository.saveAll(textBlocks);
         }
     }

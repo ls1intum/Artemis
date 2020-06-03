@@ -14,7 +14,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() zeroIndent = true;
     @Input() complaint: Complaint;
-    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond (i.e. that he is not the assessor)
+    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();

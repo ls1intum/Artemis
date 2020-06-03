@@ -50,6 +50,7 @@ public abstract class AssessmentResource {
     void checkAuthorization(Exercise exercise, User user) throws AccessForbiddenException, BadRequestAlertException {
         validateExercise(exercise);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            log.debug("Insufficient permission for course: " + exercise.getCourse().getTitle());
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }
