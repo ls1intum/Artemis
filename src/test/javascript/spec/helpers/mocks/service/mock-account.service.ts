@@ -15,6 +15,7 @@ export class MockAccountService implements IAccountService {
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAuthenticated = () => true;
+    isOwnerOfParticipation = () => true;
     isAdmin = () => true;
     save = (account: any) => ({} as any);
 }

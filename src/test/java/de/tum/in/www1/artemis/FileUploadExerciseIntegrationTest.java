@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -89,7 +88,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getFileUploadExercise() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -101,12 +100,9 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
-        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(1);
-
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.OK);
-
+        for (var exercise : course.getExercises()) {
+            request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
+        }
         assertThat(exerciseRepo.findAll().isEmpty());
     }
 
@@ -114,20 +110,18 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     public void deleteFileUploadExercise_asStudent() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
-        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(1);
+        for (var exercise : course.getExercises()) {
+            request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
+        }
 
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.FORBIDDEN);
-
-        assertThat(exerciseRepo.findAll().size() == 2);
+        assertThat(exerciseRepo.findAll().size() == course.getExercises().size());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
 
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,

@@ -75,7 +75,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private ModelingExercise useCaseExercise;
 
-    private ModelingExercise afterDueDateExercise;
+    private ModelingExercise finishedExercise;
 
     private ModelingSubmission submittedSubmission;
 
@@ -94,12 +94,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addUsers(3, 1, 1);
         Course course1 = database.addCourseWithDifferentModelingExercises();
         List<Exercise> exercises = new ArrayList<>(course1.getExercises());
-        classExercise = (ModelingExercise) exercises.get(0);
-        activityExercise = (ModelingExercise) exercises.get(1);
-        objectExercise = (ModelingExercise) exercises.get(2);
-        useCaseExercise = (ModelingExercise) exercises.get(3);
-        afterDueDateExercise = (ModelingExercise) exercises.get(4);
-        afterDueDateParticipation = database.addParticipationForExercise(afterDueDateExercise, "student3");
+        classExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ClassDiagram");
+        activityExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ActivityDiagram");
+        objectExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ObjectDiagram");
+        useCaseExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "UseCaseDiagram");
+        finishedExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "finished");
+        afterDueDateParticipation = database.addParticipationForExercise(finishedExercise, "student3");
         database.addParticipationForExercise(classExercise, "student3");
 
         emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
@@ -107,7 +107,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
-        Course course2 = database.addCourseWithOneTextExercise();
+        Course course2 = database.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).get(0);
 
         // Add users that are not in the course
@@ -639,7 +639,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationService.save(afterDueDateParticipation);
-        request.post("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+        request.post("/api/exercises/" + finishedExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
