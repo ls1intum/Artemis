@@ -9,7 +9,7 @@
                 </h3>
                 <h4>
                     <span class="mr-2" *ngIf="lecture!.startDate && lecture!.endDate">
-                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | artemisDate }} - {{ lecture!.endDate | artemisDate: 'long-time' }}
+                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | artemisDate }} - {{ lecture!.endDate | artemisDate: 'time' }}
                     </span>
                 </h4>
             </div>
