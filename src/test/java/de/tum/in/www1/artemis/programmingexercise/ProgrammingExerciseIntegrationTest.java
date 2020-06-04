@@ -264,6 +264,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "instructor1");
