@@ -207,6 +207,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
+                .collect(Collectors.toList());
+        final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
+                String.join(",", participationIds));
+        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
