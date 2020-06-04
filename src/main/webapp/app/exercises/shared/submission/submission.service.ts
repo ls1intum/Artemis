@@ -9,7 +9,6 @@ import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;

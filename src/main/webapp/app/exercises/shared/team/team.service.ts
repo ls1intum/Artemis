@@ -263,7 +263,7 @@ export class TeamService implements ITeamService {
 
     private static convertDateFromClient(team: Team): Team {
         return Object.assign({}, team, {
-            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : null, //set createdDAte to this
+            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : null,
             lastModifiedDate: team.lastModifiedDate && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : null,
         });
     }
