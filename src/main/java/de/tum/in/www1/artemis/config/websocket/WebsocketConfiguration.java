@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
@@ -79,20 +80,19 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     private static final int LOGGING_DELAY_SECONDS = 10;
 
     public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            TaskScheduler taskScheduler) {
+            TaskScheduler taskScheduler, AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
         this.env = env;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.taskScheduler = taskScheduler;
-    }
-
-    @Autowired
-    public void setParticipationService(ParticipationService participationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
-            UserService userService) {
-        this.participationService = participationService;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseService = exerciseService;
         this.userService = userService;
+    }
+
+    @Autowired
+    public void setParticipationService(ParticipationService participationService) {
+        this.participationService = participationService;
     }
 
     /**
