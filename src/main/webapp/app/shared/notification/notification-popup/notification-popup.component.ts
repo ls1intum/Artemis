@@ -22,7 +22,7 @@ export class NotificationPopupComponent implements OnInit {
     ngOnInit(): void {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
-                this.notificationService.subscribeToNotificationUpdates();
+                this.subscribeToNotificationUpdates();
             }
         });
     }
@@ -58,7 +58,7 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     private subscribeToNotificationUpdates(): void {
-        this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
+        this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
             if (notification && notification.notificationDate) {
                 this.addNotification(notification);
             }
