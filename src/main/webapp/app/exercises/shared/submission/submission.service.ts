@@ -54,14 +54,14 @@ export class SubmissionService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submissionDate = res.body.submissionDate != null ? moment(res.body.submissionDate) : null;
+            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : null;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
         }
         return res;
     }
 
     protected convertParticipationDateFromServer(participation: Participation) {
-        participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
         participation.results = this.convertResultsDateFromServer(participation.results);
         participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
         return participation;
@@ -71,7 +71,7 @@ export class SubmissionService {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
                 convertedResults.push(result);
             });
         }
@@ -83,7 +83,7 @@ export class SubmissionService {
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : null;
                     convertedSubmissions.push(submission);
                 }
             });

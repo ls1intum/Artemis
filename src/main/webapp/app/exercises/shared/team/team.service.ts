@@ -250,7 +250,7 @@ export class TeamService implements ITeamService {
     private static convertDateFromServer(res: TeamResponse): TeamResponse {
         if (res.body) {
             res.body.createdDate = moment(res.body.createdDate);
-            res.body.lastModifiedDate = res.body.lastModifiedDate != null ? moment(res.body.lastModifiedDate) : null;
+            res.body.lastModifiedDate = res.body.lastModifiedDate ? moment(res.body.lastModifiedDate) : null;
         }
         return res;
     }
@@ -263,8 +263,8 @@ export class TeamService implements ITeamService {
 
     private static convertDateFromClient(team: Team): Team {
         return Object.assign({}, team, {
-            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : null,
-            lastModifiedDate: team.lastModifiedDate != null && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : null,
+            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : null, //set createdDAte to this
+            lastModifiedDate: team.lastModifiedDate && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : null,
         });
     }
 }

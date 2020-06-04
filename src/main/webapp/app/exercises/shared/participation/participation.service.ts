@@ -147,7 +147,7 @@ export class ParticipationService {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
                 convertedResults.push(result);
             });
         }
@@ -159,7 +159,7 @@ export class ParticipationService {
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : null;
                     convertedSubmissions.push(submission);
                 }
             });
