@@ -247,9 +247,7 @@ run configuration that will be delivered with this repository:
 
 * Choose ``Run | Edit Configurations...`
 * Select the ``Artemis (Client)`` configuration ``rom`` the ``npm section``
-* Now you can run the configuration in the upper right corner of IntelliJ:
-
-TODO: SCREENSHOT
+* Now you can run the configuration in the upper right corner of IntelliJ
 
 Using the command line
 ^^^^^^^^^^^^^^^^^^^^^
