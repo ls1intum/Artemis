@@ -257,7 +257,7 @@ export class TeamService implements ITeamService {
 
     private static convertDatesForTeamFromServer(team: Team): Team {
         team.createdDate = moment(team.createdDate);
-        team.lastModifiedDate = team.lastModifiedDate != null ? moment(team.lastModifiedDate) : null;
+        team.lastModifiedDate = team.lastModifiedDate ? moment(team.lastModifiedDate) : null;
         return team;
     }
 

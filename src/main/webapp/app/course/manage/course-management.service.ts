@@ -294,16 +294,16 @@ export class CourseManagementService {
 
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
-            startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
-            endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
+            startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
+            endDate: course.endDate && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
         });
         return copy;
     }
 
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
             res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
             res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
         }
@@ -386,15 +386,6 @@ export class CourseExerciseService {
         return this.http
             .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
-    /**
-     * returns a modeling exercise with the given exerciseId of the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findModelingExercise(courseId: number, exerciseId: number): Observable<ModelingExercise> {
-        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}`).map((res: ModelingExercise) => this.convertDateFromServer(res));
     }
 
     /**

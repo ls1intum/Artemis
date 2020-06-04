@@ -79,7 +79,7 @@ export class ResultService implements IResultService {
         const copy: Result = Object.assign({}, result, {
             completionDate:
                 // Result completionDate is a moment object -> toJSON.
-                result.completionDate != null && isMoment(result.completionDate)
+                result.completionDate && isMoment(result.completionDate)
                     ? result.completionDate.toJSON()
                     : // Result completionDate would be a valid date -> keep string.
                     result.completionDate && moment(result.completionDate).isValid()
