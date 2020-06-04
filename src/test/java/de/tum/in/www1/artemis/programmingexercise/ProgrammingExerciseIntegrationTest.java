@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -48,6 +49,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.Verifiable;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -306,7 +308,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
         programmingExercise.setId(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -315,7 +316,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -355,6 +355,22 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProblemStatement_invalidId_notFound() throws Exception {
+        programmingExercise.setId(20L);
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
 
     @Test
