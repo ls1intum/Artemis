@@ -222,7 +222,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 .collect(Collectors.toList());
         final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
                 String.join(",", participationIds));
-        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
     }
 
     @Test
