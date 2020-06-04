@@ -312,6 +312,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
