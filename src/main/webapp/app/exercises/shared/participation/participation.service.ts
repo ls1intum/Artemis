@@ -94,14 +94,14 @@ export class ParticipationService {
 
     protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
         const copy: StudentParticipation = Object.assign({}, participation, {
-            initializationDate: participation.initializationDate != null && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
+            initializationDate: participation.initializationDate && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
+            res.body.initializationDate = res.body.initializationDate ? moment(res.body.initializationDate) : null;
             res.body.results = this.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
@@ -120,8 +120,8 @@ export class ParticipationService {
 
     protected convertExerciseDateFromServer(exercise: Exercise) {
         if (exercise !== null) {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
         }
         return exercise;
     }

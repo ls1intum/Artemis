@@ -157,9 +157,9 @@ export class ExerciseService {
      * @returns { Exercise } - Exercise with adjusted times
      */
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
-        exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-        exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
+        exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+        exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+        exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
         exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
         return exercise;
     }
