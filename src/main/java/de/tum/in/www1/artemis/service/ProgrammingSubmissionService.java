@@ -528,27 +528,25 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        String topic = "/topic/newSubmission";
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, submission));
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+            String exerciseTopic = EXERCISE_TOPIC_ROOT + submission.getParticipation().getExercise().getId() + "/newSubmission";
             messagingTemplate.convertAndSend(exerciseTopic, submission);
         }
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        String topic = "/topic/newSubmission";
         if (submission.getParticipation() instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), topic, error));
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            String exerciseTopic = "/topic/exercise/" + submission.getParticipation().getExercise().getId() + "/newSubmission";
+            String exerciseTopic = EXERCISE_TOPIC_ROOT + submission.getParticipation().getExercise().getId() + "/newSubmission";
             messagingTemplate.convertAndSend(exerciseTopic, error);
         }
     }

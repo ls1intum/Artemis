@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
+
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,11 +50,11 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (originalParticipation instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) originalParticipation;
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), "/topic/newResults", result));
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
         }
 
         // Send to tutors, instructors and admins
-        messagingTemplate.convertAndSend("/topic/exercise/" + originalParticipation.getExercise().getId() + "/newResults", result);
+        messagingTemplate.convertAndSend(getResultDestination(originalParticipation.getExercise().getId()), result);
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);
@@ -79,7 +82,11 @@ public class WebsocketMessagingService {
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 
+    private static String getResultDestination(long exerciseId) {
+        return getResultDestination(String.valueOf(exerciseId));
+    }
+
     private static String getResultDestination(String exerciseId) {
-        return "/topic/exercise/" + exerciseId + "/newResults";
+        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

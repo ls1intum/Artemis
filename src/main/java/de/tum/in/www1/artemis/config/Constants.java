@@ -32,7 +32,11 @@ public final class Constants {
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String PARTICIPATION_TOPIC_ROOT = "/topic/exercise/";
+    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
+
+    public static final String NEW_SUBMISSION_TOPIC = "/topic/newSubmission";
+
+    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
