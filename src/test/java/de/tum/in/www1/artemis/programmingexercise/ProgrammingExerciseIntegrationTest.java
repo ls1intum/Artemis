@@ -207,6 +207,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void textExportSubmissionsByParticipationIds_invalidParticipation_badRequest() throws Exception {
+        final var path = Endpoints.ROOT
+                + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}", "" + 10L);
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
