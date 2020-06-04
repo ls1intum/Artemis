@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -45,11 +46,15 @@ public class RatingResource {
 
     private final ResultService resultService;
 
-    public RatingResource(RatingService ratingService, UserService userService, AuthorizationCheckService authCheckService, ResultService resultService) {
+    private final ParticipationService participationService;
+
+    public RatingResource(RatingService ratingService, UserService userService, AuthorizationCheckService authCheckService, ResultService resultService,
+            ParticipationService participationService) {
         this.ratingService = ratingService;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultService = resultService;
+        this.participationService = participationService;
     }
 
     /**
