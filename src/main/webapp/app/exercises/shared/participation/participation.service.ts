@@ -127,7 +127,7 @@ export class ParticipationService {
     }
 
     protected convertParticipationDateFromServer(participation: StudentParticipation) {
-        participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
         participation.results = this.convertResultsDateFromServer(participation.results);
         participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
         return participation;

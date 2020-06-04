@@ -110,7 +110,7 @@ export class ResultService implements IResultService {
 
     convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
-            participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
             if (participation.exercise) {
                 participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }
