@@ -274,7 +274,7 @@ file and save, the client is automatically reloaded with the new code)
 and will start the client application in your browser on
 ``http://localhost:9000``. If you have activated the JIRA profile (see
 above in Server Setup) and if you have configured
-``application-artemis.yml`` correctly, then you should be able to loginâ
+``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
 For more information, review `Working with
