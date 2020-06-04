@@ -412,6 +412,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void setupProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
+        programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -420,6 +421,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void setupProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);
+        programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -428,6 +430,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void setupProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxScore(null);
+        programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -435,6 +438,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_vcsProjectAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
 
@@ -445,6 +449,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_bambooProjectAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
