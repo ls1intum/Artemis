@@ -38,7 +38,7 @@ export class CourseManagementService {
         private http: HttpClient,
         private exerciseService: ExerciseService,
         private lectureService: LectureService,
-        private notificationService: NotificationService,
+        // private notificationService: NotificationService,
         private accountService: AccountService,
     ) {}
 
@@ -284,22 +284,19 @@ export class CourseManagementService {
     getCoursesForNotifications(): BehaviorSubject<Course[] | null> {
         // The timeout is set to ensure that the request for retrieving courses
         // here is only made if there was no similar request made before.
-        console.log('here 2');
         setTimeout(() => {
-            console.log('here 3');
-            if (!this.fetchingCoursesForNotifications) {
-                console.log('here 4');
+            // Retrieve courses if no courses were fetched before and are not queried at the moment.
+            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications) {
                 this.fetchingCoursesForNotifications = true;
                 // TODO: replace with dedicated REST call that has a smaller payload (and that get's courses specifically for the current user)
                 this.findAllForDashboard().subscribe(
                     (res: HttpResponse<Course[]>) => {
-                        console.log('here 5');
                         this.coursesForNotifications.next(res.body);
                     },
                     () => (this.fetchingCoursesForNotifications = false),
                 );
             }
-        }, 1000);
+        }, 500);
         return this.coursesForNotifications;
     }
 
@@ -348,14 +345,14 @@ export class CourseManagementService {
 
     private subscribeToCourseNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            this.notificationService.handleCoursesNotifications(res.body);
+            // this.notificationService.handleCoursesNotifications(res.body);
         }
         return res;
     }
 
     private subscribeToCourseNotification(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.notificationService.handleCourseNotifications(res.body);
+            // this.notificationService.handleCourseNotifications(res.body);
         }
         return res;
     }
