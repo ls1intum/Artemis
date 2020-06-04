@@ -33,7 +33,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
     @Input() showTestNames = false;
-    @Input() personal = true;
+    @Input() personalParticipation = true;
 
     result: Result | null;
     isBuilding: boolean;
@@ -87,7 +87,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personal, this.exercise ? this.exercise.id : undefined)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
@@ -108,7 +108,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personal)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personalParticipation)
             .pipe(
                 // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
                 // (otherwise the building animation will be shown even though not relevant).

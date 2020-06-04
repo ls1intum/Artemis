@@ -32,9 +32,9 @@ spring:
             indent-output: true
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-        username: root
-        password:
+        url: jdbc:mysql://srv01.simon-leiss.de:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&&serverTimezone=UTC
+        username: artemis
+        password: artemis2018
         hikari:
             poolName: Hikari
             auto-commit: false
@@ -61,7 +61,7 @@ spring:
 
 server:
     port: 8080
-    url: https://artemislocal.ase.in.tum.de
+    url: http://tunnel.sleiss.me
 
 # ===================================================================
 # JHipster specific properties

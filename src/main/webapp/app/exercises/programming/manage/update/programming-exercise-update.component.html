@@ -156,7 +156,11 @@
                             <span class="font-weight-bold">{{ 'artemisApp.programmingExercise.import.attention' | translate }}</span
                             ><span>{{ 'artemisApp.programmingExercise.import.markdownWarning' | translate }}</span>
                         </ngb-alert>
-                        <jhi-programming-exercise-instructions [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation" [personal]="false">
+                        <jhi-programming-exercise-instructions
+                            [exercise]="programmingExercise"
+                            [participation]="programmingExercise.templateParticipation"
+                            [personalParticipation]="false"
+                        >
                         </jhi-programming-exercise-instructions>
                     </ng-container>
                     <jhi-programming-exercise-editable-instructions

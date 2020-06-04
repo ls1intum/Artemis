@@ -99,7 +99,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
-                comp.personal = true;
+                comp.personalParticipation = true;
             });
     });
 

@@ -56,7 +56,7 @@
                     <jhi-programming-exercise-instructions
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.templateParticipation"
-                        [personal]="true"
+                        [personalParticipation]="true"
                     ></jhi-programming-exercise-instructions>
                 </dd>
                 <ng-container *ngIf="programmingExercise.gradingInstructions">
@@ -136,7 +136,7 @@
                             [participation]="programmingExercise.templateParticipation"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
-                            [personal]="false"
+                            [personalParticipation]="false"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -162,7 +162,7 @@
                             [participation]="programmingExercise.solutionParticipation"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
-                            [personal]="false"
+                            [personalParticipation]="false"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
