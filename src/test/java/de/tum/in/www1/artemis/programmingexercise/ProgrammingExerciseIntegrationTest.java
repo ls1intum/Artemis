@@ -304,6 +304,15 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
+        programmingExercise.setId(null);
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.enableMockingOfRequests();
