@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, UrlTree } from '@angular/router';
-import * as moment from 'moment';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -59,17 +58,14 @@ export class NotificationPopupComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            if (notification && notification.notificationDate) {
-                this.addNotification(notification);
-            }
+            this.addNotification(notification);
         });
     }
 
     private addNotification(notification: Notification): void {
-        notification.notificationDate = moment(notification.notificationDate);
-        // Only add a notification if it does not already exist
+        // Only add a notification if it does not already exist.
         if (!this.notifications.some(({ id }) => id === notification.id)) {
-            // For now only notifications about a started quiz should be displayed
+            // For now only notifications about a started quiz should be displayed.
             if (notification.title === 'Quiz started') {
                 this.addQuizNotification(notification);
                 this.setRemovalTimeout(notification);

@@ -114,14 +114,11 @@ export class NotificationSidebarComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            if (notification && notification.notificationDate) {
-                notification.notificationDate = moment(notification.notificationDate);
-                // Increase total notifications count if the notification does not already exist.
-                if (!this.notifications.some(({ id }) => id === notification.id)) {
-                    this.totalNotifications += 1;
-                }
-                this.addNotifications([notification]);
+            // Increase total notifications count if the notification does not already exist.
+            if (!this.notifications.some(({ id }) => id === notification.id)) {
+                this.totalNotifications += 1;
             }
+            this.addNotifications([notification]);
         });
     }
 

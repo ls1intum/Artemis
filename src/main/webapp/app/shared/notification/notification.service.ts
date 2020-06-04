@@ -135,7 +135,7 @@ export class NotificationService {
                     this.subscribedTopics.push(userTopic);
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                        this.notificationObserverNEW.next(notification);
+                        this.addNotificationToObserver(notification);
                     });
                 }
             }
@@ -154,7 +154,7 @@ export class NotificationService {
                 this.subscribedTopics.push(courseTopic);
                 this.jhiWebsocketService.subscribe(courseTopic);
                 this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
-                    this.notificationObserverNEW.next(notification);
+                    this.addNotificationToObserver(notification);
                 });
             }
         });
@@ -169,20 +169,26 @@ export class NotificationService {
                 this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
                     // TODO: enhance condition.
                     if (quizExercise.started) {
-                        this.createNotificationFromStartedQuizExercise(quizExercise);
+                        this.addNotificationToObserver(this.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });
             }
         });
     }
 
-    private createNotificationFromStartedQuizExercise(quizExercise: QuizExercise) {
-        // TODO: use the quizExercise to create the notification text and target
-        const notification = {
+    private createNotificationFromStartedQuizExercise(quizExercise: QuizExercise): GroupNotification {
+        // TODO: use the quizExercise to create the notification text, notificationDate and target
+        return {
             title: 'Quiz started',
             text: 'Quiz "TODO" just started.',
         } as GroupNotification;
-        this.notificationObserverNEW.next(notification);
+    }
+
+    private addNotificationToObserver(notification: Notification): void {
+        if (notification && notification.notificationDate) {
+            notification.notificationDate = moment(notification.notificationDate);
+            this.notificationObserverNEW.next(notification);
+        }
     }
 
     private convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
