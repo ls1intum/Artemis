@@ -89,6 +89,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.submission = participation.submissions[0] as TextSubmission;
             if (this.submission && participation.results && this.isAfterAssessmentDueDate) {
                 this.result = participation.results.find((r) => r.submission!.id === this.submission.id)!;
+                this.result.participation = participation;
             }
 
             if (this.submission && this.submission.text) {
