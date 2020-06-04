@@ -47,7 +47,7 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment, textExercise);
+        Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
         return submitResult(result, textExercise, calculatedScore);
     }
@@ -58,12 +58,11 @@ public class TextAssessmentService extends AssessmentService {
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
-     * @param textExercise  the corresponding TextExercise
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
                 .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);

@@ -55,6 +55,15 @@
                     "showAll": "Alle anzeigen",
                     "showLocked": "Nur gesperrte anzeigen"
                 }
+            },
+            "locks": {
+                "home": {
+                    "title": "Gesperrte Bewertungen"
+                },
+                "title": "Von dir gesperrte Bewertungen",
+                "exercise": "Aufgabe",
+                "type": "Aufgabentyp",
+                "empty": "Keine von dir gesperrten Bewertungen vorhanden!"
             }
         }
     }

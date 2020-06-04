@@ -299,7 +299,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.updateSubmissionModel();
-        this.submission.submitted = true;
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
