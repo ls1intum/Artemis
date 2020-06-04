@@ -10,8 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { Submission } from 'app/entities/submission.model';
-import { Result } from 'app/entities/result.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -20,7 +19,7 @@ export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
 export class ParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     update(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
@@ -102,8 +101,8 @@ export class ParticipationService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.initializationDate = res.body.initializationDate ? moment(res.body.initializationDate) : null;
-            res.body.results = this.convertResultsDateFromServer(res.body.results);
-            res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
+            res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
+            res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
         }
         return res;
@@ -128,8 +127,8 @@ export class ParticipationService {
 
     protected convertParticipationDateFromServer(participation: StudentParticipation) {
         participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
-        participation.results = this.convertResultsDateFromServer(participation.results);
-        participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+        participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
+        participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         return participation;
     }
 
@@ -141,30 +140,6 @@ export class ParticipationService {
             });
         }
         return convertedParticipations;
-    }
-
-    protected convertResultsDateFromServer(results: Result[]) {
-        const convertedResults: Result[] = [];
-        if (results != null && results.length > 0) {
-            results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
-                convertedResults.push(result);
-            });
-        }
-        return convertedResults;
-    }
-
-    protected convertSubmissionsDateFromServer(submissions: Submission[]) {
-        const convertedSubmissions: Submission[] = [];
-        if (submissions != null && submissions.length > 0) {
-            submissions.forEach((submission: Submission) => {
-                if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : null;
-                    convertedSubmissions.push(submission);
-                }
-            });
-        }
-        return convertedSubmissions;
     }
 
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | null {

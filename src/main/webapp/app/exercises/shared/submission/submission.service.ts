@@ -66,7 +66,7 @@ export class SubmissionService {
         return participation;
     }
 
-    protected convertResultsDateFromServer(results: Result[]) {
+    convertResultsDateFromServer(results: Result[]) {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
@@ -77,7 +77,7 @@ export class SubmissionService {
         return convertedResults;
     }
 
-    protected convertSubmissionsDateFromServer(submissions: Submission[]) {
+    convertSubmissionsDateFromServer(submissions: Submission[]) {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
