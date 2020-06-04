@@ -17,7 +17,7 @@ export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
-    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean) => BehaviorSubject<Result | null>;
+    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | null>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
 }
 
