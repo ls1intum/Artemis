@@ -224,7 +224,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         repositoryExportOptions.setCombineStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
-        repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
         return repositoryExportOptions;
     }
 
