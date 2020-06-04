@@ -105,7 +105,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // increase the limit of concurrent connections (default is 1024 which is much too low)
         // config.setCacheLimit(10000);
         //
-        config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry");
+        config.enableStompBrokerRelay("/topic");
     }
 
     @Override
