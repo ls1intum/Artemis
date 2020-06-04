@@ -313,8 +313,8 @@ export class CourseManagementService {
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.startDate = course.startDate != null ? moment(course.startDate) : null;
-                course.endDate = course.endDate != null ? moment(course.endDate) : null;
+                course.startDate = course.startDate ? moment(course.startDate) : null;
+                course.endDate = course.endDate ? moment(course.endDate) : null;
                 course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
                 course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
             });
@@ -502,8 +502,8 @@ export class CourseExerciseService {
     }
 
     convertDateFromServer<T extends Exercise>(res: T): T {
-        res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
-        res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
+        res.releaseDate = res.releaseDate ? moment(res.releaseDate) : null;
+        res.dueDate = res.dueDate ? moment(res.dueDate) : null;
         return res;
     }
 
