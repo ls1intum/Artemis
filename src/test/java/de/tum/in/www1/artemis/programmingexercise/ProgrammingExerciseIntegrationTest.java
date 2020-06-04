@@ -256,6 +256,22 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
+        programmingExercise.setId(20L);
+        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.delete(path, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.delete(path, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise() throws Exception {
         final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
@@ -282,6 +298,22 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(programmingExerciseServer.getTemplateParticipation()).isNotNull();
         assertThat(programmingExerciseServer.getSolutionParticipation()).isNotNull();
         // TODO add more assertions
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
+        programmingExercise.setId(20L);
+        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.get(path, HttpStatus.NOT_FOUND, ProgrammingExercise.class);
     }
 
     @Test
