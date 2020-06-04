@@ -23,7 +23,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     * 
+     *
      * @param exercise          a programming exercise with the required information to create the base build plan
      * @param planKey           the key of the plan
      * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
@@ -60,7 +60,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * triggers a build for the build plan in the given participation
-     * 
+     *
      * @param participation the participation with the id of the build plan that should be triggered
      * @throws HttpException if the request to the CI failed.
      */
@@ -199,6 +199,13 @@ public interface ContinuousIntegrationService {
      * @param permissions The permissions to grant the users
      */
     void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
+
+    /**
+     * Set Build Plan Permissions for admins, instructors and teaching assistants.
+     * @param programmingExercise   a programming exercise with the required information to set the needed build plan permissions
+     * @param planName              The name of the source plan
+     */
+    void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
 
     /**
      * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
