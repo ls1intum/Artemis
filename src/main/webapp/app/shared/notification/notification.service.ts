@@ -14,11 +14,13 @@ import { GroupNotification, GroupNotificationType } from 'app/entities/group-not
 import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification | null>;
+    notificationObserverNEW: BehaviorSubject<Notification | null>; // TODO: replace existing notificationObserver
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
@@ -30,41 +32,6 @@ export class NotificationService {
         private courseManagementService: CourseManagementService,
     ) {
         this.initNotificationObserver();
-    }
-
-    /**
-     * Create new notification.
-     * @param {Notification} notification
-     * @return Observable<HttpResponse<Notification>>
-     */
-    create(notification: Notification): Observable<HttpResponse<Notification>> {
-        const copy = this.convertDateFromClient(notification);
-        return this.http
-            .post<Notification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
-    }
-
-    /**
-     * Update existing notification.
-     * @param {Notification} notification
-     * @return Observable<HttpResponse<Notification>>
-     */
-    update(notification: Notification): Observable<HttpResponse<Notification>> {
-        const copy = this.convertDateFromClient(notification);
-        return this.http
-            .put<Notification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
-    }
-
-    /**
-     * Find notification by id.
-     * @param {number} id
-     * @return Observable<HttpResponse<Notification>>
-     */
-    find(id: number): Observable<HttpResponse<Notification>> {
-        return this.http
-            .get<Notification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
     }
 
     /**
@@ -88,29 +55,8 @@ export class NotificationService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    protected convertDateFromClient(notification: Notification): Notification {
-        return Object.assign({}, notification, {
-            notificationDate: notification.notificationDate != null && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
-        });
-    }
-
-    protected convertDateFromServer(res: HttpResponse<Notification>): HttpResponse<Notification> {
-        if (res.body) {
-            res.body.notificationDate = res.body.notificationDate != null ? moment(res.body.notificationDate) : null;
-        }
-        return res;
-    }
-
-    protected convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
-        if (res.body) {
-            res.body.forEach((notification: Notification) => {
-                notification.notificationDate = notification.notificationDate != null ? moment(notification.notificationDate) : null;
-            });
-        }
-        return res;
-    }
-
     /**
+     * TODO: remove
      * Subscribe to notifications for user.
      * @return Promise<any>
      */
@@ -138,36 +84,7 @@ export class NotificationService {
     }
 
     /**
-     * Subscribe to websocket for course and role.
-     * @param {Course} course
-     */
-    public handleCourseNotifications(course: Course): void {
-        let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
-        if (this.accountService.isAtLeastInstructorInCourse(course)) {
-            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
-        } else if (this.accountService.isAtLeastTutorInCourse(course)) {
-            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
-        }
-        if (!this.subscribedTopics.includes(courseTopic)) {
-            this.subscribedTopics.push(courseTopic);
-            this.jhiWebsocketService.subscribe(courseTopic);
-            this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
-                this.notificationObserver.next(notification);
-            });
-        }
-    }
-
-    /**
-     * handleCourseNotification for each course of array
-     * @param {Course[]} courses
-     */
-    public handleCoursesNotifications(courses: Course[]): void {
-        courses.forEach((course: Course) => {
-            this.handleCourseNotifications(course);
-        });
-    }
-
-    /**
+     * TODO: remove
      * Get the notificationObserver.
      * @return {BehaviorSubject<Notification}
      */
@@ -186,43 +103,95 @@ export class NotificationService {
     }
 
     /**
-     * TODO
+     * Init new observer for notifications and reset topics.
      */
-    subscribeToQuizUpdates(): void {
-        /*
-        console.log('here 1');
-        // TODO: Will duplicated subscriptions be handled?
-        this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
-            // TODO: implement subscription to quiz updates
-            console.log(courses);
-            // TODO: when received --> create notification from it and pass it to receiving component
-        });
-        */
+    cleanUp(): void {
+        this.cachedNotifications = new Observable<HttpResponse<Notification[]>>();
+        this.initNotificationObserver();
+        this.subscribedTopics = [];
     }
 
     /**
-     * Listen to updates of quiz exercises and create a notification.
-     * @returns {GroupNotification}
+     * Subscribe to single user notification, group notification and quiz updates if it was not already subscribed.
+     * Then it returns a BehaviorSubject the calling component can listen on to actually receive the notifications.
+     * @returns {BehaviorSubject<Notification | null>}
      */
-    createNotificationOnQuizExerciseUpdate(): GroupNotification {
-        /*
-        const quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
+    subscribeToNotificationUpdates(): BehaviorSubject<Notification | null> {
+        this.subscribeToSingleUserNotificationUpdates();
+        this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+            if (courses) {
+                this.subscribeToGroupNotificationUpdates(courses);
+                this.subscribeToQuizUpdates(courses);
+            }
+        });
+        return this.notificationObserverNEW;
+    }
 
-        // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-        this.jhiWebsocketService.subscribe(quizExerciseChannel);
-        this.jhiWebsocketService.receive(quizExerciseChannel).subscribe(
-            (quiz) => {
-                if (this.waitingForQuizStart && this.quizId === quiz.id) {
-                    this.applyQuizFull(quiz);
+    private subscribeToSingleUserNotificationUpdates(): void {
+        this.accountService.identity().then((user) => {
+            if (user) {
+                const userTopic = `/topic/user/${user.id}/notifications`;
+                if (!this.subscribedTopics.includes(userTopic)) {
+                    this.subscribedTopics.push(userTopic);
+                    this.jhiWebsocketService.subscribe(userTopic);
+                    this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                        this.notificationObserverNEW.next(notification);
+                    });
                 }
-            },
-            () => {},
-        );
-        */
-        return {
+            }
+        });
+    }
+
+    private subscribeToGroupNotificationUpdates(courses: Course[]): void {
+        courses.forEach((course) => {
+            let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
+            if (this.accountService.isAtLeastInstructorInCourse(course)) {
+                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
+            } else if (this.accountService.isAtLeastTutorInCourse(course)) {
+                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
+            }
+            if (!this.subscribedTopics.includes(courseTopic)) {
+                this.subscribedTopics.push(courseTopic);
+                this.jhiWebsocketService.subscribe(courseTopic);
+                this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
+                    this.notificationObserverNEW.next(notification);
+                });
+            }
+        });
+    }
+
+    private subscribeToQuizUpdates(courses: Course[]): void {
+        courses.forEach((course) => {
+            const quizExerciseTopic = '/topic/courses/' + course.id + '/quizExercises';
+            if (!this.subscribedTopics.includes(quizExerciseTopic)) {
+                this.subscribedTopics.push(quizExerciseTopic);
+                this.jhiWebsocketService.subscribe(quizExerciseTopic);
+                this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
+                    // TODO: enhance condition.
+                    if (quizExercise.started) {
+                        this.createNotificationFromStartedQuizExercise(quizExercise);
+                    }
+                });
+            }
+        });
+    }
+
+    private createNotificationFromStartedQuizExercise(quizExercise: QuizExercise) {
+        // TODO: use the quizExercise to create the notification
+        const notification = {
             title: 'Quiz started',
             text: 'Quiz "TODO" just started.',
         } as GroupNotification;
+        this.notificationObserverNEW.next(notification);
+    }
+
+    private convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
+        if (res.body) {
+            res.body.forEach((notification: Notification) => {
+                notification.notificationDate = notification.notificationDate != null ? moment(notification.notificationDate) : null;
+            });
+        }
+        return res;
     }
 
     /**
@@ -230,14 +199,6 @@ export class NotificationService {
      */
     private initNotificationObserver(): void {
         this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-    }
-
-    /**
-     * Init new observer for notifications and reset topics.
-     */
-    public cleanUp(): void {
-        this.cachedNotifications = new Observable<HttpResponse<Notification[]>>();
-        this.initNotificationObserver();
-        this.subscribedTopics = [];
+        this.notificationObserverNEW = new BehaviorSubject<Notification | null>(null);
     }
 }
