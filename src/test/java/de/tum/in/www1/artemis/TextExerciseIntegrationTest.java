@@ -57,7 +57,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void submitEnglishTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
@@ -72,7 +72,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
@@ -86,7 +86,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         String title = "New Text Exercise";
@@ -105,7 +105,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         textExercise = (TextExercise) exerciseRepository.findByIdWithEagerExampleSubmissions(textExercise.getId()).get();
 
@@ -133,7 +133,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextExercisesForCourse() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
 
         List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
 
@@ -143,7 +143,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextExerciseAsTutor() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
@@ -154,7 +154,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getTextExerciseAsStudent() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
@@ -162,7 +162,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testTriggerAutomaticAssessment() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithoutLocation("/api/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
     }

@@ -233,7 +233,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetTeam_BadRequest() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
-        Exercise wrongExercise = new ArrayList<>(course.getExercises()).get(0);
+        Exercise wrongExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
         Team team = database.addTeamForExercise(wrongExercise, tutor);
