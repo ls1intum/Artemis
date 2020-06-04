@@ -56,43 +56,6 @@ export class NotificationService {
     }
 
     /**
-     * TODO: remove
-     * Subscribe to notifications for user.
-     * @return Promise<any>
-     */
-    subscribeUserNotifications(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            this.accountService
-                .identity()
-                .then((user: User) => {
-                    if (user) {
-                        const userTopic = `/topic/user/${user.id}/notifications`;
-                        if (!this.subscribedTopics.includes(userTopic)) {
-                            this.subscribedTopics.push(userTopic);
-                            this.jhiWebsocketService.subscribe(userTopic);
-                            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                                this.notificationObserver.next(notification);
-                            });
-                            resolve();
-                        }
-                    } else {
-                        reject('no User');
-                    }
-                })
-                .catch((error) => reject(error));
-        });
-    }
-
-    /**
-     * TODO: remove
-     * Get the notificationObserver.
-     * @return {BehaviorSubject<Notification}
-     */
-    subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
-        return this.notificationObserver;
-    }
-
-    /**
      * Navigate to notification target.
      * @param {GroupNotification} notification
      */
