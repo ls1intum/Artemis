@@ -177,7 +177,7 @@ export class NotificationService {
     }
 
     private createNotificationFromStartedQuizExercise(quizExercise: QuizExercise) {
-        // TODO: use the quizExercise to create the notification
+        // TODO: use the quizExercise to create the notification text and target
         const notification = {
             title: 'Quiz started',
             text: 'Quiz "TODO" just started.',
