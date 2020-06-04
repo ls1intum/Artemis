@@ -3,11 +3,15 @@ package de.tum.in.www1.artemis.connector.jenkins;
 import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.model.FolderJob;
+import com.offbytwo.jenkins.model.Job;
+import com.offbytwo.jenkins.model.JobWithDetails;
+import com.google.common.base.Optional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
@@ -35,6 +39,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -50,6 +56,8 @@ public class JenkinsRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
+    private JenkinsServer jenkinsServer;
+
     @Autowired
     private ObjectMapper mapper;
 
@@ -57,8 +65,9 @@ public class JenkinsRequestMockProvider {
         this.restTemplate = restTemplate;
     }
 
-    public void enableMockingOfRequests() {
+    public void enableMockingOfRequests(JenkinsServer jenkinsServer) {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        this.jenkinsServer = jenkinsServer;
         MockitoAnnotations.initMocks(this);
     }
 
@@ -68,14 +77,20 @@ public class JenkinsRequestMockProvider {
 
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        //final var projectName = exercise.getProjectName();
-        if (!exists) {
-            mockServer.expect(ExpectedCount.once(), requestTo(JENKINS_SERVER_URL + "/job/" + projectKey + "/api/json")).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.NOT_FOUND).body("Folder " + projectKey + " does not exist!"));
-        } else {
-            mockServer.expect(ExpectedCount.once(), requestTo(JENKINS_SERVER_URL + "/job/" + projectKey + "/api/json")).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK));
+
+        FolderJob folderJob = new FolderJob();
+        Job jobWithDetails =null;
+        if (exists) {
+            jobWithDetails = new JobWithDetails();
         }
+
+        doReturn(jobWithDetails).when(jenkinsServer).getJob(any());
+        doReturn(null).when(jenkinsServer).getFolderJob(null);
+        doReturn(Optional.of(folderJob)).when(jenkinsServer).getFolderJob(jobWithDetails);
+    }
+
+    public void mockCreateProjectForExercise(ProgrammingExercise programmingExercise) throws IOException {
+        doNothing().when(jenkinsServer).createFolder(null, programmingExercise.getProjectKey(), true);
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.connector;
 
 import com.offbytwo.jenkins.JenkinsServer;
+import org.gitlab4j.api.GitLabApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,4 +29,5 @@ public class JenkinsServerConfiguration {
     public JenkinsServer jenkinsServer() throws URISyntaxException {
         return new JenkinsServer(JENKINS_SERVER_URL.toURI(), JENKINS_USER, JENKINS_PASSWORD);
     }
+
 }

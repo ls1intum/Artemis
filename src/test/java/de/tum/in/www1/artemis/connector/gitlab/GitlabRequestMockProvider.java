@@ -5,11 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabProjectDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.util.Verifiable;
+import org.gitlab4j.api.*;
+import org.gitlab4j.api.models.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -21,11 +29,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -33,8 +45,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
-    @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
+    //@Value("${artemis.version-control.url}")
+    private URL GITLAB_SERVER_URL = new URL("http://host.docker.internal");
 
     @Value("${artemis.continuous-integration.user}")
     private String username;
@@ -48,41 +60,69 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
+    @SpyBean
+    @InjectMocks
+    private GitLabApi gitLabApi;
+
+    @SpyBean
+    @InjectMocks
+    private GitLabUserManagementService gitLabUserManagementService;
+
+    @Mock
+    private ProjectApi projectApi;
+
+    @Mock
+    private GroupApi groupApi;
+
+    @Mock
+    private UserApi userApi;
+
+    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) throws MalformedURLException {
         this.restTemplate = restTemplate;
     }
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        MockitoAnnotations.initMocks(this);
     }
 
     public void reset() {
         mockServer.reset();
     }
 
-    public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        final var projectKey = exercise.getProjectKey();
-        final var projectName = exercise.getProjectName();
-        final var body = Map.of("path", projectKey, "name", projectName);
-
-        mockServer.expect(ExpectedCount.once(), requestTo(GITLAB_SERVER_URL + "/api/v4/groups")).andExpect(method(HttpMethod.POST))
-            .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.CREATED));
-        mockAddUserToGroup(exercise, "1");
+    public List<Verifiable> mockCreateProjectForExercise(ProgrammingExercise exercise) throws GitLabApiException {
+        List<Verifiable> results = new ArrayList<>();
+        final var exercisePath = exercise.getProjectKey();
+        final var exerciseName = exercisePath + " " + exercise.getTitle();
+        Group project = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        results.add(() -> verify(groupApi, times(1)).addGroup(project));
+        mockGetUserID();
+        results.add(mockAddUserToGroup());
+        return results;
     }
 
-    private void mockAddUserToGroup(ProgrammingExercise exercise, String userID) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(GITLAB_SERVER_URL.toURI()).path("/api/4/projects").pathSegment(exercise.getProjectKey()).pathSegment("members")
-            .queryParam("user_id", "1", "access_level", "50").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    private void mockGetUserID() throws GitLabApiException {
+        org.gitlab4j.api.models.User instructor = new org.gitlab4j.api.models.User();
+        org.gitlab4j.api.models.User tutor = new org.gitlab4j.api.models.User();
+        instructor.setId(2);
+        tutor.setId(3);
+
+        doReturn(instructor).when(userApi).getUser("instructor1");
+        doReturn(tutor).when(userApi).getUser("tutor1");
     }
 
-    public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws IOException, URISyntaxException {
-        final var projectKey = exercise.getProjectKey();
-        final var body = Map.of("name", repositoryName, "namespace_id", projectKey);
-        final var createRepoPath = UriComponentsBuilder.fromUri(GITLAB_SERVER_URL.toURI()).path("/api/v4/project");
+    private Verifiable mockAddUserToGroup() throws GitLabApiException {
+        return () -> verify(groupApi, times(2)).addMember(any(), any(), (AccessLevel) any());
+    }
 
-        mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
-            .andRespond(withStatus(HttpStatus.CREATED));
+    public Verifiable mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws GitLabApiException {
+        Namespace exerciseNamespace = new Namespace().withName(exercise.getProjectKey());
+        final var project = new Project().withName(repositoryName.toLowerCase()).withNamespace(exerciseNamespace).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
+            .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+        final var group = new Group();
+        group.setId(1);
+        doReturn(group).when(groupApi).getGroup(exercise.getProjectKey());
+        return () -> verify(projectApi, times(1)).createProject(project);
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
@@ -158,17 +198,15 @@ public class GitlabRequestMockProvider {
         throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
-    public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws JsonProcessingException, URISyntaxException {
-        final var existsUri = UriComponentsBuilder.fromUri(GITLAB_SERVER_URL.toURI()).path("/api/v4/projects").pathSegment(exercise.getProjectKey()).build().toUri();
-        exercise.getProjectName();
-        final var uniqueUri = UriComponentsBuilder.fromUri(GITLAB_SERVER_URL.toURI()).path("/api/v4/projects").queryParam("name", exercise.getProjectName()).build()
-            .toUri();
-        final var foundProject = new GitLabProjectDTO();
+    public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws GitLabApiException {
+        Project foundProject = new Project();
         foundProject.setName(exercise.getProjectName() + (exists ? "" : "abc"));
-
-        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
-        mockServer.expect(requestTo(uniqueUri)).andExpect(method(HttpMethod.GET))
-            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(foundProject)));
+        List<Project> result = new ArrayList<>();
+        if (exists) {
+            result.add(foundProject);
+        }
+        //doReturn(result).when(projectApi.getProjects(exercise.getProjectKey()));
+        doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
     }
 
     public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException {
@@ -188,9 +226,9 @@ public class GitlabRequestMockProvider {
             .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddWebHooks(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(GITLAB_SERVER_URL.toURI()).path("/api/v4/projects").pathSegment("hooks").build().toUri();
-        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    public Verifiable addAuthenticatedWebHook() throws GitLabApiException {
+        final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
+        return () -> verify(projectApi, times(2)).addHook(anyString(), anyString(), hook, false, "noSecretNeeded");
     }
 
     public void mockDeleteProject(String projectKey) throws URISyntaxException {

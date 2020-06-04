@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -73,16 +75,12 @@ public class GitLabService extends AbstractVersionControlService {
 
     private GitLabApi gitlab;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabUserManagementService gitLabUserManagementService) {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,  GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
         this.userService = userService;
         this.restTemplate = restTemplate;
-        this.gitLabUserManagementService = gitLabUserManagementService;
-    }
-
-    @PostConstruct
-    public void init() {
+        this.gitlab = gitlab;
         this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
-        this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
+        this.gitLabUserManagementService = gitLabUserManagementService;
     }
 
     @Override

@@ -50,19 +50,15 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private GitLabApi gitlab;
 
-    public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
+    public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlab, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gitlab = gitlab;
         this.userRepository = userRepository;
     }
 
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
     }
 
     @Override

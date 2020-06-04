@@ -82,15 +82,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     private JenkinsServer jenkinsServer;
 
     public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
+        this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-    }
-
-    @PostConstruct
-    public void init() throws URISyntaxException {
-        this.jenkinsServer = new JenkinsServer(JENKINS_SERVER_URL.toURI(), username, password);
     }
 
     @Override
