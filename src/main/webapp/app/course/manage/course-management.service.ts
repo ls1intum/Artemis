@@ -377,14 +377,6 @@ export class CourseExerciseService {
 
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
-    // exercise specific calls
-
-    findProgrammingExercise(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
-        return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}`)
-            .map((res: ProgrammingExercise) => this.convertDateFromServer(res));
-    }
-
     /**
      * returns all programming exercises for the course corresponding to courseId
      * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
@@ -417,15 +409,6 @@ export class CourseExerciseService {
     }
 
     /**
-     * returns the text exercise with the identifier exerciseId for the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findTextExercise(courseId: number, exerciseId: number): Observable<TextExercise> {
-        return this.http.get<TextExercise>(`${this.resourceUrl}/${courseId}/text-exercises/${exerciseId}`).map((res: TextExercise) => this.convertDateFromServer(res));
-    }
-
-    /**
      * returns all text exercises for the course corresponding to courseId
      * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
      * @param courseId - the unique identifier of the course
@@ -434,17 +417,6 @@ export class CourseExerciseService {
         return this.http
             .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
-    /**
-     * returns the file upload exercise with the identifier exerciseId for the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findFileUploadExercise(courseId: number, exerciseId: number): Observable<FileUploadExercise> {
-        return this.http
-            .get<FileUploadExercise>(`${this.resourceUrl}/${courseId}/file-upload-exercises/${exerciseId}`)
-            .map((res: FileUploadExercise) => this.convertDateFromServer(res));
     }
 
     /**
