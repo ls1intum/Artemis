@@ -483,9 +483,18 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_shortNameIsNull_badRequest() throws Exception {
+    public void setupProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        programmingExercise.setShortName("hi");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_sameShortName_badRequest() throws Exception {
+        programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
