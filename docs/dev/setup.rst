@@ -189,7 +189,7 @@ The Artemis server should startup by running the main class
 
 .. note::
     Artemis uses Spring profiles to segregate parts of the
-    application configuration and mae it only available in certain
+    application configuration and make it only available in certain
     environments. For development purposes, the following program arguments
     can be used to enable the ``dev`` profile and the profiles for JIRA,
     Bitbucket and Bamboo:
