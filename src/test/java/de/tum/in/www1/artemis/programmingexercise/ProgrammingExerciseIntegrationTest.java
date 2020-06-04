@@ -286,6 +286,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourse().getId());
+        request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
