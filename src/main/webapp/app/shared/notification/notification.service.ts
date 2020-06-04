@@ -20,7 +20,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification | null>;
-    notificationObserverNEW: BehaviorSubject<Notification | null>; // TODO: replace existing notificationObserver
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
@@ -87,11 +86,11 @@ export class NotificationService {
                 this.subscribeToQuizUpdates(courses);
             }
         });
-        return this.notificationObserverNEW;
+        return this.notificationObserver;
     }
 
     private subscribeToSingleUserNotificationUpdates(): void {
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().then((user: User | null) => {
             if (user) {
                 const userTopic = `/topic/user/${user.id}/notifications`;
                 if (!this.subscribedTopics.includes(userTopic)) {
@@ -150,7 +149,7 @@ export class NotificationService {
     private addNotificationToObserver(notification: Notification): void {
         if (notification && notification.notificationDate) {
             notification.notificationDate = moment(notification.notificationDate);
-            this.notificationObserverNEW.next(notification);
+            this.notificationObserver.next(notification);
         }
     }
 
@@ -163,11 +162,7 @@ export class NotificationService {
         return res;
     }
 
-    /**
-     * Set new notification observer.
-     */
     private initNotificationObserver(): void {
         this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-        this.notificationObserverNEW = new BehaviorSubject<Notification | null>(null);
     }
 }
