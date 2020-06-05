@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.EmbeddingTrainingMaterialScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,14 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Attachment.
@@ -46,6 +46,8 @@ public class AttachmentResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final EmbeddingTrainingMaterialScheduleService embeddingTrainingMaterialScheduleService;
+
     private final UserService userService;
 
     private final FileService fileService;
@@ -53,13 +55,14 @@ public class AttachmentResource {
     private final CacheManager cacheManager;
 
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
+            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, EmbeddingTrainingMaterialScheduleService embeddingTrainingMaterialScheduleService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
         this.fileService = fileService;
+        this.embeddingTrainingMaterialScheduleService = embeddingTrainingMaterialScheduleService;
         this.cacheManager = cacheManager;
     }
 
@@ -78,6 +81,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Attachment result = attachmentRepository.save(attachment);
+        embeddingTrainingMaterialScheduleService.scheduleMaterialUploadForNow(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -101,6 +105,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
+        embeddingTrainingMaterialScheduleService.scheduleMaterialUploadForNow(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);

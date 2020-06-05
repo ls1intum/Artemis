@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.FileService;
@@ -53,7 +54,7 @@ public class EmbeddingTrainingMaterialService {
         final String fileName = attachment.getName();
         byte[] fileData = null;
         try {
-            fileData = fileService.getFileForPath(attachment.getLink());
+            fileData = fileService.getFileForPath(fileService.actualPathForPublicPath(attachment.getLink()));
         } catch (IOException e) {
             e.printStackTrace();
         }

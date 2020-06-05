@@ -23,7 +23,7 @@ import static java.time.Instant.now;
 @Profile("automaticText")
 public class EmbeddingTrainingMaterialScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(TextClusteringScheduleService.class);
+    private final Logger log = LoggerFactory.getLogger(EmbeddingTrainingMaterialScheduleService.class);
 
     private final Map<Long, ScheduledFuture> scheduledClusteringTasks = new HashMap<>();
 
