@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
@@ -9,30 +7,21 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
-import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
-import org.gitlab4j.api.ProjectApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
@@ -55,18 +44,6 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
-
-    @Autowired
-    private TeamService teamService;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private ParticipationService participationService;
 
     private Course course;
 
@@ -171,7 +148,7 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
-    private List<Verifiable> mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException, GitLabApiException {
+    private List<Verifiable> mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, GitLabApiException {
         List<Verifiable> results = new ArrayList<>();
         final var projectKey = exercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
@@ -180,11 +157,13 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
         jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         gitlabRequestMockProvider.mockCreateProjectForExercise(exercise);
-        results.add(gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName));
-        results.add(gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName));
-        results.add(gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName));
-        results.add(gitlabRequestMockProvider.addAuthenticatedWebHook());
+        gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
+        gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        gitlabRequestMockProvider.addAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
+        jenkinsRequestMockProvider.mockCreateBuildPlanForExercise(exercise);
+        jenkinsRequestMockProvider.mockTriggerBuild();
         jenkinsRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
         return results;
     }

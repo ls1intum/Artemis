@@ -4,6 +4,8 @@ import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.client.JenkinsHttpClient;
+import com.offbytwo.jenkins.model.ExtractHeader;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.Job;
 import com.offbytwo.jenkins.model.JobWithDetails;
@@ -18,6 +20,8 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
 import de.tum.in.www1.artemis.util.Verifiable;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,7 +60,11 @@ public class JenkinsRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
+    @InjectMocks
     private JenkinsServer jenkinsServer;
+
+    @Mock
+    private JenkinsHttpClient jenkinsClient;
 
     @Autowired
     private ObjectMapper mapper;
@@ -75,10 +83,10 @@ public class JenkinsRequestMockProvider {
         mockServer.reset();
     }
 
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
+    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException {
         final var projectKey = exercise.getProjectKey();
 
-        FolderJob folderJob = new FolderJob();
+        FolderJob folderJob = new FolderJob(projectKey, projectKey);
         Job jobWithDetails =null;
         if (exists) {
             jobWithDetails = new JobWithDetails();
@@ -89,8 +97,15 @@ public class JenkinsRequestMockProvider {
         doReturn(Optional.of(folderJob)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
-    public void mockCreateProjectForExercise(ProgrammingExercise programmingExercise) throws IOException {
-        doNothing().when(jenkinsServer).createFolder(null, programmingExercise.getProjectKey(), true);
+    public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException {
+        doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), true);
+    }
+
+    public void mockCreateBuildPlanForExercise(ProgrammingExercise exercise) throws IOException {
+        JobWithDetails job = new JobWithDetails();
+        job.setClient(jenkinsClient);
+        doReturn(job).when(jenkinsServer).getJob(any(FolderJob.class), anyString());
+        doNothing().when(jenkinsServer).createJob(any(FolderJob.class), anyString(), anyString(), anyBoolean());
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
@@ -135,12 +150,12 @@ public class JenkinsRequestMockProvider {
     public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws URISyntaxException {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        mockTriggerBuild(projectKey, planKey);
     }
 
-    public void mockTriggerBuild(String projectKey, String planKey) throws URISyntaxException {
-        final var triggerBuildPath = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/build").toUriString();
-        mockServer.expect(requestTo(triggerBuildPath)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    public void mockTriggerBuild() throws IOException {
+        ExtractHeader location = new ExtractHeader();
+        location.setLocation("mockLocation");
+        doReturn(location).when(jenkinsClient).post(anyString(), any(), any(), anyBoolean());
     }
 
     public void mockQueryLatestBuildResultFromBambooServer(final String projectKey,final String planKey) throws JsonProcessingException, URISyntaxException {

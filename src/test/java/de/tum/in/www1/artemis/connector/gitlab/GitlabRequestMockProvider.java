@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
@@ -23,7 +22,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -115,14 +113,14 @@ public class GitlabRequestMockProvider {
         return () -> verify(groupApi, times(2)).addMember(any(), any(), (AccessLevel) any());
     }
 
-    public Verifiable mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws GitLabApiException {
+    public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws GitLabApiException {
         Namespace exerciseNamespace = new Namespace().withName(exercise.getProjectKey());
         final var project = new Project().withName(repositoryName.toLowerCase()).withNamespace(exerciseNamespace).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
             .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
         final var group = new Group();
         group.setId(1);
         doReturn(group).when(groupApi).getGroup(exercise.getProjectKey());
-        return () -> verify(projectApi, times(1)).createProject(project);
+        doReturn(project).when(projectApi).createProject(project);
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
@@ -144,6 +142,12 @@ public class GitlabRequestMockProvider {
 
         mockServer.expect(requestTo(copyRepoPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
             .andRespond(withStatus(HttpStatus.CREATED));
+    }
+
+    public void mockGetUserIdCreateIfNotExists() throws GitLabApiException {
+        final User user = new User();
+        user.setLogin("artemis_admin");
+        doReturn(1).when(userApi).getUser(user.getLogin());
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users) throws URISyntaxException, IOException {
