@@ -3,14 +3,11 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.annotation.PostConstruct;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -19,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -75,7 +71,8 @@ public class GitLabService extends AbstractVersionControlService {
 
     private GitLabApi gitlab;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,  GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
+            GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.gitlab = gitlab;
@@ -291,28 +288,6 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new group for course " + exerciseName, e);
         }
-    }
-
-    /**
-     * Gets the project key from the given URL
-     *
-     * TODO: rework this!
-     *
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The project key
-     * @throws GitLabException if the URL is invalid and no project key could be extracted
-     */
-    public String getProjectKeyFromUrl(URL repositoryUrl) throws GitLabException {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 2) {
-            return urlParts[2];
-        }
-
-        log.error("No project key could be found for repository {}", repositoryUrl);
-        throw new GitLabException("No project key could be found");
     }
 
     @Override

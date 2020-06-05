@@ -4,14 +4,12 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -81,8 +79,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private JenkinsServer jenkinsServer;
 
-    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
-            JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
@@ -256,29 +254,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
 
         return result;
-    }
-
-    /**
-     * TODO: this method is not ideal here, but should als not be static in some util class. Think about improving the passing of URL arguments with slugs between
-     * programming exercise generation and the CI services (BambooService and JenkinsService) who need to handle these
-     *
-     * Gets the repository slug from the given URL
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        String repositorySlug = urlParts[urlParts.length - 1];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        else {
-            throw new IllegalArgumentException("No repository slug could be found");
-        }
-
-        return repositorySlug;
     }
 
     private double calculateResultScore(TestResultsDTO report, int testSum) {

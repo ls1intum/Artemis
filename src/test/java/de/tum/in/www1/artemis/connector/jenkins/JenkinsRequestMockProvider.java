@@ -1,25 +1,17 @@
 package de.tum.in.www1.artemis.connector.jenkins;
 
-import com.appfire.common.cli.CliClient;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.client.JenkinsHttpClient;
-import com.offbytwo.jenkins.model.ExtractHeader;
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.Job;
-import com.offbytwo.jenkins.model.JobWithDetails;
-import com.google.common.base.Optional;
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
-import de.tum.in.www1.artemis.util.Verifiable;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -36,18 +28,27 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import com.appfire.common.cli.CliClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
+import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.client.JenkinsHttpClient;
+import com.offbytwo.jenkins.model.ExtractHeader;
+import com.offbytwo.jenkins.model.FolderJob;
+import com.offbytwo.jenkins.model.Job;
+import com.offbytwo.jenkins.model.JobWithDetails;
 
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
+import de.tum.in.www1.artemis.util.Verifiable;
 
 @Component
 @Profile("jenkins")
@@ -87,7 +88,7 @@ public class JenkinsRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
 
         FolderJob folderJob = new FolderJob(projectKey, projectKey);
-        Job jobWithDetails =null;
+        Job jobWithDetails = null;
         if (exists) {
             jobWithDetails = new JobWithDetails();
         }
@@ -109,7 +110,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
-        //TODO after decision on how to handle users on Jenkins has been made
+        // TODO after decision on how to handle users on Jenkins has been made
     }
 
     public void mockGiveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
@@ -127,16 +128,16 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
-        throws CliClient.RemoteRestException, CliClient.ClientException {
+            throws CliClient.RemoteRestException, CliClient.ClientException {
         mockServer.expect(ExpectedCount.once(), requestTo(JENKINS_SERVER_URL + "/job/" + sourceProjectKey + "/job/" + sourcePlanName + "config.xml"))
-            .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+                .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
         mockServer.expect(ExpectedCount.once(), requestTo(JENKINS_SERVER_URL + "/job/" + targetProjectKey + "/createItem?name=" + targetPlanName))
-            .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+                .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         final var projectKey = exercise.getProjectKey();
-        final var planName = exercise.getProjectKey() + "-" +  username.toUpperCase();
+        final var planName = exercise.getProjectKey() + "-" + username.toUpperCase();
         final var repoNameInCI = Constants.ASSIGNMENT_REPO_NAME;
         final var vcsRepositoryUrl = projectKey.toLowerCase() + "-" + username;
 
@@ -144,7 +145,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String projectKey, String planName, String repoNameInCI, String vcsRepositoryUrl, List<String> triggeredBy) {
-        //TODO
+        // TODO
     }
 
     public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws URISyntaxException {
@@ -158,12 +159,12 @@ public class JenkinsRequestMockProvider {
         doReturn(location).when(jenkinsClient).post(anyString(), any(), any(), anyBoolean());
     }
 
-    public void mockQueryLatestBuildResultFromBambooServer(final String projectKey,final String planKey) throws JsonProcessingException, URISyntaxException {
-        final var response = createBuildResult(projectKey + " - "+ planKey);
+    public void mockQueryLatestBuildResultFromBambooServer(final String projectKey, final String planKey) throws JsonProcessingException, URISyntaxException {
+        final var response = createBuildResult(projectKey + " - " + planKey);
         final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/lastBuild/testResults/api/json").toUriString();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
     private TestResultsDTO createBuildResult(final String planKey) {
@@ -191,31 +192,31 @@ public class JenkinsRequestMockProvider {
 
     public void mockRetrieveBuildStatus(final String projectKey, final String planKey) throws URISyntaxException, JsonProcessingException {
         final var response = Map.of("building", false);
-        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/"+ projectKey+ "/job/" + planKey + "/lastBuild/api/json").toUriString();
+        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/lastBuild/api/json").toUriString();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
     public void mockBuildPlanIsValid(final String projectKey, final String planKey, final boolean isValid) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/"+ projectKey+ "/job/" + planKey + "/api/json").toUriString();
+        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/api/json").toUriString();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
     }
 
     public void mockEnablePlan(final String projectKey, final String planKey) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/"+ projectKey + "/job/" + planKey + "/enable").toUriString();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)) .andRespond(withStatus(HttpStatus.OK));
+        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/enable").toUriString();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void  mockDeleteProject(final String projectKey) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/"+ projectKey + "/doDelete").toUriString();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)) .andRespond(withStatus(HttpStatus.OK));
+    public void mockDeleteProject(final String projectKey) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/doDelete").toUriString();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockDeletePlan(final String projectKey, final String planKey) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/"+ projectKey + "/job/" + planKey + "/doDelete").toUriString();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)) .andRespond(withStatus(HttpStatus.OK));
+        final var uri = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("/job/" + projectKey + "/job/" + planKey + "/doDelete").toUriString();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
 }

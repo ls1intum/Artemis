@@ -48,7 +48,7 @@ public class GitlabRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
-    private final ObjectMapper mapper = new ObjectMapper();;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private MockRestServiceServer mockServer;
 
