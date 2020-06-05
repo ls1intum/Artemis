@@ -7,7 +7,7 @@
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
-                "assessmentDueDateOver": "Das Abgabedatum der Bewertung für diese Aufgabe ist vorbei."
+                "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
             "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
