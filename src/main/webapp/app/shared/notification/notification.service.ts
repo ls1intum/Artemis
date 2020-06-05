@@ -18,10 +18,10 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/notifications';
-    notificationObserver: BehaviorSubject<Notification | null>;
-    subscribedTopics: string[] = [];
-    cachedNotifications: Observable<HttpResponse<Notification[]>>;
+    private resourceUrl = SERVER_API_URL + 'api/notifications';
+    private subscribedTopics: string[] = [];
+    private notificationObserver: BehaviorSubject<Notification | null>;
+    private cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
