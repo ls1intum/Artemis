@@ -26,6 +26,9 @@ public class ExerciseGroup implements Serializable {
     @ManyToOne
     private Exam exam;
 
+    @Column(name = "mandatory")
+    private boolean mandatory;
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
