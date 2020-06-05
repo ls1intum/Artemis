@@ -7,10 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,7 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.*;
 
-public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private DatabaseUtilService database;
@@ -46,8 +43,6 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
-    private Course course;
-
     private ProgrammingExercise exercise;
 
     private final static int numberOfStudents = 2;
@@ -56,20 +51,20 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
 
     private final static String teamShortName = "team1";
 
-    LocalRepository exerciseRepo = new LocalRepository();
+    private LocalRepository exerciseRepo = new LocalRepository();
 
-    LocalRepository testRepo = new LocalRepository();
+    private LocalRepository testRepo = new LocalRepository();
 
-    LocalRepository solutionRepo = new LocalRepository();
+    private LocalRepository solutionRepo = new LocalRepository();
 
-    LocalRepository studentRepo = new LocalRepository();
+    private LocalRepository studentRepo = new LocalRepository();
 
-    LocalRepository studentTeamRepo = new LocalRepository();
+    private LocalRepository studentTeamRepo = new LocalRepository();
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         database.addUsers(numberOfStudents, 1, 1);
-        course = database.addEmptyCourse();
+        Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
@@ -113,7 +108,7 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
         reset(gitService);
         gitlabRequestMockProvider.reset();
@@ -128,21 +123,17 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
     @ParameterizedTest
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+    void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
-        final var verifications = mockConnectorRequestsForSetup(exercise);
+        mockConnectorRequestsForSetup(exercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
-        for (final var verification : verifications) {
-            verification.performVerification();
-        }
         assertThat(exercise).isEqualTo(generatedExercise);
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
-    private List<Verifiable> mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, GitLabApiException {
-        List<Verifiable> results = new ArrayList<>();
+    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
@@ -153,11 +144,9 @@ public class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpr
         gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        gitlabRequestMockProvider.addAuthenticatedWebHook();
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
-        jenkinsRequestMockProvider.mockCreateBuildPlanForExercise(exercise);
+        jenkinsRequestMockProvider.mockCreateBuildPlan();
         jenkinsRequestMockProvider.mockTriggerBuild();
-        jenkinsRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        return results;
     }
 }
