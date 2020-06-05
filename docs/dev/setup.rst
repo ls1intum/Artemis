@@ -245,7 +245,7 @@ Using IntelliJ
 If you are using **IntelliJ** you can use the pre-configured ``Artemis (Client)``
 run configuration that will be delivered with this repository:
 
-* Choose ``Run | Edit Configurations...`
+* Choose ``Run | Edit Configurations...``
 * Select the ``Artemis (Client)`` configuration from the ``npm section``
 * Now you can run the configuration in the upper right corner of IntelliJ
 
