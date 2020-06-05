@@ -276,9 +276,7 @@ export class CourseManagementService {
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
             if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications) {
-                this.fetchingCoursesForNotifications = true;
-                // TODO: replace with dedicated REST call that has a smaller payload (and that get's courses specifically for the current user)
-                this.findAllForDashboard().subscribe(
+                this.findAllForNotifications().subscribe(
                     (res: HttpResponse<Course[]>) => {
                         this.coursesForNotifications.next(res.body);
                     },
@@ -289,12 +287,7 @@ export class CourseManagementService {
         return this.coursesForNotifications;
     }
 
-    /**
-     * Set cached courses for notifications when received via http request.
-     * @param res {HttpResponse<Course[]>}
-     * @returns {HttpResponse<Course[]>}
-     */
-    setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
+    private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             this.coursesForNotifications.next(res.body);
             this.fetchingCoursesForNotifications = false;
@@ -310,7 +303,7 @@ export class CourseManagementService {
         return copy;
     }
 
-    convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
@@ -364,6 +357,14 @@ export class CourseManagementService {
             });
         }
         return res;
+    }
+
+    private findAllForNotifications(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
     }
 }
 
