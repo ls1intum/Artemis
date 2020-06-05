@@ -1,9 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import com.offbytwo.jenkins.JenkinsServer;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -14,12 +10,16 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import com.offbytwo.jenkins.JenkinsServer;
+
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,7 +37,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
     @SpyBean
     protected JenkinsService continuousIntegrationService;
 
-    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate.
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
+    // GitlabApi.
     @SpyBean
     protected GitLabService versionControlService;
 
@@ -46,10 +47,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     @SpyBean
     protected GitService gitService;
-
-    // TODO: activate jenkins, gitlab profiles and add mocking services for them
-    @SpyBean
-    protected GitLabUserManagementService userManagementService;
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
@@ -68,7 +65,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, jenkinsServer, gitService, groupNotificationService, websocketMessagingService, userManagementService,
-            plantUmlService, messagingTemplate, programmingSubmissionService);
+        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, jenkinsServer, gitService, groupNotificationService, websocketMessagingService,
+                plantUmlService, messagingTemplate, programmingSubmissionService);
     }
 }

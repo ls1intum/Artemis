@@ -3,14 +3,11 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 
-import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -18,7 +15,6 @@ import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,19 +32,13 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
-    @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
-
-    @Value("${artemis.version-control.secret}")
-    private String GITLAB_PRIVATE_TOKEN;
-
     private UserService userService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
 
-    private GitLabApi gitlab;
+    private final GitLabApi gitlab;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlab, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -78,10 +68,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Override
     public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
         try {
-            final var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
+            var userApi = gitlab.getUserApi();
+            final var gitlabUser = userApi.getUser(user.getLogin());
 
             // update the user password
-            gitlab.getUserApi().updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+            userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
 
             // Add as member to new groups
             if (!addedGroups.isEmpty()) {
