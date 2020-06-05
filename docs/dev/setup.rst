@@ -156,7 +156,7 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <https://github.com/ls1intum/Artemis/blob/develop/docs/dev/setup.rst#client-setup>`__).
+* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <setup.rst#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
