@@ -47,8 +47,8 @@ public class Exam {
     @Column(name = "confirmation_end_text")
     private String confirmationEndText;
 
-    @Column(name = "max_points")
-    private Long maxPoints;
+    @Column(name = "max_score")
+    private Long maxScore;
 
     public Long getId() {
         return id;
@@ -130,12 +130,12 @@ public class Exam {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public Long getMaxPoints() {
-        return maxPoints;
+    public Long getMaxScore() {
+        return maxScore;
     }
 
-    public void setMaxPoints(Long maxPoints) {
-        this.maxPoints = maxPoints;
+    public void setMaxScore(Long maxScore) {
+        this.maxScore = maxScore;
     }
 
     @Override

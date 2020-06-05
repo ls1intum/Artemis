@@ -12,6 +12,6 @@ public class ExamInstructorDTOConverter implements Converter<Exam, ExamInstructo
     @Override
     public ExamInstructorDTO convert(Exam source) {
         return new ExamInstructorDTO(source.getId(), source.getCourse(), source.getStudentExams(), source.getExerciseGroups(), source.getReleaseDate(), source.getDueDate(),
-                source.getStartText(), source.getEndText(), source.getConfirmationStartText(), source.getConfirmationEndText());
+                source.getStartText(), source.getEndText(), source.getConfirmationStartText(), source.getConfirmationEndText(), source.getMaxScore());
     }
 }
