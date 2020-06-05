@@ -120,15 +120,6 @@ public interface ContinuousIntegrationService {
     boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
 
     /**
-     * Get details about the latest build result. Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html Used to generate the
-     * interactive exercise instructions: webapp/app/editor/instructions/editor-instructions.components.js
-     *
-     * @param result the result for which to get details
-     * @return List of automatic feedback by the continuous integration server. contains the test methods and their results:
-     */
-    List<Feedback> getLatestBuildResultDetails(Result result);
-
-    /**
      * Get the build logs of the latest CI build.
      *
      * @param projectKey The key of the project under which the plan is stored
@@ -143,7 +134,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build artifact
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
-    ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
+    ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
      * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission and save it into the database.
