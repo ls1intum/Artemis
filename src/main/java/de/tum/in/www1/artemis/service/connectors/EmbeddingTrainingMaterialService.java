@@ -1,18 +1,19 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.service.FileService;
+
+import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
+
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-
-import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.service.FileService;
 
 @Service
 @Profile("automaticText")
@@ -22,8 +23,11 @@ public class EmbeddingTrainingMaterialService {
 
     // region Request/Response DTOs
     private static class Request {
+
         public long courseId;
+
         public String fileName;
+
         public byte[] fileData;
 
         public Request(long courseId, String fileName, byte[] fileData) {
