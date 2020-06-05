@@ -574,6 +574,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function (question) {
+            if (question.score < 0) {
+                return false;
+            }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
@@ -691,6 +694,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (!question.title || question.title === '') {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
+                    translateValues: { index: index + 1 },
+                });
+            }
+            if (question.score < 0) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
                 });
             }
@@ -1021,8 +1030,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
-        this.duration.minutes = 60 * duration.hours() + duration.minutes();
-        this.duration.seconds = duration.seconds();
+        this.changeDetector.detectChanges();
+        // when input fields are empty do not update their values
+        if (this.duration.minutes !== null) {
+            this.duration.minutes = 60 * duration.hours() + duration.minutes();
+        }
+        if (this.duration.seconds !== null) {
+            this.duration.seconds = duration.seconds();
+        }
     }
 
     /**

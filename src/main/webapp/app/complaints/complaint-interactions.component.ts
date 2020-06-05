@@ -5,6 +5,7 @@ import { ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -31,9 +32,9 @@ export class ComplaintInteractionsComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
-        if (this.exercise.course) {
-            if (this.exercise.course.complaintsEnabled) {
-                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.exercise.course.id).subscribe((allowedComplaints: number) => {
+        if (this.course) {
+            if (this.course!.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
                     this.numberOfAllowedComplaints = allowedComplaints;
                 });
             } else {
@@ -56,6 +57,10 @@ export class ComplaintInteractionsComponent implements OnInit {
         }
     }
 
+    get course(): Course | null {
+        return this.exercise.course;
+    }
+
     /**
      * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
      * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
@@ -65,9 +70,9 @@ export class ComplaintInteractionsComponent implements OnInit {
         if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
             if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
-                return resultCompletionDate.isAfter(moment().subtract(this.exercise.course?.maxComplaintTimeDays, 'day'));
+                return resultCompletionDate.isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
             }
-            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.exercise.course?.maxComplaintTimeDays, 'day'));
+            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
         } else {
             return false;
         }

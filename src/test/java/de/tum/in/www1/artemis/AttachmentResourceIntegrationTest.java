@@ -55,7 +55,7 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
 
         attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
 
-        var course = database.addCourseWithOneTextExercise();
+        var course = database.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) exerciseRepository.findAll().get(0);
         lecture = new Lecture().title("test").description("test").course(course);
         lecture = lectureRepository.save(lecture);

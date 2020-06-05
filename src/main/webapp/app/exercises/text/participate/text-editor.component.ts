@@ -23,6 +23,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -59,6 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private stringCountService: StringCountService,
     ) {
         this.isSaving = false;
     }
@@ -87,6 +89,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.submission = participation.submissions[0] as TextSubmission;
             if (this.submission && participation.results && this.isAfterAssessmentDueDate) {
                 this.result = participation.results.find((r) => r.submission!.id === this.submission.id)!;
+                this.result.participation = participation;
             }
 
             if (this.submission && this.submission.text) {
@@ -171,6 +174,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         return null;
+    }
+
+    get wordCount(): number {
+        return this.stringCountService.countWords(this.answer);
+    }
+
+    get characterCount(): number {
+        return this.stringCountService.countCharacters(this.answer);
     }
 
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes

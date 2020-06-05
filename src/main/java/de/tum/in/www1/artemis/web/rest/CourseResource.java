@@ -34,10 +34,14 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -303,6 +307,10 @@ public class CourseResource {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaints(3);
         }
+        if (course.getMaxTeamComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            course.setMaxTeamComplaints(3);
+        }
         if (course.getMaxComplaintTimeDays() == null) {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaintTimeDays(7);
@@ -310,14 +318,17 @@ public class CourseResource {
         if (course.getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
+        if (course.getMaxTeamComplaints() < 0) {
+            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
+        }
         if (course.getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() == 0 && course.getMaxComplaints() != 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() == 0 && (course.getMaxComplaints() != 0 || course.getMaxTeamComplaints() != 0)) {
+            throw new BadRequestAlertException("If complaints are allowed, the complaint time in days must be positive.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() != 0 && (course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0)) {
+            throw new BadRequestAlertException("If no complaints are allowed, the complaint time in days should be set to zero.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
     }
 
@@ -524,19 +535,20 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
+            DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+
+            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            exercise.setNumberOfAssessments(numberOfAssessments);
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            exercise.setNumberOfParticipations(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
@@ -574,10 +586,13 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
-        stats.setNumberOfSubmissions(numberOfSubmissions);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
+
+        final DueDateStat numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
@@ -585,6 +600,9 @@ public class CourseResource {
 
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
+
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
@@ -652,25 +670,58 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
+
+            DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+
+            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            exercise.setNumberOfAssessments(numberOfAssessments);
+
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfParticipations(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
+     */
+    @GetMapping("/courses/{courseId}/lockedSubmissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get all locked submissions for course : {}", courseId);
+        long start = System.currentTimeMillis();
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
+
+        for (Submission submission : submissions) {
+            submissionService.hideDetails(submission, user);
+        }
+
+        long end = System.currentTimeMillis();
+        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        return ResponseEntity.ok(submissions);
     }
 
     /**
@@ -710,10 +761,15 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
+
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long startT = System.currentTimeMillis();
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);

@@ -15,6 +15,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -28,15 +29,12 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     DatabaseUtilService database;
 
     @Autowired
-    ModelingExerciseRepository exerciseRepo;
-
-    @Autowired
     StudentParticipationRepository participationRepo;
 
     @Autowired
     ParticipationTeamWebsocketService participationTeamWebsocketService;
 
-    ModelingExercise exercise;
+    ModelingExercise modelingExercise;
 
     StudentParticipation participation;
 
@@ -47,9 +45,9 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @BeforeEach
     void init() {
         database.addUsers(3, 0, 0);
-        database.addCourseWithOneModelingExercise();
-        exercise = exerciseRepo.findAll().get(0);
-        participation = database.addParticipationForExercise(exercise, "student1");
+        Course course = database.addCourseWithOneModelingExercise();
+        modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        participation = database.addParticipationForExercise(modelingExercise, "student1");
 
         MockitoAnnotations.initMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
