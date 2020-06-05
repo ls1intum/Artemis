@@ -2,7 +2,7 @@
     <div class="col">
         <h3>
             <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                {{ 'artemisApp.studentDashboard.exerciseTitle' | translate: { date: nextRelevantExercise.dueDate | artemisDate, course: nextRelevantCourse.title } }}
+                {{ 'artemisApp.studentDashboard.exerciseTitle' | translate: { course: nextRelevantCourse.title } }}
             </span>
             <ng-template #noDueDate>
                 {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | translate: { course: nextRelevantCourse.title } }}
