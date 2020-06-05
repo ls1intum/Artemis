@@ -5,16 +5,19 @@ import { Subject } from 'rxjs';
     providedIn: 'root',
 })
 export class LoadingNotificationService {
-    isLoading = false;
     loadingStatus: Subject<boolean> = new Subject();
 
+    /**
+     * Emit value to display loading screen
+     */
     startLoading() {
-        this.isLoading = true;
         this.loadingStatus.next(true);
     }
 
+    /**
+     * Emit value to close loading screen
+     */
     stopLoading() {
-        this.isLoading = false;
         this.loadingStatus.next(false);
     }
 }
