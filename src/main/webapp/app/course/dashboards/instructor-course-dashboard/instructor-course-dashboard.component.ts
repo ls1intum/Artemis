@@ -9,6 +9,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -17,6 +19,7 @@ import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 })
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
+    instructor: User;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -31,7 +34,13 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
 
-    constructor(private courseService: CourseManagementService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
+    constructor(
+        private courseService: CourseManagementService,
+        private resultService: ResultService,
+        private route: ActivatedRoute,
+        private jhiAlertService: AlertService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * On init fetch the course from the server.
@@ -39,6 +48,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.instructor = user;
+            }
+        });
     }
 
     /**
@@ -49,7 +63,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         // Load the course.
         const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
             map((res: HttpResponse<Course>) => res.body!),
-            tap((course: Course) => (this.course = course)),
+            tap((course: Course) => {
+                this.course = Course.from(course);
+            }),
             catchError((response: HttpErrorResponse) => {
                 this.onError(response.message);
                 return of(null);
@@ -60,8 +76,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
         const loadStatsObservable = this.courseService.getStatsForInstructors(courseId).pipe(
             map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
             tap((stats) => {
-                this.stats = stats;
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+                this.stats = StatsForDashboard.from(stats);
+                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total, this.stats.numberOfAssessments.total];
             }),
             catchError((response: string) => {
                 this.onError(response);
@@ -76,16 +92,17 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     /**
-     * Calculate percentage for given numerator an denominator.
+     * Calculate rounded towards zero percentage for given numerator and denominator.
      * @param numerator
      * @param denominator
+     * @return {number} percentage for given numerator and denominator that is rounded towards zero
      */
     calculatePercentage(numerator: number, denominator: number): number {
         if (denominator === 0) {
             return 0;
         }
 
-        return Math.round((numerator / denominator) * 100);
+        return Math.floor((numerator / denominator) * 100);
     }
 
     /**

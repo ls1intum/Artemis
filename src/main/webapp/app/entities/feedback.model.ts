@@ -13,6 +13,7 @@ export enum FeedbackHighlightColor {
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
+    MANUAL_UNREFERENCED = 'MANUAL_UNREFERENCED',
     AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 

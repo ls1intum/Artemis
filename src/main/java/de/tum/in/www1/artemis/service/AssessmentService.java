@@ -30,7 +30,7 @@ public class AssessmentService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ResultService resultService;
+    protected final ResultService resultService;
 
     private final SubmissionRepository submissionRepository;
 
@@ -109,16 +109,15 @@ public class AssessmentService {
      * @return true of the the given user can override a potentially existing result
      */
     public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        // if the assessor is null, the user is allowed to save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
+            return isAllowedToBeAssessor || isAtLeastInstructor;
         }
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
         var assessmentDueDate = exercise.getAssessmentDueDate();
-        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
     /**
@@ -144,19 +143,25 @@ public class AssessmentService {
      * @return The example result, which is linked to the submission
      */
     public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
-        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+        return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
-     * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
-     *
-     * @param assessment the assessment to check
+     * Returns whether a user is allowed to be the assessor of an existing result
+     * @param result Result for which to check if the user can be the assessor
+     * @param exercise Exercise to which the result belongs to
+     * @param user User for whom to check if they can be the assessor of the given result
+     * @return true if the user is allowed to be the assessor, false otherwise
      */
-    void checkGeneralFeedback(List<Feedback> assessment) {
-        final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
-        if (generalFeedbackCount > 1) {
-            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
+        if (exercise.isTeamMode()) {
+            // for team exercises only the team tutor is allowed to be the assessor
+            return ((StudentParticipation) result.getParticipation()).getTeam().orElseThrow().isOwner(user);
+        }
+        else {
+            // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
+            return result.getAssessor() == null || user.equals(result.getAssessor());
         }
     }
 

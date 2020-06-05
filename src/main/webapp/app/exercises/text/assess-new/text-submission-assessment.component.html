@@ -1,10 +1,11 @@
 <jhi-assessment-layout
-    [hideBackButton]="true"
+    (navigateBack)="goToExerciseDashboard()"
     [isLoading]="isLoading"
     [saveBusy]="saveBusy"
     [submitBusy]="submitBusy"
     [cancelBusy]="cancelBusy"
     [nextSubmissionBusy]="nextSubmissionBusy"
+    [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
@@ -38,7 +39,10 @@
     </div>
 
     <div class="row mt-3">
-        <jhi-assessment-general-feedback class="col-md-6" [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
+        <div class="col-md-6">
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()"></jhi-unreferenced-feedback>
+            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
+        </div>
     </div>
 </ng-template>
 

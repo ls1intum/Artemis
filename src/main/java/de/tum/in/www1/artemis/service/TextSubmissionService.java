@@ -91,6 +91,8 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
+            // NOTE: from now on we always set submitted to true to prevent problems here!
+            textSubmission.setSubmitted(true);
             textSubmission = save(textSubmission, participation, textExercise, principal);
         }
         return textSubmission;
@@ -123,10 +125,7 @@ public class TextSubmissionService extends SubmissionService {
         }
 
         participation.addSubmissions(textSubmission);
-
-        if (textSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-        }
+        participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
             Optional<Submission> optionalTextSubmission = savedParticipation.findLatestSubmission();
@@ -190,6 +189,9 @@ public class TextSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, textExercise.getDueDate());
+
         var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }

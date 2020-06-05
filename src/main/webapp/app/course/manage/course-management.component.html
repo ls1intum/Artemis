@@ -101,8 +101,8 @@
                                 {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})
                             </div>
                         </td>
-                        <td>{{ course.startDate | date: 'medium' }}</td>
-                        <td>{{ course.endDate | date: 'medium' }}</td>
+                        <td>{{ course.startDate | artemisDate }}</td>
+                        <td>{{ course.endDate | artemisDate }}</td>
                         <td class="d-none d-md-table-cell">
                             <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                             <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
