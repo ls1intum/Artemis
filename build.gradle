@@ -31,7 +31,7 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.1.0"
+    id "com.diffplug.gradle.spotless" version "4.2.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -313,7 +313,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.4.1"
+    gradleVersion = "6.5"
 }
 
 task stage(dependsOn: "bootWar") {
