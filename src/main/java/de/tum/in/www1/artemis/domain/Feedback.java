@@ -39,6 +39,10 @@ public class Feedback implements Serializable {
     @Column(name = "detail_text")
     private String detailText;
 
+    @Size(max = 5000)
+    @Column(name = "automatic_detail_text")
+    private String automaticDetailText;
+
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
@@ -96,6 +100,14 @@ public class Feedback implements Serializable {
 
     public void setDetailText(String detailText) {
         this.detailText = detailText;
+    }
+
+    public String getAutomaticDetailText() {
+        return automaticDetailText;
+    }
+
+    public void setAutomaticDetailText(String automaticDetailText) {
+        this.automaticDetailText = automaticDetailText;
     }
 
     public String getReference() {
