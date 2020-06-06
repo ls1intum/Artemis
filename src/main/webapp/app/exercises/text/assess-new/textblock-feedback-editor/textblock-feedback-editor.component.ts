@@ -12,8 +12,6 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 export class TextblockFeedbackEditorComponent implements AfterViewInit, OnInit {
     readonly FeedbackType = FeedbackType;
 
-    public canRestore = false;
-
     @Input() textBlock: TextBlock;
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
@@ -40,6 +38,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit, OnInit {
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
+    /**
+     * Cache automaticDetailText
+     */
     ngOnInit(): void {
         if (this.feedback.type === FeedbackType.AUTOMATIC) {
             this.automaticDetailText = this.feedback.detailText;
@@ -119,6 +120,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit, OnInit {
         this.feedbackChange.emit(this.feedback);
     }
 
+    /**
+     * Restore the automatic feedback and set the type back to automatic
+     */
     onFeedbackRestore(): void {
         if (Feedback.hasAutomaticDetailText(this.feedback)) {
             this.feedback.detailText = this.feedback!.automaticDetailText;
