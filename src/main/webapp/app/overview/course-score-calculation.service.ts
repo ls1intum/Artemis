@@ -43,7 +43,7 @@ export class CourseScoreCalculationService {
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
 
-                    if (participation.initializationState == InitializationState.INITIALIZED) {
+                    if (participation.initializationState === InitializationState.INITIALIZED) {
                         reachableScore = reachableScore + exercise.maxScore;
                     }
                 } else {
