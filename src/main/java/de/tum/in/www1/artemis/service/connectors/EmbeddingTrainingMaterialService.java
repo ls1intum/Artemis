@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-
 import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
 
 import java.io.IOException;
@@ -38,6 +37,7 @@ public class EmbeddingTrainingMaterialService {
     }
 
     private static class Response {
+
         public String remotePath;
     }
     // endregion
@@ -50,8 +50,14 @@ public class EmbeddingTrainingMaterialService {
 
     private FileService fileService = new FileService();
 
-    private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log, EmbeddingTrainingMaterialService.Response.class);
+    private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log,
+            EmbeddingTrainingMaterialService.Response.class);
 
+    /**
+     * uploads attachment to Athene to be used for the incremental training of the ELMo model
+     * @param attachment - the attachment to be uploaded
+     * @throws NetworkingError - thrown if the upload fails because of network issue
+     */
     public void uploadAttachment(Attachment attachment) throws NetworkingError {
         log.info("Calling Remote Service to upload training material for the embedding component.");
         final long courseId = attachment.getLecture().getCourse().getId();
@@ -59,11 +65,12 @@ public class EmbeddingTrainingMaterialService {
         byte[] fileData = null;
         try {
             fileData = fileService.getFileForPath(fileService.actualPathForPublicPath(attachment.getLink()));
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
 
-        if (fileData != null){
+        if (fileData != null) {
             final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, fileData);
             final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), 2);
             log.info("File successfully uploaded to " + response.remotePath);
