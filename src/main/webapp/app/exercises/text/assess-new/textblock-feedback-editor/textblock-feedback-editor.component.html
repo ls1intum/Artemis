@@ -55,3 +55,14 @@
         ></jhi-confirm-icon>
     </ng-template>
 </div>
+
+<div class="close restore" *ngIf="feedback.type === FeedbackType.AUTOMATIC_ADAPTED && feedback.automaticDetailText">
+    <jhi-confirm-icon
+        initialIcon="undo"
+        confirmIcon="check"
+        [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.restoreFeedback' | translate"
+        [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.restoreFeedbackConfirmation' | translate"
+        (confirmEvent)="onFeedbackRestore()"
+    >
+    </jhi-confirm-icon>
+</div>
