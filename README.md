@@ -2,6 +2,7 @@
 
 [![GitHub Actions Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
+[![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
 
 This application was generated using JHipster 6.9.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.9.0))
 
@@ -9,21 +10,21 @@ This application was generated using JHipster 6.9.0. ([Documentation and help](h
 
 ## Main features
 Artemis supports the following exercises:
-1. **[Programming exercises](/doc/exerciseTypes/programmingExercise/PROGRAMMING_EXERCISE.md)** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises** with multiple choice, drag and drop and short answer quiz questions 
-3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
-4. **Text exercises** with manual (and experimental semi-automatic) assessment
-5. **File upload exercises** with manual assessment
+1. **[Programming exercises](docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
+2. **[Quiz exercises](docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions
+3. **[Modeling exercises](docs/user/exercises/modeling.rst)** with semi-automatic assessment using machine learning concepts
+4. **[Text exercises](docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
+5. **[File upload exercises](docs/user/exercises/file-upload.rst)** with manual assessment
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
 ## Development setup
 
-Find here a guide on [how to set up your local development environment](/doc/setup/SETUP.md).
+Find here a guide on [how to set up your local development environment](docs/dev/setup.rst).
 
 ## Server Setup for Programming Exercises
 
-You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md) and Bamboo/Bitbucket/Jira [here](doc/bamboo-bitbucket-jira/BAMBOO_BITBUCKET_JIRA_SETUP.md)
+You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](docs/dev/setup/jenkins-gitlab.rst) and Bamboo/Bitbucket/Jira [here](docs/dev/setup/bamboo-bitbucket-jira.rst)
 
 ## Contributing 
 
@@ -33,7 +34,7 @@ Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 The following diagram shows the top-level design of Artemis which is decomposed into an application client (running as Angular web app in the browser) and an application server (based on Spring Boot). For programming exercises, the application server connects to a version control system (VCS) and a continuous integration system (CIS). Authentication is handled by an external user management system (UMS).
 
-![Top-Level Design](doc/TopLevelDesign.png "Top-Level Design")
+![Top-Level Design](docs/dev/system-design/TopLevelDesign.png "Top-Level Design")
 
 While Artemis includes generic adapters to these three external systems with a defined protocol that can be instantiated to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
 
@@ -55,7 +56,7 @@ This will compile the TypeScript into JavaScript files, concatenate and minify t
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
 
-(You might need to copy a yml file into the folder build/libs before, also see [development setup](/doc/setup/SETUP.md))
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](/docs/dev/setup.rst))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -67,7 +68,7 @@ The following UML deployment diagram shows a typical deployment of Artemis appli
 
 The Continuous Integration Server typically delegates the build jobs to local build agents within the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
 
-![Deployment Overview](doc/DeploymentOverview.svg "Deployment Overview")
+![Deployment Overview](docs/dev/system-design/DeploymentOverview.svg "Deployment Overview")
 
 
 ## Data Model
@@ -78,12 +79,12 @@ A student can submit multiple solutions by committing and pushing the source cod
 In addition, teaching assistants can assess student solutions and "manually" create results.
 The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
-![Data Model](doc/DataModel.svg "Data Model")
+![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
 
 
 ## Server Architecture
 
 The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
 
-![Server Architecture](doc/ServerArchitecture.png "Server Architecture")
+![Server Architecture](docs/dev/system-design/ServerArchitecture.png "Server Architecture")
 

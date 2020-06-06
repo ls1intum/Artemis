@@ -54,7 +54,11 @@
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
-            "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
+            "stats": {
+                "intime": "Zeitgerecht",
+                "late": "Verspätet"
+            },
+            "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",

@@ -74,13 +74,13 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             if (!this.quizExerciseChannel) {
-                this.quizExerciseChannel = '/topic/quizExercise/' + params['exerciseId'];
+                this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
                 this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
                 this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
                     (quiz) => {
-                        if (this.waitingForQuizStart) {
+                        if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
                             this.loadQuizSuccess(quiz);
                         }
                     },

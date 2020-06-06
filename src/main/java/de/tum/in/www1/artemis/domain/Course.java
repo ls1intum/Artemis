@@ -88,6 +88,10 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
+    @Column(name = "max_team_complaints")
+    @JsonView(QuizView.Before.class)
+    private Integer maxTeamComplaints;
+
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
@@ -284,6 +288,19 @@ public class Course implements Serializable {
 
     public void setMaxComplaints(Integer maxComplaints) {
         this.maxComplaints = maxComplaints;
+    }
+
+    public Integer getMaxTeamComplaints() {
+        return maxTeamComplaints;
+    }
+
+    public Course maxTeamComplaints(Integer maxTeamComplaints) {
+        this.maxTeamComplaints = maxTeamComplaints;
+        return this;
+    }
+
+    public void setMaxTeamComplaints(Integer maxTeamComplaints) {
+        this.maxTeamComplaints = maxTeamComplaints;
     }
 
     public Integer getMaxComplaintTimeDays() {

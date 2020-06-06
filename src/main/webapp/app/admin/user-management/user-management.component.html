@@ -85,9 +85,9 @@
                             <span class="badge badge-info">{{ group }}</span>
                         </div>
                     </td>
-                    <td>{{ user.createdDate | date: 'dd.MM.yy HH:mm' }}</td>
+                    <td>{{ user.createdDate | artemisDate }}</td>
                     <td>{{ user.lastModifiedBy }}</td>
-                    <td>{{ user.lastModifiedDate | date: 'dd.MM.yy HH:mm' }}</td>
+                    <td>{{ user.lastModifiedDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit" [routerLink]="['./', user.login, 'view']" class="btn btn-info btn-sm">

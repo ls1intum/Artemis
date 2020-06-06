@@ -24,8 +24,12 @@
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "maxComplaints": {
-                "title": "Maximum amount of Complaints",
-                "description": "Set the maximum amount of complaints allowed"
+                "title": "Maximum amount of complaints per student",
+                "description": "Set the maximum amount of complaints allowed per student. If a complaint is rejected, it counts towards the allowed quota. If a complaint is accepted, the student gets to keep it. The scope of this limit are individual exercises."
+            },
+            "maxTeamComplaints": {
+                "title": "Maximum amount of complaints per team",
+                "description": "Set the maximum amount of complaints allowed per team. If a complaint is rejected, it counts towards the allowed quota. If a complaint is accepted, the team gets to keep it. The scope of this limit are team exercises."
             },
             "maxComplaintTimeDays": {
                 "title": "Deadline for complaints in days after result date",

@@ -38,15 +38,34 @@ describe('InstructorExerciseDashboardComponent', () => {
 
     it('Statistics are calculated correctly', () => {
         const stats = new StatsForDashboard();
-        stats.numberOfSubmissions = 420;
-        stats.numberOfAssessments = 333;
-        stats.numberOfAutomaticAssistedAssessments = 42;
+        stats.numberOfSubmissions.inTime = 420;
+        stats.numberOfSubmissions.late = 110;
+        stats.numberOfAssessments.inTime = 333;
+        stats.numberOfAssessments.late = 55;
+        stats.numberOfAutomaticAssistedAssessments.inTime = 42;
+        stats.numberOfAutomaticAssistedAssessments.late = 15;
         comp.stats = stats;
         comp.setStatistics();
-        expect(comp.totalManualAssessmentPercentage).equal(69);
-        expect(comp.totalAutomaticAssessmentPercentage).equal(10);
-        expect(comp.dataForAssessmentPieChart[0]).equal(87);
-        expect(comp.dataForAssessmentPieChart[1]).equal(291);
-        expect(comp.dataForAssessmentPieChart[2]).equal(42);
+        expect(comp.totalManualAssessmentPercentage.inTime).equal(69);
+        expect(comp.totalManualAssessmentPercentage.late).equal(36);
+        expect(comp.totalAutomaticAssessmentPercentage.inTime).equal(10);
+        expect(comp.totalAutomaticAssessmentPercentage.late).equal(13);
+        expect(comp.dataForAssessmentPieChart[0]).equal(142);
+        expect(comp.dataForAssessmentPieChart[1]).equal(331);
+        expect(comp.dataForAssessmentPieChart[2]).equal(57);
+    });
+
+    it('Statistics are calculated, and rounded towards zero correctly', () => {
+        const stats = new StatsForDashboard();
+        stats.numberOfSubmissions.inTime = 2162;
+        stats.numberOfAssessments.inTime = 2152;
+        stats.numberOfAutomaticAssistedAssessments.inTime = 4;
+        comp.stats = stats;
+        comp.setStatistics();
+        expect(comp.totalManualAssessmentPercentage.inTime).equal(99);
+        expect(comp.totalAutomaticAssessmentPercentage.inTime).equal(0);
+        expect(comp.dataForAssessmentPieChart[0]).equal(10);
+        expect(comp.dataForAssessmentPieChart[1]).equal(2148);
+        expect(comp.dataForAssessmentPieChart[2]).equal(4);
     });
 });

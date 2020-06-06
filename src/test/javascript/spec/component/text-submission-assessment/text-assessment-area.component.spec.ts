@@ -9,6 +9,8 @@ import { By } from '@angular/platform-browser';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -18,6 +20,7 @@ describe('TextAssessmentAreaComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule],
             declarations: [TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {

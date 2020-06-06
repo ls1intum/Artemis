@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -227,7 +226,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
     @Async
-    public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
+    public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
@@ -591,6 +590,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, programmingExercise.getDueDate());
+
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 

@@ -34,6 +34,7 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -55,15 +56,15 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfSubmissions = 0;
-    numberOfAssessments = 0;
+    numberOfSubmissions = new DueDateStat();
+    numberOfAssessments = new DueDateStat();
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
-    totalAssessmentPercentage = 0;
+    totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
@@ -211,7 +212,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.statsForDashboard = res.body!;
+                this.statsForDashboard = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
@@ -229,9 +230,20 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
-                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions) * 100);
+                if (this.numberOfSubmissions.inTime > 0) {
+                    this.totalAssessmentPercentage.inTime = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                } else {
+                    this.totalAssessmentPercentage.inTime = 100;
+                }
+                if (this.numberOfSubmissions.late > 0) {
+                    this.totalAssessmentPercentage.late = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                } else {
+                    this.totalAssessmentPercentage.late = 100;
+                }
+                if (this.numberOfSubmissions.total > 0) {
+                    this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
+                } else {
+                    this.tutorAssessmentPercentage = 100;
                 }
             },
             (response: string) => this.onError(response),
