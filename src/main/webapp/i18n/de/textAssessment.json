@@ -48,6 +48,8 @@
             "feedbackEditor": {
                 "dismissFeedback": "Möchtest du das Feedback löschen?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass du das Feedback löschen möchtest!",
+                "restoreFeedback": "Möchtest du das automatische Feedback wiederherstellen?",
+                "restoreFeedbackConfirmation": "Bitte bestätige, dass du das automatische Feedback wiederherstellen möchtest!",
                 "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein.."
             },
             "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten."

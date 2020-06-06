@@ -48,6 +48,8 @@
             "feedbackEditor": {
                 "dismissFeedback": "Do you want to delete this feedback?",
                 "dismissFeedbackConfirmation": "Please confirm that you want to delete this feedback!",
+                "restoreFeedback": "Do you want to restore the automatic feedback?",
+                "restoreFeedbackConfirmation": "Please confirm that you want to restore the automatic feedback!",
                 "feedbackCommentPlaceholder": "Enter your feedback comment here.."
             },
             "assessmentInstruction": "Please hover over and click on the text block you want to assess."
