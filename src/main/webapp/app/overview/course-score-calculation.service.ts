@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
@@ -42,6 +42,10 @@ export class CourseScoreCalculationService {
                         reachableScore = reachableScore + exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
+
+                    if (participation.initializationState == InitializationState.INITIALIZED) {
+                        reachableScore = reachableScore + exercise.maxScore;
+                    }
                 } else {
                     reachableScore = reachableScore + exercise.maxScore;
                 }
