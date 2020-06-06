@@ -21,6 +21,7 @@ export class Feedback implements BaseEntity {
     public id: number;
     public text: string | null;
     public detailText: string | null;
+    public automaticDetailText: string | null;
     public reference: string | null;
     public credits = 0;
     public type: FeedbackType | null;
@@ -33,6 +34,10 @@ export class Feedback implements BaseEntity {
 
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != null && that.detailText.length > 0;
+    }
+
+    public static hasAutomaticDetailText(that: Feedback): boolean {
+        return that.automaticDetailText != null && that.automaticDetailText.length > 0;
     }
 
     public static isEmpty(that: Feedback): boolean {
