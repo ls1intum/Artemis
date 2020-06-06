@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -10,7 +10,22 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -127,7 +142,8 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<TutorGroup> tutorGroups = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course")
+    @JsonIgnore
     private Set<Exam> exams = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
@@ -470,6 +486,20 @@ public class Course implements Serializable {
 
     public void setExams(Set<Exam> exams) {
         this.exams = exams;
+    }
+
+    public void addExam(Exam exam) {
+        this.exams.add(exam);
+        if (exam.getCourse() != this) {
+            exam.setCourse(this);
+        }
+    }
+
+    public void removeExam(Exam exam) {
+        this.exams.remove(exam);
+        if (exam.getCourse() == this) {
+            exam.setCourse(null);
+        }
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
