@@ -1,18 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
-
-import java.io.IOException;
-
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.service.FileService;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.service.FileService;
+import java.io.IOException;
+
+import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
 
 @Service
 @Profile("automaticText")
@@ -27,9 +27,9 @@ public class EmbeddingTrainingMaterialService {
 
         public String fileName;
 
-        public byte[] fileData;
+        public String fileData;
 
-        public Request(long courseId, String fileName, byte[] fileData) {
+        public Request(long courseId, String fileName, String fileData) {
             this.courseId = courseId;
             this.fileName = fileName;
             this.fileData = fileData;
@@ -61,7 +61,7 @@ public class EmbeddingTrainingMaterialService {
     public void uploadAttachment(Attachment attachment) throws NetworkingError {
         log.info("Calling Remote Service to upload training material for the embedding component.");
         final long courseId = attachment.getLecture().getCourse().getId();
-        final String fileName = attachment.getName();
+        final String fileName = attachment.getLink().substring(attachment.getLink().lastIndexOf("/") + 1);
         byte[] fileData = null;
         try {
             fileData = fileService.getFileForPath(fileService.actualPathForPublicPath(attachment.getLink()));
@@ -71,7 +71,8 @@ public class EmbeddingTrainingMaterialService {
         }
 
         if (fileData != null) {
-            final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, fileData);
+            String encodedFileData = Base64.encodeBase64String(fileData);
+            final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, encodedFileData);
             final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), 2);
             log.info("File successfully uploaded to " + response.remotePath);
         }
