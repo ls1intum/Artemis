@@ -196,7 +196,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "student11", roles = "USER")
     public void testGetExercise_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId(), HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -251,7 +251,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "student11", roles = "USER")
     public void testGetExerciseDetails_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -308,7 +308,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "tutor6", roles = "TA")
     public void testGetExerciseForTutorDashboard_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -322,7 +322,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExerciseForTutorDashboard_exerciseWithTutorParticipation() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         var exercise = exerciseRepository.findAll().get(0);
         var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
@@ -383,7 +383,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "tutor6", roles = "TA")
     public void testGetStatsForTutorExerciseDashboard_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -427,7 +427,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testGetStatsForInstructorExerciseDashboard_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -448,7 +448,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testResetExercise_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
@@ -480,7 +480,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testCleanupExercise_forbidden() throws Exception {
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
     }
 }
