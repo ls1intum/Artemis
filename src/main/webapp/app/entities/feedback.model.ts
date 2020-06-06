@@ -82,6 +82,9 @@ export class Feedback implements BaseEntity {
     public static updateFeedbackTypeOnChange(feedback: Feedback) {
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        } else if (feedback.type === FeedbackType.AUTOMATIC_ADAPTED && feedback.automaticDetailText === feedback.detailText) {
+            // revert FeedbackType due to restoring automatic feedback
+            feedback.type = FeedbackType.AUTOMATIC;
         }
     }
 }
