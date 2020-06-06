@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -76,8 +78,12 @@ public class GitLabService extends AbstractVersionControlService {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.gitlab = gitlab;
-        this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
         this.gitLabUserManagementService = gitLabUserManagementService;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
     }
 
     @Override
