@@ -108,7 +108,7 @@
     <jhi-programming-assessment-manual-result-in-code-editor
         editorBottom
         [participationId]="participation.id"
-        [result]="participation.results[participation.results.length - 1]"
+        [result]="checkIfManualResultExist()"
         [exercise]="exercise"
         [assessmentActionState]="assessmentActionState"
     ></jhi-programming-assessment-manual-result-in-code-editor>

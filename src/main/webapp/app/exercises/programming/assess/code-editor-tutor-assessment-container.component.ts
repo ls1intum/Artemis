@@ -110,8 +110,12 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     }
 
     findManualResults(results: Result[]): Result[] {
-        const manualResult = results.filter((manualResult) => manualResult.assessmentType == AssessmentType.MANUAL);
-        return manualResult ? _orderBy(manualResult, 'completionDate', 'desc') : manualResult;
+        const manualResult = results.filter((manualResult) => manualResult.assessmentType === AssessmentType.MANUAL);
+        return manualResult ? _orderBy(manualResult, 'completionDate', 'desc') : [];
+    }
+
+    checkIfManualResultExist(): Result | null {
+        return this.participationForAssessment.results ? this.participationForAssessment.results[0] : null;
     }
 
     /**

@@ -121,9 +121,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.result = this.manualResultService.generateInitialManualResult();
         this.result.assessor = this.user;
         // TODO: is this call really necessary?
-        this.getParticipation();
-        console.log('PARTICIPATION');
-        console.log(this.participation);
+        this.getParticipation().subscribe(() => (this.isLoading = false));
     }
 
     private checkPermissions(): void {
@@ -147,11 +145,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         return this.participationService.find(this.participationId).pipe(
             tap(({ body: participation }) => {
                 this.participation = participation! as ProgrammingExerciseStudentParticipation;
-                console.log('participation');
-                console.log(this.participation);
                 this.result.participation = this.participation;
-                console.log('result-participation');
-                console.log(this.result.participation);
                 this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
             }),
             catchError((err: any) => {
@@ -184,8 +178,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.isSaving = true;
         this.getParticipation().subscribe(() => {
             this.isLoading = false;
-            console.log(this.participationId);
-            console.log(this.participation);
             for (let i = 0; i < this.result.feedbacks.length; i++) {
                 this.result.feedbacks[i].type = FeedbackType.MANUAL;
             }
@@ -196,18 +188,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
                 this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
             }
         });
-    }
-
-    private test() {
-        var testFeedback: Feedback[];
-        var feedback: Feedback = new Feedback();
-        feedback.text = 'super';
-        feedback.detailText = 'Hammer';
-        feedback.credits = 0;
-        //feedback.positive = true;
-        //feedback.result = this.result;
-        testFeedback = [feedback];
-        return testFeedback;
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
