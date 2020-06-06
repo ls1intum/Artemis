@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -9,8 +9,10 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     templateUrl: './textblock-feedback-editor.component.html',
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
-export class TextblockFeedbackEditorComponent implements AfterViewInit {
+export class TextblockFeedbackEditorComponent implements AfterViewInit, OnInit {
     readonly FeedbackType = FeedbackType;
+
+    public canRestore = false;
 
     @Input() textBlock: TextBlock;
     @Input() feedback: Feedback = new Feedback();
@@ -20,6 +22,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
     private textareaElement: HTMLTextAreaElement;
+    private automaticDetailText: string | null;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -36,6 +39,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+
+    ngOnInit(): void {
+        if (this.feedback.type === FeedbackType.AUTOMATIC) {
+            this.automaticDetailText = this.feedback.detailText;
+        } else {
+            this.automaticDetailText = this.feedback.automaticDetailText;
+        }
+    }
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -99,7 +110,20 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Hook to indicate changes in the feedback editor
      */
     didChange(): void {
+        // store original automatic feedback text in feedback
+        if (this.feedback.type === FeedbackType.AUTOMATIC) {
+            this.feedback.automaticDetailText = this.automaticDetailText;
+        }
+
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+    }
+
+    onFeedbackRestore(): void {
+        if (Feedback.hasAutomaticDetailText(this.feedback)) {
+            this.feedback.detailText = this.feedback!.automaticDetailText;
+            Feedback.updateFeedbackTypeOnChange(this.feedback);
+            this.feedbackChange.emit(this.feedback);
+        }
     }
 }
