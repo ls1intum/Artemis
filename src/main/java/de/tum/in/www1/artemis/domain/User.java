@@ -3,9 +3,26 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -20,6 +37,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
@@ -116,6 +135,14 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
+
+    @ManyToMany(mappedBy = "registeredUsers")
+    @JsonIgnore
+    private Set<Exam> exams = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private Set<StudentExam> studentExams = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -286,6 +313,51 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
 
     public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
+    }
+
+    public Set<Exam> getExams() {
+        return exams;
+    }
+
+    public void setExams(Set<Exam> exams) {
+        this.exams = exams;
+    }
+
+    public void addExam(Exam exam) {
+        this.exams.add(exam);
+        if (!exam.getRegisteredUsers().contains(this)) {
+            exam.getRegisteredUsers().add(this);
+        }
+    }
+
+    public void removeExam(Exam exam) {
+        this.exams.remove(exam);
+
+        if (exam.getRegisteredUsers().contains(this)) {
+            exam.getRegisteredUsers().remove(this);
+        }
+    }
+
+    public Set<StudentExam> getStudentExams() {
+        return studentExams;
+    }
+
+    public void setStudentExams(Set<StudentExam> studentExams) {
+        this.studentExams = studentExams;
+    }
+
+    public void addStudentExam(StudentExam studentExam) {
+        this.studentExams.add(studentExam);
+        if (studentExam.getUser() != this) {
+            studentExam.setUser(this);
+        }
+    }
+
+    public void removeStudentExam(StudentExam studentExam) {
+        this.studentExams.remove(studentExam);
+        if (studentExam.getUser() == this) {
+            studentExam.setUser(null);
+        }
     }
 
     @Override
