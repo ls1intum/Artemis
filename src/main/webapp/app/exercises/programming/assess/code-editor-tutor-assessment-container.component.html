@@ -34,6 +34,15 @@
             [exercise]="exercise"
             [showUngradedResults]="true"
             [showGradedBadge]="true"
+            [participation]="participationForAssessment"
+            [short]="true"
+            class="mr-2"
+        ></jhi-updating-result>
+        <jhi-updating-result
+            *ngIf="participation"
+            [exercise]="exercise"
+            [showUngradedResults]="true"
+            [showGradedBadge]="true"
             [participation]="participation"
             [short]="true"
             class="mr-2"

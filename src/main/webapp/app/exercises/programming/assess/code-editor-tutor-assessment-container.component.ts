@@ -28,6 +28,8 @@ import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentActionState, AssessmentSubmitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { orderBy as _orderBy, cloneDeep as _cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -46,6 +48,8 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
+
+    participationForAssessment: ProgrammingExerciseStudentParticipation;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -84,6 +88,8 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults!;
+                        this.participationForAssessment = _cloneDeep(this.participation);
+                        this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
@@ -101,6 +107,11 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                     },
                 );
         });
+    }
+
+    findManualResults(results: Result[]): Result[] {
+        const manualResult = results.filter((manualResult) => manualResult.assessmentType == AssessmentType.MANUAL);
+        return manualResult ? _orderBy(manualResult, 'completionDate', 'desc') : manualResult;
     }
 
     /**
