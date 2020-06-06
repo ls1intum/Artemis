@@ -25,7 +25,18 @@ public class ExerciseGroup extends AbstractAuditingEntity {
     // -----------------------------------------------------------------------------------------------------------------
     // no arg constructor required for jpa
     public ExerciseGroup() {
+
     }
+
+    public ExerciseGroup(Long id, String title, Boolean isMandatory, Integer positionInExam, Exam exam, Set<Exercise> exercises) {
+        this.id = id;
+        this.title = title;
+        this.isMandatory = isMandatory;
+        this.positionInExam = positionInExam;
+        this.exam = exam;
+        this.exercises = exercises;
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
 
