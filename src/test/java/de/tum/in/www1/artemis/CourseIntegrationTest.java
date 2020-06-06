@@ -126,6 +126,101 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithSameShortName() throws Exception {
+        Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course1.setShortName("shortName");
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course1.getDefaultInstructorGroupName());
+        request.post("/api/courses", course1, HttpStatus.CREATED);
+        assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(1);
+
+        Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course2.setShortName("shortName");
+        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
+        assertThat(courseRepo.findAll().size()).as("Course has not been stored").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaints(-1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaintTimeDays(-1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithNegativeMaxTeamComplainNumber() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxTeamComplaints(-1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course.setMaxComplaintTimeDays(0);
+        course.setMaxComplaints(1);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+
+        // change configuration
+        course.setMaxComplaintTimeDays(1);
+        course.setMaxComplaints(0);
+        course.setMaxTeamComplaints(0);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setStudentGroupName("StudentGroupName");
+        course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
+        course.setInstructorGroupName("InstructorGroupName");
+        request.post("/api/courses", course, HttpStatus.CREATED);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false);
@@ -281,6 +376,45 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testGetCourseForDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+
+        // Test that the received course has five exercises
+        assertThat(receivedCourse.getExercises().size()).as("Five exercises are returned").isEqualTo(5);
+        // Test that the received course has two lectures
+        assertThat(receivedCourse.getLectures().size()).as("Two lectures are returned").isEqualTo(2);
+
+        // Iterate over all exercises of the remaining course
+        for (Exercise exercise : courses.get(0).getExercises()) {
+            // Test that the exercise does not have more than one participation.
+            assertThat(exercise.getStudentParticipations().size()).as("At most one participation for exercise").isLessThanOrEqualTo(1);
+            if (exercise.getStudentParticipations().size() > 0) {
+                // Buffer participation so that null checking is easier.
+                Participation participation = exercise.getStudentParticipations().iterator().next();
+                if (participation.getSubmissions().size() > 0) {
+                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
+                    assertThat(participation.getSubmissions().size()).as("At most one submission for participation").isLessThanOrEqualTo(1);
+                    Submission submission = participation.getSubmissions().iterator().next();
+                    if (submission != null) {
+                        // Test that the correct text submission was filtered.
+                        if (submission instanceof TextSubmission) {
+                            TextSubmission textSubmission = (TextSubmission) submission;
+                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
+                        }
+                        // Test that the correct modeling submission was filtered.
+                        if (submission instanceof ModelingSubmission) {
+                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllCoursesForDashboard() throws Exception {
         database.createCoursesWithExercisesAndLectures(true);
 
@@ -347,6 +481,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
         courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllCoursesWithUserStats() throws Exception {
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
+        List<Course> receivedCourse = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
+        assertThat(testCourses).isEqualTo(receivedCourse);
+        assertThat(receivedCourse.get(0).getNumberOfStudents()).isEqualTo(numberOfStudents);
+        assertThat(receivedCourse.get(0).getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
+        assertThat(receivedCourse.get(0).getNumberOfInstructors()).isEqualTo(numberOfInstructors);
     }
 
     @Test
@@ -470,7 +615,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
-        Course testCourse = database.addCourseWithOneTextExercise();
+        Course testCourse = database.addCourseWithOneReleasedTextExercise();
         var points = withPoints ? 15L : null;
         var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());
         tutorLeaderboardComplaintsViewRepo.save(new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
@@ -670,15 +815,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getTeachingAssistantGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getInstructorGroupName()));
-
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, HttpStatus.OK, null);
+        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.OK);
 
         // TODO check that the roles have changed accordingly
     }
@@ -688,7 +825,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse__forbidden(course);
+        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -696,22 +833,33 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse__forbidden(course);
+        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
-    private void testAddStudentOrTutorOrInstructorToCourse__forbidden(Course course) throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
-
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getTeachingAssistantGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getInstructorGroupName()));
 
-        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
+    }
+
+    private void testAddStudentOrTutorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getTeachingAssistantGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getInstructorGroupName()));
+
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, httpStatus, null);
     }
 
     @Test
@@ -719,32 +867,26 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
-        // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
-
-        // Mock remove requests
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
-
-        // Remove users from their group
-        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.OK);
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
-        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.OK);
-
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+        request.delete("/api/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course.getId() + "/tutors/maxMustermann", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course.getId() + "/instructors/maxMustermann", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course);
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -752,22 +894,23 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course);
+        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
-    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course) throws Exception {
+    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
+        // Retrieve users from whom to remove groups
         User student = userRepo.findOneWithGroupsByLogin("student1").get();
         User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
-
+        // Mock remove requests
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin());
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getInstructorGroupName()), instructor.getLogin());
-
-        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.FORBIDDEN);
+        // Remove users from their group
+        request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), httpStatus);
     }
 
     @Test

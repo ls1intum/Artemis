@@ -113,7 +113,7 @@
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
-                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
+                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
                 "addStudentName": "Namen der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
@@ -141,16 +141,16 @@
             "timeline": {
                 "manualReview": "Manuelle Review",
                 "automaticTests": "Automatische Tests",
-                "afterDueDate": "Testlauf nach dem Abgabedatum",
+                "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
                 "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
-                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmers löst alle in dem Testrepository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach dem Abgabedatum ausgeführt werden sollen)",
-                "automaticTestsAfterDueDateTooltip": "Sobald das Abgabedatum abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Testrepository gespeicherten Tests.",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmers löst alle in dem Testrepository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
+                "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Testrepository gespeicherten Tests.",
                 "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutoren noch einmal alle Abgaben manuell bewerten",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studenten können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
                 "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgabgen und Commits für Studenten gesperrt werden",
-                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist",
-                "alertNewDueDate": "Das Abgabedatum wurde auf das Releasedatum gesetzt!",
+                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
+                "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "notSet": "nicht gesetzt"
             },
@@ -167,7 +167,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
-                "tooltip": "Dein Repository ist gesperrt, weil das Abgabedatum abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
             "preview": {
                 "label": "Vorschau",
