@@ -57,5 +57,4 @@ processResources {
     }
 }
 
-processResources.dependsOn webpack
 bootJar.dependsOn processResources
