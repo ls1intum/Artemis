@@ -52,11 +52,16 @@
                     <h4 id="reachable-score">
                         <span>
                             {{
-                            'artemisApp.courseOverview.statistics.reachablePoints'
-                                | translate: { number: exerciseGroup.reachableScore, relative: exerciseGroup.currentRelativeScore }
+                                'artemisApp.courseOverview.statistics.reachablePoints'
+                                    | translate: { number: exerciseGroup.reachableScore, relative: exerciseGroup.currentRelativeScore }
                             }}
                         </span>
-                        <fa-icon id="reachable-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"></fa-icon>
+                        <fa-icon
+                            id="reachable-help"
+                            class="mr-1"
+                            [icon]="'question-circle'"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"
+                        ></fa-icon>
                     </h4>
                     <h4 id="max-score">
                         <span>
