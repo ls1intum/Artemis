@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -176,7 +177,35 @@ public class AssessmentService {
      * @param assessments the List of Feedback
      * @return the total score
      */
-    protected Double calculateTotalScore(List<Feedback> assessments) {
-        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
+    public static Double calculateTotalScore(List<Feedback> assessments) {
+        double totalScore = 0.0;
+
+        var gradingInstructions = new HashMap<Long,Integer>(); // { instructionId: noOfEncounters }
+        for (Feedback feedback : assessments) {
+            if (feedback.getGradingInstruction() != null) {
+                if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
+                    // We Encountered this grading instruction before
+                    var maxCount = feedback.getGradingInstruction().getUsageCount();
+                    var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
+                    if ( maxCount > 0) {
+                        if (encounters >= maxCount) {
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(),encounters + 1);
+                        } else {
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(),encounters + 1);
+                            totalScore += feedback.getGradingInstruction().getCredits();
+                        }
+                    } else {
+                        totalScore += feedback.getGradingInstruction().getCredits();
+                    }
+                } else {
+                    // First time encountering the grading instruction
+                    gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
+                    totalScore += feedback.getGradingInstruction().getCredits();
+                }
+            } else {
+                totalScore += feedback.getCredits();
+            }
+        }
+        return  totalScore;
     }
 }

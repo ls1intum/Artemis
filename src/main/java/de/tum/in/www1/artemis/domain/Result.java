@@ -5,14 +5,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.service.AssessmentService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -524,9 +522,8 @@ public class Result implements Serializable {
     // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
     private double calculateTotalScore(double maxScore) {
         double totalScore = 0.0;
-        for (Feedback feedback : this.feedbacks) {
-            totalScore += feedback.getCredits();
-        }
+        totalScore = AssessmentService.calculateTotalScore(this.feedbacks);
+
         // limit total score to be between 0 and maxScore
         totalScore = Math.max(Math.min(totalScore, maxScore), 0);
         return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
