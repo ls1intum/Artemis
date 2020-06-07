@@ -20,7 +20,7 @@ public class Exam {
     }
 
     public Exam(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, String startText, String endText, String confirmationStartText,
-            String confirmationEndText, Integer numberOfExerciseGroups, Course course, List<ExerciseGroup> exerciseGroups, Set<StudentExam> studentExams,
+            String confirmationEndText, Integer numberOfExercisesInExam, Course course, List<ExerciseGroup> exerciseGroups, Set<StudentExam> studentExams,
             Set<User> registeredUsers) {
         this.id = id;
         this.title = title;
@@ -31,7 +31,7 @@ public class Exam {
         this.endText = endText;
         this.confirmationStartText = confirmationStartText;
         this.confirmationEndText = confirmationEndText;
-        this.numberOfExerciseGroups = numberOfExerciseGroups;
+        this.numberOfExercisesInExam = numberOfExercisesInExam;
         this.course = course;
         this.exerciseGroups = exerciseGroups;
         this.studentExams = studentExams;
@@ -82,11 +82,11 @@ public class Exam {
     private String confirmationEndText;
 
     /**
-     * From all exercise groups connected to the exam, {@link #numberOfExerciseGroups} are randomly
+     * From all exercise groups connected to the exam, {@link #numberOfExercisesInExam} are randomly
      * chosen when generating the specific exam for the {@link #registeredUsers}
      */
-    @Column(name = "number_of_exercise_groups")
-    private Integer numberOfExerciseGroups;
+    @Column(name = "number_of_exercises_in_exam")
+    private Integer numberOfExercisesInExam;
 
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
@@ -266,12 +266,12 @@ public class Exam {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public Integer getNumberOfExerciseGroups() {
-        return numberOfExerciseGroups;
+    public Integer getNumberOfExercisesInExam() {
+        return numberOfExercisesInExam;
     }
 
-    public void setNumberOfExerciseGroups(Integer numberOfExerciseGroups) {
-        this.numberOfExerciseGroups = numberOfExerciseGroups;
+    public void setNumberOfExercisesInExam(Integer numberOfExercisesInExam) {
+        this.numberOfExercisesInExam = numberOfExercisesInExam;
     }
 
     // endregion
