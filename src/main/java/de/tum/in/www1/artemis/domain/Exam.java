@@ -99,20 +99,18 @@ public class Exam {
         this.exerciseGroups = exerciseGroups;
     }
 
-    public Exam addExerciseGroup(ExerciseGroup exerciseGroup) {
+    public void addExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.add(exerciseGroup);
         if (exerciseGroup.getExam() != this) {
             exerciseGroup.setExam(this);
         }
-        return this;
     }
 
-    public Exam removeExerciseGroup(ExerciseGroup exerciseGroup) {
+    public void removeExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.remove(exerciseGroup);
         if (exerciseGroup.getExam() == this) {
             exerciseGroup.setExam(null);
         }
-        return this;
     }
     // -----------------------------------------------------------------------------------------------------------------
 
