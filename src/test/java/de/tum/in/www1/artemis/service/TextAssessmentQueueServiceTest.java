@@ -44,7 +44,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     public void init() {
-        course = database.addCourseWithOneTextExercise();
+        course = database.addCourseWithOneReleasedTextExercise();
         random = new Random();
         errorRate = Percentage.withPercentage(0.0001);
     }

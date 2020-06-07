@@ -74,7 +74,6 @@ public abstract class QuizQuestion implements Serializable {
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
-    @JsonView(QuizView.After.class)
     private QuizQuestionStatistic quizQuestionStatistic;
 
     @ManyToOne
@@ -261,8 +260,8 @@ public abstract class QuizQuestion implements Serializable {
      */
     @JsonIgnore
     public Boolean isValid() {
-        // check title
-        return getTitle() != null && !getTitle().equals("");
+        // check title and score
+        return getTitle() != null && !getTitle().equals("") && getScore() >= 0;
     }
 
     @Override

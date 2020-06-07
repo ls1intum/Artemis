@@ -99,11 +99,20 @@ public class BambooBuildPlanService {
 
         bambooServer.publish(plan);
 
+        setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
+    }
+
+    /**
+     * Set Build Plan Permissions for admins, instructors and teaching assistants.
+     * @param programmingExercise   a programming exercise with the required information to set the needed build plan permissions
+     * @param planKey              The name of the source plan
+     */
+    public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
         Course course = programmingExercise.getCourse();
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
-        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), plan.getKey().toString(), teachingAssistantGroupName,
-                instructorGroupName, ADMIN_GROUP_NAME);
+        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, instructorGroupName,
+                ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
     }
 

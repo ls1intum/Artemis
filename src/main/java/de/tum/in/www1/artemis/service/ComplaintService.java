@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -53,28 +54,31 @@ public class ComplaintService {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        User student = studentParticipation.getStudent().get(); // TODO: adapt for teams
+        Participant participant = studentParticipation.getParticipant(); // Team or Student
         Long courseId = studentParticipation.getExercise().getCourse().getId();
 
-        // Retrieve course to get Max Complaint Number and Max Complaint Time per Student
+        // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
         Course course = courseService.findOne(courseId);
 
-        long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= course.getMaxComplaints() && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            throw new BadRequestAlertException("You cannot have more than " + course.getMaxComplaints() + " open or rejected complaints at the same time.", ENTITY_NAME,
-                    "toomanycomplaints");
+        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+            long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
+            if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
+                throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.", ENTITY_NAME,
+                        "toomanycomplaints");
+            }
         }
         if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise(), course)) {
             throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
         }
-        if (!student.getLogin().equals(principal.getName())) {
+        if (!studentParticipation.isOwnedBy(principal.getName())) {
             throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
 
         originalResult.setHasComplaint(true);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
-        complaint.setStudent(student);
+        complaint.setParticipant(participant);
         complaint.setResult(originalResult);
         try {
             // Store the original result with the complaint
@@ -99,9 +103,25 @@ public class ComplaintService {
         return complaintRepository.findByResult_Id(resultId);
     }
 
+    /**
+     * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
+     * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
+     *
+     * @param participant the participant (student or team)
+     * @param courseId  the id of the course
+     * @return the number of unaccepted complaints
+     */
     @Transactional(readOnly = true)
-    public long countUnacceptedComplaintsByStudentIdAndCourseId(long studentId, long courseId) {
-        return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(studentId, courseId);
+    public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
+        if (participant instanceof User) {
+            return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(participant.getId(), courseId);
+        }
+        else if (participant instanceof Team) {
+            return complaintRepository.countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(participant.getParticipantIdentifier(), courseId);
+        }
+        else {
+            throw new Error("Unknown participant type");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -166,6 +186,16 @@ public class ComplaintService {
         return complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
     }
 
+    /**
+     * Returns the maximum allowed number of complaints per participant in a course (differentiates between individual and team complaints)
+     * @param course Course for which to evaluate
+     * @param participant Participant for which to evaluate
+     * @return max complaints
+     */
+    public Integer getMaxComplaintsPerParticipant(Course course, Participant participant) {
+        return participant instanceof Team ? course.getMaxTeamComplaints() : course.getMaxComplaints();
+    }
+
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
         return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
@@ -183,5 +213,4 @@ public class ComplaintService {
         }
         return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
     }
-
 }

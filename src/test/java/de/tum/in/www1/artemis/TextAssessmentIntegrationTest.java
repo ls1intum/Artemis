@@ -7,7 +7,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,13 +21,33 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -79,8 +102,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        course = database.addCourseWithOneTextExercise();
-        textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        course = database.addCourseWithOneReleasedTextExercise();
+        textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
     }
@@ -518,8 +541,35 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void checkTextSubmissionWithoutAssessmentAndRetrieveParticipationForSubmissionReturnSameBlocksAndFeedback() throws Exception {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("lock", "true");
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, parameters);
+
+        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmissions.get(0).getId() + "/cancel-assessment", null, HttpStatus.OK);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        Participation participation = request.get("/api/text-assessments/submission/" + textSubmissions.get(0).getId(), HttpStatus.OK, Participation.class, params);
+        final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
+        final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
+
+        assertThat(textSubmissionWithoutAssessment.getId()).isEqualTo(submissionFromParticipation.getId());
+        assertThat(Arrays.equals(textSubmissionWithoutAssessment.getBlocks().toArray(), submissionFromParticipation.getBlocks().toArray())).isTrue();
+        final Feedback feedbackFromSubmissionWithoutAssessment = textSubmissionWithoutAssessment.getResult().getFeedbacks().get(0);
+        final Feedback feedbackFromParticipation = resultFromParticipation.getFeedbacks().get(0);
+        assertThat(feedbackFromSubmissionWithoutAssessment.getCredits()).isEqualTo(feedbackFromParticipation.getCredits());
+        assertThat(feedbackFromSubmissionWithoutAssessment.getDetailText()).isEqualTo(feedbackFromParticipation.getDetailText());
+        assertThat(feedbackFromSubmissionWithoutAssessment.getType()).isEqualTo(feedbackFromParticipation.getType());
+    }
+
+    @NotNull
+    private List<TextSubmission> prepareTextSubmissionsWithFeedbackForAutomaticFeedback() {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("This is another Submission.", Language.ENGLISH, true);
+        var textSubmissions = asList(textSubmission1, textSubmission2);
         database.addTextSubmission(textExercise, textSubmission1, "student1");
         database.addTextSubmission(textExercise, textSubmission2, "student2");
         exerciseDueDatePassed();
@@ -542,24 +592,43 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final Feedback feedback = new Feedback().detailText("Foo Bar.").credits(2d).reference(textBlockSubmission2.getId());
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", asList(feedback));
         feedbackRepository.save(feedback);
+        return textSubmissions;
+    }
 
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void checkTextBlockSavePreservesClusteringInformation() throws Exception {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
+        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("lock", "true");
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class);
+                TextSubmission.class, parameters);
 
-        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission1.getId() + "/cancel-assessment", null, HttpStatus.OK);
+        textSubmissionWithoutAssessment.getBlocks()
+                .forEach(block -> assertThat(block).isEqualToIgnoringGivenFields(blocksSubmission1.get(block.getId()), "positionInCluster", "submission", "cluster"));
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-        Participation participation = request.get("/api/text-assessments/submission/" + textSubmission1.getId(), HttpStatus.OK, Participation.class, params);
-        final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
-        final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
+        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
+                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
 
-        assertThat(textSubmissionWithoutAssessment.getId()).isEqualTo(submissionFromParticipation.getId());
-        assertThat(Arrays.equals(textSubmissionWithoutAssessment.getBlocks().toArray(), submissionFromParticipation.getBlocks().toArray())).isTrue();
-        final Feedback feedbackFromSubmissionWithoutAssessment = textSubmissionWithoutAssessment.getResult().getFeedbacks().get(0);
-        final Feedback feedbackFromParticipation = resultFromParticipation.getFeedbacks().get(0);
-        assertThat(feedbackFromSubmissionWithoutAssessment.getCredits()).isEqualTo(feedbackFromParticipation.getCredits());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getDetailText()).isEqualTo(feedbackFromParticipation.getDetailText());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getType()).isEqualTo(feedbackFromParticipation.getType());
+        final List<TextBlock> newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
+            var newBlock = new TextBlock();
+            newBlock.setText(oldBlock.getText());
+            newBlock.setStartIndex(oldBlock.getStartIndex());
+            newBlock.setEndIndex(oldBlock.getEndIndex());
+            newBlock.setId(oldBlock.getId());
+            return newBlock;
+        }).collect(Collectors.toList());
+
+        final TextAssessmentDTO dto = new TextAssessmentDTO();
+        dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
+        dto.setFeedbacks(new ArrayList<>());
+
+        Result result = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + textSubmissionWithoutAssessment.getResult().getId(),
+                dto, Result.class, HttpStatus.OK);
+
+        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
+                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
     }
 }

@@ -10,21 +10,21 @@ This application was generated using JHipster 6.9.0. ([Documentation and help](h
 
 ## Main features
 Artemis supports the following exercises:
-1. **[Programming exercises](/doc/exerciseTypes/programmingExercise/PROGRAMMING_EXERCISE.md)** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises** with multiple choice, drag and drop and short answer quiz questions 
-3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
-4. **Text exercises** with manual (and experimental semi-automatic) assessment
-5. **File upload exercises** with manual assessment
+1. **[Programming exercises](docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
+2. **[Quiz exercises](docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions
+3. **[Modeling exercises](docs/user/exercises/modeling.rst)** with semi-automatic assessment using machine learning concepts
+4. **[Text exercises](docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
+5. **[File upload exercises](docs/user/exercises/file-upload.rst)** with manual assessment
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
 ## Development setup
 
-Find here a guide on [how to set up your local development environment](/doc/setup/SETUP.md).
+Find here a guide on [how to set up your local development environment](docs/dev/setup.rst).
 
 ## Server Setup for Programming Exercises
 
-You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md) and Bamboo/Bitbucket/Jira [here](doc/bamboo-bitbucket-jira/BAMBOO_BITBUCKET_JIRA_SETUP.md)
+You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](docs/dev/setup/jenkins-gitlab.rst) and Bamboo/Bitbucket/Jira [here](docs/dev/setup/bamboo-bitbucket-jira.rst)
 
 ## Contributing 
 
@@ -56,7 +56,7 @@ This will compile the TypeScript into JavaScript files, concatenate and minify t
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
 
-(You might need to copy a yml file into the folder build/libs before, also see [development setup](/doc/setup/SETUP.md))
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](/docs/dev/setup.rst))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -79,7 +79,7 @@ A student can submit multiple solutions by committing and pushing the source cod
 In addition, teaching assistants can assess student solutions and "manually" create results.
 The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
-![Data Model](docs/dev/system-designDataModel.svg "Data Model")
+![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
 
 
 ## Server Architecture

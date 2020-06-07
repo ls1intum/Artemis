@@ -85,7 +85,6 @@ public class QuizExerciseService {
      * @return the saved quiz exercise
      */
     public QuizExercise save(QuizExercise quizExercise) {
-        log.debug("Request to save QuizExercise : {}", quizExercise);
 
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
 
@@ -186,6 +185,7 @@ public class QuizExerciseService {
 
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
+        log.debug("Save quiz to database: {}", quizExercise);
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
@@ -203,7 +203,6 @@ public class QuizExerciseService {
         }
 
         quizScheduleService.scheduleQuizStart(quizExercise.getId());
-
         return quizExercise;
     }
 
@@ -262,10 +261,10 @@ public class QuizExerciseService {
      * Get one quiz exercise by id and eagerly load questions and statistics
      *
      * @param quizExerciseId the id of the entity
-     * @return the entity
+     * @return the quiz exercise entity
      */
     public QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        log.debug("Request to find one Quiz Exercise with questions and statistics : {}", quizExerciseId);
+        log.debug("Find quiz exercise {} with questions and statistics", quizExerciseId);
         Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExerciseId);
         return optionalQuizExercise.orElse(null);
     }
@@ -303,12 +302,15 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
-    private void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
+    private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        log.debug("Found " + results.size() + " results to update for quiz re-evaluate");
+        List<QuizSubmission> submissions = new ArrayList<>();
+        for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed
@@ -324,13 +326,14 @@ public class QuizExerciseService {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.setSubmission(quizSubmission);
             result.evaluateSubmission();
 
-            // save the updated Result and its Submission
-            quizSubmissionRepository.save(quizSubmission);
-            resultRepository.save(result);
+            submissions.add(quizSubmission);
         }
+        // save the updated submissions and results
+        quizSubmissionRepository.saveAll(submissions);
+        resultRepository.saveAll(results);
+        log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
     }
 
     /**
@@ -534,16 +537,17 @@ public class QuizExerciseService {
         quizExercise.reconnectJSONIgnoreAttributes();
 
         // adjust existing results if an answer or a question was deleted and recalculate them
-        adjustResultsOnQuizChanges(quizExercise);
+        updateResultsOnQuizChanges(quizExercise);
 
         quizExercise = save(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            quizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExercise.getId()).get();
+            quizExercise = findOneWithQuestionsAndStatistics(quizExercise.getId());
             quizStatisticService.recalculateStatistics(quizExercise);
         }
-        return quizExercise;
+        // fetch the quiz exercise again to make sure the latest changes are included
+        return findOneWithQuestionsAndStatistics(quizExercise.getId());
     }
 
     /**

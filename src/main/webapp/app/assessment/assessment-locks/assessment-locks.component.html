@@ -1,0 +1,74 @@
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                <span>{{ 'artemisApp.assessment.locks.title' | translate }}</span>
+            </h2>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="submissions.length > 0">
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+                <tr>
+                    <th class="th-link">Id</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type">Type</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let submission of submissions; let i = index">
+                    <td>{{ submission.id }}</td>
+                    <td>
+                        <fa-icon
+                            [icon]="getIcon(submission.participation.exercise.type)"
+                            placement="right"
+                            [ngbTooltip]="getIconTooltip(submission.participation.exercise.type) | translate"
+                            container="body"
+                        ></fa-icon>
+                    </td>
+                    <td>{{ submission.participation.exercise.title }}</td>
+                    <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>{{ submission.participation.submissions?.length }}</td>
+                    <td>
+                        <span *ngIf="submission.result.score != null">{{ submission.result.score }}%</span>
+                    </td>
+                    <td>
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                            <button
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    submission.participation.exercise.type + '-exercises',
+                                    submission.participation.exercise.id,
+                                    'submissions',
+                                    submission.id,
+                                    'assessment'
+                                ]"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            </button>
+                        </span>
+                        <span>
+                            <button *ngIf="!submission.result.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 10px;" *ngIf="submissions.length === 0">
+    <p jhiTranslate="artemisApp.assessment.locks.empty">No Assessments locked by you!</p>
+</div>
