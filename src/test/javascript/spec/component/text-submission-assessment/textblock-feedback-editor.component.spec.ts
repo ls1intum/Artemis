@@ -1,8 +1,8 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -84,5 +84,36 @@ describe('TextblockFeedbackEditorComponent', () => {
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
+    });
+
+    it('should show restore button', () => {
+        let confirm = compiled.querySelector('.restore jhi-confirm-icon');
+        expect(confirm).toBeFalsy();
+
+        component.feedback.detailText = 'Test Automatic';
+        component.feedback.type = FeedbackType.AUTOMATIC;
+        fixture.detectChanges();
+
+        confirm = compiled.querySelector('.restore jhi-confirm-icon');
+        expect(confirm).toBeFalsy();
+
+        component.feedback.detailText = 'Automatic_Adapted';
+        component.feedback.automaticDetailText = 'Automatic Detail Text';
+        component.feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        fixture.detectChanges();
+
+        confirm = compiled.querySelector('.restore jhi-confirm-icon');
+        expect(confirm).toBeTruthy();
+    });
+
+    it('should reset feedback', () => {
+        component.feedback.detailText = 'Automatic_Adapted';
+        component.feedback.automaticDetailText = 'Automatic Detail Text';
+        component.automaticDetailText = 'Automatic Detail Text';
+        component.feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+
+        component.onFeedbackRestore();
+        expect(component.feedback.type).toEqual(FeedbackType.AUTOMATIC);
+        expect(component.feedback.detailText).toEqual(component.feedback.automaticDetailText);
     });
 });
