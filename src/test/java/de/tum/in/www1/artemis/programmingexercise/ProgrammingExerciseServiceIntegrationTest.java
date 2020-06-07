@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.net.MalformedURLException;
 import java.util.LinkedList;
@@ -177,6 +179,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
+        doReturn(null).when(bambooServer).publish(any());
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
         bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
