@@ -62,78 +62,6 @@
             </column>
         </createTable>
     </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-34">
-        <createTable tableName="view_tutor_leaderboard_answered_more_feedback_requests">
-            <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_answered_more_feedback_requestsPK"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_answered_more_feedback_requestsPK"/>
-            </column>
-            <column name="answered_requests" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="points" type="BIGINT"/>
-            <column name="first_name" type="VARCHAR(255)"/>
-        </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-35">
-        <createTable tableName="view_tutor_leaderboard_assessments">
-            <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_assessmentsPK"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_assessmentsPK"/>
-            </column>
-            <column name="assessments" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="points" type="BIGINT"/>
-            <column name="first_name" type="VARCHAR(255)"/>
-        </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-36">
-        <createTable tableName="view_tutor_leaderboard_complaint_responses">
-            <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_complaint_responsesPK"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_complaint_responsesPK"/>
-            </column>
-            <column name="complaint_responses" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="points" type="BIGINT"/>
-            <column name="first_name" type="VARCHAR(255)"/>
-        </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-37">
-        <createTable tableName="view_tutor_leaderboard_complaints">
-            <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_complaintsPK"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_complaintsPK"/>
-            </column>
-            <column name="accepted_complaints" type="BIGINT"/>
-            <column name="all_complaints" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="points" type="BIGINT"/>
-            <column name="first_name" type="VARCHAR(255)"/>
-        </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-38">
-        <createTable tableName="view_tutor_leaderboard_more_feedback_requests">
-            <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_more_feedback_requestsPK"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="view_tutor_leaderboard_more_feedback_requestsPK"/>
-            </column>
-            <column name="all_requests" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="not_answered_requests" type="BIGINT"/>
-            <column name="points" type="BIGINT"/>
-            <column name="first_name" type="VARCHAR(255)"/>
-        </createTable>
-    </changeSet>
     <changeSet author="sbe (generated)" id="1591570971313-39">
         <addColumn tableName="exercise">
             <column name="exercise_group_id" type="bigint"/>
@@ -141,9 +69,6 @@
     </changeSet>
     <changeSet author="sbe (generated)" id="1591570971313-40">
         <addUniqueConstraint columnNames="title" constraintName="UC_EXAMTITLE_COL" tableName="exam"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-41">
-        <addUniqueConstraint columnNames="id" constraintName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>
     </changeSet>
     <changeSet author="sbe (generated)" id="1591570971313-42">
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_exam_exercise" constraintName="FK48u8v93a8nmwv58c7eyjp25nt" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
@@ -171,74 +96,5 @@
     </changeSet>
     <changeSet author="sbe (generated)" id="1591570971313-50">
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="student_exam_exercise" constraintName="FKtj4uelcky6dvb0knrvgfufbyv" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-51">
-        <dropUniqueConstraint constraintName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-52">
-        <dropUniqueConstraint constraintName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-53">
-        <dropUniqueConstraint constraintName="exercise_test_case" tableName="programming_exercise_test_case"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-54">
-        <dropUniqueConstraint constraintName="registration_number" tableName="jhi_user"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-55">
-        <dropUniqueConstraint constraintName="result_id" tableName="result_rating"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-56">
-        <dropView viewName="view_tutor_leaderboard_answered_more_feedback_requests"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-57">
-        <dropView viewName="view_tutor_leaderboard_assessments"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-58">
-        <dropView viewName="view_tutor_leaderboard_complaint_responses"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-59">
-        <dropView viewName="view_tutor_leaderboard_complaints"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-60">
-        <dropView viewName="view_tutor_leaderboard_more_feedback_requests"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-61">
-        <dropTable tableName="jhi_date_time_wrapper"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-62">
-        <dropTable tableName="programming_exercise_details"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-63">
-        <dropColumn columnName="exercise_id" tableName="team_assignment_config"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-1">
-        <dropNotNullConstraint columnDataType="boolean" columnName="active" tableName="programming_exercise_test_case"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-2">
-        <dropNotNullConstraint columnDataType="bigint" columnName="author_id" tableName="submission_version"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-3">
-        <dropNotNullConstraint columnDataType="boolean" columnName="build_artifact" tableName="submission"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-4">
-        <dropDefaultValue columnDataType="boolean" columnName="build_artifact" tableName="submission"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-5">
-        <dropNotNullConstraint columnDataType="boolean" columnName="build_failed" tableName="submission"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-6">
-        <dropDefaultValue columnDataType="boolean" columnName="build_failed" tableName="submission"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-7">
-        <dropNotNullConstraint columnDataType="varchar(255)" columnName="complaint_type" tableName="complaint"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-8">
-        <addNotNullConstraint columnDataType="varchar(50)" columnName="created_by" tableName="jhi_user" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-9">
-        <dropNotNullConstraint columnDataType="datetime(6)" columnName="created_date" tableName="submission_version"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-10">
-        <dropNotNullConstraint columnDataType="datetime(6)" columnName="created_date" tableName="team"/>
     </changeSet>
 </databaseChangeLog>
