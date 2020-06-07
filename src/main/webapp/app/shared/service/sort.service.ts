@@ -62,7 +62,7 @@ export class SortService {
                 return obj;
             } else {
                 if (obj instanceof Map) {
-                    return obj.get[key];
+                    return obj.get(key);
                 } else {
                     return obj[key];
                 }
