@@ -239,6 +239,14 @@ public class Exam {
         this.confirmationEndText = confirmationEndText;
     }
 
+    public Integer getMaxPoints() {
+        return this.maxPoints;
+    }
+
+    public void setMaxPoints(Integer maxPoints) {
+        this.maxPoints = maxPoints;
+    }
+
     public Integer getNumberOfExercisesInExam() {
         return numberOfExercisesInExam;
     }
