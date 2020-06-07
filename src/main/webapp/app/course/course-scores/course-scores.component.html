@@ -33,8 +33,9 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="pointsPerExerciseType.{{ exerciseType }}">
-                            <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span><fa-icon [icon]="'sort'"></fa-icon>
+                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
+                            <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                     </ng-container>
                     <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="'sort'"></fa-icon></th>
