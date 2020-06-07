@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,7 +31,7 @@ public class Exam {
     }
 
     public Exam(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, String startText, String endText, String confirmationStartText,
-            String confirmationEndText, Integer numberOfExerciseGroups, Course course, Set<ExerciseGroup> exerciseGroups, Set<StudentExam> studentExams,
+            String confirmationEndText, Integer numberOfExerciseGroups, Course course, List<ExerciseGroup> exerciseGroups, Set<StudentExam> studentExams,
             Set<User> registeredUsers) {
         this.id = id;
         this.title = title;
@@ -128,13 +126,13 @@ public class Exam {
 
     // -----------------------------------------------------------------------------------------------------------------
     @OneToMany(mappedBy = "exam")
-    private Set<ExerciseGroup> exerciseGroups = new HashSet<>();
+    private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
-    public Set<ExerciseGroup> getExerciseGroups() {
+    public List<ExerciseGroup> getExerciseGroups() {
         return exerciseGroups;
     }
 
-    public void setExerciseGroups(Set<ExerciseGroup> exerciseGroups) {
+    public void setExerciseGroups(List<ExerciseGroup> exerciseGroups) {
         this.exerciseGroups = exerciseGroups;
     }
 

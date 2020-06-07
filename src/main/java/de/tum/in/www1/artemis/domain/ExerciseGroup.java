@@ -27,11 +27,10 @@ public class ExerciseGroup {
     public ExerciseGroup() {
     }
 
-    public ExerciseGroup(Long id, String title, Boolean isMandatory, Integer positionInExam, Exam exam, Set<Exercise> exercises) {
+    public ExerciseGroup(Long id, String title, Boolean isMandatory, Exam exam, Set<Exercise> exercises) {
         this.id = id;
         this.title = title;
         this.isMandatory = isMandatory;
-        this.positionInExam = positionInExam;
         this.exam = exam;
         this.exercises = exercises;
     }
@@ -54,12 +53,6 @@ public class ExerciseGroup {
      */
     @Column(name = "is_mandatory", nullable = false)
     private Boolean isMandatory = true;
-
-    /**
-     * Specifies the position of this exercise group if it is used in an exam
-     */
-    @Column(name = "position_in_exam", nullable = false)
-    private Integer positionInExam = 1;
 
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
@@ -133,14 +126,6 @@ public class ExerciseGroup {
 
     public void setIsMandatory(Boolean isMandatory) {
         isMandatory = isMandatory;
-    }
-
-    public Integer getPositionInExam() {
-        return positionInExam;
-    }
-
-    public void setPositionInExam(Integer positionInExam) {
-        this.positionInExam = positionInExam;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
