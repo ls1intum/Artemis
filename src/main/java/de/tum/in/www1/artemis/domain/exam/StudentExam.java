@@ -145,7 +145,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hashCode(getId());
     }
     // endregion
     // -----------------------------------------------------------------------------------------------------------------
