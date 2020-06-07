@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "EXAM")
+@Table(name = "exam")
 public class Exam extends AbstractAuditingEntity {
 
     // region CONSTRUCTORS
