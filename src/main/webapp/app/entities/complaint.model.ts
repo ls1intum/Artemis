@@ -2,6 +2,7 @@ import { Moment } from 'moment';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
+import { Team } from 'app/entities/team.model';
 
 export enum ComplaintType {
     COMPLAINT = 'COMPLAINT',
@@ -16,7 +17,8 @@ export class Complaint implements BaseEntity {
     public submittedTime: Moment | null;
     public resultBeforeComplaint: string;
     public result: Result;
-    public student: User;
+    public student: User | null;
+    public team: Team | null;
     public complaintType: ComplaintType;
 
     constructor() {}

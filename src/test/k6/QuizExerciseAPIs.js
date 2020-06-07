@@ -3,7 +3,7 @@ import { group, sleep } from 'k6';
 import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { createQuizExercise, deleteQuizExercise } from './requests/quiz.js';
+import { createQuizExercise, deleteQuizExercise, waitForQuizStartAndStart } from './requests/quiz.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -23,6 +23,7 @@ const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
+let waitQuizStart = __ENV.WAIT_QUIZ_START === 'true';
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -75,18 +76,20 @@ export default function (data) {
     const delay = Math.floor(__VU / 50);
     sleep(delay);
 
-    group('Artemis Programming Exercise Participation Websocket Stresstest', function () {
+    group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
         const userId = parseInt(__VU) + userOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
 
-        const questions = getQuizQuestions(artemis, data.courseId, data.exerciseId);
         const remainingTime = websocketConnectionTime - delay;
         const startTime = new Date().getTime();
-        // while ((new Date().getTime() - startTime) / 1000 < remainingTime) {
-        simulateQuizWork(artemis, data.exerciseId, questions, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername);
-        // }
+        if (waitQuizStart) {
+            waitForQuizStartAndStart(artemis, data.exerciseId, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername, data.courseId);
+        } else {
+            const questions = getQuizQuestions(artemis, data.courseId, data.exerciseId);
+            simulateQuizWork(artemis, data.exerciseId, questions, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername);
+        }
     });
 
     return data;

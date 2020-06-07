@@ -6,12 +6,12 @@
 
 <div *ngIf="exercise !== undefined">
     <div class="row my-3 justify-content-around">
-        <div class="col-4 text-center">
+        <div class="col-5 text-center">
             <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
-                [numberOfParticipations]="numberOfSubmissions"
+                [numberOfSubmissions]="numberOfSubmissions"
                 [numberOfAssessments]="numberOfAssessments"
                 [numberOfComplaints]="numberOfComplaints"
                 [numberOfOpenComplaints]="numberOfOpenComplaints"
@@ -20,19 +20,40 @@
             >
             </jhi-tutor-participation-graph>
         </div>
-        <div class="col-4">
+        <div class="col-5">
             <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
+                <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">
+                    <div class="col-8"></div>
+                    <div class="col-4">
+                        {{ 'artemisApp.tutorExerciseDashboard.stats.intime' | translate }}
+                        <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.tutorExerciseDashboard.stats.late' | translate }} </span>
+                    </div>
+                </div>
+
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
-                    <div class="col-4">{{ numberOfSubmissions }}</div>
+                    <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfSubmissions' | translate }}</div>
+                    <div class="col-4">
+                        {{ numberOfSubmissions.inTime }}
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
+                    </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
-                    <div class="col-4">{{ numberOfAssessments }} ({{ totalAssessmentPercentage }}%)</div>
+                    <div class="col-4">
+                        {{ numberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                            >| {{ numberOfAssessments.late }} ({{ totalAssessmentPercentage.late }}%)</span
+                        >
+                    </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
-                    <div class="col-4">{{ numberOfSubmissions - numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
+                    <div class="col-4">
+                        {{ numberOfSubmissions.inTime - numberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                            >| {{ numberOfSubmissions.late - numberOfAssessments.late }} ({{ 100 - totalAssessmentPercentage.late }}%)</span
+                        >
+                    </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfSubmissionsAssessedByYou' | translate }}</div>

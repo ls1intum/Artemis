@@ -119,10 +119,6 @@ public class QuizScheduleService {
         }
     }
 
-    public static void addResultsForStatisticUpdate(Long quizExerciseId, List<Result> results) {
-        results.forEach(result -> addResultForStatisticUpdate(quizExerciseId, result));
-    }
-
     /**
      * add a result to resultHashMap for a statistic-update
      * this should only be invoked once, when the quiz was submitted
@@ -139,10 +135,6 @@ public class QuizScheduleService {
             }
             resultHashMap.get(quizExerciseId).add(result);
         }
-    }
-
-    private static void addParticipations(Long quizExerciseId, List<StudentParticipation> participations) {
-        participations.forEach(participation -> addParticipation(quizExerciseId, participation));
     }
 
     /**
@@ -504,13 +496,11 @@ public class QuizScheduleService {
                 // first case: the user submitted the quizSubmission
                 QuizSubmission quizSubmission = userSubmissionMap.get(username);
                 if (quizSubmission.isSubmitted()) {
-                    userSubmissionMap.remove(username);
                     if (quizSubmission.getType() == null) {
                         quizSubmission.setType(SubmissionType.MANUAL);
                     }
                 } // second case: the quiz has ended
                 else if (quizExercise.isEnded()) {
-                    userSubmissionMap.remove(username);
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.TIMEOUT);
                     quizSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -550,15 +540,18 @@ public class QuizScheduleService {
                 // add submission to participation
                 participation.addSubmissions(quizSubmission);
 
-                // save all participations, results and quizSubmissions
-                // NOTE: we save the single participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student
-                // answers
+                // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
                 participation = studentParticipationRepository.save(participation);
                 quizSubmissionRepository.save(quizSubmission);
                 result = resultRepository.save(result);
 
                 // add the participation to the participationHashMap for the send out at the end of the quiz
                 addParticipation(quizExercise.getId(), participation);
+
+                // remove the submission only after the participation has been added to the participation hashmap to avoid duplicated key exceptions for multiple participations for
+                // the same user
+                userSubmissionMap.remove(username);
+
                 // add the result of the participation resultHashMap for the statistic-Update
                 addResultForStatisticUpdate(quizExercise.getId(), result);
             }

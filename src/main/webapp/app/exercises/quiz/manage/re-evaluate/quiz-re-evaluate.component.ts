@@ -11,6 +11,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -51,7 +52,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
-                this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
+                this.backupQuiz = cloneDeep(this.quizExercise);
             });
         });
 
@@ -65,9 +66,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.quizExercise && changes.quizExercise.currentValue != null) {
+        if (changes.quizExercise && changes.quizExercise.currentValue !== null) {
             this.prepareEntity(this.quizExercise);
-            this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
+            this.backupQuiz = cloneDeep(this.quizExercise);
         }
     }
 
@@ -95,7 +96,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
-        return JSON.stringify(this.quizExercise).toLowerCase() !== JSON.stringify(this.backupQuiz).toLowerCase();
+        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.backupQuiz);
     }
 
     /**
@@ -115,7 +116,11 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      *  -> if canceled: close Modal
      */
     save(): void {
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise);
+        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise).then((res) => {
+            res.result.then(() => {
+                this.backupQuiz = cloneDeep(this.quizExercise);
+            });
+        });
     }
 
     /**
@@ -177,7 +182,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Resets the whole Quiz
      */
     resetAll(): void {
-        this.quizExercise = JSON.parse(JSON.stringify(this.backupQuiz));
+        this.quizExercise = cloneDeep(this.backupQuiz);
     }
 
     /**
