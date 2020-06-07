@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
 @Table(name = "exercise_group")
-public class ExerciseGroup extends AbstractAuditingEntity {
+public class ExerciseGroup {
 
     // region CONSTRUCTORS
     // -----------------------------------------------------------------------------------------------------------------
