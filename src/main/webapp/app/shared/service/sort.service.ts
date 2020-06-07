@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { get } from 'lodash';
 import * as moment from 'moment';
 
 @Injectable({
@@ -10,8 +9,8 @@ export class SortService {
 
     sortByProperty<T>(array: T[], key: string, asc: boolean): T[] {
         array.sort((a: T, b: T) => {
-            const valueA = get(a, key, null);
-            const valueB = get(b, key, null);
+            const valueA = this.customGet(a, key, null);
+            const valueB = this.customGet(b, key, null);
 
             if (valueA === null || valueB === null) {
                 return this.compareWithNull(valueA, valueB);
@@ -53,6 +52,27 @@ export class SortService {
             return valueA < valueB ? -1 : 1;
         } else {
             return valueA < valueB ? 1 : -1;
+        }
+    }
+
+    private customGet(object: any, path: string, defaultValue: any) {
+        const pathArray = path.split('.').filter((key) => key);
+        const value = pathArray.reduce((obj, key) => {
+            if (!obj) {
+                return obj;
+            } else {
+                if (obj instanceof Map) {
+                    return obj.get[key];
+                } else {
+                    return obj[key];
+                }
+            }
+        }, object);
+
+        if (value === undefined) {
+            return defaultValue;
+        } else {
+            return value;
         }
     }
 }
