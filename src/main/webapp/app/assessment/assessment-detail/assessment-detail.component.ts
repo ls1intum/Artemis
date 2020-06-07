@@ -50,7 +50,7 @@ export class AssessmentDetailComponent {
     }
 
     updateAssessmentOnDrop(event: Event) {
-        this.assessmentChange.emit(this.assessment);
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);
+        this.assessmentChange.emit(this.assessment);
     }
 }
