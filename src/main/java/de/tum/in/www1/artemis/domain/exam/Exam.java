@@ -19,25 +19,6 @@ public class Exam {
     public Exam() {
     }
 
-    public Exam(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, String startText, String endText, String confirmationStartText,
-            String confirmationEndText, Integer numberOfExercisesInExam, Course course, List<ExerciseGroup> exerciseGroups, Set<StudentExam> studentExams,
-            Set<User> registeredUsers) {
-        this.id = id;
-        this.title = title;
-        this.visibleDate = visibleDate;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.startText = startText;
-        this.endText = endText;
-        this.confirmationStartText = confirmationStartText;
-        this.confirmationEndText = confirmationEndText;
-        this.numberOfExercisesInExam = numberOfExercisesInExam;
-        this.course = course;
-        this.exerciseGroups = exerciseGroups;
-        this.studentExams = studentExams;
-        this.registeredUsers = registeredUsers;
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
 

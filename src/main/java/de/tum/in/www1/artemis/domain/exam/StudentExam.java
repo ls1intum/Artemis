@@ -31,13 +31,6 @@ public class StudentExam extends AbstractAuditingEntity {
     public StudentExam() {
     }
 
-    public StudentExam(Long id, Exam exam, User user, Set<Exercise> exercises) {
-        this.id = id;
-        this.exam = exam;
-        this.user = user;
-        this.exercises = exercises;
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
 

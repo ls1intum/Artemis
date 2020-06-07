@@ -27,14 +27,6 @@ public class ExerciseGroup {
     public ExerciseGroup() {
     }
 
-    public ExerciseGroup(Long id, String title, Boolean isMandatory, Exam exam, Set<Exercise> exercises) {
-        this.id = id;
-        this.title = title;
-        this.isMandatory = isMandatory;
-        this.exam = exam;
-        this.exercises = exercises;
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
 
