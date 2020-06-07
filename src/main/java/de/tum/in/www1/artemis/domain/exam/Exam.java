@@ -193,12 +193,10 @@ public class Exam {
 
     public void addUser(User user) {
         this.registeredUsers.add(user);
-        user.getExams().remove(this);
     }
 
     public void removeUser(User user) {
         this.registeredUsers.remove(user);
-        user.getExams().remove(this);
     }
     // -----------------------------------------------------------------------------------------------------------------
     // endregion

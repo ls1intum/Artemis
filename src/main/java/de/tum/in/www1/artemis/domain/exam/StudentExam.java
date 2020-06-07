@@ -109,12 +109,10 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        exercise.getStudentExams().add(this);
     }
 
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        exercise.getStudentExams().remove(this);
     }
     // -----------------------------------------------------------------------------------------------------------------
     // endregion

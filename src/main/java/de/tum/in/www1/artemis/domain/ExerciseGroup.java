@@ -99,16 +99,10 @@ public class ExerciseGroup {
 
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        if (exercise.getExerciseGroup() != this) {
-            exercise.setExerciseGroup(this);
-        }
     }
 
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        if (exercise.getExerciseGroup() == this) {
-            exercise.setExerciseGroup(null);
-        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
