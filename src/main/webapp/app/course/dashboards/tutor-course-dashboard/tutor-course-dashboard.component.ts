@@ -11,6 +11,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/entities/course.model';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
 
@@ -27,8 +28,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
-    numberOfSubmissions = 0;
-    numberOfAssessments = 0;
+    numberOfSubmissions = new DueDateStat();
+    numberOfAssessments = new DueDateStat();
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -36,6 +37,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
 
@@ -84,7 +86,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     loadAll() {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
-                this.course = res.body!;
+                this.course = Course.from(res.body!);
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
@@ -92,7 +94,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                     const [finishedExercises, unfinishedExercises] = partition(
                         this.course.exercises,
                         (exercise) =>
-                            exercise.numberOfAssessments === exercise.numberOfParticipations &&
+                            exercise.numberOfAssessments?.total === exercise.numberOfSubmissions?.total &&
                             exercise.numberOfOpenComplaints === 0 &&
                             exercise.numberOfOpenMoreFeedbackRequests === 0,
                     );
@@ -108,13 +110,14 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
         this.courseService.getStatsForTutors(this.courseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = res.body!;
+                this.stats = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;
                 this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
+                this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
@@ -126,8 +129,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments / this.numberOfSubmissions) * 100);
+                if (this.numberOfSubmissions.total > 0) {
+                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                 }
             },
             (response: string) => this.onError(response),

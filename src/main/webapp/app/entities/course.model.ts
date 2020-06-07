@@ -3,6 +3,7 @@ import { Moment } from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 export class Course implements BaseEntity {
     public id: number;
@@ -20,6 +21,7 @@ export class Course implements BaseEntity {
     public registrationEnabled = false; // default value
     public presentationScore = 0; // default value
     public maxComplaints = 3; // default value
+    public maxTeamComplaints = 3; // default value
     public maxComplaintTimeDays = 7; // default value
     public complaintsEnabled = true; // default value
     public studentQuestionsEnabled = true; // default value
@@ -41,6 +43,21 @@ export class Course implements BaseEntity {
     public maxScore: number;
 
     constructor() {}
+
+    /**
+     * Correctly initializes a class instance from a typecasted object.
+     * Returns a 'real' class instance that supports all class methods.
+     * @param object: The typecasted object
+     * @returns The class instance
+     */
+    static from(object: Course): Course {
+        const course = Object.assign(new Course(), object);
+        course.exercises.forEach((e) => {
+            e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
+            e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
+        });
+        return course;
+    }
 }
 
 export const enum CourseGroup {

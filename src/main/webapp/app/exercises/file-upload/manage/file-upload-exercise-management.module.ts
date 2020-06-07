@@ -13,6 +13,7 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
         FormDateTimePickerModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
+        ExerciseDetailsModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

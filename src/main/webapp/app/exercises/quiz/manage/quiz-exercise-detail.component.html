@@ -52,9 +52,8 @@
                             type="number"
                             min="0"
                             max="600"
-                            (ngModelChange)="onDurationChange()"
                             [(ngModel)]="duration.minutes"
-                            (blur)="onDurationChange()"
+                            (ngModelChange)="onDurationChange()"
                         />
                         <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
                         <input
@@ -63,11 +62,10 @@
                             class="form-control mb-2 mr-2 ml-2"
                             title="Duration"
                             type="number"
-                            max="999"
-                            min="-99"
-                            (ngModelChange)="onDurationChange()"
+                            max="60"
+                            min="-1"
                             [(ngModel)]="duration.seconds"
-                            (blur)="onDurationChange()"
+                            (ngModelChange)="onDurationChange()"
                         />
                         <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                     </div>

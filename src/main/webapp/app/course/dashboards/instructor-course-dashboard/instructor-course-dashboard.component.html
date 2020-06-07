@@ -19,14 +19,14 @@
                                 <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions.total }}
                             </li>
                             <li>
                                 <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
-                                    stats.numberOfSubmissions - stats.numberOfAssessments
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments.total }} ({{
+                                    stats.numberOfSubmissions.total - stats.numberOfAssessments.total
                                 }}
                                 {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>
@@ -41,6 +41,11 @@
                                     <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
                                 </a>
                                 ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
+                            </li>
+                            <li>
+                                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: instructor.id }">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | translate }}:</b> {{ stats.numberOfAssessmentLocks }}
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -108,7 +113,7 @@
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | artemisDate }}</td>
                         <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
-                        <td>{{ exercise.numberOfParticipations }}</td>
+                        <td>{{ exercise.numberOfSubmissions.total }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
                         <td class="text-center">
@@ -116,24 +121,50 @@
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfParticipations)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) }}"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
                                     <span class="justify-content-center d-flex position-absolute w-100 text-dark">
-                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfParticipations }} ({{
-                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations)
+                                        {{ exercise.numberOfAssessments.inTime }} / {{ exercise.numberOfSubmissions.inTime }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)
+                                        }}%)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="progress position-relative mt-1" *ngIf="exercise.numberOfSubmissions.late > 0">
+                                <div
+                                    class="progress-bar"
+                                    role="progressbar"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late) }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                >
+                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">
+                                        {{ exercise.numberOfAssessments.late }} / {{ exercise.numberOfSubmissions.late }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late)
                                         }}%)
                                     </span>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-primary" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
-                                {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
-                            </button>
+                            <div class="btn-group flex-btn-group-container">
+                                <button class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
+                                    {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
+                                </button>
+                                <button
+                                    class="btn btn-primary btn-sm mr-1"
+                                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
+                                >
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

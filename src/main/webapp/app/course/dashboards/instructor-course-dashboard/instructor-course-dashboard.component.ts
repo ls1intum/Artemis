@@ -10,6 +10,8 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -18,6 +20,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
+    instructor: User;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -38,6 +41,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
         private sortService: SortService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -46,6 +50,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.instructor = user;
+            }
+        });
     }
 
     /**
@@ -56,7 +65,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         // Load the course.
         const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
             map((res: HttpResponse<Course>) => res.body!),
-            tap((course: Course) => (this.course = course)),
+            tap((course: Course) => {
+                this.course = Course.from(course);
+            }),
             catchError((response: HttpErrorResponse) => {
                 this.onError(response.message);
                 return of(null);
@@ -67,8 +78,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
         const loadStatsObservable = this.courseService.getStatsForInstructors(courseId).pipe(
             map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
             tap((stats) => {
-                this.stats = stats;
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+                this.stats = StatsForDashboard.from(stats);
+                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total, this.stats.numberOfAssessments.total];
             }),
             catchError((response: string) => {
                 this.onError(response);
