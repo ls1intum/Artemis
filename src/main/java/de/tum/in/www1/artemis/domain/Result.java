@@ -10,7 +10,6 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
-import de.tum.in.www1.artemis.service.AssessmentService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.AssessmentService;
 
 /**
  * A Result.

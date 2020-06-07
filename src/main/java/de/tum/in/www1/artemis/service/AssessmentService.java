@@ -180,32 +180,36 @@ public class AssessmentService {
     public static Double calculateTotalScore(List<Feedback> assessments) {
         double totalScore = 0.0;
 
-        var gradingInstructions = new HashMap<Long,Integer>(); // { instructionId: noOfEncounters }
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
                 if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
                     // We Encountered this grading instruction before
                     var maxCount = feedback.getGradingInstruction().getUsageCount();
                     var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
-                    if ( maxCount > 0) {
+                    if (maxCount > 0) {
                         if (encounters >= maxCount) {
-                            gradingInstructions.put(feedback.getGradingInstruction().getId(),encounters + 1);
-                        } else {
-                            gradingInstructions.put(feedback.getGradingInstruction().getId(),encounters + 1);
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
+                        }
+                        else {
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
                             totalScore += feedback.getGradingInstruction().getCredits();
                         }
-                    } else {
+                    }
+                    else {
                         totalScore += feedback.getGradingInstruction().getCredits();
                     }
-                } else {
+                }
+                else {
                     // First time encountering the grading instruction
                     gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
                     totalScore += feedback.getGradingInstruction().getCredits();
                 }
-            } else {
+            }
+            else {
                 totalScore += feedback.getCredits();
             }
         }
-        return  totalScore;
+        return totalScore;
     }
 }
