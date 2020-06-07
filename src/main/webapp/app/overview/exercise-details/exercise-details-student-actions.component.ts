@@ -39,6 +39,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     public repositoryPassword: string;
     public wasCopied = false;
+    public useSsh = false;
 
     private user: User;
 
@@ -75,7 +76,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         if (programmingParticipation.team) {
             return this.repositoryUrlForTeam(programmingParticipation);
         }
-        return programmingParticipation.repositoryUrl;
+        if (this.useSsh) {
+            // (https://user)@(bitbucket.ase.in.tum.de)(/scm)/(....git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(....git)
+            return programmingParticipation.repositoryUrl.replace(/^(\w*:\/\/\w*)@(.*?)(:\d*)?\/scm\/(.*)$/, `ssh://git@$2:7999/$4`);
+        } else {
+            return programmingParticipation.repositoryUrl;
+        }
     }
 
     /**
@@ -84,8 +90,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * @return repository url with username of current user inserted
      */
     private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
-        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
-        return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
+        if (this.useSsh) {
+            // (https://)(bitbucket.ase.in.tum.de)(/scm)/(...-team1.git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(...-team1.git)
+            return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*?)(:\d*)?\/scm\/(.*)$/, `ssh://git@$2:7999/$4`);
+        } else {
+            // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+            return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
+        }
     }
 
     /**

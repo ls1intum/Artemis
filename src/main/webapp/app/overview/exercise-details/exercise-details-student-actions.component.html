@@ -231,14 +231,19 @@
         ></button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <pre
-                style="max-width: 100%;"
-                ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
-                >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
-            >
+            <div class="row" style="margin: 0; max-width: 100%;">
+                <pre
+                    style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"
+                    ngxClipboard
+                    [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
+                    (cbOnSuccess)="onCopySuccess()"
+                    (cbOnError)="onCopyFailure()"
+                    >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
+                >
+                <pre class="btn btn-primary" style="margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0;" (click)="useSsh = !useSsh">{{
+                    useSsh ? 'SSH' : 'HTTPS'
+                }}</pre>
+            </div>
             <p *ngIf="repositoryPassword">
                 {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
                 {{ 'artemisApp.exerciseActions.hoverToShow' | translate }}
