@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-    selector: 'jhi-course-management-exams',
-    templateUrl: './course-management-exams.component.html',
+    selector: 'jhi-exam-management',
+    templateUrl: './exam-management.component.html',
+    styleUrls: ['./exam-management.scss'],
 })
-export class CourseManagementExamsComponent implements OnInit {
+export class ExamManagementComponent implements OnInit {
     course: Course;
     courseId = 0;
 
