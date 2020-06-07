@@ -127,6 +127,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
+        // TODO after decision on how to handle users on Jenkins has been made if needed for Jenkins
+    }
+
+    @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
@@ -375,12 +380,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<Feedback> getLatestBuildResultDetails(Result result) {
-        // TODO since this is unused as of now
-        throw new UnsupportedOperationException("Jenkins service does not support fetching the latest feedback for a result");
-    }
-
-    @Override
     public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
         try {
             final var build = job(projectKey, buildPlanId).getLastBuild();
@@ -447,7 +446,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
+    public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // TODO, not necessary for the core functionality
         return null;
     }
