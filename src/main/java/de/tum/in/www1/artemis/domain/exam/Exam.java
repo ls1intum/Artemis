@@ -106,14 +106,7 @@ public class Exam {
     }
 
     public void setCourse(Course course) {
-        if (this.course != null) {
-            this.course.removeExam(this);
-        }
-
         this.course = course;
-        if (!course.getExams().contains(this)) {
-            course.getExams().add(this);
-        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------

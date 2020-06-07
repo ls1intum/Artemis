@@ -64,14 +64,7 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     public void setExam(Exam exam) {
-        if (this.exam != null) {
-            this.exam.removeStudentExam(this);
-        }
-
         this.exam = exam;
-        if (!exam.getStudentExams().contains(this)) {
-            exam.getStudentExams().add(this);
-        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -84,14 +77,7 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     public void setUser(User user) {
-        if (this.exam != null) {
-            this.exam.removeStudentExam(this);
-        }
-
-        this.exam = exam;
-        if (!exam.getStudentExams().contains(this)) {
-            exam.getStudentExams().add(this);
-        }
+        this.user = user;
     }
 
     // -----------------------------------------------------------------------------------------------------------------

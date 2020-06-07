@@ -69,13 +69,7 @@ public class ExerciseGroup {
     }
 
     public void setExam(Exam exam) {
-        if (this.exam != null) {
-            this.exam.removeExerciseGroup(this);
-        }
         this.exam = exam;
-        if (!exam.getExerciseGroups().contains(this)) {
-            exam.getExerciseGroups().add(this);
-        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
