@@ -81,6 +81,9 @@ public class Exam {
     @Column(name = "confirmation_end_text")
     private String confirmationEndText;
 
+    @Column(name = "max_points")
+    private Integer maxPoints;
+
     /**
      * From all exercise groups connected to the exam, {@link #numberOfExercisesInExam} are randomly
      * chosen when generating the specific exam for the {@link #registeredUsers}
