@@ -20,6 +20,7 @@ import { notUndefined } from 'app/shared/util/global.utils';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -77,6 +78,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         private assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,
         translateService: TranslateService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
@@ -249,8 +251,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private computeTotalScore() {
-        const credits = this.assessments.map((feedback) => feedback.credits);
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     /**
