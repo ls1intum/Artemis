@@ -8,7 +8,7 @@ export const examParticipationRoute: Routes = [
         component: ExamParticipationComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'Super cool exam mode',
+            pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
     },
