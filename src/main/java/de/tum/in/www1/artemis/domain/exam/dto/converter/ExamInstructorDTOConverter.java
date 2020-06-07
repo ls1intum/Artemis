@@ -4,7 +4,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.dto.ExamInstructorDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInstructorDTO;
 
 @Component
 public class ExamInstructorDTOConverter implements Converter<Exam, ExamInstructorDTO> {
