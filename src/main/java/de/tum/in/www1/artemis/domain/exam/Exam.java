@@ -3,18 +3,7 @@ package de.tum.in.www1.artemis.domain.exam;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseGroup;
@@ -126,6 +115,7 @@ public class Exam {
 
     // -----------------------------------------------------------------------------------------------------------------
     @OneToMany(mappedBy = "exam")
+    @OrderColumn
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
     public List<ExerciseGroup> getExerciseGroups() {
@@ -136,18 +126,20 @@ public class Exam {
         this.exerciseGroups = exerciseGroups;
     }
 
-    public void addExerciseGroup(ExerciseGroup exerciseGroup) {
+    public Exam addExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.add(exerciseGroup);
         if (exerciseGroup.getExam() != this) {
             exerciseGroup.setExam(this);
         }
+        return this;
     }
 
-    public void removeExerciseGroup(ExerciseGroup exerciseGroup) {
+    public Exam removeExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.remove(exerciseGroup);
         if (exerciseGroup.getExam() == this) {
             exerciseGroup.setExam(null);
         }
+        return this;
     }
     // -----------------------------------------------------------------------------------------------------------------
 
