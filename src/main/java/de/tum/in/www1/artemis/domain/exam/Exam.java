@@ -58,48 +58,48 @@ public class Exam extends AbstractAuditingEntity {
     // region BASIC PROPERTIES
     // -----------------------------------------------------------------------------------------------------------------
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "TITLE", unique = true, nullable = false)
+    @Column(name = "title", unique = true, nullable = false)
     private String title;
 
     /**
      * student can see the exam in the UI from {@link #visibleDate} date onwards
      */
-    @Column(name = "VISIBLE_DATE")
+    @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
     /**
      * student can start working on exam from {@link #startDate}
      */
-    @Column(name = "START_DATE")
+    @Column(name = "start_date")
     private ZonedDateTime startDate;
 
     /**
      * student can work on exam until {@link #endDate}
      */
-    @Column(name = "END_DATE")
+    @Column(name = "end_date")
     private ZonedDateTime endDate;
 
-    @Column(name = "START_TEXT")
+    @Column(name = "start_text")
     private String startText;
 
-    @Column(name = "END_TEXT")
+    @Column(name = "end_text")
     private String endText;
 
-    @Column(name = "CONFIRMATION_START_TEXT")
+    @Column(name = "confirmation_start_text")
     private String confirmationStartText;
 
-    @Column(name = "CONFIRMATION_END_TEXT")
+    @Column(name = "confirmation_end_text")
     private String confirmationEndText;
 
     /**
      * From all exercise groups connected to the exam, {@link #numberOfExerciseGroups} are randomly
      * chosen when generating the specific exam for the {@link #registeredUsers}
      */
-    @Column(name = "NUMBER_OF_EXERCISE_GROUPS")
+    @Column(name = "number_of_exercise_groups")
     private Integer numberOfExerciseGroups;
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ public class Exam extends AbstractAuditingEntity {
     // -----------------------------------------------------------------------------------------------------------------
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "COURSE_ID")
+    @JoinColumn(name = "course_id")
     private Course course;
 
     public Course getCourse() {
@@ -181,7 +181,7 @@ public class Exam extends AbstractAuditingEntity {
 
     // -----------------------------------------------------------------------------------------------------------------
     @ManyToMany
-    @JoinTable(name = "EXAM_JHI_USER", joinColumns = @JoinColumn(name = "EXAM_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "STUDENT_ID", referencedColumnName = "ID"))
+    @JoinTable(name = "exam_jhi_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> registeredUsers = new HashSet<>();
 
     public Set<User> getRegisteredUsers() {

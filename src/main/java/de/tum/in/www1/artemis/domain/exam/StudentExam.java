@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "STUDENT_EXAM")
+@Table(name = "student_exam")
 public class StudentExam extends AbstractAuditingEntity {
 
     // region CONSTRUCTORS
@@ -45,7 +45,7 @@ public class StudentExam extends AbstractAuditingEntity {
     // -----------------------------------------------------------------------------------------------------------------
 
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -56,7 +56,7 @@ public class StudentExam extends AbstractAuditingEntity {
     // -----------------------------------------------------------------------------------------------------------------
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "EXAM_ID")
+    @JoinColumn(name = "exam_id")
     private Exam exam;
 
     public Exam getExam() {
@@ -76,7 +76,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     // -----------------------------------------------------------------------------------------------------------------
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID")
+    @JoinColumn(name = "user_id")
     private User user;
 
     public User getUser() {
@@ -96,7 +96,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     // -----------------------------------------------------------------------------------------------------------------
     @ManyToMany
-    @JoinTable(name = "STUDENT_EXAM_EXERCISE", joinColumns = @JoinColumn(name = "STUDENT_EXAM_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "EXERCISE_ID", referencedColumnName = "ID"))
+    @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     private Set<Exercise> exercises = new HashSet<>();
 
     public Set<Exercise> getExercises() {

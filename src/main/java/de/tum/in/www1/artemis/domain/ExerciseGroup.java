@@ -18,14 +18,13 @@ import javax.persistence.Table;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
-@Table(name = "EXERCISE_GROUP")
+@Table(name = "exercise_group")
 public class ExerciseGroup extends AbstractAuditingEntity {
 
     // region CONSTRUCTORS
     // -----------------------------------------------------------------------------------------------------------------
     // no arg constructor required for jpa
     public ExerciseGroup() {
-
     }
 
     public ExerciseGroup(Long id, String title, Boolean isMandatory, Integer positionInExam, Exam exam, Set<Exercise> exercises) {
@@ -43,23 +42,23 @@ public class ExerciseGroup extends AbstractAuditingEntity {
     // region BASIC PROPERTIES
     // -----------------------------------------------------------------------------------------------------------------
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "TITLE")
+    @Column(name = "title")
     private String title;
 
     /**
      * Mandatory exercise groups need to be included in the exam
      */
-    @Column(name = "IS_MANDATORY", nullable = false)
+    @Column(name = "is_mandatory", nullable = false)
     private Boolean isMandatory = true;
 
     /**
      * Specifies the position of this exercise group if it is used in an exam
      */
-    @Column(name = "POSITION_IN_EXAM", nullable = false)
+    @Column(name = "position_in_exam", nullable = false)
     private Integer positionInExam = 1;
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -69,7 +68,7 @@ public class ExerciseGroup extends AbstractAuditingEntity {
     // -----------------------------------------------------------------------------------------------------------------
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "EXAM_ID")
+    @JoinColumn(name = "exam_id")
     private Exam exam;
 
     public Exam getExam() {
@@ -134,12 +133,12 @@ public class ExerciseGroup extends AbstractAuditingEntity {
         this.title = title;
     }
 
-    public Boolean getMandatory() {
+    public Boolean getIsMandatory() {
         return isMandatory;
     }
 
-    public void setMandatory(Boolean mandatory) {
-        isMandatory = mandatory;
+    public void setIsMandatory(Boolean isMandatory) {
+        isMandatory = isMandatory;
     }
 
     public Integer getPositionInExam() {
