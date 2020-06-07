@@ -3,20 +3,20 @@ package de.tum.in.www1.artemis.service.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.tum.in.www1.artemis.domain.enumeration.StaticAssessmentTool;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StaticAssessmentReportDTO {
 
-    private StaticAssessmentTool tool;
+    private StaticCodeAnalysisTool tool;
 
     private List<BambooStaticAssessmentIssue> issues;
 
-    public StaticAssessmentTool getTool() {
+    public StaticCodeAnalysisTool getTool() {
         return tool;
     }
 
-    public void setTool(StaticAssessmentTool tool) {
+    public void setTool(StaticCodeAnalysisTool tool) {
         this.tool = tool;
     }
 

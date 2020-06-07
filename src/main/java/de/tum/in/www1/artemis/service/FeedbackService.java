@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticAssessmentTool;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 
@@ -57,7 +57,7 @@ public class FeedbackService {
     public List<Feedback> createFeedbackFromStaticAssessmentReports(List<StaticAssessmentReportDTO> reports) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (final var report : reports) {
-            StaticAssessmentTool tool = report.getTool();
+            StaticCodeAnalysisTool tool = report.getTool();
 
             for (final var issue : report.getIssues()) {
                 Feedback feedback = new Feedback();

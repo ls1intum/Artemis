@@ -5,10 +5,7 @@ import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -780,10 +777,12 @@ public class BambooService implements ContinuousIntegrationService {
         if (response != null) {
             final var buildResult = response.getBody();
 
-            // Filter out build log artifacts
+            // Filter out build log and static code analysis artifacts
             if (buildResult != null && buildResult.getArtifacts() != null) {
+                List<String> artifactLabelFilter = StaticCodeAnalysisTool.getArtifactLabels();
+                artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts().setArtifacts(buildResult.getArtifacts().getArtifacts().stream()
-                        .filter(artifact -> !artifact.getName().equals("Build log"))
+                        .filter(artifact -> !artifactLabelFilter.contains(artifact.getName()))
                         .collect(Collectors.toList())
                 );
             }
