@@ -31,7 +31,6 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
         FeatureToggleModule,
-        SortByModule,
         ExerciseDetailsModule,
     ],
     declarations: [ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent],
