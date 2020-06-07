@@ -27,6 +27,7 @@
             *ngIf="submission"
             [diagramType]="modelingExercise?.diagramType"
             [maxScore]="modelingExercise?.maxScore"
+            [totalScore]="totalScore"
             [model]="model"
             [feedbacks]="result?.feedbacks"
             [highlightedElements]="highlightedElements"
@@ -42,6 +43,7 @@
 
     <div class="row mt-3">
         <div class="col-md-6">
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()"></jhi-unreferenced-feedback>
             <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
         </div>
         <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">

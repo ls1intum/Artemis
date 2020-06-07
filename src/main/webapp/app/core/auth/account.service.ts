@@ -11,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { setUser } from '@sentry/browser';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -136,6 +137,9 @@ export class AccountService implements IAccountService {
                     if (user) {
                         this.websocketService.connect();
                         this.userIdentity = user;
+
+                        // improved error tracking in sentry
+                        setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting

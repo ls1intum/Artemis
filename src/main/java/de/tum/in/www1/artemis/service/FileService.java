@@ -85,8 +85,6 @@ public class FileService {
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId, Boolean keepFileName) {
-        log.debug("Manage files for {} to {}", oldFilePath, newFilePath);
-
         if (oldFilePath != null) {
             if (oldFilePath.equals(newFilePath)) {
                 // Do nothing
@@ -94,6 +92,7 @@ public class FileService {
             }
             else {
                 // delete old file
+                log.debug("Delete old file {}", oldFilePath);
                 try {
                     File oldFile = new File(actualPathForPublicPath(oldFilePath));
 
