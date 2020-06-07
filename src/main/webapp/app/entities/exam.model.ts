@@ -9,11 +9,13 @@ export class Exam implements BaseEntity {
     public course: Course;
     public studentExams: StudentExam[] | null;
     public exerciseGroups: ExerciseGroup[] | null;
-    public dueDate: Moment | null;
-    public releaseDate: Moment | null;
+    public startDate: Moment | null;
+    public endDate: Moment | null;
+    public visibleDate: Moment | null;
     public startText: string;
     public endText: string;
     public confirmationStartText: string;
     public confirmationEndText: string;
-    public maxScore: number | null;
+    public maxPoints: number | null;
+    public numberOfExercisesInExam: number | null;
 }
