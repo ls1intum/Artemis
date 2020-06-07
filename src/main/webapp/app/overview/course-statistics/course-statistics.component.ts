@@ -460,7 +460,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         reachableScores[ExerciseType.TEXT] = textExerciseTotalCurrentMaxScore;
         reachableScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalCurrentMaxScore;
         this.reachableScores = reachableScores;
-        this.reachableScore = this.calculateTotalScoreForTheCourse('reachableScores');
+        this.reachableScore = this.calculateTotalScoreForTheCourse(REACHABLE_SCORE);
     }
 
     calculateCurrentRelativeScores(): void {
