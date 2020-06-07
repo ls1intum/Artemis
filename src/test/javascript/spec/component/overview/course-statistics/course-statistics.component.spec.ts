@@ -211,7 +211,7 @@ describe('CourseStatisticsComponent', () => {
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
     });
 
-    it('should transform results correctly', () => {
+    /*it('should transform results correctly', () => {
         const buildFailedsubmission = { id: 42, buildFailed: true, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
         const result1 = { resultString: '17 of 26 passed' } as Result;
         expect(comp.absoluteResult(result1)).to.be.null;
@@ -224,5 +224,5 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.absoluteResult(result4)).to.be.null;
         const result5 = { resultString: '20 of 20 points' } as Result;
         expect(comp.absoluteResult(result5)).to.equal(20);
-    });
+    });*/
 });

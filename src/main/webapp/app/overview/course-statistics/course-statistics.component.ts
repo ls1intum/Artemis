@@ -297,28 +297,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                             groupedExercises[index].scores.footer.push(null);
                             groupedExercises[index].missedScores.footer.push(null);
                             groupedExercises[index].notGraded.footer.push(null);
-                            if (this.absoluteResult(participationResult) !== null) {
-                                groupedExercises[index].scores.tooltips.push(
-                                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
-                                        points: this.absoluteResult(participationResult),
-                                        percentage: participationScore,
-                                    }),
-                                );
-                                if (exercise.maxScore) {
-                                    groupedExercises[index].missedScores.tooltips.push(
-                                        this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                                            points: exercise.maxScore - this.absoluteResult(participationResult)!,
-                                            percentage: missedScore,
-                                        }),
-                                    );
-                                }
-                            } else {
-                                if (participationScore > 50) {
-                                    groupedExercises[index].scores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
-                                } else {
-                                    groupedExercises[index].missedScores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
-                                }
-                            }
+                            this.generateTooltip(participationResult, groupedExercises[index]);
                         }
                     } else {
                         if (
@@ -365,7 +344,59 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
-    // TODO: document the implementation of this method --> it is not really obvious
+    generateTooltip(result: Result, groupedExercise: any): void {
+        const replaced = result.resultString.replace(',', '.');
+        const split = replaced.split(' ');
+
+        if (replaced.includes('points')) {
+            if (split.length === 2) {
+                groupedExercise.scores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                        points: parseFloat(split[0]),
+                        percentage: result.score,
+                    }),
+                );
+                return;
+            }
+            if (split.length === 4) {
+                groupedExercise.scores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                        points: parseFloat(split[0]),
+                        percentage: result.score,
+                    }),
+                );
+                groupedExercise.missedScores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                        points: parseFloat(split[2]) - parseFloat(split[0]),
+                        percentage: 100 - result.score,
+                    }),
+                );
+                return;
+            }
+        }
+
+        if (replaced.includes('passed')) {
+            if (split.length === 2) {
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' passed (' + result.score + ').');
+                return;
+            }
+            if (split.length === 4) {
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' passed (' + result.score + ').');
+                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' failed (' + (100 - result.score) + ').');
+                return;
+            }
+        }
+
+        if (result.score > 50) {
+            groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+        } else {
+            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${result.score}%)`);
+        }
+
+        return;
+    }
+
+    /*// TODO: document the implementation of this method --> it is not really obvious
     // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
@@ -388,7 +419,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         }
 
         return parseFloat(replaced.split(' ')[0]);
-    }
+    }*/
 
     calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
@@ -397,7 +428,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
         this.totalScore = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
-        const totalMissedPoints = this.totalMaxScore - this.totalScore;
+        const totalMissedPoints = this.reachableScore - this.totalScore;
         const absoluteScores = {};
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
