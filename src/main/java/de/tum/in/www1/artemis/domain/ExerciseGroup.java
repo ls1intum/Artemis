@@ -63,7 +63,8 @@ public class ExerciseGroup {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    @OneToMany(mappedBy = "exerciseGroup")
+    @OneToMany
+    @JoinColumn(name = "exercise_group_id")
     private Set<Exercise> exercises = new HashSet<>();
 
     public Set<Exercise> getExercises() {
@@ -109,7 +110,7 @@ public class ExerciseGroup {
     }
 
     public void setIsMandatory(Boolean isMandatory) {
-        isMandatory = isMandatory;
+        this.isMandatory = isMandatory;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
