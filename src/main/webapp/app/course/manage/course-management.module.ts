@@ -10,6 +10,7 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
+import { CourseManagementExamsComponent } from 'app/course/manage/course-management-exams.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { courseManagementState } from 'app/course/manage/course-management.route';
@@ -74,6 +75,14 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
     ],
-    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
+    declarations: [
+        CourseManagementComponent,
+        CourseDetailComponent,
+        CourseUpdateComponent,
+        CourseExerciseCardComponent,
+        CourseManagementExercisesComponent,
+        CourseGroupComponent,
+        CourseManagementExamsComponent,
+    ],
 })
 export class ArtemisCourseManagementModule {}

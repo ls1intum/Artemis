@@ -10,6 +10,7 @@ import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
+import { CourseManagementExamsComponent } from 'app/course/manage/course-management-exams.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 
 @Injectable({ providedIn: 'root' })
@@ -100,6 +101,18 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.course.detail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/exams',
+        component: CourseManagementExamsComponent,
+        resolve: {
+            course: CourseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
