@@ -18,7 +18,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "student_exam")
-public class StudentExam extends AbstractAuditingEntity {
+public class StudentExam {
 
     // region CONSTRUCTORS
     // -----------------------------------------------------------------------------------------------------------------
