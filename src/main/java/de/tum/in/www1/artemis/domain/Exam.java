@@ -1,13 +1,9 @@
-package de.tum.in.www1.artemis.domain.exam;
+package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.persistence.*;
-
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "exam")

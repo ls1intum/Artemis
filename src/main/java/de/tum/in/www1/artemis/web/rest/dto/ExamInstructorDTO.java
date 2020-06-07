@@ -5,7 +5,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.StudentExam;
 
 public class ExamInstructorDTO {
 

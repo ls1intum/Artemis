@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.exam;
+package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -15,10 +15,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "student_exam")
