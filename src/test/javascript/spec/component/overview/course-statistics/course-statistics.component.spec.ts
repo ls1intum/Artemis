@@ -7,8 +7,10 @@ import * as sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
@@ -172,6 +174,12 @@ describe('CourseStatisticsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
