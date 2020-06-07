@@ -6,6 +6,7 @@ import java.util.Set;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.StudentExam;
+import de.tum.in.www1.artemis.domain.User;
 
 public class ExamInstructorDTO {
 
@@ -16,6 +17,8 @@ public class ExamInstructorDTO {
     public Set<StudentExam> studentExams;
 
     public Set<ExerciseGroup> exerciseGroups;
+
+    public Set<User> registeredUsers;
 
     public ZonedDateTime startDate;
 
