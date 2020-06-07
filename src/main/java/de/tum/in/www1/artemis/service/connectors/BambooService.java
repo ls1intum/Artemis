@@ -293,6 +293,11 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
+        bambooBuildPlanService.setBuildPlanPermissionsForExercise(programmingExercise, planName);
+    }
+
+    @Override
     public void removeAllDefaultProjectPermissions(String projectKey) {
         final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         // Bamboo always gives read rights

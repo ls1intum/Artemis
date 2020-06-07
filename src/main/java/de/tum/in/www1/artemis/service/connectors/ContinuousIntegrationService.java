@@ -192,6 +192,13 @@ public interface ContinuousIntegrationService {
     void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
 
     /**
+     * Set Build Plan Permissions for admins, instructors and teaching assistants.
+     * @param programmingExercise   a programming exercise with the required information to set the needed build plan permissions
+     * @param planName              The name of the source plan
+     */
+    void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
+
+    /**
      * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
      * This method removes all of these unnecessary and potentially insecure permissions
      *
