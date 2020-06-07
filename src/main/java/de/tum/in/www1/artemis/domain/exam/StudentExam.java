@@ -140,7 +140,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (o == null || getClass() != o.getClass())
             return false;
         StudentExam that = (StudentExam) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override

@@ -140,7 +140,7 @@ public class ExerciseGroup {
         if (o == null || getClass() != o.getClass())
             return false;
         ExerciseGroup that = (ExerciseGroup) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
