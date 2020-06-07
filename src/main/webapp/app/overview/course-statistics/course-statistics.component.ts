@@ -380,13 +380,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed) {
             return null;
         }
+        const replaced = result.resultString.replace(',', '.');
         if (result.resultString.indexOf('of') === -1) {
             if (result.resultString.indexOf('points') === -1) {
                 return 0;
             }
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
         }
-        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+
+        return parseFloat(replaced.split(' ')[0]);
     }
 
     calculateAbsoluteScores(): void {
