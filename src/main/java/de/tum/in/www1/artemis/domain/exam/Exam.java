@@ -18,14 +18,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "exam")
-public class Exam extends AbstractAuditingEntity {
+public class Exam {
 
     // region CONSTRUCTORS
     // -----------------------------------------------------------------------------------------------------------------
