@@ -14,6 +14,7 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         const data = event.dataTransfer.getData('artemis/sgi');
         const instruction = JSON.parse(data);
+        feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
         feedback.detailText = instruction.feedback;
     }
