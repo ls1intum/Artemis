@@ -286,7 +286,7 @@ public class Exam {
         if (o == null || getClass() != o.getClass())
             return false;
         Exam exam = (Exam) o;
-        return Objects.equals(title, exam.title);
+        return Objects.equals(id, exam.id);
     }
 
     @Override
