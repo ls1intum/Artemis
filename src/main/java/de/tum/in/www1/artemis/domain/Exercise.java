@@ -30,7 +30,6 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -52,7 +51,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -190,15 +188,6 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "EXERCISE_GROUP_ID")
-    @JsonIgnore
-    private ExerciseGroup exerciseGroup;
-
-    @ManyToMany(mappedBy = "exercises")
-    @JsonIgnore
-    private Set<StudentExam> studentExams = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -971,39 +960,6 @@ public abstract class Exercise implements Serializable {
                 gradingCriterion.setExercise(this);
             });
         }
-    }
-
-    public ExerciseGroup getExerciseGroup() {
-        return exerciseGroup;
-    }
-
-    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
-        if (this.exerciseGroup != null) {
-            this.exerciseGroup.removeExercise(this);
-        }
-
-        this.exerciseGroup = exerciseGroup;
-        if (!exerciseGroup.getExercises().contains(this)) {
-            exerciseGroup.getExercises().add(this);
-        }
-    }
-
-    public Set<StudentExam> getStudentExams() {
-        return studentExams;
-    }
-
-    public void setStudentExams(Set<StudentExam> studentExams) {
-        this.studentExams = studentExams;
-    }
-
-    public void addStudentExam(StudentExam studentExam) {
-        this.studentExams.add(studentExam);
-        studentExam.getExercises().add(this);
-    }
-
-    public void removeStudentExam(StudentExam studentExam) {
-        this.studentExams.remove(studentExam);
-        studentExam.getExercises().remove(this);
     }
 
 }
