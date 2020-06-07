@@ -2,35 +2,38 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Set;
+import java.util.List;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exam;
 import de.tum.in.www1.artemis.domain.ExerciseGroup;
 
 public class ExamDTO implements Serializable {
 
-    public ExamDTO(Long id, Course course, Set<ExerciseGroup> exerciseGroups, ZonedDateTime releaseDate, ZonedDateTime dueDate, String startText, String endText,
-            String confirmationStartText, String confirmationEndText) {
-        this.id = id;
-        this.course = course;
-        this.exerciseGroups = exerciseGroups;
-        this.releaseDate = releaseDate;
-        this.dueDate = dueDate;
-        this.startText = startText;
-        this.endText = endText;
-        this.confirmationStartText = confirmationStartText;
-        this.confirmationEndText = confirmationEndText;
+    public ExamDTO(Exam exam) {
+        this.id = exam.getId();
+        this.course = exam.getCourse();
+        this.exerciseGroups = exam.getExerciseGroups();
+        this.startDate = exam.getStartDate();
+        this.endDate = exam.getEndDate();
+        this.visibleDate = exam.getVisibleDate();
+        this.startText = exam.getStartText();
+        this.endText = exam.getEndText();
+        this.confirmationStartText = exam.getConfirmationStartText();
+        this.confirmationEndText = exam.getConfirmationEndText();
     }
 
     public Long id;
 
     public Course course;
 
-    public Set<ExerciseGroup> exerciseGroups;
+    public List<ExerciseGroup> exerciseGroups;
 
-    public ZonedDateTime releaseDate;
+    public ZonedDateTime startDate;
 
-    public ZonedDateTime dueDate;
+    public ZonedDateTime endDate;
+
+    public ZonedDateTime visibleDate;
 
     public String startText;
 

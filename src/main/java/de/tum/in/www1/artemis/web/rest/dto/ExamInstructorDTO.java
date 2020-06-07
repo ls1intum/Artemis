@@ -9,21 +9,6 @@ import de.tum.in.www1.artemis.domain.StudentExam;
 
 public class ExamInstructorDTO {
 
-    public ExamInstructorDTO(Long id, Course course, Set<StudentExam> studentExams, Set<ExerciseGroup> exerciseGroups, ZonedDateTime releaseDate, ZonedDateTime dueDate,
-            String startText, String endText, String confirmationStartText, String confirmationEndText, Long maxScore) {
-        this.id = id;
-        this.course = course;
-        this.studentExams = studentExams;
-        this.exerciseGroups = exerciseGroups;
-        this.releaseDate = releaseDate;
-        this.dueDate = dueDate;
-        this.startText = startText;
-        this.endText = endText;
-        this.confirmationStartText = confirmationStartText;
-        this.confirmationEndText = confirmationEndText;
-        this.maxScore = maxScore;
-    }
-
     public Long id;
 
     public Course course;
@@ -32,9 +17,11 @@ public class ExamInstructorDTO {
 
     public Set<ExerciseGroup> exerciseGroups;
 
-    public ZonedDateTime releaseDate;
+    public ZonedDateTime startDate;
 
-    public ZonedDateTime dueDate;
+    public ZonedDateTime endDate;
+
+    public ZonedDateTime visibleDate;
 
     public String startText;
 
@@ -44,5 +31,7 @@ public class ExamInstructorDTO {
 
     public String confirmationEndText;
 
-    public Long maxScore;
+    public Integer maxPoints;
+
+    public Integer numberOfExercisesInExam;
 }
