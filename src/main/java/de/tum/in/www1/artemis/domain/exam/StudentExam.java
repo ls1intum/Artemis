@@ -31,9 +31,6 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentExam implements Serializable {
 
-    // region BASIC PROPERTIES
-    // -----------------------------------------------------------------------------------------------------------------
-
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +49,14 @@ public class StudentExam implements Serializable {
     @OrderColumn(name = "exercise_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Exam getExam() {
         return exam;
@@ -77,29 +82,16 @@ public class StudentExam implements Serializable {
         this.exercises = exercises;
     }
 
-    public Exercise addExercise(Exercise exercise) {
+    public StudentExam addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        return exercise;
+        return this;
     }
 
-    public Exercise removeExercise(Exercise exercise) {
+    public StudentExam removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        return exercise;
+        return this;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
-
-    // region HASHCODE AND EQUAL
-    // -----------------------------------------------------------------------------------------------------------------
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -114,6 +106,5 @@ public class StudentExam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
+
 }

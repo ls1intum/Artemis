@@ -21,14 +21,12 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Exam implements Serializable {
 
-    // region BASIC PROPERTIES
-    // -----------------------------------------------------------------------------------------------------------------
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title", unique = true, nullable = false)
+    @Column(name = "title", nullable = false)
     private String title;
 
     /**
@@ -75,12 +73,6 @@ public class Exam implements Serializable {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
-
-    // region RELATIONSHIPS
-    // -----------------------------------------------------------------------------------------------------------------
-
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -102,70 +94,6 @@ public class Exam implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "exam_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> registeredUsers = new HashSet<>();
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
-    public List<ExerciseGroup> getExerciseGroups() {
-        return exerciseGroups;
-    }
-
-    public void setExerciseGroups(List<ExerciseGroup> exerciseGroups) {
-        this.exerciseGroups = exerciseGroups;
-    }
-
-    public ExerciseGroup addExerciseGroup(ExerciseGroup exerciseGroup) {
-        this.exerciseGroups.add(exerciseGroup);
-        exerciseGroup.setExam(this);
-        return exerciseGroup;
-    }
-
-    public ExerciseGroup removeExerciseGroup(ExerciseGroup exerciseGroup) {
-        this.exerciseGroups.remove(exerciseGroup);
-        exerciseGroup.setExam(null);
-        return exerciseGroup;
-    }
-
-    public Set<StudentExam> getStudentExams() {
-        return studentExams;
-    }
-
-    public void setStudentExams(Set<StudentExam> studentExams) {
-        this.studentExams = studentExams;
-    }
-
-    public StudentExam addStudentExam(StudentExam studentExam) {
-        this.studentExams.add(studentExam);
-        studentExam.setExam(this);
-        return studentExam;
-    }
-
-    public StudentExam removeStudentExam(StudentExam studentExam) {
-        this.studentExams.remove(studentExam);
-        studentExam.setExam(null);
-        return studentExam;
-    }
-
-    public Set<User> getRegisteredUsers() {
-        return registeredUsers;
-    }
-
-    public void setRegisteredUsers(Set<User> registeredUsers) {
-        this.registeredUsers = registeredUsers;
-    }
-
-    public void addUser(User user) {
-        this.registeredUsers.add(user);
-    }
-
-    public void removeUser(User user) {
-        this.registeredUsers.remove(user);
-    }
 
     public Long getId() {
         return id;
@@ -255,11 +183,72 @@ public class Exam implements Serializable {
         this.numberOfExercisesInExam = numberOfExercisesInExam;
     }
 
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
+    public Course getCourse() {
+        return course;
+    }
 
-    // region HASHCODE AND EQUAL
-    // -----------------------------------------------------------------------------------------------------------------
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public List<ExerciseGroup> getExerciseGroups() {
+        return exerciseGroups;
+    }
+
+    public void setExerciseGroups(List<ExerciseGroup> exerciseGroups) {
+        this.exerciseGroups = exerciseGroups;
+    }
+
+    public Exam addExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroups.add(exerciseGroup);
+        exerciseGroup.setExam(this);
+        return this;
+    }
+
+    public Exam removeExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroups.remove(exerciseGroup);
+        exerciseGroup.setExam(null);
+        return this;
+    }
+
+    public Set<StudentExam> getStudentExams() {
+        return studentExams;
+    }
+
+    public void setStudentExams(Set<StudentExam> studentExams) {
+        this.studentExams = studentExams;
+    }
+
+    public Exam addStudentExam(StudentExam studentExam) {
+        this.studentExams.add(studentExam);
+        studentExam.setExam(this);
+        return this;
+    }
+
+    public Exam removeStudentExam(StudentExam studentExam) {
+        this.studentExams.remove(studentExam);
+        studentExam.setExam(null);
+        return this;
+    }
+
+    public Set<User> getRegisteredUsers() {
+        return registeredUsers;
+    }
+
+    public void setRegisteredUsers(Set<User> registeredUsers) {
+        this.registeredUsers = registeredUsers;
+    }
+
+    public Exam addUser(User user) {
+        this.registeredUsers.add(user);
+        return this;
+    }
+
+    public Exam removeUser(User user) {
+        this.registeredUsers.remove(user);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -274,9 +263,6 @@ public class Exam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
-
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
 
     /**
      * check if students are allowed to see this exam
