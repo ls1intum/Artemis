@@ -50,6 +50,14 @@ public class StudentExam implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Exam getExam() {
         return exam;
     }
@@ -74,22 +82,14 @@ public class StudentExam implements Serializable {
         this.exercises = exercises;
     }
 
-    public Exercise addExercise(Exercise exercise) {
+    public StudentExam addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        return exercise;
+        return this;
     }
 
-    public Exercise removeExercise(Exercise exercise) {
+    public StudentExam removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        return exercise;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+        return this;
     }
 
     @Override

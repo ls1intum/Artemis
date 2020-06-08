@@ -228,16 +228,16 @@ public class Exam implements Serializable {
         this.exerciseGroups = exerciseGroups;
     }
 
-    public ExerciseGroup addExerciseGroup(ExerciseGroup exerciseGroup) {
+    public Exam addExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.add(exerciseGroup);
         exerciseGroup.setExam(this);
-        return exerciseGroup;
+        return this;
     }
 
-    public ExerciseGroup removeExerciseGroup(ExerciseGroup exerciseGroup) {
+    public Exam removeExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.remove(exerciseGroup);
         exerciseGroup.setExam(null);
-        return exerciseGroup;
+        return this;
     }
 
     public Set<StudentExam> getStudentExams() {
@@ -248,16 +248,16 @@ public class Exam implements Serializable {
         this.studentExams = studentExams;
     }
 
-    public StudentExam addStudentExam(StudentExam studentExam) {
+    public Exam addStudentExam(StudentExam studentExam) {
         this.studentExams.add(studentExam);
         studentExam.setExam(this);
-        return studentExam;
+        return this;
     }
 
-    public StudentExam removeStudentExam(StudentExam studentExam) {
+    public Exam removeStudentExam(StudentExam studentExam) {
         this.studentExams.remove(studentExam);
         studentExam.setExam(null);
-        return studentExam;
+        return this;
     }
 
     public Set<User> getRegisteredUsers() {
@@ -268,12 +268,14 @@ public class Exam implements Serializable {
         this.registeredUsers = registeredUsers;
     }
 
-    public void addUser(User user) {
+    public Exam addUser(User user) {
         this.registeredUsers.add(user);
+        return this;
     }
 
-    public void removeUser(User user) {
+    public Exam removeUser(User user) {
         this.registeredUsers.remove(user);
+        return this;
     }
 
     @Override
