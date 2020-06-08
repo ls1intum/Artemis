@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -72,6 +73,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected AuthorityRepository authorityRepository;
+
+    @Autowired
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     private User student;
 
@@ -160,6 +164,10 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
+
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockUpdateUser();
+
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
