@@ -61,7 +61,8 @@ public class ExamService {
     }
 
     /**
-     * filters the visible exams (excluding the ones that are not visible yet)
+     * Filters the visible exams (excluding the ones that are not visible yet)
+     * 
      * @param exams a set of exams (e.g. the ones of a course)
      * @return only the visible exams
      */
