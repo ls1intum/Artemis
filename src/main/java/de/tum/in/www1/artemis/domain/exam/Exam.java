@@ -8,7 +8,21 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -88,7 +102,7 @@ public class Exam implements Serializable {
     // region RELATIONSHIPS
     // -----------------------------------------------------------------------------------------------------------------
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 
@@ -126,18 +140,16 @@ public class Exam implements Serializable {
         this.exerciseGroups = exerciseGroups;
     }
 
-    public void addExerciseGroup(ExerciseGroup exerciseGroup) {
+    public ExerciseGroup addExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.add(exerciseGroup);
-        if (exerciseGroup.getExam() != this) {
-            exerciseGroup.setExam(this);
-        }
+        exerciseGroup.setExam(this);
+        return exerciseGroup;
     }
 
-    public void removeExerciseGroup(ExerciseGroup exerciseGroup) {
+    public ExerciseGroup removeExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroups.remove(exerciseGroup);
-        if (exerciseGroup.getExam() == this) {
-            exerciseGroup.setExam(null);
-        }
+        exerciseGroup.setExam(null);
+        return exerciseGroup;
     }
 
     public Set<StudentExam> getStudentExams() {
@@ -148,18 +160,16 @@ public class Exam implements Serializable {
         this.studentExams = studentExams;
     }
 
-    public void addStudentExam(StudentExam studentExam) {
+    public StudentExam addStudentExam(StudentExam studentExam) {
         this.studentExams.add(studentExam);
-        if (studentExam.getExam() != this) {
-            studentExam.setExam(this);
-        }
+        studentExam.setExam(this);
+        return studentExam;
     }
 
-    public void removeStudentExam(StudentExam studentExam) {
+    public StudentExam removeStudentExam(StudentExam studentExam) {
         this.studentExams.remove(studentExam);
-        if (studentExam.getExam() == this) {
-            studentExam.setExam(null);
-        }
+        studentExam.setExam(null);
+        return studentExam;
     }
 
     public Set<User> getRegisteredUsers() {

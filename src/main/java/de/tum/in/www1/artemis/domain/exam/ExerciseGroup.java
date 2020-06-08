@@ -75,12 +75,14 @@ public class ExerciseGroup implements Serializable {
         this.exercises = exercises;
     }
 
-    public void addExercise(Exercise exercise) {
+    public Exercise addExercise(Exercise exercise) {
         this.exercises.add(exercise);
+        return exercise;
     }
 
-    public void removeExercise(Exercise exercise) {
+    public Exercise removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
+        return exercise;
     }
 
     public Long getId() {

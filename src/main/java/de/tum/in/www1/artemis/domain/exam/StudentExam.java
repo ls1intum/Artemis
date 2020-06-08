@@ -39,11 +39,11 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -77,12 +77,14 @@ public class StudentExam implements Serializable {
         this.exercises = exercises;
     }
 
-    public void addExercise(Exercise exercise) {
+    public Exercise addExercise(Exercise exercise) {
         this.exercises.add(exercise);
+        return exercise;
     }
 
-    public void removeExercise(Exercise exercise) {
+    public Exercise removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
+        return exercise;
     }
 
     public Long getId() {
