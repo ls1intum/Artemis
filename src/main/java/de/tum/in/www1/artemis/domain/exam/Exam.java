@@ -66,6 +66,9 @@ public class Exam implements Serializable {
     @Column(name = "max_points")
     private Integer maxPoints;
 
+    @Column(name = "randomize_exercise_order")
+    private Boolean randomizeExerciseOrder;
+
     /**
      * From all exercise groups connected to the exam, {@link #numberOfExercisesInExam} are randomly
      * chosen when generating the specific exam for the {@link #registeredUsers}
@@ -181,6 +184,14 @@ public class Exam implements Serializable {
 
     public void setNumberOfExercisesInExam(Integer numberOfExercisesInExam) {
         this.numberOfExercisesInExam = numberOfExercisesInExam;
+    }
+
+    public Boolean getRandomizeExerciseOrder() {
+        return randomizeExerciseOrder;
+    }
+
+    public void setRandomizeExerciseOrder(Boolean randomizeExerciseOrder) {
+        this.randomizeExerciseOrder = randomizeExerciseOrder;
     }
 
     public Course getCourse() {

@@ -11,6 +11,7 @@
             <column name="end_text" type="LONGTEXT"/>
             <column name="max_points" type="INT"/>
             <column name="number_of_exercises_in_exam" type="INT"/>
+            <column name="randomize_exercise_order" type="BIT"/>
             <column name="start_date" type="datetime"/>
             <column name="start_text" type="LONGTEXT"/>
             <column name="title" type="VARCHAR(255)">

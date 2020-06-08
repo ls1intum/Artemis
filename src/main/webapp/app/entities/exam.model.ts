@@ -15,6 +15,7 @@ export class Exam implements BaseEntity {
     public confirmationEndText: string;
     public maxPoints: number | null;
     public numberOfExercisesInExam: number | null;
+    public randomizeExerciseOrder = false; // default value (set by server)
     public course: Course;
     public studentExams: StudentExam[] | null;
     public exerciseGroups: ExerciseGroup[] | null;
