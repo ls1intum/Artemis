@@ -16,6 +16,7 @@ export class TextblockAssessmentCardComponent {
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
+    disableEditScore = false;
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
@@ -56,6 +57,9 @@ export class TextblockAssessmentCardComponent {
         this.select();
         if (this.textBlockRef.feedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.textBlockRef.feedback, event);
+            if (this.textBlockRef.feedback.gradingInstruction.usageCount !== 0) {
+                this.disableEditScore = true;
+            }
         }
         this.feedbackDidChange();
     }

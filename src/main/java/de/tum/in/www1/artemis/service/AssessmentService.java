@@ -197,13 +197,13 @@ public class AssessmentService {
                         }
                     }
                     else {
-                        totalScore += feedback.getGradingInstruction().getCredits();
+                        totalScore += feedback.getCredits();
                     }
                 }
                 else {
                     // First time encountering the grading instruction
                     gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
-                    totalScore += feedback.getGradingInstruction().getCredits();
+                    totalScore += feedback.getCredits();
                 }
             }
             else {
