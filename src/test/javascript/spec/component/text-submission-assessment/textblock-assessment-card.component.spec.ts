@@ -9,6 +9,7 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateModule } from '@ngx-translate/core';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;
@@ -53,6 +54,9 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(element).toBeFalsy();
 
         component.textBlockRef.initFeedback();
+        component.textBlockRef.feedback!.gradingInstruction = new GradingInstruction();
+        component.textBlockRef.feedback!.gradingInstruction.usageCount = 0;
+
         fixture.detectChanges();
         element = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         expect(element).toBeTruthy();
