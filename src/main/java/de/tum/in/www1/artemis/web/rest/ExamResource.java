@@ -59,7 +59,8 @@ public class ExamResource {
     /**
      * POST /courses/{courseId}/exams : Create a new exam.
      *
-     * @param exam the exam to create
+     * @param courseId  the course to which the exam belongs
+     * @param exam      the exam to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -85,13 +86,14 @@ public class ExamResource {
     /**
      * PUT /courses/{courseId}/exams : Updates an existing exam.
      *
-     * @param updatedExam the exam to update
+     * @param courseId      the course to which the exam belongs
+     * @param updatedExam   the exam to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses/{courseId}/exams")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> updateCourse(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
+    public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
         if (updatedExam.getId() == null) {
             return createExam(courseId, updatedExam);

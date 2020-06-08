@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,11 +23,8 @@ public class ExamService {
 
     private final ExamRepository examRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public ExamService(ExamRepository examRepository, AuthorizationCheckService authCheckService) {
+    public ExamService(ExamRepository examRepository) {
         this.examRepository = examRepository;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -65,24 +60,13 @@ public class ExamService {
         examRepository.deleteById(examId);
     }
 
-    /**
-     * find all visible exams for the given user in the given course
-     *
-     * @param course the course for which the exams should be found
-     * @param user the user who wants to see the exams
-     * @return all visible exams
-     */
-    public Set<Exam> findAllForCourse(Course course, User user) {
-        Set<Exam> exams = examRepository.findByCourseId(course.getId());
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // tutors/instructors/admins can see all exams of the course
+    public Set<Exam> filterVisibleExams(Set<Exam> exams) {
+        Set<Exam> filteredExams = new HashSet<>();
+        for (Exam exam : exams) {
+            if (exam.isVisibleToStudents()) {
+                filteredExams.add(exam);
+            }
         }
-        else if (authCheckService.isStudentInCourse(course, user)) {
-            // user is student for this course and might not have the right to see it so we have to
-            // filter out exercises that are not released (or explicitly made visible to students) yet
-            exams = exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
-        }
-
-        return exams;
+        return filteredExams;
     }
 }
