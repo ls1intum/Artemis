@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -72,13 +72,13 @@ public class StudentExam {
     // -----------------------------------------------------------------------------------------------------------------
     @ManyToMany
     @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    private Set<Exercise> exercises = new HashSet<>();
+    private List<Exercise> exercises = new HashSet<>();
 
-    public Set<Exercise> getExercises() {
+    public List<Exercise> getExercises() {
         return exercises;
     }
 
-    public void setExercises(Set<Exercise> exercises) {
+    public void setExercises(List<Exercise> exercises) {
         this.exercises = exercises;
     }
 
