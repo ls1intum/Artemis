@@ -7,6 +7,7 @@ import java.util.List;
  * Enumeration for supported static code analysis tools
  */
 public enum StaticCodeAnalysisTool {
+
     SPOTBUGS(ProgrammingLanguage.JAVA);
 
     private final ProgrammingLanguage language;
