@@ -112,6 +112,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.assessmentType <> 'AUTOMATIC' AND p.exercise.course.id = :#{#courseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE)")
     long countSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
 
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     *
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have an assessment and have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all (only exercises with manual or semi automatic correction are considered)
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.assessmentType <> 'AUTOMATIC' AND p.exercise.course.id = :#{#courseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL)")
+    long countAssessmentsByCourseIdSubmitted(@Param("courseId") Long courseId);
+
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);

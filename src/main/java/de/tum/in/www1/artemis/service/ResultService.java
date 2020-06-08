@@ -336,11 +336,11 @@ public class ResultService {
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
      * @param courseId - the course we are interested in
+     * @param rated - wether we want rated or unrated results
      * @return a number of assessments for the course
      */
-    public DueDateStat countNumberOfAssessments(Long courseId) {
-        return new DueDateStat(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
-                resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
+    public Long countNumberOfAssessments(Long courseId, boolean rated) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, rated);
     }
 
     /**
