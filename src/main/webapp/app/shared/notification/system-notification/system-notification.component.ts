@@ -14,7 +14,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 export class SystemNotificationComponent implements OnInit {
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
-    notification: SystemNotification;
+    notification: SystemNotification | undefined;
     alertClass: string;
     alertIcon: string;
     websocketChannel: string;
@@ -42,9 +42,11 @@ export class SystemNotificationComponent implements OnInit {
 
     private loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
-            this.notification = notification;
-            this.setAlertClass();
-            this.setAlertIcon();
+            if (notification) {
+                this.notification = notification;
+                this.setAlertClass();
+                this.setAlertIcon();
+            }
         });
     }
 
@@ -54,6 +56,7 @@ export class SystemNotificationComponent implements OnInit {
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
             // as we cannot send null as websocket payload (this is not supported), we send a string 'deleted' in case the system notification was deleted
             if (systemNotification === 'deleted') {
+                this.notification = undefined;
                 this.loadActiveNotification();
                 return;
             }
