@@ -32,7 +32,7 @@ export class StructuredGradingCriterionService {
                             gradingInstructions[feedback.gradingInstruction.id] = encounters + 1;
                         } else {
                             gradingInstructions[feedback.gradingInstruction.id] = encounters + 1;
-                            score += feedback.credits;
+                            score += feedback.gradingInstruction.credits;
                         }
                     } else {
                         score += feedback.credits;

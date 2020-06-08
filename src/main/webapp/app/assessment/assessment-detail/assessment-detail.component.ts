@@ -17,6 +17,7 @@ export class AssessmentDetailComponent {
     @Input() public highlightColor: HighlightColors.Color;
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
+    disableEditScore = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
@@ -51,6 +52,9 @@ export class AssessmentDetailComponent {
 
     updateAssessmentOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);
+        if (this.assessment.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        }
         this.assessmentChange.emit(this.assessment);
     }
 }
