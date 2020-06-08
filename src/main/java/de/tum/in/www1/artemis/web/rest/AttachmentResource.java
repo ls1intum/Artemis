@@ -47,7 +47,7 @@ public class AttachmentResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final EmbeddingTrainingMaterialScheduleService embeddingTrainingMaterialScheduleService;
+    private final Optional<EmbeddingTrainingMaterialScheduleService> embeddingTrainingMaterialScheduleService;
 
     private final UserService userService;
 
@@ -57,7 +57,7 @@ public class AttachmentResource {
 
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
             AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService,
-            EmbeddingTrainingMaterialScheduleService embeddingTrainingMaterialScheduleService, CacheManager cacheManager) {
+                              Optional<EmbeddingTrainingMaterialScheduleService> embeddingTrainingMaterialScheduleService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
@@ -83,7 +83,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Attachment result = attachmentRepository.save(attachment);
-        embeddingTrainingMaterialScheduleService.scheduleMaterialUploadForNow(attachment);
+        embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -105,7 +105,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
-        embeddingTrainingMaterialScheduleService.scheduleMaterialUploadForNow(attachment);
+        embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
