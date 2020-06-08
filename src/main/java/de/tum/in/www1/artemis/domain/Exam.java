@@ -1,9 +1,25 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "exam")
@@ -67,6 +83,9 @@ public class Exam {
      */
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
+
+    @Column(name = "hasExerciseGroupOrder")
+    private Boolean hasExerciseGroupOrder;
 
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
@@ -251,6 +270,14 @@ public class Exam {
 
     public void setNumberOfExercisesInExam(Integer numberOfExercisesInExam) {
         this.numberOfExercisesInExam = numberOfExercisesInExam;
+    }
+
+    public Boolean getHasExerciseGroupOrder() {
+        return hasExerciseGroupOrder;
+    }
+
+    public void setHasExerciseGroupOrder(Boolean hasExerciseGroupOrder) {
+        this.hasExerciseGroupOrder = hasExerciseGroupOrder;
     }
 
     // endregion
