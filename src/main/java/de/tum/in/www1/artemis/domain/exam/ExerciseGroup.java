@@ -56,7 +56,6 @@ public class ExerciseGroup implements Serializable {
 
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinColumn(name = "exercise_group_id")
     private Set<Exercise> exercises = new HashSet<>();
 
     public Exam getExam() {
