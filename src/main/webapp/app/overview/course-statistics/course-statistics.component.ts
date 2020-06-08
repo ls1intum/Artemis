@@ -345,6 +345,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     generateTooltip(result: Result, groupedExercise: any): void {
+        if (!result.resultString) {
+            groupedExercise.scores.tooltips.push(
+                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                    points: 0,
+                    percentage: 0,
+                }),
+            );
+        }
+
         const replaced = result.resultString.replace(',', '.');
         const split = replaced.split(' ');
 
