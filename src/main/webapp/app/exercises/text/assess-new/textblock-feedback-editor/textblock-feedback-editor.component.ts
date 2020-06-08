@@ -44,6 +44,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
+        if (this.feedback.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        }
     }
     /**
      * Increase size of text area automatically
