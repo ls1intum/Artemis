@@ -203,6 +203,9 @@ public class DatabaseUtilService {
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
+        // TODO: delete all student exams
+        // TODO: delete all exercise groups
+        // TODO: delete all exams
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
