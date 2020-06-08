@@ -177,6 +177,15 @@ public class DatabaseUtilService {
     @Autowired
     private TextClusterRepository textClusterRepository;
 
+    @Autowired
+    private ExerciseGroupRepository exerciseGroupRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
+
     public void resetDatabase() {
 
         conflictRepo.deleteAll();
@@ -202,10 +211,10 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
+        studentExamRepository.deleteAll();
+        exerciseGroupRepository.deleteAll();
+        examRepository.deleteAll();
         exerciseRepo.deleteAll();
-        // TODO: delete all student exams
-        // TODO: delete all exercise groups
-        // TODO: delete all exams
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
