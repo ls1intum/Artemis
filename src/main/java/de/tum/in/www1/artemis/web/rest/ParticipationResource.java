@@ -406,7 +406,7 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/participations/{participationId}/buildArtifact")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long participationId) {
+    public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
         ProgrammingExerciseStudentParticipation participation = participationService.findProgrammingExerciseParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
