@@ -46,6 +46,8 @@ export class SystemNotificationComponent implements OnInit {
                 this.notification = notification;
                 this.setAlertClass();
                 this.setAlertIcon();
+            } else {
+                this.notification = undefined;
             }
         });
     }
@@ -56,7 +58,6 @@ export class SystemNotificationComponent implements OnInit {
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
             // as we cannot send null as websocket payload (this is not supported), we send a string 'deleted' in case the system notification was deleted
             if (systemNotification === 'deleted') {
-                this.notification = undefined;
                 this.loadActiveNotification();
                 return;
             }

@@ -109,7 +109,7 @@ describe('System Notification Component', () => {
 
         it('should delete notification when "deleted" is received via websocket', fakeAsync(() => {
             sinon.replace(jhiWebsocketService, 'receive', sinon.fake.returns(of('deleted')));
-            sinon.replace(systemNotificationService, 'getActiveNotification', sinon.fake.returns(of()));
+            sinon.replace(systemNotificationService, 'getActiveNotification', sinon.fake.returns(of(null)));
             systemNotificationComponent.notification = createActiveNotification(SystemNotificationType.WARNING);
             systemNotificationComponent.ngOnInit();
             tick(500);
