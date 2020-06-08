@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -60,13 +60,12 @@ public class ExamService {
         examRepository.deleteById(examId);
     }
 
+    /**
+     * filters the visible exams (excluding the ones that are not visible yet)
+     * @param exams a set of exams (e.g. the ones of a course)
+     * @return only the visible exams
+     */
     public Set<Exam> filterVisibleExams(Set<Exam> exams) {
-        Set<Exam> filteredExams = new HashSet<>();
-        for (Exam exam : exams) {
-            if (exam.isVisibleToStudents()) {
-                filteredExams.add(exam);
-            }
-        }
-        return filteredExams;
+        return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
     }
 }
