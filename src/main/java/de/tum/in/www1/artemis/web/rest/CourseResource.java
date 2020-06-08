@@ -215,9 +215,8 @@ public class CourseResource {
     /**
      * PUT /courses : Updates an existing updatedCourse.
      *
-     * @param updatedCourse the updatedCourse to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse, or with status 400 (Bad Request) if the updatedCourse is not valid, or with status
-     * 500 (Internal Server Error) if the updatedCourse couldn't be updated
+     * @param updatedCourse the course to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated course
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
@@ -237,8 +236,8 @@ public class CourseResource {
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        // only allow admins or instructors of the existing updatedCourse to change it
-        // this is important, otherwise someone could put himself into the instructor group of the updated Course
+        // only allow admins or instructors of the existing course to change it
+        // this is important, otherwise someone could put himself into the instructor group of the updated course
         if (!authCheckService.isAtLeastInstructorInCourse(existingCourse.get(), user)) {
             return forbidden();
         }
@@ -493,9 +492,7 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
-
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
-
         return courses;
     }
 

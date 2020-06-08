@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -13,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -38,13 +34,16 @@ public class CourseService {
 
     private final LectureService lectureService;
 
+    private final ExamService examService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService) {
+            LectureService lectureService, ExamService examService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
+        this.examService = examService;
     }
 
     /**
@@ -112,9 +111,7 @@ public class CourseService {
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
-                .peek(course -> {
-                    fetchExercisesAndLecturesForCourse(user, course);
-                }).collect(Collectors.toList());
+                .peek(course -> fetchExercisesAndLecturesForCourse(user, course)).collect(Collectors.toList());
     }
 
     /**
@@ -124,11 +121,10 @@ public class CourseService {
      * @param course the course for which exercises and lectures should be fetched
      */
     private void fetchExercisesAndLecturesForCourse(User user, Course course) {
-        // fetch visible lectures exercises for each course after filtering
-        Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
-        List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
-        course.setExercises(new HashSet<>(exercises));
-        course.setLectures(lectures);
+        // fetch visible lectures, exercises and exams for the given course
+        course.setExercises(exerciseService.findAllForCourse(course, user));
+        course.setLectures(lectureService.findAllForCourse(course, user));
+        course.setExams(examService.findAllForCourse(course, user));
     }
 
     private boolean isActiveCourseVisibleForUser(User user, Course course) {

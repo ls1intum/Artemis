@@ -2,27 +2,9 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -92,9 +74,6 @@ public class Exam implements Serializable {
      */
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
-
-    @Column(name = "hasExerciseGroupOrder")
-    private Boolean hasExerciseGroupOrder;
 
     // -----------------------------------------------------------------------------------------------------------------
     // endregion
@@ -276,14 +255,6 @@ public class Exam implements Serializable {
         this.numberOfExercisesInExam = numberOfExercisesInExam;
     }
 
-    public Boolean getHasExerciseGroupOrder() {
-        return hasExerciseGroupOrder;
-    }
-
-    public void setHasExerciseGroupOrder(Boolean hasExerciseGroupOrder) {
-        this.hasExerciseGroupOrder = hasExerciseGroupOrder;
-    }
-
     // endregion
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -303,7 +274,19 @@ public class Exam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
+
     // endregion
     // -----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * check if students are allowed to see this exam
+     *
+     * @return true, if students are allowed to see this exam, otherwise false
+     */
+    public Boolean isVisibleToStudents() {
+        if (visibleDate == null) {  // no visible date means the exercise is visible to students
+            return Boolean.TRUE;
+        }
+        return visibleDate.isBefore(ZonedDateTime.now());
+    }
 }

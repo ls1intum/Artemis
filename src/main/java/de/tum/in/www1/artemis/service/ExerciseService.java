@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -97,10 +96,10 @@ public class ExerciseService {
      * @param user the user entity
      * @return a List of all Exercises for the given course
      */
-    public List<Exercise> findAllForCourse(Course course, User user) {
-        List<Exercise> exercises = null;
+    public Set<Exercise> findAllForCourse(Course course, User user) {
+        Set<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // user can see all exercises of the course
+            // tutors/instructors/admins can see all exercises of the course
             exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
@@ -113,9 +112,9 @@ public class ExerciseService {
                 exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
-            // user is student for this course and might not have the right to see it so we have to filter
+            // students for this course might not have the right to see it so we have to
             // filter out exercises that are not released (or explicitly made visible to students) yet
-            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
+            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
 
         if (exercises != null) {
