@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FileService;
@@ -141,8 +142,9 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<TutorGroup> tutorGroups = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
-    @JsonIgnore
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it

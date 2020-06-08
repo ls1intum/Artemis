@@ -4,9 +4,9 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.StudentExam;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 public class ExamInstructorDTO {
 

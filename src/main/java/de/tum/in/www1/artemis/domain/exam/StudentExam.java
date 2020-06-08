@@ -1,12 +1,12 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.exam;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,19 +17,19 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+
 @Entity
 @Table(name = "student_exam")
-public class StudentExam {
-
-    // region CONSTRUCTORS
-    // -----------------------------------------------------------------------------------------------------------------
-
-    // no arg constructor required for jpa
-    public StudentExam() {
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class StudentExam implements Serializable {
 
     // region BASIC PROPERTIES
     // -----------------------------------------------------------------------------------------------------------------
@@ -39,15 +39,19 @@ public class StudentExam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
-
-    // region RELATIONSHIPS
-    // -----------------------------------------------------------------------------------------------------------------
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "exam_id")
     private Exam exam;
+
+    @ManyToOne()
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToMany
+    @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
+    @OrderColumn(name = "exercise_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<Exercise> exercises = new ArrayList<>();
 
     public Exam getExam() {
         return exam;
@@ -57,11 +61,6 @@ public class StudentExam {
         this.exam = exam;
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
     public User getUser() {
         return user;
     }
@@ -69,12 +68,6 @@ public class StudentExam {
     public void setUser(User user) {
         this.user = user;
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    @ManyToMany
-    @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    @OrderColumn(name = "exercise_order")
-    private List<Exercise> exercises = new ArrayList<>();
 
     public List<Exercise> getExercises() {
         return exercises;
@@ -91,11 +84,6 @@ public class StudentExam {
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
     }
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
-
-    // region SIMPLE GETTERS AND SETTERS
-    // -----------------------------------------------------------------------------------------------------------------
 
     public Long getId() {
         return id;

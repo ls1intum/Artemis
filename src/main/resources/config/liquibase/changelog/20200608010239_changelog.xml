@@ -1,27 +1,25 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="sbe (generated)" id="1591570971313-29">
+    <changeSet author="saschabeele" id="1591570971313">
         <createTable tableName="exam">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="examPK"/>
             </column>
-            <column name="confirmation_end_text" type="VARCHAR(255)"/>
-            <column name="confirmation_start_text" type="VARCHAR(255)"/>
-            <column name="end_date" type="datetime(6)"/>
-            <column name="end_text" type="VARCHAR(255)"/>
+            <column name="confirmation_end_text" type="MEDIUMTEXT"/>
+            <column name="confirmation_start_text" type="MEDIUMTEXT"/>
+            <column name="end_date" type="datetime"/>
+            <column name="end_text" type="MEDIUMTEXT"/>
             <column name="max_points" type="INT"/>
             <column name="number_of_exercises_in_exam" type="INT"/>
-            <column name="start_date" type="datetime(6)"/>
-            <column name="start_text" type="VARCHAR(255)"/>
+            <column name="start_date" type="datetime"/>
+            <column name="start_text" type="MEDIUMTEXT"/>
             <column name="title" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="visible_date" type="datetime(6)"/>
+            <column name="visible_date" type="datetime"/>
             <column name="course_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-30">
-        <createTable tableName="exam_jhi_user">
+        <createTable tableName="exam_user">
             <column name="exam_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -29,8 +27,6 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-31">
         <createTable tableName="exercise_group">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="exercise_groupPK"/>
@@ -42,8 +38,6 @@
             <column name="exam_id" type="BIGINT"/>
             <column name="exercise_groups_order" type="INT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-32">
         <createTable tableName="student_exam">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="student_examPK"/>
@@ -51,8 +45,6 @@
             <column name="exam_id" type="BIGINT"/>
             <column name="user_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-33">
         <createTable tableName="student_exam_exercise">
             <column name="student_exam_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
@@ -61,40 +53,18 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-39">
         <addColumn tableName="exercise">
             <column name="exercise_group_id" type="bigint"/>
         </addColumn>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-40">
         <addUniqueConstraint columnNames="title" constraintName="UC_EXAMTITLE_COL" tableName="exam"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-42">
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_exam_exercise" constraintName="FK48u8v93a8nmwv58c7eyjp25nt" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-43">
         <addForeignKeyConstraint baseColumnNames="exercise_group_id" baseTableName="exercise" constraintName="FK8cduvvvsh3ki4y8ssmm8r6hmb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise_group" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-44">
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exercise_group" constraintName="FKfcsbwug74umq05n5g5lnbku85" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-45">
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_jhi_user" constraintName="FKfe5u17noov0eh93yt4f2ovkhj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-46">
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="exam" constraintName="FKiub3ue9cklcyyra24v9ns656n" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-47">
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="exam_jhi_user" constraintName="FKkjjs5660ieiuvk3wafmqonq0t" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-48">
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="student_exam" constraintName="FKm3tx9n7w4hpjyu130hp3bueh7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-49">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="student_exam" constraintName="FKsqyvk8gb9eiknlgrj6xld1nel" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-    </changeSet>
-    <changeSet author="sbe (generated)" id="1591570971313-50">
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="student_exam_exercise" constraintName="FKtj4uelcky6dvb0knrvgfufbyv" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
     </changeSet>
 </databaseChangeLog>

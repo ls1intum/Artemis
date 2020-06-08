@@ -1,5 +1,6 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.exam;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -15,18 +16,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.Exercise;
+
 @Entity
 @Table(name = "exercise_group")
-public class ExerciseGroup {
-
-    // region CONSTRUCTORS
-    // -----------------------------------------------------------------------------------------------------------------
-    // no arg constructor required for jpa
-    public ExerciseGroup() {
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ExerciseGroup implements Serializable {
 
     // region BASIC PROPERTIES
     // -----------------------------------------------------------------------------------------------------------------
@@ -54,6 +54,11 @@ public class ExerciseGroup {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
+    @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JoinColumn(name = "exercise_group_id")
+    private Set<Exercise> exercises = new HashSet<>();
+
     public Exam getExam() {
         return exam;
     }
@@ -61,11 +66,6 @@ public class ExerciseGroup {
     public void setExam(Exam exam) {
         this.exam = exam;
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    @OneToMany
-    @JoinColumn(name = "exercise_group_id")
-    private Set<Exercise> exercises = new HashSet<>();
 
     public Set<Exercise> getExercises() {
         return exercises;
@@ -82,12 +82,6 @@ public class ExerciseGroup {
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
-
-    // region SIMPLE GETTERS AND SETTERS
-    // -----------------------------------------------------------------------------------------------------------------
 
     public Long getId() {
         return id;

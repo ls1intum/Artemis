@@ -5,7 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 
 public class ExamDTO implements Serializable {
 
