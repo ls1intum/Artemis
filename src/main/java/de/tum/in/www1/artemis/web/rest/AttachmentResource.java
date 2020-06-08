@@ -57,7 +57,7 @@ public class AttachmentResource {
 
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
             AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService,
-                              Optional<EmbeddingTrainingMaterialScheduleService> embeddingTrainingMaterialScheduleService, CacheManager cacheManager) {
+            Optional<EmbeddingTrainingMaterialScheduleService> embeddingTrainingMaterialScheduleService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
