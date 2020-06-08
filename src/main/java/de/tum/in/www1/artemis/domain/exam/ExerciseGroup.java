@@ -28,8 +28,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseGroup implements Serializable {
 
-    // region BASIC PROPERTIES
-    // -----------------------------------------------------------------------------------------------------------------
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,12 +42,6 @@ public class ExerciseGroup implements Serializable {
     @Column(name = "is_mandatory", nullable = false)
     private Boolean isMandatory = true;
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
-
-    // region RELATIONSHIPS
-    // -----------------------------------------------------------------------------------------------------------------
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -57,32 +49,6 @@ public class ExerciseGroup implements Serializable {
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
-
-    public Exam getExam() {
-        return exam;
-    }
-
-    public void setExam(Exam exam) {
-        this.exam = exam;
-    }
-
-    public Set<Exercise> getExercises() {
-        return exercises;
-    }
-
-    public void setExercises(Set<Exercise> exercises) {
-        this.exercises = exercises;
-    }
-
-    public Exercise addExercise(Exercise exercise) {
-        this.exercises.add(exercise);
-        return exercise;
-    }
-
-    public Exercise removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        return exercise;
-    }
 
     public Long getId() {
         return id;
@@ -108,11 +74,32 @@ public class ExerciseGroup implements Serializable {
         this.isMandatory = isMandatory;
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
+    public Exam getExam() {
+        return exam;
+    }
 
-    // region EQUALS AND HASHCODE
-    // -----------------------------------------------------------------------------------------------------------------
+    public void setExam(Exam exam) {
+        this.exam = exam;
+    }
+
+    public Set<Exercise> getExercises() {
+        return exercises;
+    }
+
+    public void setExercises(Set<Exercise> exercises) {
+        this.exercises = exercises;
+    }
+
+    public ExerciseGroup addExercise(Exercise exercise) {
+        this.exercises.add(exercise);
+        return this;
+    }
+
+    public ExerciseGroup removeExercise(Exercise exercise) {
+        this.exercises.remove(exercise);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -128,6 +115,4 @@ public class ExerciseGroup implements Serializable {
         return Objects.hashCode(getId());
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // endregion
 }

@@ -31,9 +31,6 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentExam implements Serializable {
 
-    // region BASIC PROPERTIES
-    // -----------------------------------------------------------------------------------------------------------------
-
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -95,11 +92,6 @@ public class StudentExam implements Serializable {
         this.id = id;
     }
 
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
-
-    // region HASHCODE AND EQUAL
-    // -----------------------------------------------------------------------------------------------------------------
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -114,6 +106,5 @@ public class StudentExam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
-    // endregion
-    // -----------------------------------------------------------------------------------------------------------------
+
 }

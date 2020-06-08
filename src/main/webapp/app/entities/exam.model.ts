@@ -6,9 +6,6 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class Exam implements BaseEntity {
     public id: number;
-    public course: Course;
-    public studentExams: StudentExam[] | null;
-    public exerciseGroups: ExerciseGroup[] | null;
     public startDate: Moment | null;
     public endDate: Moment | null;
     public visibleDate: Moment | null;
@@ -18,4 +15,7 @@ export class Exam implements BaseEntity {
     public confirmationEndText: string;
     public maxPoints: number | null;
     public numberOfExercisesInExam: number | null;
+    public course: Course;
+    public studentExams: StudentExam[] | null;
+    public exerciseGroups: ExerciseGroup[] | null;
 }

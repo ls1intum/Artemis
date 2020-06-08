@@ -4,8 +4,8 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class ExerciseGroup implements BaseEntity {
     public id: number;
-    public exercises: Exercise[];
-    public exam: Exam;
     public title: string;
     public mandatory: boolean;
+    public exam: Exam;
+    public exercises: Exercise[];
 }
