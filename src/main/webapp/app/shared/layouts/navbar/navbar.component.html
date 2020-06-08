@@ -16,6 +16,7 @@
             <img class="logo-img" [src]="SERVER_API_URL + 'public/images/logo.png'" />
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
+            <jhi-loading-notification></jhi-loading-notification>
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
