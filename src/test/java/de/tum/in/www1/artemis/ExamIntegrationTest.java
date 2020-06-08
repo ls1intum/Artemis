@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -19,20 +18,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -46,34 +37,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     DatabaseUtilService database;
 
     @Autowired
-    RequestUtilService request;
-
-    @Autowired
     CourseRepository courseRepo;
 
     @Autowired
     ExerciseRepository exerciseRepo;
-
-    @Autowired
-    ParticipationRepository participationRepo;
-
-    @Autowired
-    SubmissionRepository submissionRepo;
-
-    @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
-    CustomAuditEventRepository auditEventRepo;
-
-    @Autowired
-    JiraRequestMockProvider jiraRequestMockProvider;
-
-    @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    UserService userService;
 
     @Autowired
     ExamRepository examRepository;
@@ -95,11 +62,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void initTestCase() {
         users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
         course = database.addEmptyCourse();
-
-        // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
-
     }
 
     @AfterEach
@@ -110,7 +72,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testSaveExamToDatabase() throws Exception {
-        // TODO: create one EXAM and store in the database (using repositories)
         ZonedDateTime currentTime = ZonedDateTime.now();
 
         // create exercise
