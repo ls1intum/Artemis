@@ -40,7 +40,7 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    loadActiveNotification() {
+    private loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
             this.notification = notification;
             this.setAlertClass();
@@ -48,7 +48,7 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    subscribeSocket() {
+    private subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
@@ -72,7 +72,7 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    checkNotificationDates(systemNotification: SystemNotification) {
+    private checkNotificationDates(systemNotification: SystemNotification) {
         if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
             this.notification = systemNotification;
             this.setAlertClass();
@@ -83,7 +83,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    setAlertClass(): void {
+    private setAlertClass(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertClass = 'alert-warning';
@@ -93,7 +93,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    setAlertIcon(): void {
+    private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertIcon = 'exclamation-triangle';
