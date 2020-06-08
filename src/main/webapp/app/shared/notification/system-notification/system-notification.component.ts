@@ -27,7 +27,7 @@ export class SystemNotificationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.identity().then((user: User | null) => {
             this.loadActiveNotification();
             if (user) {
                 // maybe use connectedPromise as a set function
