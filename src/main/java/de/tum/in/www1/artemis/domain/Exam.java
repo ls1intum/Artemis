@@ -107,7 +107,7 @@ public class Exam {
 
     // -----------------------------------------------------------------------------------------------------------------
     @OneToMany(mappedBy = "exam")
-    @OrderColumn
+    @OrderColumn(name = "exercise_group_order")
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
     public List<ExerciseGroup> getExerciseGroups() {

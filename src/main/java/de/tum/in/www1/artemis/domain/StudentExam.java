@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,6 +14,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 
 @Entity
@@ -72,7 +73,8 @@ public class StudentExam {
     // -----------------------------------------------------------------------------------------------------------------
     @ManyToMany
     @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    private List<Exercise> exercises = new HashSet<>();
+    @OrderColumn(name = "exercise_order")
+    private List<Exercise> exercises = new ArrayList<>();
 
     public List<Exercise> getExercises() {
         return exercises;
