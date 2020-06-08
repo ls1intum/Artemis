@@ -25,6 +25,8 @@ export class AssessmentDetailComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         if (this.assessment.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
         }
     }
 
@@ -61,6 +63,8 @@ export class AssessmentDetailComponent implements AfterViewInit {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);
         if (this.assessment.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
         }
         this.assessmentChange.emit(this.assessment);
     }

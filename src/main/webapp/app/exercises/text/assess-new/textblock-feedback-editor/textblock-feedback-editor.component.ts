@@ -46,6 +46,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         setTimeout(() => this.textareaAutogrow());
         if (this.feedback.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
         }
     }
     /**
@@ -110,6 +112,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         if (this.feedback.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
         }
         this.didChange();
     }
