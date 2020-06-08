@@ -580,10 +580,7 @@ public class CourseResource {
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-
-        final long numberOfInTimeAssessments = resultService.countNumberOfAssessments(courseId, true) + programmingExerciseService.countAssessmentsByCourseIdSubmitted(courseId);
-        final long numberOfLateAssessments = resultService.countNumberOfAssessments(courseId, false);
-        stats.setNumberOfAssessments(new DueDateStat(numberOfInTimeAssessments, numberOfLateAssessments));
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -758,10 +755,7 @@ public class CourseResource {
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-
-        final long numberOfInTimeAssessments = resultService.countNumberOfAssessments(courseId, true) + programmingExerciseService.countAssessmentsByCourseIdSubmitted(courseId);
-        final long numberOfLateAssessments = resultService.countNumberOfAssessments(courseId, false);
-        stats.setNumberOfAssessments(new DueDateStat(numberOfInTimeAssessments, numberOfLateAssessments));
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);

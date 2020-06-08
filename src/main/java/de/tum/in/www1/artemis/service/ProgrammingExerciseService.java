@@ -789,18 +789,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param courseId the course we are interested in
-     * @return the number of programming submissions which are assessed, but ignore exercises with only automatic assessment
-     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
-     */
-    public long countAssessmentsByCourseIdSubmitted(Long courseId) {
-        long start = System.currentTimeMillis();
-        var count = programmingExerciseRepository.countAssessmentsByCourseIdSubmitted(courseId);
-        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
-        return count;
-    }
-
-    /**
      * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
      * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
      * no connection to a version control and continuous integration server
