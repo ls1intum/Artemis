@@ -15,9 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(1)
+@Profile("artemis")
 public class ApiVersionFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiVersionFilter.class);
@@ -44,7 +48,7 @@ public class ApiVersionFilter implements Filter {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
         final HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        logger.debug("Adding Version to Response to {}", httpRequest.getRequestURI());
+        logger.debug("Adding Version to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
 
         httpResponse.addHeader(CONTENT_VERSION_HEADER, VERSION);
 
@@ -60,13 +64,13 @@ public class ApiVersionFilter implements Filter {
      */
     @Bean
     public FilterRegistrationBean<ApiVersionFilter> registerFilter() {
-        logger.debug("Register API Version Filter.");
-
         final FilterRegistrationBean<ApiVersionFilter> bean = new FilterRegistrationBean<>();
 
         bean.setFilter(new ApiVersionFilter());
         bean.addUrlPatterns("/api/**");
         bean.addUrlPatterns("/management/**");
+
+        logger.debug("Register API Version Filter for Paths {}.", bean.getUrlPatterns());
 
         return bean;
     }
