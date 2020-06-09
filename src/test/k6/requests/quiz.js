@@ -1,7 +1,7 @@
 import { PARTICIPATION, QUIZ_EXERCISES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue } from '../util/utils.js';
-import { QUIZ_EXERCISE } from './endpoints.js';
+import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE } from './endpoints.js';
 
 export function createQuizExercise(artemis, course) {
     let res;
@@ -114,22 +114,39 @@ export function getQuizQuestions(artemis, courseId, exerciseId) {
     return JSON.parse(res[0].body).exercise.quizQuestions;
 }
 
-export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
+export function simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername) {
     artemis.websocket(function (socket) {
         function subscribe() {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
         }
 
-        function submitRandomAnswer() {
+        function submitRandomAnswer(numberOfQuestions) {
             const answer = {
                 submissionExerciseType: 'quiz',
                 submitted: false,
-                submittedAnswers: questions.map((q) => generateAnswer(q)),
+                submittedAnswers: questions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
             };
             const answerString = JSON.stringify(answer);
             const wsMessage = `SEND\ndestination:/topic/quizExercise/${exerciseId}/submission\ncontent-length:${answerString.length}\n\n${answerString}\u0000`;
 
             socket.send(wsMessage);
+        }
+
+        function submitRandomAnswerREST(numberOfQuestions) {
+            const answer = {
+                submissionExerciseType: 'quiz',
+                submitted: false,
+                submittedAnswers: questions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
+            };
+
+            let res = artemis.post(SUBMIT_QUIZ_LIVE(exerciseId), answer);
+            if (res[0].status !== 200) {
+                console.log('ERROR when submitting quiz via REST. Response headers:');
+                for (let [key, value] of Object.entries(res[0].headers)) {
+                    console.log(`${key}: ${value}`);
+                }
+                fail('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+            }
         }
 
         function generateAnswer(question) {
@@ -148,21 +165,74 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission')) {
-                console.log(`RECEIVED callback from server for ${__VU}`);
+            if (message.startsWith('MESSAGE\ndestination:/user/topic/exercise/' + exerciseId + '/participation')) {
+                console.log(`RECEIVED callback from server for ${currentUsername}`);
                 sleep(5);
                 socket.close();
             }
         });
 
-        // submit new quiz answer
-        socket.setTimeout(function () {
-            submitRandomAnswer();
-        }, 10 * 1000);
+        // Send heartbeat to server so session is kept alive
+        socket.setInterval(function timeout() {
+            socket.send('\n');
+        }, 20000);
+
+        for (let questionCount = 1; questionCount <= 50; questionCount++) {
+            // submit new quiz answer
+            socket.setTimeout(function () {
+                if (questionCount === 50) {
+                    console.log('Submitting via REST for ' + currentUsername);
+                    submitRandomAnswerREST(10);
+                } else {
+                    submitRandomAnswer(10);
+                }
+            }, (questionCount - 1) * 500 + 1000);
+        }
 
         // Stop after timeout
         socket.setTimeout(function () {
+            console.log('Connection timed out');
             socket.close();
         }, timeout * 1000);
+    });
+}
+
+export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUsername, courseId) {
+    artemis.websocket(function (socket) {
+        function subscribe() {
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/topic/courses/' + courseId + '/quizExercises\n\n\u0000');
+        }
+
+        socket.setTimeout(function () {
+            subscribe();
+        }, 1000);
+
+        // Wait for new result
+        socket.on('message', function (message) {
+            if (message.startsWith('MESSAGE\ndestination:/topic/courses/' + courseId + '/quizExercises')) {
+                // console.log(`RECEIVED quiz start for user ${currentUsername}: ${message}`);
+                //console.log(message.match('MESSAGE\ndestination:\/topic\/courses\/(?:\d)*\/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\w|\d|-)*\ncontent-length:(?:\d)*\n\n(.*)'));
+                let receivedPayload = message.match(
+                    'MESSAGE\ndestination:/topic/courses/(?:\\d*)/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\\w|\\d|-)*\ncontent-length:(?:\\d)*\n\n(.*)\u0000',
+                )[1];
+                let parsedQuiz = JSON.parse(receivedPayload);
+
+                if (parsedQuiz.started) {
+                    // Quiz started
+                    console.log(`Quiz start received for user ${currentUsername}, will send answers`);
+                    const questions = parsedQuiz.quizQuestions;
+                    socket.close();
+                    simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername);
+                } else {
+                    // Quiz is now visible, but not started
+                    console.log(`Quiz visible received for user ${currentUsername}, will wait for quiz start`);
+                }
+            }
+        });
+
+        // Send heartbeat to server so session is kept alive
+        socket.setInterval(function timeout() {
+            socket.send('\n');
+        }, 20000);
     });
 }

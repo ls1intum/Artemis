@@ -22,7 +22,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
@@ -311,7 +311,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.updateSubmissionModel();
-        this.submission.submitted = true;
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
@@ -449,7 +448,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private filterGeneralFeedback(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
             const feedback = this.assessmentResult.feedbacks;
-            const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null);
+            const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
             if (generalFeedbackIndex >= 0) {
                 this.generalFeedbackText = feedback[generalFeedbackIndex].detailText;
                 feedback.splice(generalFeedbackIndex, 1);

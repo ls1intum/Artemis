@@ -66,6 +66,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
+            if (this.programmingExercise.categories) {
+                this.programmingExercise.categories = this.programmingExercise.categories.map((category) => JSON.parse(category));
+            }
+
             this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe((results) => {
                 this.programmingExercise.solutionParticipation.results = results;
                 this.loadingSolutionParticipationResults = false;

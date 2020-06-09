@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, O
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { AlertService } from 'app/core/alert/alert.service';
 import interact from 'interactjs';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import * as $ from 'jquery';
 
 @Component({
@@ -13,7 +13,8 @@ import * as $ from 'jquery';
 export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, OnChanges {
     apollonEditor: ApollonEditor | null = null;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
-    totalScore = 0;
+    referencedFeedbacks: Feedback[] = [];
+    unreferencedFeedbacks: Feedback[] = [];
 
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
@@ -23,6 +24,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: UMLDiagramType;
     @Input() maxScore: number;
+    @Input() totalScore: number;
     @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
@@ -38,6 +40,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * initialized ApollonEditor
      */
     ngAfterViewInit(): void {
+        if (this.feedbacks) {
+            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != null);
+            this.unreferencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        }
         this.initializeApollonEditor();
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
@@ -133,9 +139,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         });
         if (!this.readOnly) {
             this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
-                this.feedbacks = this.generateFeedbackFromAssessment(assessments);
-                this.calculateTotalScore();
-                this.feedbackChanged.emit(this.feedbacks);
+                this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessments);
+                this.feedbackChanged.emit(this.referencedFeedbacks);
             });
         }
     }
@@ -169,15 +174,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     /**
      * Handles (new) feedback by removing invalid feedback, updating the element-feedback mapping and updating
-     * the assessments for Apollon accordingly. It also calculates the (new) total score of the assessment
+     * the assessments for Apollon accordingly.
      * which is then shown in the score display component.
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.feedbacks = this.removeInvalidFeedback(this.feedbacks);
-        this.updateElementFeedbackMapping(this.feedbacks);
-        this.updateApollonAssessments(this.feedbacks);
-        this.calculateTotalScore();
+        this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
+        this.updateElementFeedbackMapping(this.referencedFeedbacks);
+        this.updateApollonAssessments(this.referencedFeedbacks);
     }
 
     /**
@@ -264,23 +268,5 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }
-    }
-
-    /**
-     * Calculates the total score of the current assessment.
-     * This function originally checked whether the total score is negative
-     * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score boundaries on the server.
-     */
-    private calculateTotalScore() {
-        if (!this.feedbacks || this.feedbacks.length === 0) {
-            this.totalScore = 0;
-            return;
-        }
-        let totalScore = 0;
-        for (const feedback of this.feedbacks) {
-            totalScore += feedback.credits!;
-        }
-        this.totalScore = totalScore;
     }
 }

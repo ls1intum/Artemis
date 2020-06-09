@@ -123,7 +123,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         if (!this.submission || !file) {
             return;
         }
-        this.submission!.submitted = true;
         this.isSaving = true;
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
             (response) => {

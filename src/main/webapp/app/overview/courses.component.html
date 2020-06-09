@@ -2,7 +2,7 @@
     <div class="col">
         <h3>
             <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | translate: { date: nextRelevantExercise.dueDate | artemisDate, course: nextRelevantCourse.title } }}
+                {{ 'artemisApp.studentDashboard.exerciseTitle' | translate: { course: nextRelevantCourse.title } }}
             </span>
             <ng-template #noDueDate>
                 {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | translate: { course: nextRelevantCourse.title } }}
@@ -29,4 +29,29 @@
         [hasGuidedTour]="course === courseForGuidedTour"
     >
     </jhi-overview-course-card>
+</div>
+<!-- Modal -->
+<div *ngIf="isQuizLive" class="modal fade" id="quizLiveModal" tabindex="-1" role="dialog" [class.liveQuiz-modal]="isQuizLive">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {{ 'artemisApp.quizExercise.quizLiveModal.title' | translate }}
+                </h5>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {{ 'artemisApp.quizExercise.quizLiveModal.body' | translate: { quizName: liveQuiz.title, courseName: liveQuizCourse.title } }}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="isQuizLive = false">
+                    {{ 'artemisApp.quizExercise.quizLiveModal.cancelButton' | translate }}
+                </button>
+                <button type="button" class="btn btn-primary" routerLink="/courses/{{ liveQuizCourse.id }}/quiz-exercises/{{ liveQuiz.id }}/live">
+                    {{ 'artemisApp.quizExercise.quizLiveModal.goToButton' | translate }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

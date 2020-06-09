@@ -14,7 +14,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 export class SystemNotificationComponent implements OnInit {
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
-    notification: SystemNotification;
+    notification: SystemNotification | undefined;
     alertClass: string;
     alertIcon: string;
     websocketChannel: string;
@@ -30,7 +30,7 @@ export class SystemNotificationComponent implements OnInit {
      * Lifecycle function which is called on initialisations. Calls {@link loadActiveNotification} when a user is connected.
      */
     ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.identity().then((user: User | null) => {
             this.loadActiveNotification();
             if (user) {
                 // maybe use connectedPromise as a set function
@@ -43,24 +43,19 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    /** Subscribes to {@link systemNotificationService~getActiveNotification}.
-     * It sets the {@link notification} and triggers {@link setAlertClass} & {@link setAlertIcon} when a notification is received.
-     * @method
-     */
-    loadActiveNotification() {
+    private loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
-            this.notification = notification;
-            this.setAlertClass();
-            this.setAlertIcon();
+            if (notification) {
+                this.notification = notification;
+                this.setAlertClass();
+                this.setAlertIcon();
+            } else {
+                this.notification = undefined;
+            }
         });
     }
 
-    /** Sets the websocket channel and subscribes to it for receiving system notifications. See {@link jhiWebsocketService~subscribe}, {@link jhiWebsocketService~receive}.
-     * Before displaying a notification that is not null, the {@link SystemNotification~id} and {@link SystemNotification~notificationDate} are validated.
-     * {@link checkNotificationDates}.
-     * @method subscribeSocket
-     */
-    subscribeSocket() {
+    private subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
@@ -84,12 +79,7 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    /** Checks whether the notifications are still valid before triggering {@link setAlertClass} and {@link setAlertIcon} and setting it in {@link notification}.
-     * If they are not valid, {@link loadActiveNotification} is called.
-     * @method
-     * @param systemNotification {SystemNotification}
-     */
-    checkNotificationDates(systemNotification: SystemNotification) {
+    private checkNotificationDates(systemNotification: SystemNotification) {
         if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
             this.notification = systemNotification;
             this.setAlertClass();
@@ -100,11 +90,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    /** Sets the {@link alertClass} according to the {@link SystemNotificationType}.
-     * For {@link SystemNotificationType~WARNING} {@link alertClass} is set to 'alert-warning', otherwise it is set to 'alert-info'.
-     * @method
-     */
-    setAlertClass(): void {
+    private setAlertClass(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertClass = 'alert-warning';
@@ -114,11 +100,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    /** Sets the {@link alertIcon} according to the {@link SystemNotificationType}.
-     * For {@link SystemNotificationType~WARNING} {@link alertIcon} is set to 'exclamation-triangle', otherwise it is set to 'info-circle'.
-     * @method
-     */
-    setAlertIcon(): void {
+    private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertIcon = 'exclamation-triangle';

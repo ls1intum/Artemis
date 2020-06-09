@@ -5,7 +5,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-exercises-re-evaluate';
+    private resourceUrl = SERVER_API_URL + 'api/quiz-exercises/';
 
     constructor(private http: HttpClient) {}
 
@@ -15,7 +15,7 @@ export class QuizReEvaluateService {
      */
     update(quizExercise: QuizExercise) {
         const copy = this.convert(quizExercise);
-        return this.http.put<QuizExercise>(this.resourceUrl, copy, { observe: 'response' });
+        return this.http.put<QuizExercise>(this.resourceUrl + quizExercise.id + '/re-evaluate', copy, { observe: 'response' });
     }
 
     /**

@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import { AfterViewInit, Component, ContentChild, ElementRef, Input, ViewEncapsulation } from '@angular/core';
 
 import { WindowRef } from 'app/core/websocket/window.service';
-import Interactable from '@interactjs/core/Interactable';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';

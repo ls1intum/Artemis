@@ -89,7 +89,7 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
 
     @Override
     public String toString() {
-        return "QuizPointStatistic{" + "id=" + getId() + "}";
+        return "QuizPointStatistic{" + "id=" + getId() + ", counters=" + getPointCounters() + "}";
     }
 
     /**
@@ -121,7 +121,6 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
      *              quizExercise)
      */
     public void addResult(Long score, Boolean rated) {
-
         changeStatisticBasedOnResult(score, rated, 1);
     }
 
@@ -133,7 +132,6 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
      *              quizExercise)
      */
     public void removeOldResult(Long score, Boolean rated) {
-
         changeStatisticBasedOnResult(score, rated, -1);
     }
 

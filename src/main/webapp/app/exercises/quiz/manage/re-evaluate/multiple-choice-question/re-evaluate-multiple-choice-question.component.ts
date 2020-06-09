@@ -1,10 +1,11 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
+import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -12,13 +13,7 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
     providers: [ArtemisMarkdownService],
 })
-export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit {
-    @ViewChild('questionEditor', { static: false })
-    private questionEditor: AceEditorComponent;
-
-    @ViewChildren(AceEditorComponent)
-    aceEditorComponents: QueryList<AceEditorComponent>;
-
+export class ReEvaluateMultipleChoiceQuestionComponent {
     @Input()
     question: MultipleChoiceQuestion;
     @Input()
@@ -33,13 +28,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     @Output()
     questionMoveDown = new EventEmitter<object>();
 
-    /** Ace Editor configuration constants **/
-    questionEditorText = '';
-    answerEditorText = new Array<string>();
     editorMode = 'markdown';
-    editorAutoUpdate = true;
 
     // Create Backup Question for resets
+    @Input()
     backupQuestion: MultipleChoiceQuestion;
 
     /**
@@ -49,66 +41,33 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
-     * Do nothing
+     * generate the question using the markdown service
+     * @param {MultipleChoiceQuestion} question
+     * @return string
      */
-    ngOnInit(): void {
-        this.setupQuestionEditor();
+    getQuestionText(question: MultipleChoiceQuestion): string {
+        const questionToSet = { text: question.text, hint: question.hint, explanation: question.explanation };
+        return this.artemisMarkdown.generateTextHintExplanation(questionToSet);
     }
 
     /**
-     * Setup editor after view init
+     * parse the new question text, hint and explanation using the markdown service
+     * @param {string} text
      */
-    ngAfterViewInit(): void {
-        /** Setup editor **/
-        this.backupQuestion = Object.assign({}, this.question);
-        this.setupQuestionEditor();
-        this.setQuestionText();
-        this.setAnswerTexts();
+    onQuestionChange(text: string): void {
+        this.artemisMarkdown.parseTextHintExplanation(text, this.question);
     }
 
     /**
-     * Set the question text of the editor based on the generated text hint
+     * parse the new text, hint and explanation using the markdown service and assign it to the passed answer
+     * @param {string} text
+     * @param {AnswerOption} answer
      */
-    setQuestionText(): void {
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-    }
-
-    /**
-     * Set the question answer text based on the generated answer markdown.
-     */
-    setAnswerTexts(): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        this.question.answerOptions?.forEach((answerOption, index) => {
-            this.answerEditorText[index] = this.generateAnswerMarkdown(answerOption);
+    onAnswerOptionChange(text: string, answer: AnswerOption): void {
+        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
+            return answerOption.id === answer.id;
         });
-    }
-
-    /**
-     * Setup Question text editor
-     */
-    setupQuestionEditor() {
-        if (this.aceEditorComponents) {
-            this.aceEditorComponents.forEach((editor) => {
-                editor.setTheme('chrome');
-                editor.getEditor().renderer.setShowGutter(false);
-                editor.getEditor().renderer.setPadding(10);
-                editor.getEditor().renderer.setScrollMargin(8, 8);
-                editor.getEditor().setHighlightActiveLine(false);
-                editor.getEditor().setShowPrintMargin(false);
-                editor.getEditor().setOptions({
-                    autoScrollEditorIntoView: true,
-                });
-                editor.getEditor().clearSelection();
-
-                editor.getEditor().on(
-                    'blur',
-                    () => {
-                        this.questionUpdated.emit();
-                    },
-                    this,
-                );
-            });
-        }
+        this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
     }
 
     /**
@@ -127,23 +86,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * Parse the question-markdown and apply the result to the question's data
-     *
-     * The markdown rules are as follows:
-     *
-     * 1. Text is split at [correct] and [wrong]
-     *    => The first part (any text before the first [correct] or [wrong]) is the question text
-     * 2. The question text is parsed with ArtemisMarkdown
-     *
-     * @param text {string} the markdown text to parse
-     */
-    parseQuestionMarkdown(text: string) {
-        const questionParts = this.splitByCorrectIncorrectTag(text);
-        const questionText = questionParts[0];
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
-    }
-
-    /**
      * Parse the an answer markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
@@ -156,8 +98,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption} the answer, where to save the result
      */
     parseAnswerMarkdown(text: string, answer: AnswerOption) {
-        const answerParts = this.splitByCorrectIncorrectTag(text.trim());
-        // Work on answer options
+        const answerParts = this.splitByCorrectIncorrectTag(text);
         // Find the box (text in-between the parts)
         const answerOptionText = answerParts[1];
         const startOfThisPart = text.indexOf(answerOptionText);
@@ -172,8 +113,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param text
      */
     private splitByCorrectIncorrectTag(text: string): string[] {
-        const correctIncorrectRegex = new RegExp(CorrectOptionCommand.identifier + '|' + IncorrectOptionCommand.identifier);
-        return text.split(correctIncorrectRegex);
+        const stringForSplit = escapeStringForUseInRegex(`${CorrectOptionCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${IncorrectOptionCommand.identifier}`);
+        const splitRegExp = new RegExp(stringForSplit, 'g');
+        return text.split(splitRegExp);
     }
 
     /**
@@ -211,7 +153,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setQuestionText();
     }
 
     /**
@@ -219,14 +160,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetQuestion() {
         this.resetQuestionTitle();
-        this.question.invalid = this.backupQuestion.invalid;
-        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
-        this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions = this.backupQuestion.answerOptions;
-        // Reset answer editors
-        this.setupQuestionEditor();
         this.resetQuestionText();
-        this.setAnswerTexts();
+        this.question.answerOptions = cloneDeep(this.backupQuestion.answerOptions);
     }
 
     /**
@@ -235,12 +170,15 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
-        // Find current index of our AnswerOption
-        const answerIndex = this.question.answerOptions!.indexOf(answer);
+        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
+            return answerOption.id === answer.id;
+        });
+        // Find correct backup answer
+        const backupAnswerIndex = this.backupQuestion.answerOptions!.findIndex((answerBackup) => {
+            return answer.id === answerBackup.id;
+        });
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex] = backupAnswer;
-        this.setAnswerTexts();
+        this.question.answerOptions![answerIndex] = cloneDeep(this.backupQuestion.answerOptions![backupAnswerIndex]);
     }
 
     /**

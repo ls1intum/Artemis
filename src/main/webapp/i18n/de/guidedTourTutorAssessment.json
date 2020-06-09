@@ -17,7 +17,7 @@
             },
             "exerciseTable": {
                 "headline": "Tabelle aller Übungen",
-                "content": "Diese Tabelle listet alle Übungen des aktuellen Kurses auf und zeigt Informationen zum <tt>Aufgabentyp</tt>, <tt>Titel der Übung</tt>, <tt>Status</tt> deines Bewertungsprozesses und das <tt>Fälligkeitsdatum</tt> der Übung und der Bewertung."
+                "content": "Diese Tabelle listet alle Übungen des aktuellen Kurses auf und zeigt Informationen zum <tt>Aufgabentyp</tt>, <tt>Titel der Übung</tt>, <tt>Status</tt> deines Bewertungsprozesses und das <tt>Einreichungsfrist</tt> der Übung und der Bewertung."
             },
             "gradingProcess": {
                 "headline": "Bewertungsprozess",
@@ -47,7 +47,7 @@
             },
             "submissionsAndComplaints": {
                 "headline": "Studentenabgaben",
-                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach dem Fälligkeitsdatum der Übung hier angezeigt."
+                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach der Einreichungsfrist der Übung hier angezeigt."
             },
             "assessSubmissions": {
                 "headline": "Bewertung von Studentenabgaben",
