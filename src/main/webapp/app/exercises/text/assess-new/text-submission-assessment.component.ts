@@ -205,7 +205,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (confirmCancel && this.exercise && this.submission) {
             this.assessmentsService
                 .cancelAssessment(this.exercise.id, this.submission.id)
-                .subscribe(() => this.router.navigate(['course-management', this.exercise?.course?.id, 'exercises', this.exercise?.id, 'tutor-dashboard']));
+                .subscribe(() => this.navigateBack());
         }
     }
 
