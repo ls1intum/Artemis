@@ -283,36 +283,38 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     };
                 }
 
-                exercise.studentParticipations.forEach((participation) => {
-                    if (participation.results && participation.results.length > 0) {
-                        const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
-                        if (participationResult && participationResult.rated) {
-                            const participationScore = participationResult.score;
-                            const missedScore = 100 - participationScore;
-                            groupedExercises[index].scores.data.push(participationScore);
-                            groupedExercises[index].missedScores.data.push(missedScore);
-                            groupedExercises[index].notGraded.data.push(0);
-                            groupedExercises[index].notGraded.tooltips.push(null);
-                            groupedExercises[index].names.push(exercise.title);
-                            groupedExercises[index].scores.footer.push(null);
-                            groupedExercises[index].missedScores.footer.push(null);
-                            groupedExercises[index].notGraded.footer.push(null);
-                            this.generateTooltip(participationResult, groupedExercises[index]);
-                        }
-                    } else {
-                        if (
-                            participation.initializationState === InitializationState.FINISHED &&
-                            (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
-                        ) {
-                            groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
-                        } else {
-                            groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
-                        }
-                    }
-                });
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotParticipated', false);
+                } else {
+                    exercise.studentParticipations.forEach((participation) => {
+                        if (participation.results && participation.results.length > 0) {
+                            const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
+                            if (participationResult && participationResult.rated) {
+                                const participationScore = participationResult.score;
+                                const missedScore = 100 - participationScore;
+                                groupedExercises[index].scores.data.push(participationScore);
+                                groupedExercises[index].missedScores.data.push(missedScore);
+                                groupedExercises[index].notGraded.data.push(0);
+                                groupedExercises[index].notGraded.tooltips.push(null);
+                                groupedExercises[index].names.push(exercise.title);
+                                groupedExercises[index].scores.footer.push(null);
+                                groupedExercises[index].missedScores.footer.push(null);
+                                groupedExercises[index].notGraded.footer.push(null);
+                                this.generateTooltip(participationResult, groupedExercises[index]);
+                            }
+                        } else {
+                            if (
+                                participation.initializationState === InitializationState.FINISHED &&
+                                (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
+                            ) {
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
+                            } else {
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
+                            }
+                        }
+                    });
                 }
+
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
                 groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type];
@@ -357,6 +359,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const replaced = result.resultString.replace(',', '.');
         const split = replaced.split(' ');
 
+        if (!replaced.includes('passed') && !replaced.includes('points')) {
+            if (result.score > 50) {
+                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+            } else {
+                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${result.score}%)`);
+            }
+            return;
+        }
+
         if (replaced.includes('points')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(
@@ -386,23 +397,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         if (replaced.includes('passed')) {
             if (split.length === 2) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' passed (' + result.score + ').');
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
                 return;
             }
             if (split.length === 4) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' passed (' + result.score + ').');
-                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' failed (' + (100 - result.score) + ').');
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' tests failed (' + (100 - result.score) + '%).');
                 return;
             }
         }
-
-        if (result.score > 50) {
-            groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-        } else {
-            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${result.score}%)`);
-        }
-
-        return;
     }
 
     /*// TODO: document the implementation of this method --> it is not really obvious
