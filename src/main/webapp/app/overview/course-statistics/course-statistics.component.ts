@@ -367,7 +367,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         if (!replaced.includes('passed') && !replaced.includes('points')) {
             groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${(100 - result.score)}%)`);
+            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score}%)`);
             return;
         }
 
@@ -382,7 +382,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
                         points: '',
-                        percentage: (100 - result.score),
+                        percentage: 100 - result.score,
                     }),
                 );
                 return;
