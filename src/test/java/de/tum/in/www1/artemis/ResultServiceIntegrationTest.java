@@ -35,9 +35,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -165,7 +165,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         submissionRepository.save(programmingSubmission);
 
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
-        final var staticCodeAnalysisFeedback = feedbackService.createFeedbackFromStaticAssessmentReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
+        final var staticCodeAnalysisFeedback = feedbackService
+                .createFeedbackFromStaticAssessmentReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
         final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 

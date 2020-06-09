@@ -449,9 +449,10 @@ public class ModelFactory {
         return notification;
     }
 
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames) {
         final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        final var spotbugsReport =  generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
         notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
         return notification;
     }
@@ -468,7 +469,6 @@ public class ModelFactory {
         report.setIssues(List.of(issue1, issue2));
         return report;
     }
-
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
         final var test = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
