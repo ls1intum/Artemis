@@ -354,17 +354,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     percentage: 0,
                 }),
             );
+            groupedExercise.missedScores.tooltips.push(
+                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                    points: '',
+                    percentage: 100,
+                }),
+            );
         }
 
         const replaced = result.resultString.replace(',', '.');
         const split = replaced.split(' ');
 
         if (!replaced.includes('passed') && !replaced.includes('points')) {
-            if (result.score > 50) {
-                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-            } else {
-                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${result.score}%)`);
-            }
+            groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${(100 - result.score)}%)`);
             return;
         }
 
@@ -374,6 +377,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                         points: parseFloat(split[0]),
                         percentage: result.score,
+                    }),
+                );
+                groupedExercise.missedScores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                        points: '',
+                        percentage: (100 - result.score),
                     }),
                 );
                 return;
@@ -398,6 +407,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (replaced.includes('passed')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.missedScores.tooltips.push('(' + (100 - result.score) + '%)');
                 return;
             }
             if (split.length === 4) {
