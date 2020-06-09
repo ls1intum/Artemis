@@ -158,7 +158,7 @@ export class ProgrammingExerciseService {
         const copy = {
             ...this.exerciseService.convertDateFromClient(exercise),
             buildAndTestStudentSubmissionsAfterDueDate:
-                exercise.buildAndTestStudentSubmissionsAfterDueDate != null && moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
+                exercise.buildAndTestStudentSubmissionsAfterDueDate && moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : null,
         };
@@ -185,8 +185,9 @@ export class ProgrammingExerciseService {
         if (!res.body) {
             return res;
         }
-        res.body.buildAndTestStudentSubmissionsAfterDueDate =
-            res.body.buildAndTestStudentSubmissionsAfterDueDate != null ? moment(res.body.buildAndTestStudentSubmissionsAfterDueDate) : null;
+        res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
+            ? moment(res.body.buildAndTestStudentSubmissionsAfterDueDate)
+            : null;
         return res;
     }
 }
