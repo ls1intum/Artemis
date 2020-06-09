@@ -203,9 +203,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService
-                .cancelAssessment(this.exercise.id, this.submission.id)
-                .subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
         }
     }
 
