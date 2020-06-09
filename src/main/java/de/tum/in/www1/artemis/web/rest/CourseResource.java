@@ -518,17 +518,20 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
+
             DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-
-            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             exercise.setNumberOfAssessments(numberOfAssessments);
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
@@ -574,9 +577,7 @@ public class CourseResource {
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-
-        final DueDateStat numberOfAssessments = resultService.countNumberOfAssessments(courseId);
-        stats.setNumberOfAssessments(numberOfAssessments);
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -655,16 +656,18 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
 
             DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-
-            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             exercise.setNumberOfAssessments(numberOfAssessments);
 
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
