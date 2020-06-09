@@ -103,7 +103,6 @@ public class ProgrammingSubmissionResource {
             SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
             // Remove unnecessary information from the new submission.
-            submission.getParticipation().setExercise(null);
             submission.getParticipation().setSubmissions(null);
 
             programmingSubmissionService.notifyUserAboutSubmission(submission);
