@@ -190,9 +190,9 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.fasterxml.jackson.module:jackson-module-afterburner:${fasterxml_version}"
-    implementation "com.hazelcast:hazelcast"
-    implementation "com.hazelcast:hazelcast-hibernate53"
-    implementation "com.hazelcast:hazelcast-spring"
+    implementation "com.hazelcast:hazelcast:4.0.1"
+    implementation "com.hazelcast:hazelcast-hibernate53:2.0.0"
+    implementation "com.hazelcast:hazelcast-spring:4.0.1"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.5"
@@ -221,8 +221,8 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.3.0.RELEASE"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client"
-    implementation "org.springframework.cloud:spring-cloud-starter-config"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.3.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.3.RELEASE"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
