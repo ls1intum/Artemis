@@ -121,6 +121,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
+        // TODO after decision on how to handle users on Jenkins has been made if needed for Jenkins
+    }
+
+    @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
