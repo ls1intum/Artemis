@@ -57,6 +57,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/exam/:examId',
                     loadChildren: () => import('./exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
                 },
+                {
+                    path: 'course-management/:courseId/exam/:examId',
+                    loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+                },
             ],
             { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
