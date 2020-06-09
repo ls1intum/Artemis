@@ -134,6 +134,7 @@
                                 name="endDate"
                             ></jhi-date-time-picker>
                         </div>
+
                         <div class="form-group" *ngIf="attachmentToBeCreated.id">
                             <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText">Notification Text</label>
                             <input
@@ -144,6 +145,17 @@
                                 [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | translate"
                                 [(ngModel)]="notificationText"
                             />
+                        </div>
+
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                id="useForEmbeddingTraining"
+                                [(ngModel)]="attachmentToBeCreated.useForEmbeddingTraining"
+                            />
+                            <label class="form-check-label" for="useForEmbeddingTraining" jhiTranslate= "artemisApp.lecture.attachments.useForEmbeddingTraining">
+                                Use file to improve the quality of the automatic assessment of text exercises
+                            </label>
                         </div>
                     </div>
                 </div>

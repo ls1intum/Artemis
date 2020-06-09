@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import liquibase.util.file.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,10 +84,18 @@ public class AttachmentResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Attachment result = attachmentRepository.save(attachment);
-        embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        handleUploadAsEmbeddingTrainingResource(result);
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+    }
+
+    private void handleUploadAsEmbeddingTrainingResource(@RequestBody Attachment attachment) {
+        final String fileName = attachment.getLink().substring(attachment.getLink().lastIndexOf("/") + 1);
+        final String fileExtension = FilenameUtils.getExtension(fileName);
+        if (fileExtension.equals("pdf") && attachment.getUseForEmbeddingTraining() ) {
+            embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
+        }
     }
 
     /**
@@ -105,11 +114,11 @@ public class AttachmentResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
-        embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
+        handleUploadAsEmbeddingTrainingResource(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
     }
 

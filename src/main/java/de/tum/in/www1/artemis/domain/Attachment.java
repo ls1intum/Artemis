@@ -33,6 +33,9 @@ public class Attachment implements Serializable {
     @Transient
     private String prevLink;
 
+    @Transient
+    private boolean useForEmbeddingTraining;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -199,6 +202,14 @@ public class Attachment implements Serializable {
     public Attachment attachmentType(AttachmentType attachmentType) {
         this.attachmentType = attachmentType;
         return this;
+    }
+
+    public Boolean getUseForEmbeddingTraining() {
+        return useForEmbeddingTraining;
+    }
+
+    public void setUseForEmbeddingTraining(Boolean useForEmbeddingTraining) {
+        this.useForEmbeddingTraining = useForEmbeddingTraining;
     }
 
     public void setAttachmentType(AttachmentType attachmentType) {

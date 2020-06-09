@@ -172,6 +172,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         }
     }
 
+    updateUseForEmbeddingTraining(useForEmbeddingTraining: any) {
+        this.attachmentToBeCreated!.useForEmbeddingTraining = useForEmbeddingTraining;
+    }
+
     /**
      * @function uploadLectureAttachmentAndSave
      * @desc Upload the selected file and add it to the attachment

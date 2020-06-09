@@ -29,6 +29,7 @@
                 "file": "File",
                 "releaseDate": "Release date",
                 "uploadDate": "Upload date",
+                "useForEmbeddingTraining": "Use file to improve the quality of the automatic assessment of text exercises",
                 "version": "Version",
                 "uploading": "Uploading...",
                 "isBeingEdited": "Is currently being edited...",

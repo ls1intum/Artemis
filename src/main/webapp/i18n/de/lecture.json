@@ -29,6 +29,7 @@
                 "file": "Datei",
                 "releaseDate": "Freigabedatum",
                 "uploadDate": "Upload-Datum",
+                "useForEmbeddingTraining": "Datei für die Verbesserung der automatischen Bewertung von Textaufgaben benutzen",
                 "version": "Version",
                 "uploading": "Lade hoch...",
                 "isBeingEdited": "Wird gerade bearbeitet...",

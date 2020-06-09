@@ -18,6 +18,7 @@ export class Attachment implements BaseEntity {
     attachmentType: AttachmentType;
     lecture: Lecture;
     exercise: Exercise;
+    useForEmbeddingTraining = true;
 
     constructor() {}
 }
