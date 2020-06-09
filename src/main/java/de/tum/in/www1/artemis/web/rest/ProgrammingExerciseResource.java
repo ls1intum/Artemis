@@ -214,7 +214,7 @@ public class ProgrammingExerciseResource {
         // Check if package name is set
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             // only Java needs a valid package name at the moment
-            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            if (programmingExercise.getPackageName() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
 
