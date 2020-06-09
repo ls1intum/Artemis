@@ -6,6 +6,7 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/exercise-group-detail.component';
+import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -82,6 +83,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/students',
+        component: ExamStudentsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
