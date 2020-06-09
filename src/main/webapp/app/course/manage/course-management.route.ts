@@ -104,18 +104,6 @@ export const courseManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':courseId/exams',
-        component: ExamManagementComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 const COURSE_MANAGEMENT_ROUTES = [...courseManagementRoute];
