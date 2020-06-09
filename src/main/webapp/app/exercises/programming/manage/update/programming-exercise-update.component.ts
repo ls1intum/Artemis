@@ -50,7 +50,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     maxScorePattern = MAX_SCORE_PATTERN;
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_,$ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-    packageNamePattern = '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[\$A-Z_a-z][\$0-9A-Z_a-z]*(?:\\.[\$A-Z_a-z][\$0-9A-Z_a-z]*)*$';
+    packageNamePattern =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[$A-Z_a-z][$0-9A-Z_a-z]*(?:\\.[$A-Z_a-z][$0-9A-Z_a-z]*)*$';
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
