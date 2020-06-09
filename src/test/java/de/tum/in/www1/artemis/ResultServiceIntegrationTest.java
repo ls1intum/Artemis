@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -46,6 +47,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     ResultService resultService;
+
+    @Autowired
+    FeedbackService feedbackService;
 
     @Autowired
     ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
@@ -148,6 +152,27 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(testCases).isEqualTo(expectedTestCases);
         assertThat(optionalResult).isPresent();
         assertThat(optionalResult.get().getScore()).isEqualTo(100L);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() throws Exception {
+        // TODO: This should be refactoring into the ModelUtilService.
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
+        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
+        submissionRepository.save(programmingSubmission);
+
+        final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        final var staticCodeAnalysisFeedback = feedbackService.createFeedbackFromStaticAssessmentReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
+        final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+
+        assertThat(optionalResult).isPresent();
+        assertThat(savedResult.getFeedbacks().containsAll(staticCodeAnalysisFeedback));
+        assertThat(optionalResult.get().getFeedbacks().containsAll(staticCodeAnalysisFeedback));
+        assertThat(optionalResult.get().getFeedbacks().equals(savedResult.getFeedbacks()));
     }
 
     @Test

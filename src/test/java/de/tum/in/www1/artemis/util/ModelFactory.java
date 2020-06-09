@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 
 public class ModelFactory {
 
@@ -447,6 +448,27 @@ public class ModelFactory {
 
         return notification;
     }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        final var spotbugsReport =  generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        return notification;
+    }
+
+    private static StaticAssessmentReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
+        final var report = new StaticAssessmentReportDTO();
+        final var issue1 = new StaticAssessmentReportDTO.BambooStaticAssessmentIssue();
+        final var issue2 = new StaticAssessmentReportDTO.BambooStaticAssessmentIssue();
+        report.setTool(StaticCodeAnalysisTool.SPOTBUGS);
+        issue1.setType("Error1");
+        issue1.setMessage("Error1 - Message");
+        issue2.setType("Error1");
+        issue2.setMessage("Error1 - Message");
+        report.setIssues(List.of(issue1, issue2));
+        return report;
+    }
+
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
         final var test = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
