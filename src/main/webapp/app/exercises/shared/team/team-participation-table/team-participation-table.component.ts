@@ -122,14 +122,7 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param submission Submission for which to check
      */
     assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
-        // there is no submission yet
-        if (!submission) {
-            return true;
-        } else if (this.assessmentAction(submission) === AssessmentAction.CONTINUE) {
-            // continuing an assessment is not allowed after the assessment due date
-            return exercise.assessmentDueDate && exercise.assessmentDueDate.isBefore();
-        }
-        return false;
+        return !submission; // there is no submission yet to assess
     }
 
     private onError(error: HttpErrorResponse) {
