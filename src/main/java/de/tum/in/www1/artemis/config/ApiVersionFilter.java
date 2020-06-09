@@ -24,9 +24,21 @@ public class ApiVersionFilter implements Filter {
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
 
+    /**
+     * Artemis Version as defined in build.gradle
+     */
     @Value("${artemis.version}")
     private String VERSION;
 
+    /**
+     * Use doFilter to hook into every HTTP Request and set Content-Version HTTP Header to the Artemis Version.
+     *
+     * @param request  the <code>ServletRequest</code> object contains the client's request
+     * @param response the <code>ServletResponse</code> object contains the filter's response
+     * @param chain    the <code>FilterChain</code> for invoking the next filter or the resource
+     * @throws IOException      if an I/O related error has occurred during the processing
+     * @throws ServletException if an exception occurs that interferes with the filter's normal operation
+     */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
@@ -39,6 +51,13 @@ public class ApiVersionFilter implements Filter {
         chain.doFilter(httpRequest, httpResponse);
     }
 
+    /**
+     * Instantiate Bean and register URL Patterns to apply filter to:
+     *   - /api/**
+     *   - /management/**
+     *
+     * @return Register the ApiVersionFilter Bean
+     */
     @Bean
     public FilterRegistrationBean<ApiVersionFilter> registerFilter() {
         logger.debug("Register API Version Filter.");
