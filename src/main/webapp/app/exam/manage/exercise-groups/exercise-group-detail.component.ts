@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-exercise-group-detail',
@@ -9,7 +10,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 export class ExerciseGroupDetailComponent implements OnInit {
     exerciseGroup: ExerciseGroup;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService) {}
 
     /**
      * Initialize the exerciseGroup

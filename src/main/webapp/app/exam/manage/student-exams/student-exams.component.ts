@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -8,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 export class StudentExamsComponent implements OnInit {
     examId: number;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private studentExamService: StudentExamService) {}
 
     /**
      * Initialize the examId

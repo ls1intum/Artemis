@@ -4,7 +4,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam.model';
 
 type EntityResponseType = HttpResponse<ExerciseGroup>;
 type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
