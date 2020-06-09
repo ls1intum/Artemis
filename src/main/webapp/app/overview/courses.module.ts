@@ -29,6 +29,7 @@ import { CourseRegistrationSelectorComponent } from 'app/overview/course-registr
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 
 @NgModule({
     imports: [
@@ -64,6 +65,7 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         ExerciseActionButtonComponent,
         ExerciseDetailsStudentActionsComponent,
         ProgrammingExerciseStudentIdeActionsComponent,
+        CourseExamsComponent,
     ],
     exports: [ExerciseActionButtonComponent],
 })

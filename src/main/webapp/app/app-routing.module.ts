@@ -52,6 +52,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/file-upload-exercises/:exerciseId',
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
+                // ===== EXAM =====
+                {
+                    path: 'courses/:courseId/exam/:examId',
+                    loadChildren: () => import('./exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                },
             ],
             { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
