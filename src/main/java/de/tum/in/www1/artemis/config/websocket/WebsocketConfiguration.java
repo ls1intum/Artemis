@@ -253,6 +253,6 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     private boolean isUserTAOrHigherForExercise(Principal principal, Long exerciseId) {
         Exercise exercise = exerciseService.findOne(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        return authorizationCheckService.isAtLeastInstructorForExercise(exercise, user);
+        return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

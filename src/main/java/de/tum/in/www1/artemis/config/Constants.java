@@ -34,8 +34,6 @@ public final class Constants {
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
-    public static final String NEW_SUBMISSION_TOPIC = "/topic/newSubmission";
-
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
@@ -54,7 +52,9 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
+
+    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";

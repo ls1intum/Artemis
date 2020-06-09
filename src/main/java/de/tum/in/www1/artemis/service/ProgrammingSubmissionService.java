@@ -534,8 +534,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            String exerciseTopic = EXERCISE_TOPIC_ROOT + submission.getParticipation().getExercise().getId() + "/newSubmission";
-            messagingTemplate.convertAndSend(exerciseTopic, submission);
+            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), submission);
         }
     }
 
@@ -546,9 +545,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            String exerciseTopic = EXERCISE_TOPIC_ROOT + submission.getParticipation().getExercise().getId() + "/newSubmission";
-            messagingTemplate.convertAndSend(exerciseTopic, error);
+            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), error);
         }
+    }
+
+    private String getExerciseTopicForTAAndAbove(long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {

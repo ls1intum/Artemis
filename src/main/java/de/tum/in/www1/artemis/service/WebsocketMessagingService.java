@@ -62,10 +62,12 @@ public class WebsocketMessagingService {
     }
 
     /**
-     * Returns true if the given destination should be handled by this service
+     * Returns true if the given destination should be handled by this service.
+     * This is the case if this is a 'non-personal' subscription (a result subscription for a whole exercise).
+     * Only teaching assistants, instructors and admins should be allowed to subscribe to this topic.
      *
      * @param destination Websocket destination topic which to check
-     * @return flag whether the destination belongs to this controller
+     * @return flag whether the destination belongs to this controller (is a 'non-personal' result subscription)
      */
     public static boolean isResultNonPersonalDestination(String destination) {
         return Optional.ofNullable(getExerciseIdFromResultDestination(destination)).isPresent();

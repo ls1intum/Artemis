@@ -52,7 +52,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public PROGRAMMING_EXERCISE_RESOURCE_URL = SERVER_API_URL + 'api/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
-    private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmission';
+    private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmissions';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     // participationId -> topic
@@ -174,7 +174,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (!this.submissionTopicsSubscribed.get(participationId)) {
             let newSubmissionTopic: string;
             if (personal) {
-                newSubmissionTopic = '/user/topic/newSubmission';
+                newSubmissionTopic = '/user/topic/newSubmissions';
             } else {
                 newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%exerciseId%', exerciseId.toString());
             }

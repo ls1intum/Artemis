@@ -42,7 +42,7 @@ describe('ProgrammingSubmissionService', () => {
     let wsLatestResultSubject: Subject<Result | null>;
 
     const participationId = 1;
-    const submissionTopic = `/user/topic/newSubmission`;
+    const submissionTopic = `/user/topic/newSubmissions`;
     const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
     const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds'), participation: { id: participationId } } as any;
     const result = { id: 31, submission: currentSubmission } as any;
