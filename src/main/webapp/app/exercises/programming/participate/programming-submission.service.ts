@@ -571,6 +571,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);
             this.resultTimerSubjects.delete(participationId);
+            delete this.submissionSubjects[participationId];
 
             const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === submissionTopic).length;
             // Only unsubscribe if no other participations are using this topic
