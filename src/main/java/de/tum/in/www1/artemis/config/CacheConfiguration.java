@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.*;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -68,6 +71,7 @@ public class CacheConfiguration {
             createIfNotExists(cm, User.class.getName() + ".persistentTokens", jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName() + ".exercises", jcacheConfiguration);
+            createIfNotExists(cm, Course.class.getName() + ".exams", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName() + ".studentParticipations", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName() + ".exampleSubmissions", jcacheConfiguration);
@@ -185,7 +189,16 @@ public class CacheConfiguration {
             createIfNotExists(cm, GradingInstruction.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, GradingCriterion.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, GradingCriterion.class.getName() + ".structuredGradingInstructions", jcacheConfiguration);
-            // jhipster-needle-ehcache-add-entry
+
+            createIfNotExists(cm, Exam.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, Exam.class.getName() + ".exerciseGroups", jcacheConfiguration);
+            createIfNotExists(cm, Exam.class.getName() + ".studentExams", jcacheConfiguration);
+            createIfNotExists(cm, Exam.class.getName() + ".registeredUsers", jcacheConfiguration);
+            createIfNotExists(cm, ExerciseGroup.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, ExerciseGroup.class.getName() + ".exercises", jcacheConfiguration);
+            createIfNotExists(cm, StudentExam.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, StudentExam.class.getName() + ".exercises", jcacheConfiguration);
+
             createIfNotExists(cm, "files", jcacheConfiguration);
         };
     }
