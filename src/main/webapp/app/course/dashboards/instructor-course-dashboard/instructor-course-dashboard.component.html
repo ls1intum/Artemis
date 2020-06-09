@@ -150,6 +150,7 @@
                                     {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
                                 </button>
                                 <button
+                                    *ngIf="exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT"
                                     class="btn btn-primary btn-sm mr-1"
                                     [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
                                 >
