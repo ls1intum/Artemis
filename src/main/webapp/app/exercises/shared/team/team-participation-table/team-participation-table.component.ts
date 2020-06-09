@@ -125,8 +125,8 @@ export class TeamParticipationTableComponent implements OnInit {
         // there is no submission yet
         if (!submission) {
             return true;
-        } else if (this.assessmentAction(submission) !== AssessmentAction.OPEN) {
-            // starting or continuing an assessment is not allowed after the assessment due date
+        } else if (this.assessmentAction(submission) === AssessmentAction.CONTINUE) {
+            // continuing an assessment is not allowed after the assessment due date
             return exercise.assessmentDueDate && exercise.assessmentDueDate.isBefore();
         }
         return false;
