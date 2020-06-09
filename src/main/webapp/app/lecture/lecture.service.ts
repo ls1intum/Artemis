@@ -69,8 +69,8 @@ export class LectureService {
 
     protected convertDateFromClient(lecture: Lecture): Lecture {
         const copy: Lecture = Object.assign({}, lecture, {
-            startDate: lecture.startDate != null && lecture.startDate.isValid() ? lecture.startDate.toJSON() : null,
-            endDate: lecture.endDate != null && lecture.endDate.isValid() ? lecture.endDate.toJSON() : null,
+            startDate: lecture.startDate && lecture.startDate.isValid() ? lecture.startDate.toJSON() : null,
+            endDate: lecture.endDate && lecture.endDate.isValid() ? lecture.endDate.toJSON() : null,
         });
         if (copy.course) {
             delete copy.course.exercises;
@@ -81,8 +81,8 @@ export class LectureService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
         }
         return res;
     }
