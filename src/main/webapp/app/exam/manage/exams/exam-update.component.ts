@@ -15,5 +15,7 @@ export class ExamUpdateComponent implements OnInit {
     /**
      * Initialize the exam
      */
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.route.data.subscribe(({ exam }) => (this.exam = exam));
+    }
 }

@@ -15,5 +15,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     /**
      * Initialize the exerciseGroup
      */
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.route.data.subscribe(({ exerciseGroup }) => (this.exerciseGroup = exerciseGroup));
+    }
 }
