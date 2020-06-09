@@ -79,13 +79,16 @@ public abstract class AssessmentResource {
      */
     protected boolean isAllowedToCreateOrOverrideResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final var existingResult = submission.getResult();
-        if (exercise.isTeamMode()) {
-            // for team exercises a user is allowed to create a result only if they are the team's tutor (or an instructor)
-            StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-            return Objects.equals(participation.getTeam().orElseThrow().getOwner(), user) || isAtLeastInstructor;
-        } else if (existingResult == null) {
-            // if there is no result yet, we can always save, submit and potentially "override"
-            return true;
+        if (existingResult == null) {
+            if (exercise.isTeamMode()) {
+                // for team exercises a user is allowed to create a result only if they are the team's tutor (or an instructor)
+                StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+                return Objects.equals(participation.getTeam().orElseThrow().getOwner(), user) || isAtLeastInstructor;
+            }
+            else {
+                // for individual exercises a result can always be created by any tutor if none exists yet
+                return true;
+            }
         }
         return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
