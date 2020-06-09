@@ -111,7 +111,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             (error: HttpErrorResponse) => {
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError();
                 }
@@ -131,10 +131,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError();
                 }
@@ -359,7 +359,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
-                this.goToExerciseDashboard();
+                this.navigateBack();
             });
         }
     }
@@ -393,7 +393,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
@@ -435,8 +435,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.assessmentsAreValid = true;
     }
 
-    goToExerciseDashboard() {
-        if (this.modelingExercise && this.modelingExercise.course) {
+    navigateBack() {
+        if (this.modelingExercise && this.modelingExercise.teamMode && this.modelingExercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/teams/${teamId}`);
+        } else if (this.modelingExercise && this.modelingExercise.course) {
             this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
