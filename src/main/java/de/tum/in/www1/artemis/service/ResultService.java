@@ -421,12 +421,12 @@ public class ResultService {
         return objectMapper.writeValueAsString(resultCopy);
     }
 
-    public void notifyUserAboutNewResult(Result result, Long participationId) {
-        notifyNewResult(result, participationId);
+    public void notifyUserAboutNewResult(Result result, Participation participation) {
+        notifyNewResult(result, participation);
     }
 
-    private void notifyNewResult(Result result, Long participationId) {
-        websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
+    private void notifyNewResult(Result result, Participation participation) {
+        websocketMessagingService.broadcastNewResult(participation, result);
     }
 
     /**

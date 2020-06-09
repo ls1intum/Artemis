@@ -97,6 +97,7 @@
                 <jhi-programming-exercise-instructions
                     [exercise]="asProgrammingExercise(exercise)"
                     [participation]="asProgrammingExercise(exercise).templateParticipation"
+                    [personalParticipation]="false"
                 ></jhi-programming-exercise-instructions>
             </ng-template>
         </div>
@@ -278,7 +279,7 @@
                                 </ng-template>
                             </td>
                         </tr>
-                        <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
+                        <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0 && !exercise.teamMode">
                             <td></td>
                             <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
                             <td></td>
@@ -315,9 +316,14 @@
 
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
-                    <div class="alert alert-info">
+                    <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
                         {{ 'artemisApp.tutorExerciseDashboard.noSubmissions' | translate }}
                     </div>
+                    <ng-template #teamAssessmentInfo>
+                        <div class="alert alert-warning">
+                            {{ 'artemisApp.tutorExerciseDashboard.startAssessmentFromTeamPages' | translate }}
+                        </div>
+                    </ng-template>
                 </ng-template>
             </div>
             <!-- Complaints -->
