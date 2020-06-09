@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
+import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
+import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
+import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
+import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
+import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/exercise-group-detail.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -14,6 +19,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: 'new',
+        component: ExamUpdateComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -22,6 +28,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/edit',
+        component: ExamUpdateComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -30,6 +37,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/view',
+        component: ExamDetailComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -38,6 +46,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exerciseGroups',
+        component: ExerciseGroupsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -46,6 +55,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exerciseGroups/new',
+        component: ExerciseGroupUpdateComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -54,6 +64,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exerciseGroups/:exerciseGroupId/edit',
+        component: ExerciseGroupUpdateComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -62,6 +73,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exerciseGroups/:exerciseGroupId/view',
+        component: ExerciseGroupDetailComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',

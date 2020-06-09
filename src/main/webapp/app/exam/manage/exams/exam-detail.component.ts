@@ -3,10 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 
 @Component({
-    selector: 'jhi-exam-update',
-    templateUrl: './exam-update.component.html',
+    selector: 'jhi-exam-detail',
+    templateUrl: './exam-detail.component.html',
 })
-export class ExamDetailComponentComponent implements OnInit {
+export class ExamDetailComponent implements OnInit {
     exam: Exam;
 
     constructor(private route: ActivatedRoute) {}
