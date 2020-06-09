@@ -13,5 +13,7 @@ export class StudentExamsComponent implements OnInit {
     /**
      * Initialize the examId
      */
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+    }
 }
