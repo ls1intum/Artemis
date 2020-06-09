@@ -20,6 +20,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
+    showExamButton = false;
 
     courses: Course[];
     eventSubscriber: Subscription;
