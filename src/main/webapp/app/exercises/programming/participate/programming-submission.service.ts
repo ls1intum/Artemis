@@ -180,7 +180,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
 
             this.resultTimerSubjects.set(participationId, new Subject<null>());
-            this.participationToExercise.set(participationId, exerciseId);
+            this.participationIdToExercise.set(participationId, exerciseId);
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
             if (!Array.from(this.submissionTopicsSubscribed.values()).includes(newSubmissionTopic)) {
@@ -197,7 +197,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             const programmingSubmission = submission as ProgrammingSubmission;
                             this.emitBuildingSubmission(
                                 programmingSubmission.participation.id,
-                                this.participationToExercise.get(programmingSubmission.participation.id)!,
+                                this.participationIdToExercise.get(programmingSubmission.participation.id)!,
                                 submission,
                             );
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
