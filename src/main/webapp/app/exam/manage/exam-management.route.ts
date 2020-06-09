@@ -4,7 +4,7 @@ import { ExamManagementComponent } from 'app/exam/manage/exam-management.compone
 
 export const examManagementRoute: Routes = [
     {
-        path: ':courseId/exams',
+        path: '',
         component: ExamManagementComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
