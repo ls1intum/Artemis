@@ -34,6 +34,14 @@ export class ExerciseGroupService {
     }
 
     /**
+     * Find an exercise group on the server using a GET request.
+     * @param id The id of the exercise group to get.
+     */
+    find(id: number): Observable<EntityResponseType> {
+        return this.http.get<ExerciseGroup>(`${this.resourceUrlExerciseGroups}/${id}`, { observe: 'response' });
+    }
+
+    /**
      * Delete an exercise group on the server using a DELETE request.
      * @param id The id of the exercise group to delete.
      */

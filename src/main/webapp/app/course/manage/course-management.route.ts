@@ -10,7 +10,6 @@ import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 
 @Injectable({ providedIn: 'root' })
