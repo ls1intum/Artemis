@@ -9,6 +9,8 @@ import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercis
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/exercise-group-detail.component';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
+import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
+import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -22,6 +24,8 @@ const ENTITY_STATES = [...examManagementState];
         ExerciseGroupUpdateComponent,
         ExerciseGroupDetailComponent,
         ExamStudentsComponent,
+        StudentExamsComponent,
+        StudentExamDetailComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

@@ -7,6 +7,8 @@ import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercis
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/exercise-group-detail.component';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
+import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
+import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -92,6 +94,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/studentExams',
+        component: StudentExamsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
@@ -100,6 +103,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/studentExams/:studentExamId/view',
+        component: StudentExamDetailComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
