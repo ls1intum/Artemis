@@ -623,6 +623,20 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addSampleStaticCodeAnalysisFeedbackToResults(Result result) {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1").type(FeedbackType.AUTOMATIC));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2").type(FeedbackType.AUTOMATIC));
+        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("scadetail1").type(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT));
+        Feedback feedback4 = feedbackRepo.save(new Feedback().detailText("scadetail2").type(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT));
+        List<Feedback> feedback = new ArrayList<>();
+        feedback.add(feedback1);
+        feedback.add(feedback2);
+        feedback.add(feedback3);
+        feedback.add(feedback4);
+        result.addFeedbacks(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToSubmission(Submission submission) {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
         resultRepo.save(result);

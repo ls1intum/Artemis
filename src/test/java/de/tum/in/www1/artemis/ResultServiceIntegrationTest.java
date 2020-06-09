@@ -162,6 +162,17 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsWithStaticCodeAnalysisFeedbackForAProgrammingExerciseStudentParticipation() throws Exception {
+        Result result = database.addResultToParticipation(programmingExerciseStudentParticipation);
+        result = database.addSampleStaticCodeAnalysisFeedbackToResults(result);
+
+        List<Feedback> feedback = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedback).isEqualTo(result.getFeedbacks());
+    }
+
+    @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
