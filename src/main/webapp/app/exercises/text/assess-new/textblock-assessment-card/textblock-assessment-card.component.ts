@@ -57,7 +57,7 @@ export class TextblockAssessmentCardComponent {
         this.select();
         if (this.textBlockRef.feedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.textBlockRef.feedback, event);
-            if (this.textBlockRef.feedback.gradingInstruction.usageCount !== 0) {
+            if (this.textBlockRef.feedback.gradingInstruction && this.textBlockRef.feedback.gradingInstruction.usageCount !== 0) {
                 this.disableEditScore = true;
             } else {
                 this.disableEditScore = false;
