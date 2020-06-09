@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,8 +26,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.mapper.ExamMapper;
-import de.tum.in.www1.artemis.web.rest.dto.response.ExamResponseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -56,17 +53,12 @@ public class ExamResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExamMapper examMapper;
-
-    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
-            ExamMapper examMapper) {
+    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamRepository examRepository, AuthorizationCheckService authCheckService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examService = examService;
         this.examRepository = examRepository;
         this.authCheckService = authCheckService;
-        this.examMapper = examMapper;
-
     }
 
     /**
@@ -96,23 +88,11 @@ public class ExamResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
-    @GetMapping("/exams/{examId}")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<ExamResponseDTO> getExam(@PathVariable Long examId) {
-        Optional<Exam> exam = examRepository.findById(examId);
-        if (exam.isPresent()) {
-            return ResponseEntity.ok().body(examMapper.examToExamResponseDto(exam.get()));
-        }
-        else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
     /**
      * PUT /courses/{courseId}/exams : Updates an existing exam.
      *
-     * @param courseId    the course to which the exam belongs
-     * @param updatedExam the exam to update
+     * @param courseId      the course to which the exam belongs
+     * @param updatedExam   the exam to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
