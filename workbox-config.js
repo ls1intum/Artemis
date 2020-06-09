@@ -1,5 +1,5 @@
 module.exports = {
-    globDirectory: "dist/apps/web/",
+    globDirectory: "build/resources/main/static/",
     globPatterns: ["**/*.{css,eot,html,ico,jpg,js,json,png,svg,ttf,txt,webmanifest,woff,woff2,webm,xml}"],
     globFollow: true, // follow symlinks
     globStrict: true, // fail the build if anything goes wrong while reading the files

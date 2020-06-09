@@ -144,9 +144,6 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
             minimize: true,
             debug: false,
         }),
-        new WorkboxPlugin.InjectManifest({
-            swSrc: utils.root('build/resources/main/static/service-worker.js')
-        }),
     ],
     mode: 'production',
 });
