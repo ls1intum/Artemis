@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
-    List<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+    Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
@@ -34,7 +33,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return list of exercises
      */
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#login})")
-    List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
+    Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("select distinct c from Exercise e join e.categories c where e.course.id = :#{#courseId}")
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
