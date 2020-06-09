@@ -21,6 +21,10 @@
     </div>
     <jhi-alert></jhi-alert>
     <div class="tab-bar tab-bar-course-overview">
+        <!-- TODO: set to course.exams when data model is finished -->
+        <div *ngIf="false" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
+            <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
+        </div>
         <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
         </div>
