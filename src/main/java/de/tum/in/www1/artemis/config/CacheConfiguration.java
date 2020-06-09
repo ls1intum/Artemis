@@ -84,7 +84,7 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName("Artemis");
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        if (this.registration == null) {
+        if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
         }
         else {
