@@ -439,7 +439,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.modelingExercise && this.modelingExercise.teamMode && this.modelingExercise.course && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
             this.router.navigateByUrl(`/courses/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/teams/${teamId}`);
-        } else if (this.modelingExercise && this.modelingExercise.course) {
+        } else if (this.modelingExercise && !this.modelingExercise.teamMode && this.modelingExercise.course) {
             this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
