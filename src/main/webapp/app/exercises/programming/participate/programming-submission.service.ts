@@ -59,7 +59,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private submissionTopicsSubscribed = new Map<number, string>();
 
     // participationId -> exerciseId
-    private participationToExercise = new Map<number, number>();
+    private participationIdToExerciseId = new Map<number, number>();
 
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> } = {};
