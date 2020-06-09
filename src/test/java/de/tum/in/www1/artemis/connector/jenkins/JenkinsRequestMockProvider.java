@@ -10,9 +10,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;;
+import java.nio.file.Path;
 
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +25,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.w3c.dom.Document;
 
 import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
@@ -32,14 +38,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.w3c.dom.Document;
-
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsException;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Component
@@ -111,7 +110,7 @@ public class JenkinsRequestMockProvider {
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final String buildplan = Files.readString(Path.of("src","test",  "resources", "templates", "jenkins", "mockBuildplan.xml"), StandardCharsets.UTF_8);
+        final String buildplan = Files.readString(Path.of("src", "test", "resources", "templates", "jenkins", "mockBuildplan.xml"), StandardCharsets.UTF_8);
         final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
         final var jobWithDetails = mockGetJob(exercise, true);
         final var folder = new FolderJob(exercise.getProjectKey(), exercise.getProjectKey());
@@ -134,7 +133,7 @@ public class JenkinsRequestMockProvider {
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
         final var planKey = exercise.getProjectKey() + "-" + username.toUpperCase();
 
-        final String buildplan = Files.readString(Path.of("src","test",  "resources", "templates", "jenkins", "mockBuildplan.xml"), StandardCharsets.UTF_8);
+        final String buildplan = Files.readString(Path.of("src", "test", "resources", "templates", "jenkins", "mockBuildplan.xml"), StandardCharsets.UTF_8);
 
         final var jobWithDetails = mockGetJob(exercise, true);
         final var folder = new FolderJob(exercise.getProjectKey(), exercise.getProjectKey());
@@ -151,8 +150,10 @@ public class JenkinsRequestMockProvider {
         headers.setContentType(MediaType.APPLICATION_XML);
         final var entity = new HttpEntity<>(writeXmlToString(xmlBuildPlan), headers);
 
-        final var url = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("job").pathSegment(exercise.getProjectKey()).pathSegment("job").pathSegment(planKey).pathSegment("config.xml").build(true).toUri();
-        mockServer.expect(requestTo(url)).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_XML)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+        final var url = UriComponentsBuilder.fromUri(JENKINS_SERVER_URL.toURI()).path("job").pathSegment(exercise.getProjectKey()).pathSegment("job").pathSegment(planKey)
+                .pathSegment("config.xml").build(true).toUri();
+        mockServer.expect(requestTo(url)).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_XML)).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK));
     }
 
     private String writeXmlToString(Document doc) {

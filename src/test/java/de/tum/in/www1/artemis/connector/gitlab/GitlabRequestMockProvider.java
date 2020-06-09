@@ -61,6 +61,7 @@ public class GitlabRequestMockProvider {
     private UserApi userApi;
 
     final private List<org.gitlab4j.api.models.User> mockGitLabUsers = new ArrayList<>();
+
     final private List<Member> mockGitLabMembers = new ArrayList<>();
 
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
@@ -79,7 +80,7 @@ public class GitlabRequestMockProvider {
             gitLabUser.setUsername(user.getLogin());
             gitLabUser.setName(user.getName());
             gitLabUser.setEmail(user.getEmail());
-            //Setup the mock returns
+            // Setup the mock returns
             mockGitLabUsers.add(gitLabUser);
             mockGetUserByUsername(gitLabUser.getUsername());
         }
@@ -93,7 +94,8 @@ public class GitlabRequestMockProvider {
             member.setUsername(user.getLogin());
             if (member.getUsername().length() > 10 && member.getUsername().substring(0, 9).equals("instructor")) {
                 member.setAccessLevel(AccessLevel.MAINTAINER);
-            } else {
+            }
+            else {
                 member.setAccessLevel(AccessLevel.GUEST);
             }
             mockGitLabMembers.add(member);
@@ -182,10 +184,7 @@ public class GitlabRequestMockProvider {
     }
 
     private org.gitlab4j.api.models.User findUserByUsername(final String username) {
-        return mockGitLabUsers.stream()
-            .filter(user -> username.equals(user.getUsername()))
-            .findAny()
-            .orElse(null);
+        return mockGitLabUsers.stream().filter(user -> username.equals(user.getUsername())).findAny().orElse(null);
     }
 
     private void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username) throws URISyntaxException {
