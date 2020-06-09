@@ -20,7 +20,7 @@ export enum FeedbackType {
 
 export class Feedback implements BaseEntity {
     public id: number;
-    public gradingInstruction: GradingInstruction;
+    public gradingInstruction: GradingInstruction | null;
     public text: string | null;
     public detailText: string | null;
     public reference: string | null;
