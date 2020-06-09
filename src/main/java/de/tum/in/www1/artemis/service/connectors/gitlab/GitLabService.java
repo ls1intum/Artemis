@@ -74,7 +74,7 @@ public class GitLabService extends AbstractVersionControlService {
     private GitLabApi gitlab;
 
     public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
+            GitLabUserManagementService gitLabUserManagementService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.gitlab = gitlab;

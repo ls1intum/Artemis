@@ -7,9 +7,13 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +25,15 @@ import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -42,6 +51,9 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
+
+    @Autowired
+    private UserRepository userRepo;
 
     private ProgrammingExercise exercise;
 
@@ -124,8 +136,10 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+        User instructor = userRepo.findOneByLogin("instructor1").orElseThrow();
+        User tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
         exercise.setMode(mode);
-        mockConnectorRequestsForSetup(exercise);
+        mockConnectorRequestsForSetup(exercise, List.of(instructor, tutor));
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
@@ -133,11 +147,46 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
-    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
+    @Test
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void startProgrammingExercise_student_correctInitializationState() throws Exception {
+        final var course = exercise.getCourse();
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
+        final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), List.of(user));
+        final var path = ParticipationResource.Endpoints.ROOT
+                + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", "" + course.getId()).replace("{exerciseId}", "" + exercise.getId());
+        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+
+        for (final var verification : verifications) {
+            verification.performVerification();
+        }
+
+        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    private List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, List<User> users) throws Exception {
+        final var verifications = new LinkedList<Verifiable>();
+        gitlabRequestMockProvider.setupMockUsers(users);
+        gitlabRequestMockProvider.setupMockMembers(users);
+        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, username);
+        jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        jenkinsRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username);
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+        return verifications;
+    }
+
+    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise, List<User> users) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        gitlabRequestMockProvider.setupMockUsers(users);
+        gitlabRequestMockProvider.setupMockMembers(users);
         jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         gitlabRequestMockProvider.mockCreateProjectForExercise(exercise);
@@ -146,7 +195,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
-        jenkinsRequestMockProvider.mockCreateBuildPlan();
+        jenkinsRequestMockProvider.mockCreateBuildPlan(exercise);
         jenkinsRequestMockProvider.mockTriggerBuild();
     }
 }

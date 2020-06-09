@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import org.junit.jupiter.api.AfterEach;
+import org.mockito.InjectMocks;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,8 +35,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
     @SpyBean
     protected LtiService ltiService;
 
-    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate and JenkinsServer.
     @SpyBean
+    @Autowired
     protected JenkinsService continuousIntegrationService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
