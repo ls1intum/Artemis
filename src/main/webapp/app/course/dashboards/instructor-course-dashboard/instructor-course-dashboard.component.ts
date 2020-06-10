@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { getIcon, getIconTooltip, ExerciseType } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -33,6 +33,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
+
+    readonly ExerciseType = ExerciseType;
 
     constructor(
         private courseService: CourseManagementService,
