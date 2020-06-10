@@ -69,7 +69,7 @@ public class RestTemplateConfiguration {
         interceptors.add(interceptor);
         restTemplate.setInterceptors(interceptors);
 
-        // we do not want to use MappingJackson2XmlHttpMessageConverter here because it would lead to problems
+        // we do not want to use MappingJackson2XmlHttpMessageConverter here because it would lead to problems with the tests
         HttpMessageConverter<?> messageConverterToRemove = null;
         for (HttpMessageConverter<?> messageConverter : restTemplate.getMessageConverters()) {
             if (messageConverter instanceof MappingJackson2XmlHttpMessageConverter) {

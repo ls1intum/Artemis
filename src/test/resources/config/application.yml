@@ -47,6 +47,7 @@ spring:
 #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
 #            hibernate.hbm2ddl.auto: validate       # out commented because it would lead to test execution errors
+            hibernate.javax.cache.missing_cache_strategy: create
     liquibase:
         contexts: tests
         enabled: false
