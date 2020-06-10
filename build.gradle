@@ -25,7 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.3.0"
+    id "com.google.cloud.tools.jib" version "2.4.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -219,7 +219,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.3.0.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.3.1.RELEASE"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.3.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.3.RELEASE"
