@@ -5,6 +5,7 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
@@ -45,6 +46,9 @@ public class CacheConfiguration {
 
     private Registration registration;
 
+    @Value("{spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
+    private String instanceName;
+
     public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
         this.env = env;
         this.serverProperties = serverProperties;
@@ -82,7 +86,7 @@ public class CacheConfiguration {
             return hazelCastInstance;
         }
         Config config = new Config();
-        config.setInstanceName("Artemis");
+        config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
