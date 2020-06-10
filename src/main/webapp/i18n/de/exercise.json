@@ -41,10 +41,10 @@
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
-            "dueDate": "Abgabedatum",
-            "dueDateError": "Abgabedatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
-            "assessmentDueDate": "Abgabedatum der Bewertung",
-            "assessmentDateError": "Abgabedatum der Bewertung muss nach dem Veröffentlichungs- und Abgabedatum sein. Bitte überprüfe deine Auswahl nochmal",
+            "dueDate": "Einreichungsfrist",
+            "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
+            "assessmentDueDate": "Einreichungsfrist der Bewertung",
+            "assessmentDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal",
             "dateNotSet": "Kein Datum gesetzt",
             "maxScore": "Maximale Punktzahl",
             "difficulty": "Schwierigkeit",
@@ -123,7 +123,7 @@
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
-                    "pattern": "Der Packagename muss mindestens einen Punkt enthalten und darf nicht mit einer Zahl anfangen!"
+                    "pattern": "Der Package Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!"
                 },
                 "maxScore": {
                     "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"

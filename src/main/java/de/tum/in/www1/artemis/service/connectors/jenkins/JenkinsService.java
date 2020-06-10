@@ -4,14 +4,12 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -81,16 +79,12 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private JenkinsServer jenkinsServer;
 
-    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
+    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
+        this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-    }
-
-    @PostConstruct
-    public void init() throws URISyntaxException {
-        this.jenkinsServer = new JenkinsServer(JENKINS_SERVER_URL.toURI(), username, password);
     }
 
     @Override
@@ -124,6 +118,11 @@ public class JenkinsService implements ContinuousIntegrationService {
         saveJobXml(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
+    }
+
+    @Override
+    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
+        // TODO after decision on how to handle users on Jenkins has been made if needed for Jenkins
     }
 
     @Override
@@ -375,12 +374,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<Feedback> getLatestBuildResultDetails(Result result) {
-        // TODO since this is unused as of now
-        throw new UnsupportedOperationException("Jenkins service does not support fetching the latest feedback for a result");
-    }
-
-    @Override
     public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
         try {
             final var build = job(projectKey, buildPlanId).getLastBuild();
@@ -447,7 +440,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
+    public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // TODO, not necessary for the core functionality
         return null;
     }

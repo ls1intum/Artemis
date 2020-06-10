@@ -86,6 +86,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     afterEach(() => {
         getExerciseSubmissionStateStub.restore();
         triggerAllStub.restore();
+        getBuildRunStateStub.restore();
         triggerParticipationsStub.restore();
     });
 

@@ -2,7 +2,7 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
-            "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
+            "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
@@ -27,7 +27,8 @@
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
-                "lectures": "Vorlesungen"
+                "lectures": "Vorlesungen",
+                "exams": "Klausuren"
             },
             "exerciseList": {
                 "fullScore": "Keine mit voller Punktzahl",
@@ -42,7 +43,7 @@
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
-                "noDueDate": "Kein Fälligkeitsdatum",
+                "noDueDate": "Keine Deadline",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
@@ -50,7 +51,7 @@
                 "exerciseMissedDeadline": "Abgabefrist abgelaufen",
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
-                "quizNotStarted": "Das Quiz hat noch nicht begonnen.",
+                "quizNotStarted": "Das Quiz ist nicht aktiv.",
                 "userNotStartedQuiz": "Du hast mit dem Quiz noch nicht begonnen.",
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
@@ -92,7 +93,7 @@
                 "exerciseMissedScore": "Fehlende Wertung: {{ points }} Punkte ({{ percentage }}%)",
                 "exerciseNotGraded": "{{ exercise }} wurde noch nicht bewertet.",
                 "exerciseNotParticipated": "Du hast an {{ exercise }} nicht teilgenommen.",
-                "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach dem Abgabedatum.",
+                "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach der Einreichungsfrist.",
                 "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten.",
                 "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist."
             },
@@ -114,7 +115,7 @@
                 "isDownloading": "Wird heruntergeladen..."
             },
             "exerciseDetails": {
-                "dueDate": "Abgabedatum:",
+                "dueDate": "Einreichungsfrist:",
                 "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
                 "difficulty": "Schwierigkeit:",

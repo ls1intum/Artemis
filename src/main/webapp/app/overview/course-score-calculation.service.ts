@@ -152,12 +152,12 @@ export class CourseScoreCalculationService {
     }
 
     private static convertDateForResultFromServer(result: Result): Result {
-        result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+        result.completionDate = result.completionDate ? moment(result.completionDate) : null;
         return result;
     }
 
     private static convertDateForParticipationFromServer(participation: Participation): Participation {
-        participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
         return participation;
     }
 }
