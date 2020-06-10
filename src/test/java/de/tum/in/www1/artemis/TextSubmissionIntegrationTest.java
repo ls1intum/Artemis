@@ -292,6 +292,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         submission.setText(submission.getText() + " Extra contribution.");
         request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", submission, HttpStatus.OK);
 
+        // create new submission to simulate other teams working at the same time
+        request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.OK);
+
         database.changeUser("student2");
         version = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
