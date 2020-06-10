@@ -5,11 +5,9 @@ import static de.tum.in.www1.artemis.service.WebsocketMessagingService.isResultN
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
+import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -30,9 +28,9 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.messaging.simp.stomp.StompCommand;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.stomp.*;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -43,6 +41,7 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterables;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -122,7 +121,21 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // increase the limit of concurrent connections (default is 1024 which is much too low)
         // config.setCacheLimit(10000);
         //
-        config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry");
+        config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry")
+                .setTcpClient(createTcpClient());
+    }
+
+    // https://github.com/spring-projects/spring-framework/issues/17057
+    // https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+    private ReactorNettyTcpClient<byte[]> createTcpClient() {
+        final List<InetSocketAddress> addressList = new ArrayList<>();
+        // TODO: Simon Leiß: Load URLs from config
+        addressList.add(new InetSocketAddress("192.168.0.1", 61613));
+        addressList.add(new InetSocketAddress("192.168.0.2", 61613));
+        addressList.add(new InetSocketAddress("192.168.0.3", 61613));
+        addressList.add(new InetSocketAddress("192.168.0.4", 61613));
+        Iterator<InetSocketAddress> addressIterator = Iterables.cycle(addressList).iterator();
+        return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
     }
 
     @Override

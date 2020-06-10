@@ -228,6 +228,9 @@ dependencies {
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
     implementation "io.netty:netty-all"
     implementation "io.projectreactor.netty:reactor-netty"
+    implementation "org.springframework:spring-messaging:5.2.7.RELEASE"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:4.2.0.RELEASE_2"
+
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
