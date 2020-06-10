@@ -79,7 +79,7 @@ export class ResultService implements IResultService {
         const copy: Result = Object.assign({}, result, {
             completionDate:
                 // Result completionDate is a moment object -> toJSON.
-                result.completionDate != null && isMoment(result.completionDate)
+                result.completionDate && isMoment(result.completionDate)
                     ? result.completionDate.toJSON()
                     : // Result completionDate would be a valid date -> keep string.
                     result.completionDate && moment(result.completionDate).isValid()
@@ -93,7 +93,7 @@ export class ResultService implements IResultService {
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
-                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
                 result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
             });
         }
@@ -102,7 +102,7 @@ export class ResultService implements IResultService {
 
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
+            res.body.completionDate = res.body.completionDate ? moment(res.body.completionDate) : null;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
         }
         return res;
@@ -110,7 +110,7 @@ export class ResultService implements IResultService {
 
     convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
-            participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
             if (participation.exercise) {
                 participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }
