@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
@@ -67,6 +69,16 @@ public class RestTemplateConfiguration {
         interceptors.add(interceptor);
         restTemplate.setInterceptors(interceptors);
 
+        // we do not want to use MappingJackson2XmlHttpMessageConverter here because it would lead to problems
+        HttpMessageConverter<?> messageConverterToRemove = null;
+        for (HttpMessageConverter<?> messageConverter : restTemplate.getMessageConverters()) {
+            if (messageConverter instanceof MappingJackson2XmlHttpMessageConverter) {
+                messageConverterToRemove = messageConverter;
+            }
+        }
+        if (messageConverterToRemove != null) {
+            restTemplate.getMessageConverters().remove(messageConverterToRemove);
+        }
         return restTemplate;
     }
 
