@@ -147,7 +147,7 @@
                                         <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
                                     </button>
                                 </div>
-                                <div ngIf="showExamButton" class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                                <div *ngIf="showExamButton" class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                     <button
                                         *ngIf="course.isAtLeastInstructor"
                                         type="submit"
