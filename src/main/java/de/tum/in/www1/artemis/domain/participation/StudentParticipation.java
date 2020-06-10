@@ -52,7 +52,7 @@ public class StudentParticipation extends Participation {
 
     @JsonIgnore
     public Set<User> getStudents() {
-        return getStudent().map(Set::of).orElseGet(() -> team.getStudents());
+        return getStudent().map(Set::of).orElseGet(() -> team != null ? team.getStudents() : Set.of());
     }
 
     @JsonIgnore
