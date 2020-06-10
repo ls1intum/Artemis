@@ -49,8 +49,9 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             this.exerciseId = (domainValue as StudentParticipation).exercise
                 ? (domainValue as StudentParticipation).exercise.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
+            const personalParticipation = domainValue instanceof StudentParticipation;
             this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, true)
+                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
                 .pipe(
                     tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
                     map(({ submission }) => !!submission),
