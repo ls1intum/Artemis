@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-exam-detail',
@@ -15,11 +16,19 @@ export class CourseExamDetailComponent {
     constructor(private router: Router) {}
 
     openExam(): void {
-        // TODO logic to navigate to summary if exam is over
-        this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
-            state: {
-                exam: this.exam, // TODO: load student exam
-            },
-        });
+        // TODO: load student exam
+        if (moment(this.exam.endDate).isAfter(moment())) {
+            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'summary'], {
+                state: {
+                    exam: this.exam,
+                },
+            });
+        } else {
+            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
+                state: {
+                    exam: this.exam,
+                },
+            });
+        }
     }
 }
