@@ -5,6 +5,7 @@
         <jhi-programming-exercise-instructions
             [exercise]="programmingExercise!"
             [participation]="programmingExercise!.templateParticipation"
+            [personalParticipation]="false"
         ></jhi-programming-exercise-instructions>
     </ng-container>
     <p class="markdown-preview" [innerHTML]="problemStatement" *ngSwitchDefault></p>

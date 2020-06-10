@@ -16,6 +16,7 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
 
     constructor(submissionService: ProgrammingSubmissionService, alertService: AlertService, participationWebsocketService: ParticipationWebsocketService) {
         super(submissionService, participationWebsocketService, alertService);
+        this.personalParticipation = true;
     }
 
     // TODO: this should not be allowed after the build and test deadline if manual grading is enabled for the exercise otherwise students could override the manual results
