@@ -7,14 +7,16 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     templateUrl: './exercise-groups.component.html',
 })
 export class ExerciseGroupsComponent implements OnInit {
+    courseId: number;
     examId: number;
 
     constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService) {}
 
     /**
-     * Initialize the examId
+     * Initialize the courseId and examId
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
     }
 }

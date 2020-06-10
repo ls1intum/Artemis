@@ -8,14 +8,16 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
     templateUrl: './student-exam-detail.component.html',
 })
 export class StudentExamDetailComponent implements OnInit {
+    courseId: number;
     studentExam: StudentExam;
 
     constructor(private route: ActivatedRoute, private studentExamService: StudentExamService) {}
 
     /**
-     * Initialize the studentExam
+     * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ studentExam }) => (this.studentExam = studentExam));
     }
 }

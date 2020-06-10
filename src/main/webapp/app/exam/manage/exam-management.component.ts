@@ -8,7 +8,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
     styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit {
-    courseId = 0;
+    courseId: number;
 
     constructor(private route: ActivatedRoute, private examManagementService: ExamManagementService) {}
 

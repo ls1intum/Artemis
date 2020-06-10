@@ -7,14 +7,16 @@ import { UserService } from 'app/core/user/user.service';
     templateUrl: './exam-students.component.html',
 })
 export class ExamStudentsComponent implements OnInit {
+    courseId: number;
     examId: number;
 
     constructor(private route: ActivatedRoute, private userService: UserService) {}
 
     /**
-     * Initialize the examId
+     * Initialize the courseId and examId
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
     }
 }
