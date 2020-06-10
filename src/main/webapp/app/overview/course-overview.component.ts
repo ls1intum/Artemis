@@ -12,6 +12,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import * as moment from 'moment';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -116,6 +117,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     showShortDescription() {
         this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;
+    }
+
+    /**
+     * check if there is a exam which should be visivle
+     */
+    hasVisibleExams(): boolean {
+        for (const exam of this.course?.exams!) {
+            if (moment(exam.visibleDate).isAfter(moment())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

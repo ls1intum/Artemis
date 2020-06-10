@@ -1,1 +1,3 @@
-<jhi-course-exam-detail [exam]="exam" *ngFor="let exam of course.exams!"></jhi-course-exam-detail>
+<ng-container *ngFor="let exam of course.exams!">
+    <jhi-course-exam-detail *ngIf="isVisible(exam)" [exam]="exam" [course]="course"></jhi-course-exam-detail>
+</ng-container>

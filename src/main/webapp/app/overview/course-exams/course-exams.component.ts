@@ -5,6 +5,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Exam } from 'app/entities/exam.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -35,5 +36,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
+    }
+
+    isVisible(exam: Exam): boolean {
+        return moment(exam.visibleDate).isAfter(moment());
     }
 }
