@@ -46,7 +46,7 @@ public class CacheConfiguration {
 
     private Registration registration;
 
-    @Value("{spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
+    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
     public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
