@@ -7,6 +7,8 @@ services:
             - SPRING_PROFILES_ACTIVE=prod,swagger
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
         ports:
             - 8080:8080
