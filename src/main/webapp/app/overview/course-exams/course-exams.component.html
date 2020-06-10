@@ -1,3 +1,2 @@
-<div class="row" *ngFor="let exam in course.exams">
-    <jhi-course-exam-detail [exam]="exam"></jhi-course-exam-detail>
-</div>
+EXAMS:
+<jhi-course-exam-detail [exam]="exam" *ngFor="let exam of exams"></jhi-course-exam-detail>

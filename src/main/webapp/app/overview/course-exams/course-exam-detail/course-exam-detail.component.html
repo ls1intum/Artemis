@@ -1,1 +1,7 @@
-<p>{{ exam.startDate }} - {{ exam.endDate }}</p>
+<div *ngIf="exam" class="row">
+    <div class="col" (click)="openExam()">
+        <div class="row">TITLE</div>
+        <div class="row">{{ exam.startDate }}</div>
+        <div class="row">Duration</div>
+    </div>
+</div>
