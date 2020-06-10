@@ -10,24 +10,26 @@ type EntityArrayResponseType = HttpResponse<StudentExam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class StudentExamService {
-    public resourceUrlStudentExam = SERVER_API_URL + 'api/studentExams';
-    public resourceUrlExams = SERVER_API_URL + 'api/exams';
+    public resourceUrl = SERVER_API_URL + 'api/courses';
 
     constructor(private router: Router, private http: HttpClient) {}
 
     /**
      * Find a student exam on the server using a GET request.
-     * @param id The id of the student exam to get.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param studentExamId The id of the student exam to get.
      */
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<StudentExam>(`${this.resourceUrlStudentExam}/${id}`, { observe: 'response' });
+    find(courseId: number, examId: number, studentExamId: number): Observable<EntityResponseType> {
+        return this.http.get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams/${studentExamId}`, { observe: 'response' });
     }
 
     /**
      * Find all student exams for the given exam.
+     * @param courseId The course id.
      * @param examId The exam id.
      */
-    findAllForExam(examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<StudentExam[]>(`${this.resourceUrlExams}/${examId}/studentExams`, { observe: 'response' });
+    findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams`, { observe: 'response' });
     }
 }

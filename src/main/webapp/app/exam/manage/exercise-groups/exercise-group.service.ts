@@ -10,50 +10,56 @@ type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseGroupService {
-    public resourceUrlExerciseGroups = SERVER_API_URL + 'api/exerciseGroups';
-    public resourceUrlExams = SERVER_API_URL + 'api/exams';
+    public resourceUrl = SERVER_API_URL + 'api/courses';
 
     constructor(private router: Router, private http: HttpClient) {}
 
     /**
      * Create an exercise group on the server using a POST request.
+     * @param courseId The course id.
      * @param examId The exam id.
      * @param exerciseGroup The exercise group to create.
      */
-    create(examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
-        return this.http.post<ExerciseGroup>(`${this.resourceUrlExams}/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
+    create(courseId: number, examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
+        return this.http.post<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
     }
 
     /**
      * Update an exercise group on the server using a PUT request.
-     * @param examId The course id.
+     * @param courseId The course id.
+     * @param examId The exam id.
      * @param exerciseGroup The exercise group to update.
      */
-    update(examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
-        return this.http.put<ExerciseGroup>(`${this.resourceUrlExams}/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
+    update(courseId: number, examId: number, exerciseGroup: ExerciseGroup): Observable<EntityResponseType> {
+        return this.http.put<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
     }
 
     /**
      * Find an exercise group on the server using a GET request.
-     * @param id The id of the exercise group to get.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseGroupId The id of the exercise group to get.
      */
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<ExerciseGroup>(`${this.resourceUrlExerciseGroups}/${id}`, { observe: 'response' });
+    find(courseId: number, examId: number, exerciseGroupId: number): Observable<EntityResponseType> {
+        return this.http.get<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { observe: 'response' });
     }
 
     /**
      * Delete an exercise group on the server using a DELETE request.
-     * @param id The id of the exercise group to delete.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseGroupId The id of the exercise group to delete.
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrlExerciseGroups}/${id}`, { observe: 'response' });
+    delete(courseId: number, examId: number, exerciseGroupId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { observe: 'response' });
     }
 
     /**
      * Find all exercise groups for the given exam.
+     * @param courseId The course id.
      * @param examId The exam id.
      */
-    findAllForExam(examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<ExerciseGroup[]>(`${this.resourceUrlExams}/${examId}/exerciseGroups`, { observe: 'response' });
+    findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, { observe: 'response' });
     }
 }

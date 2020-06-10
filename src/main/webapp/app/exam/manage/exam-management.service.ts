@@ -13,8 +13,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
-    public resourceUrlCourses = SERVER_API_URL + 'api/courses';
-    public resourceUrlExams = SERVER_API_URL + 'api/exams';
+    public resourceUrl = SERVER_API_URL + 'api/courses';
 
     constructor(private router: Router, private http: HttpClient) {}
 
@@ -26,7 +25,7 @@ export class ExamManagementService {
     create(courseId: number, exam: Exam): Observable<EntityResponseType> {
         const copy = ExamManagementService.convertDateFromClient(exam);
         return this.http
-            .post<Exam>(`${this.resourceUrlCourses}/${courseId}/exams`, copy, { observe: 'response' })
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
@@ -38,28 +37,30 @@ export class ExamManagementService {
     update(courseId: number, exam: Exam): Observable<EntityResponseType> {
         const copy = ExamManagementService.convertDateFromClient(exam);
         return this.http
-            .put<Exam>(`${this.resourceUrlCourses}/${courseId}/exams`, copy, { observe: 'response' })
+            .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
     /**
      * Find an exam on the server using a GET request.
-     * @param id The id of the exam to get.
+     * @param courseId The course id.
+     * @param examId The id of the exam to get.
      */
-    find(id: number): Observable<EntityResponseType> {
+    find(courseId: number, examId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exam>(`${this.resourceUrlExams}/${id}`, { observe: 'response' })
+            .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
     /**
-     * Query exams via get request.
-     * @param req The query request options
+     * Query exams of the given course via get request.
+     * @param courseId The course id.
+     * @param req The query request options.
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(courseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
-            .get<Exam[]>(this.resourceUrlExams, { params: options, observe: 'response' })
+            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
     }
 
@@ -69,16 +70,17 @@ export class ExamManagementService {
      */
     findAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Exam[]>(`${this.resourceUrlCourses}/${courseId}/exams`, { observe: 'response' })
+            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
     }
 
     /**
      * Delete an exam on the server using a DELETE request.
-     * @param id The id of the exam to delete.
+     * @param courseId The course id.
+     * @param examId The id of the exam to delete.
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrlExams}/${id}`, { observe: 'response' });
+    delete(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {
