@@ -49,17 +49,17 @@ describe('Notification Popup Component', () => {
     });
 
     describe('Initialization', () => {
-        it('should get authentication state', fakeAsync(() => {
+        it('should get authentication state', () => {
             sinon.spy(accountService, 'getAuthenticationState');
             notificationPopupComponent.ngOnInit();
             expect(accountService.getAuthenticationState).to.have.been.calledOnce;
-        }));
+        });
 
-        it('should subscribe to notification updates', fakeAsync(() => {
-            // TODO: sinon.spy(notificationService, 'subscribeToSocketMessages');
+        it('should subscribe to notification updates', () => {
+            sinon.spy(notificationService, 'subscribeToNotificationUpdates');
             notificationPopupComponent.ngOnInit();
-            // TODO: expect(notificationService.subscribeToSocketMessages).to.have.been.calledOnce;
-        }));
+            expect(notificationService.subscribeToNotificationUpdates).to.have.been.calledOnce;
+        });
     });
 
     describe('Click', () => {
