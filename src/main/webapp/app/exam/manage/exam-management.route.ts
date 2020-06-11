@@ -223,6 +223,18 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'exerciseGroup/:groupId/text-exercise/:exerciseId/edit',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 const EXAM_MANAGEMENT_ROUTES = [...examManagementRoute];
