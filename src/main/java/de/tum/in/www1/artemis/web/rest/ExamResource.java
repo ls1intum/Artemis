@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,12 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -117,5 +113,48 @@ public class ExamResource {
 
         Exam result = examService.save(updatedExam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with body the updated exam
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
+        log.debug("REST request to get Exam : {}", examId);
+        return new ResponseEntity<Exam>();
+    }
+
+    /**
+     * GET /courses/{courseId}/exams : Find all exams for the given course.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @GetMapping("/courses/{courseId}/exams")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) throws URISyntaxException {
+        log.debug("REST request to get all exams for Course : {}", courseId);
+        return new ResponseEntity<List<Exam>>();
+    }
+
+    /**
+     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     *
+     * @param courseId the course to which the exam belongs
+     * @return the ResponseEntity with status 200 (OK)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @DeleteMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
+        log.info("REST request to delete Exam : {}", examId);
+        return new ResponseEntity<Exam>();
     }
 }
