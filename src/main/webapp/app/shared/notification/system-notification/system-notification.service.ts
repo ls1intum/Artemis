@@ -81,9 +81,8 @@ export class SystemNotificationService {
      */
     protected convertDateFromClient(notification: SystemNotification): SystemNotification {
         const copy: SystemNotification = Object.assign({}, notification, {
-            notificationDate:
-                notification.notificationDate != null && moment(notification.notificationDate).isValid() ? moment(notification.notificationDate).toISOString(true) : null,
-            expireDate: notification.expireDate != null && moment(notification.expireDate).isValid() ? moment(notification.expireDate).toISOString(true) : null,
+            notificationDate: notification.notificationDate && moment(notification.notificationDate).isValid() ? moment(notification.notificationDate).toISOString(true) : null,
+            expireDate: notification.expireDate && moment(notification.expireDate).isValid() ? moment(notification.expireDate).toISOString(true) : null,
         });
         return copy;
     }
@@ -95,8 +94,8 @@ export class SystemNotificationService {
      */
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.notificationDate = res.body.notificationDate != null ? moment(res.body.notificationDate) : null;
-            res.body.expireDate = res.body.expireDate != null ? moment(res.body.expireDate) : null;
+            res.body.notificationDate = res.body.notificationDate ? moment(res.body.notificationDate) : null;
+            res.body.expireDate = res.body.expireDate ? moment(res.body.expireDate) : null;
         }
         return res;
     }
@@ -109,8 +108,8 @@ export class SystemNotificationService {
     convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((notification: SystemNotification) => {
-                notification.notificationDate = notification.notificationDate != null ? moment(notification.notificationDate) : null;
-                notification.expireDate = notification.expireDate != null ? moment(notification.expireDate) : null;
+                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
+                notification.expireDate = notification.expireDate ? moment(notification.expireDate) : null;
             });
         }
         return res;

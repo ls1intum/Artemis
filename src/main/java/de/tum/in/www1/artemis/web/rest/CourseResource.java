@@ -215,9 +215,8 @@ public class CourseResource {
     /**
      * PUT /courses : Updates an existing updatedCourse.
      *
-     * @param updatedCourse the updatedCourse to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse, or with status 400 (Bad Request) if the updatedCourse is not valid, or with status
-     * 500 (Internal Server Error) if the updatedCourse couldn't be updated
+     * @param updatedCourse the course to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated course
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
@@ -237,8 +236,8 @@ public class CourseResource {
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        // only allow admins or instructors of the existing updatedCourse to change it
-        // this is important, otherwise someone could put himself into the instructor group of the updated Course
+        // only allow admins or instructors of the existing course to change it
+        // this is important, otherwise someone could put himself into the instructor group of the updated course
         if (!authCheckService.isAtLeastInstructorInCourse(existingCourse.get(), user)) {
             return forbidden();
         }
@@ -493,9 +492,7 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
-
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
-
         return courses;
     }
 
@@ -535,17 +532,20 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
+
             DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-
-            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             exercise.setNumberOfAssessments(numberOfAssessments);
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
@@ -591,9 +591,7 @@ public class CourseResource {
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-
-        final DueDateStat numberOfAssessments = resultService.countNumberOfAssessments(courseId);
-        stats.setNumberOfAssessments(numberOfAssessments);
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -672,16 +670,18 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
 
             DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-
-            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             exercise.setNumberOfAssessments(numberOfAssessments);
 
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());

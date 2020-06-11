@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -13,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -38,13 +34,16 @@ public class CourseService {
 
     private final LectureService lectureService;
 
+    private final ExamService examService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService) {
+            LectureService lectureService, ExamService examService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
+        this.examService = examService;
     }
 
     /**
@@ -73,9 +72,9 @@ public class CourseService {
      *
      * @return the list of entities
      */
-    public List<Course> findAllActive() {
+    public List<Course> findAllActiveWithLecturesAndExams() {
         log.debug("Request to get all active courses");
-        return courseRepository.findAllActive(ZonedDateTime.now());
+        return courseRepository.findAllActiveWithLecturesAndExams(ZonedDateTime.now());
     }
 
     /**
@@ -96,8 +95,12 @@ public class CourseService {
      * @return          the course including exercises and lectures for the user
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
-        Course course = findOne(courseId);
-        fetchExercisesAndLecturesForCourse(user, course);
+        Course course = findOneWithLecturesAndExams(courseId);
+        course.setExercises(exerciseService.findAllForCourse(course, user));
+        course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            course.setExams(examService.filterVisibleExams(course.getExams()));
+        }
         return course;
     }
 
@@ -108,12 +111,16 @@ public class CourseService {
      * @return the list of all courses including exercises and lectures for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
-        return findAllActive().stream()
+        return findAllActiveWithLecturesAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
                 .peek(course -> {
-                    fetchExercisesAndLecturesForCourse(user, course);
+                    course.setExercises(exerciseService.findAllForCourse(course, user));
+                    course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+                    if (authCheckService.isOnlyStudentInCourse(course, user)) {
+                        course.setExams(examService.filterVisibleExams(course.getExams()));
+                    }
                 }).collect(Collectors.toList());
     }
 
@@ -125,20 +132,6 @@ public class CourseService {
     public List<Course> findAllActiveForUser(User user) {
         return findAllActive().stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
                 .filter(course -> isActiveCourseVisibleForUser(user, course)).collect(Collectors.toList());
-    }
-
-    /**
-     * fetch exercises and lectures for one course
-     *
-     * @param user to determine which exercises and lectures the user can see
-     * @param course the course for which exercises and lectures should be fetched
-     */
-    private void fetchExercisesAndLecturesForCourse(User user, Course course) {
-        // fetch visible lectures exercises for each course after filtering
-        Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
-        List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
-        course.setExercises(new HashSet<>(exercises));
-        course.setLectures(lectures);
     }
 
     private boolean isActiveCourseVisibleForUser(User user, Course course) {
@@ -164,6 +157,18 @@ public class CourseService {
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+    }
+
+    /**
+     * Get one course by id.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public Course findOneWithLecturesAndExams(Long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
     }
 
     /**
