@@ -12,10 +12,12 @@ import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
-    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService) {}
+    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService, public exerciseGroupService: ExerciseGroupService) {}
 
     /**
      * Resolves the route and initializes text exercise
@@ -28,10 +30,17 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
                 map((textExercise: HttpResponse<TextExercise>) => textExercise.body!),
             );
         } else if (route.params['courseId']) {
-            return this.courseService.find(route.params['courseId']).pipe(
-                filter((res) => !!res.body),
-                map((course: HttpResponse<Course>) => new TextExercise(course.body!)),
-            );
+            if (route.params['examId'] && route.params['groupId']) {
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
+                    filter((res) => !!res.body),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(null, exerciseGroup.body!)),
+                );
+            } else {
+                return this.courseService.find(route.params['courseId']).pipe(
+                    filter((res) => !!res.body),
+                    map((course: HttpResponse<Course>) => new TextExercise(course.body!, null)),
+                );
+            }
         }
         return Observable.of(new TextExercise());
     }
