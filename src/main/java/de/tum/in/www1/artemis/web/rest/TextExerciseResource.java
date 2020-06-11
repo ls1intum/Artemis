@@ -200,6 +200,7 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
+        // TODO: Should we leave this activated in case the exercise is changed during the exam?
         // Don't notify students about changes if the exercise was updated in exam-mode
         if (notificationText != null && !isExamMode) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
