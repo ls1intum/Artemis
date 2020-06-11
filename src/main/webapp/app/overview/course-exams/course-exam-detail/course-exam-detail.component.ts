@@ -16,7 +16,6 @@ export class CourseExamDetailComponent {
     constructor(private router: Router) {}
 
     openExam(): void {
-        // TODO: load student exam
         if (moment(this.exam.endDate).isAfter(moment())) {
             this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
                 state: {
