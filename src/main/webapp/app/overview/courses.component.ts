@@ -68,9 +68,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
-                // TODO: Stephan Krusche: this is deactivate at the moment, I think we need a more generic solution in more components, e.g. using the the existing notification
-                // sent to the client, when a quiz starts. This should slide in from the side.
-                // this.subscribeForQuizStartForCourses();
             },
             (response: string) => this.onError(response),
         );
@@ -108,38 +105,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
             }
             this.nextRelevantCourse = relevantExercise.course!;
             return relevantExercise;
-        }
-    }
-
-    /**
-     * TODO: this code is currently unused: instead use a high priority notification and display a notification to the students in the notification center
-     */
-    subscribeForQuizStartForCourses() {
-        if (this.courses) {
-            // subscribe to quiz exercises that are live
-            if (!this.quizExercisesChannels) {
-                this.quizExercisesChannels = this.courses.map((course) => {
-                    return '/topic/courses/' + course.id + '/quizExercises';
-                });
-                // quizExercises channels => react to the start of a quiz exercise for all courses
-                this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.subscribe(channel));
-                this.quizExercisesChannels.forEach((channel) =>
-                    this.jhiWebsocketService.receive(channel).subscribe(
-                        (quizExercise: QuizExercise) => {
-                            // TODO: conversion to moment is missing for exercise dates
-                            if (quizExercise.started) {
-                                // ignore set visible
-                                this.isQuizLive = true;
-                                this.liveQuiz = quizExercise;
-                                this.liveQuizCourse = quizExercise.course!;
-                            } else if (quizExercise.visibleToStudents) {
-                                // TODO: show the exercise at the top
-                            }
-                        },
-                        () => {},
-                    ),
-                );
-            }
         }
     }
 }
