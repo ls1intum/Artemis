@@ -231,7 +231,7 @@
         ></button>
         <ng-template #popContent style="max-width: 660px;">
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+            <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip(exercise.studentParticipations[0])"></div>
             <div class="row" style="margin: 0; max-width: 100%;">
                 <pre
                     style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"

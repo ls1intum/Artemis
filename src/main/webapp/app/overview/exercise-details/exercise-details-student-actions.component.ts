@@ -265,10 +265,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     /**
      * Inserts the correct link to the translated ssh tip.
      */
-    getSshKeyTip(participation: ProgrammingExerciseStudentParticipation) {
+    getSshKeyTip(participation: Participation) {
+        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         return this.translateService
             .instant('artemisApp.exerciseActions.sshKeyTip')
-            .replace(/{link:(.*)}/, '<a href="' + this.getSshKeyLink(participation.repositoryUrl) + '" target="_blank">$1</a>')
+            .replace(/{link:(.*)}/, '<a href="' + this.getSshKeyLink(programmingParticipation.repositoryUrl) + '" target="_blank">$1</a>')
             .replace(/{server:(.*)\/(.*)}/, this.usesBitbucket ? '$1' : '$2');
     }
 
