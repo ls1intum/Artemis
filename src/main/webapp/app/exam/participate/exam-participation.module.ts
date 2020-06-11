@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
+import { ExamCoverComponent } from './exam-cover/exam-cover.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
