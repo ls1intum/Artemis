@@ -18,13 +18,13 @@ export class CourseExamDetailComponent {
     openExam(): void {
         // TODO: load student exam
         if (moment(this.exam.endDate).isAfter(moment())) {
-            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'summary'], {
+            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
                 state: {
                     exam: this.exam,
                 },
             });
         } else {
-            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
+            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'summary'], {
                 state: {
                     exam: this.exam,
                 },
