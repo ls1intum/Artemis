@@ -82,7 +82,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
-    // Create an empty list per default
+    // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
 

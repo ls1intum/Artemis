@@ -12,7 +12,7 @@ public class InetSocketAddressValidator {
      * This works with IPv4, IPv6 and hostnames.
      *
      * @param hostnameAndPort the hostname and port, seperated by ':' (e.g. 'localhost:61613')
-     * @return an optional containing the InetSocketAddress if the conversion was possible, or an empty optional if the input was invalid
+     * @return an Optional containing the InetSocketAddress if the conversion was possible, or an empty Optional if the input was invalid
      */
     public static Optional<InetSocketAddress> getValidAddress(String hostnameAndPort) {
         // https://stackoverflow.com/a/2347356/3802758

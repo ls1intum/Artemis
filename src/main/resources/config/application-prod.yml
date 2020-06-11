@@ -131,11 +131,3 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de                                                                  #default value, can be overridden on the server
     imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint            #default value, can be overridden on the server
-
-# Eureka configuration
-eureka:
-    instance:
-        prefer-ip-address: true
-    client:
-        service-url:
-            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/

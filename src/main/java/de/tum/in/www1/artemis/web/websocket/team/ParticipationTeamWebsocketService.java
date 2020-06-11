@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.websocket.team;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +49,7 @@ public class ParticipationTeamWebsocketService {
 
     private final SimpUserRegistry simpUserRegistry;
 
-    private final Map<String, String> destinationTracker = new HashMap<>();
+    private final Map<String, String> destinationTracker;
 
     private final Map<String, Instant> lastTypingTracker;
 
@@ -80,8 +79,12 @@ public class ParticipationTeamWebsocketService {
         this.modelingSubmissionService = modelingSubmissionService;
         this.hazelcastInstance = hazelcastInstance;
 
+        // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
+        // participationId-username -> timestamp
         this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
+
+        this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
     }
 
     /**
@@ -119,8 +122,7 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
-        // lastTypingTracker.putIfAbsent(participationId, new HashMap<>());
-        lastTypingTracker.put(participationId + "-" + principal.getName(), Instant.now());
+        updateValue(lastTypingTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
     }
 
@@ -187,7 +189,7 @@ public class ParticipationTeamWebsocketService {
         }
 
         // update the last action date for the user and send out list of team members
-        lastActionTracker.put(participationId + "-" + principal.getName(), Instant.now());
+        updateValue(lastActionTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
         SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
@@ -204,7 +206,7 @@ public class ParticipationTeamWebsocketService {
         final String destination = getDestination(participationId);
 
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
-                .map(login -> new OnlineTeamStudentDTO(login, lastTypingTracker.get(participationId + "-" + login), lastActionTracker.get(participationId + "-" + login)))
+                .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login)))
                 .collect(Collectors.toList());
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
@@ -308,5 +310,13 @@ public class ParticipationTeamWebsocketService {
 
     public void clearDestinationTracker() {
         this.destinationTracker.clear();
+    }
+
+    private void updateValue(Map<String, Instant> map, long participationId, String username) {
+        map.put(participationId + "-" + username, Instant.now());
+    }
+
+    private Instant getValue(Map<String, Instant> map, long participationId, String username) {
+        return map.get(participationId + "-" + username);
     }
 }
