@@ -8,6 +8,7 @@ import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsock
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -30,6 +32,7 @@ import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -51,6 +54,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
@@ -77,6 +81,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private ExerciseService exerciseService;
 
     private static final int LOGGING_DELAY_SECONDS = 10;
+
+    // Create an empty list per default
+    @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
+    private List<String> brokerAddresses;
+
+    @Value("${spring.websocket.broker.username}")
+    private String brokerUsername;
+
+    @Value("${spring.websocket.broker.password}")
+    private String brokerPassword;
 
     public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
             TaskScheduler taskScheduler, AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
@@ -121,21 +135,30 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // increase the limit of concurrent connections (default is 1024 which is much too low)
         // config.setCacheLimit(10000);
         //
-        config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry")
-                .setTcpClient(createTcpClient());
+
+        TcpOperations<byte[]> tcpClient = createTcpClient();
+        if (tcpClient != null) {
+            log.info("Enabling StompBrokerRelay for WebSocket messages");
+            config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry")
+                    .setClientLogin(brokerUsername).setClientPasscode(brokerPassword).setSystemLogin(brokerUsername).setSystemPasscode(brokerPassword).setTcpClient(tcpClient);
+        }
+        else {
+            log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
+        }
     }
 
     // https://github.com/spring-projects/spring-framework/issues/17057
     // https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> addressList = new ArrayList<>();
-        // TODO: Simon Leiß: Load URLs from config
-        addressList.add(new InetSocketAddress("192.168.0.1", 61613));
-        addressList.add(new InetSocketAddress("192.168.0.2", 61613));
-        addressList.add(new InetSocketAddress("192.168.0.3", 61613));
-        addressList.add(new InetSocketAddress("192.168.0.4", 61613));
-        Iterator<InetSocketAddress> addressIterator = Iterables.cycle(addressList).iterator();
-        return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
+        final List<InetSocketAddress> addressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
+        if (!addressList.isEmpty()) {
+            // This provides a round-robin use of the brokers, we only want to fail over to the fallback broker if the primary broker fails, so we have the same order of brokers in
+            // all nodes
+            Iterator<InetSocketAddress> addressIterator = Iterables.cycle(addressList).iterator();
+            return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
+        }
+        return null;
     }
 
     @Override

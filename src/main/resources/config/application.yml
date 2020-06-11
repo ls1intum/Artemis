@@ -132,6 +132,11 @@ spring:
             max-request-size: 10MB
     lifecycle:
         timeout-per-shutdown-phase: 10
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
 
 server:
     servlet:
