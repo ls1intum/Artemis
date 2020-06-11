@@ -131,18 +131,24 @@ export class NotificationService {
                 this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
                     // TODO: enhance condition.
                     if (quizExercise.started) {
-                        this.addNotificationToObserver(this.createNotificationFromStartedQuizExercise(quizExercise));
+                        this.addNotificationToObserver(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });
             }
         });
     }
 
-    private createNotificationFromStartedQuizExercise(quizExercise: QuizExercise): GroupNotification {
-        // TODO: use the quizExercise to create the notification text, notificationDate and target
+    private static createNotificationFromStartedQuizExercise(quizExercise: QuizExercise): GroupNotification {
         return {
             title: 'Quiz started',
-            text: 'Quiz "TODO" just started.',
+            text: 'Quiz "' + quizExercise.title + '" just started.',
+            notificationDate: moment(),
+            target: JSON.stringify({
+                course: { id: quizExercise.course!.id },
+                mainPage: 'courses',
+                entity: 'exercises',
+                id: quizExercise.id,
+            }),
         } as GroupNotification;
     }
 
