@@ -4,6 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
@@ -53,6 +54,15 @@ const routes: Routes = [
                 data: {
                     authorities: ['ROLE_USER'],
                     pageTitle: 'overview.statistics',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'exams',
+                component: CourseExamsComponent,
+                data: {
+                    authorities: ['ROLE_USER'],
+                    pageTitle: 'overview.exams',
                 },
                 canActivate: [UserRouteAccessService],
             },

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.service.WebsocketMessagingService.getExerciseIdFromResultDestination;
+import static de.tum.in.www1.artemis.service.WebsocketMessagingService.isResultNonPersonalDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
@@ -42,9 +45,14 @@ import org.springframework.web.socket.sockjs.transport.handler.WebSocketTranspor
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 
 @Configuration
 public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
@@ -63,14 +71,23 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private ParticipationService participationService;
 
+    private AuthorizationCheckService authorizationCheckService;
+
+    private UserService userService;
+
+    private ExerciseService exerciseService;
+
     private static final int LOGGING_DELAY_SECONDS = 10;
 
     public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            TaskScheduler taskScheduler) {
+            TaskScheduler taskScheduler, AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
         this.env = env;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.taskScheduler = taskScheduler;
+        this.authorizationCheckService = authorizationCheckService;
+        this.exerciseService = exerciseService;
+        this.userService = userService;
     }
 
     @Autowired
@@ -211,6 +228,10 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
             }
+            if (isResultNonPersonalDestination(destination)) {
+                Long exerciseId = getExerciseIdFromResultDestination(destination);
+                return isUserTAOrHigherForExercise(principal, exerciseId);
+            }
             return true;
         }
 
@@ -227,5 +248,11 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         return participation.isOwnedBy(principal.getName());
+    }
+
+    private boolean isUserTAOrHigherForExercise(Principal principal, Long exerciseId) {
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

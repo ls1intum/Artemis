@@ -38,6 +38,7 @@
             "startAssessment": "Start new assessment",
             "new": "NEW",
             "noSubmissions": "There are currently no submissions for you to grade",
+            "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
             "complaints": "Complaints",
             "noComplaints": "There are no complaints at this moment.",
             "noComplaintsDisplayed": "There are no complaints at this moment (excluding complaints about your own assessment)",

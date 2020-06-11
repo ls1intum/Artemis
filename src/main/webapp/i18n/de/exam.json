@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "exam": {
+            "title": "Exam"
+        },
+        "examManagement": {
+            "title": "Klausur Verwaltung"
+        }
+    }
+}
