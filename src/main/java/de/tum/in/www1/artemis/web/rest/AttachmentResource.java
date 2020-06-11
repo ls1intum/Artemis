@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import liquibase.util.file.FilenameUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,15 +86,15 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
-        handleUploadAsEmbeddingTrainingResource(result);
+        handleUploadAsEmbeddingTrainingResource(attachment);
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
-    private void handleUploadAsEmbeddingTrainingResource(@RequestBody Attachment attachment) {
+    private void handleUploadAsEmbeddingTrainingResource(Attachment attachment) {
         final String fileName = attachment.getLink().substring(attachment.getLink().lastIndexOf("/") + 1);
         final String fileExtension = FilenameUtils.getExtension(fileName);
-        if (fileExtension.equals("pdf") && attachment.getUseForEmbeddingTraining() ) {
+        if (fileExtension.equals("pdf") && attachment.getUseForEmbeddingTraining()) {
             embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         }
     }
@@ -118,7 +119,7 @@ public class AttachmentResource {
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
-        handleUploadAsEmbeddingTrainingResource(result);
+        handleUploadAsEmbeddingTrainingResource(attachment);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
     }
 

@@ -11,6 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
@@ -34,6 +35,7 @@ public class Attachment implements Serializable {
     private String prevLink;
 
     @Transient
+    @JsonProperty
     private boolean useForEmbeddingTraining;
 
     @Id

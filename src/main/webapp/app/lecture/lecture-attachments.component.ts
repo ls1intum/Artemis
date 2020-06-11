@@ -109,6 +109,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     editAttachment(attachment: Attachment) {
         this.attachmentToBeCreated = attachment;
+        this.attachmentToBeCreated.useForEmbeddingTraining = true
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
@@ -170,10 +171,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentFile = attachmentFile;
             this.attachmentToBeCreated!.link = attachmentFile['name'];
         }
-    }
-
-    updateUseForEmbeddingTraining(useForEmbeddingTraining: any) {
-        this.attachmentToBeCreated!.useForEmbeddingTraining = useForEmbeddingTraining;
     }
 
     /**

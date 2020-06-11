@@ -150,10 +150,13 @@
                         <div class="form-check">
                             <input
                                 type="checkbox"
-                                id="useForEmbeddingTraining"
+                                class="form-check-input"
+                                id="useForEmbeddingTraining{{ attachmentToBeCreated.id }}"
+                                name="useForEmbeddingTraining"
                                 [(ngModel)]="attachmentToBeCreated.useForEmbeddingTraining"
+                                [ngModelOptions]="{standalone: true}"
                             />
-                            <label class="form-check-label" for="useForEmbeddingTraining" jhiTranslate= "artemisApp.lecture.attachments.useForEmbeddingTraining">
+                            <label class="form-check-label" for="useForEmbeddingTraining{{ attachmentToBeCreated.id }}" jhiTranslate= "artemisApp.lecture.attachments.useForEmbeddingTraining">
                                 Use file to improve the quality of the automatic assessment of text exercises
                             </label>
                         </div>
