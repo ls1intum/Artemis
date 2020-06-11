@@ -93,6 +93,8 @@ registerRoute(
 // But make sure they're updating in the background for next use
 registerRoute(/\.(?:js|css)$/, new StaleWhileRevalidate());
 
+registerRoute(/(https:\/\/)?([^\/\s]+\/)api\/.*/, new StaleWhileRevalidate());
+
 // Cache images
 // But clean up after a while
 registerRoute(
@@ -110,7 +112,7 @@ registerRoute(
 );
 
 // Anything authentication related MUST be performed online
-registerRoute(/(https:\/\/)?([^\/\s]+\/)api\/authenticate\/.*/, new NetworkOnly());
+registerRoute(/(https:\/\/)?([^\/\s]+\/)api\/authenticate\/.*/, new NetworkFirst());
 
 // Database access is only supported while online
-registerRoute(/(https:\/\/)?([^\/\s]+\/)database\/.*/, new NetworkOnly());
+// registerRoute(/(https:\/\/)?([^\/\s]+\/)database\/.*/, new NetworkOnly());

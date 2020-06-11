@@ -203,9 +203,9 @@
         "webpack:dev": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --env.stats=minimal",
         "webpack:dev-verbose": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --profile --progress --env.stats=normal",
         "webpack:build:main": "yarn run webpack --config webpack/webpack.dev.js --env.stats=minimal",
-        "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
+        "webpack:build": "yarn run cleanup && yarn run webpack:build:main && yarn run build:pwa:web",
         "webpack:prod:main": "yarn run webpack --config webpack/webpack.prod.js --profile",
-        "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
+        "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www && yarn run build:pwa:web ",
         "webpack:test": "yarn run test",
         "webpack-dev-server": "node --max_old_space_size=5120 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js"

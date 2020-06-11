@@ -16,7 +16,7 @@ platformBrowserDynamic()
     .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
     .then(() => {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./service-worker');
+            navigator.serviceWorker.register('./service-worker.js');
         }
     })
     .catch((err) => console.error(err));
