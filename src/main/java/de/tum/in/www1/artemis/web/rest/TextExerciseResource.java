@@ -124,18 +124,13 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
         }
 
-        // Fetch course from database to make sure client didn't change groups
-        Course course;
+        // If an exerciseGroup is set, the textExercise is created in exam-mode
         boolean isExamMode = textExercise.getExerciseGroup() != null;
-        if (isExamMode) {
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
-            course = courseService.findOne(exerciseGroup.getExam().getCourse().getId());
-        }
-        else {
-            course = courseService.findOne(textExercise.getCourse().getId());
-        }
 
-        // Check that user has the rights to create the exercise
+        // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
+        Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
+
+        // Check that the user is authorized to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -172,16 +167,29 @@ public class TextExerciseResource {
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
+
+        // Course and exerciseGroup must not be set simultaneously
+        if (textExercise.getCourse() != null && textExercise.getExerciseGroup() != null) {
+            throw new BadRequestAlertException("An update for a textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
+        }
+
+        // If an exerciseGroup is set, the textExercise is updated in exam-mode
+        boolean isExamMode = textExercise.getExerciseGroup() != null;
+
+        // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
+        Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
+
+        // Check that the user is authorized to update the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
         if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        // TODO: Should we forbid conversion between exam <-> normal text-exercise?
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
@@ -192,7 +200,8 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        if (notificationText != null) {
+        // Don't notify students about changes if the exercise was updated in exam-mode
+        if (notificationText != null && !isExamMode) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
@@ -371,6 +380,24 @@ public class TextExerciseResource {
         }
         else {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Retrieve the Course for a given TextExercise.
+     * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
+     * Otherwise the Course is already set and the id can be used to retrieve the Course again from the database.
+     *
+     * @param textExercise the TextExercise for which the course is retrieved
+     * @return the Course for the TextExercise
+     */
+    private Course retrieveCourseThroughExerciseGroupOrGivenCourse(TextExercise textExercise) {
+        if (textExercise.getExerciseGroup() != null) {
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            return courseService.findOne(exerciseGroup.getExam().getCourse().getId());
+        }
+        else {
+            return courseService.findOne(textExercise.getCourse().getId());
         }
     }
 }
