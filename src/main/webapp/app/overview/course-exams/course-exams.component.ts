@@ -39,6 +39,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     isVisible(exam: Exam): boolean {
-        return moment(exam.visibleDate).isAfter(moment());
+        return exam.visibleDate ? moment(exam.visibleDate).isBefore(moment()) : false;
     }
 }

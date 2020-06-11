@@ -120,7 +120,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * check if there is a exam which should be visivle
+     * check if there is at least one exam which should be shown
      */
     hasVisibleExams(): boolean {
         for (const exam of this.course?.exams!) {

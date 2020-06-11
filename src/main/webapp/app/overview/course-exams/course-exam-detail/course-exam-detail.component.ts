@@ -31,4 +31,8 @@ export class CourseExamDetailComponent {
             });
         }
     }
+
+    get examDuration(): number {
+        return Math.round(moment.duration(moment(this.exam.endDate).diff(moment(this.exam.startDate))).asMinutes());
+    }
 }

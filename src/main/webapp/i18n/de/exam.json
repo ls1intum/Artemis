@@ -1,7 +1,12 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Exam",
+            "overview": {
+                "start": "Beginn: {{start}}",
+                "duration": "Dauer: {{duration}}",
+                "maxPoints": "max. Punkte: {{points}}"
+            }
         },
         "examManagement": {
             "title": "Klausur Verwaltung"
