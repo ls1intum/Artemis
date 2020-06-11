@@ -1,10 +1,23 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Exam",
+            "visible": "Visible",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "duration": "Duration",
+            "nrOfStudents": "Registered Students"
         },
         "examManagement": {
-            "title": "Exam Management"
+            "delete": {
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Exam to confirm."
+            },
+            "title": "Exam Management",
+            "exerciseGroups": "Exercise Groups",
+            "assessmentDashboard": "Assessment Dashboard",
+            "studentExams": "Student Exams",
+            "students": "Students"
         }
     }
 }
