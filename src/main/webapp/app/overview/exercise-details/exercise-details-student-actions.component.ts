@@ -15,6 +15,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { take, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -41,6 +46,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
     public useSsh = false;
 
+    private usesBitbucket = true;
     private user: User;
 
     constructor(
@@ -50,6 +56,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
+        private translateService: TranslateService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -64,6 +72,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                take(1),
+                tap((info: ProfileInfo) => {
+                    this.usesBitbucket = info.activeProfiles.includes('bitbucket');
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -73,15 +90,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      */
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (this.useSsh) {
+            return this.getSshCloneUrl(programmingParticipation.repositoryUrl);
+        }
         if (programmingParticipation.team) {
             return this.repositoryUrlForTeam(programmingParticipation);
         }
-        if (this.useSsh) {
-            // (https://user)@(bitbucket.ase.in.tum.de)(/scm)/(....git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(....git)
-            return programmingParticipation.repositoryUrl.replace(/^(\w*:\/\/\w*)@(.*?)(:\d*)?\/scm\/(.*)$/, `ssh://git@$2:7999/$4`);
-        } else {
-            return programmingParticipation.repositoryUrl;
-        }
+        return programmingParticipation.repositoryUrl;
     }
 
     /**
@@ -90,13 +105,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * @return repository url with username of current user inserted
      */
     private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
-        if (this.useSsh) {
-            // (https://)(bitbucket.ase.in.tum.de)(/scm)/(...-team1.git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(...-team1.git)
-            return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*?)(:\d*)?\/scm\/(.*)$/, `ssh://git@$2:7999/$4`);
-        } else {
-            // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
-            return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
-        }
+        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+        return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
     /**
@@ -239,5 +249,38 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
+    }
+
+    /**
+     * Transforms the repository url to a ssh url
+     */
+    getSshCloneUrl(url: string) {
+        if (this.usesBitbucket) {
+            // (https://)(user@)(bitbucket.ase.in.tum.de)(/scm)/(....git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(....git)
+            return url.replace(/^(\w*:\/\/)(\w*?@)?([^/]*?)(:\d*)?\/(scm\/)?(.*)$/, `ssh://git@$3:7999/$6`);
+        } else {
+            return url.replace(/^(\w*:\/\/)(\w*?@)?([^/]*?)(:\d*)\/(.*)$/, `ssh://git@$3:$5`);
+        }
+    }
+
+    /**
+     * Inserts the correct link to the translated ssh tip.
+     */
+    getSshKeyTip(participation: ProgrammingExerciseStudentParticipation) {
+        return this.translateService
+            .instant('artemisApp.exerciseActions.sshKeyTip')
+            .replace(/{link:(.*)}/, '<a href="' + this.getSshKeyLink(participation.repositoryUrl) + '" target="_blank">$1</a>')
+            .replace(/{server:(.*)\/(.*)}/, this.usesBitbucket ? '$1' : '$2');
+    }
+
+    /**
+     * Returns the link to bitbucket or gitlab to manage the users ssh keys
+     */
+    getSshKeyLink(url: string) {
+        if (this.usesBitbucket) {
+            return url.replace(/^(\w*:\/\/[^/]*)\/.*$/, '$1/plugins/servlet/ssh/account/keys');
+        } else {
+            return url.replace(/^(\w*:\/\/[^/]*)\/.*$/, '$1/profile/keys');
+        }
     }
 }

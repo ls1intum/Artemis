@@ -229,8 +229,9 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-        <ng-template #popContent>
+        <ng-template #popContent style="max-width: 660px;">
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
+            <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
             <div class="row" style="margin: 0; max-width: 100%;">
                 <pre
                     style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"
@@ -240,7 +241,7 @@
                     (cbOnError)="onCopyFailure()"
                     >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
                 >
-                <pre class="btn btn-primary" style="margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0;" (click)="useSsh = !useSsh">{{
+                <pre class="btn btn-primary d-inline-flex align-items-center ml-0" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" (click)="useSsh = !useSsh">{{
                     useSsh ? 'USE HTTPS' : 'USE SSH'
                 }}</pre>
             </div>
