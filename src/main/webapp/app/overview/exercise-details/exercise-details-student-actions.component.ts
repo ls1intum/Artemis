@@ -17,7 +17,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { take, tap } from 'rxjs/operators';
 
@@ -77,7 +76,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .pipe(
                 take(1),
                 tap((info: ProfileInfo) => {
-                    this.usesBitbucket = info.activeProfiles.includes('bitbucket');
+                    this.usesBitbucket = (info.activeProfiles || []).includes('bitbucket');
                 }),
             )
             .subscribe();
