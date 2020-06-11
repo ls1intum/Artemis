@@ -129,8 +129,7 @@ export class NotificationService {
                 this.subscribedTopics.push(quizExerciseTopic);
                 this.jhiWebsocketService.subscribe(quizExerciseTopic);
                 this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
-                    // TODO: enhance condition.
-                    if (quizExercise.started) {
+                    if (quizExercise.visibleToStudents && quizExercise.started) {
                         this.addNotificationToObserver(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });
