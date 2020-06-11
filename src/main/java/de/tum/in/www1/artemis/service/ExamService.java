@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,17 @@ public class ExamService {
     public Exam findOne(Long examId) {
         log.debug("Request to get exam : {}", examId);
         return examRepository.findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
+     * Get all exams for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the list of all exams
+     */
+    public List<Exam> findAllByCourseId(Long courseId) {
+        log.debug("REST request to get all exams for Course : {}", courseId);
+        return examRepository.findByCourseId(courseId);
     }
 
     /**
