@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -67,11 +68,13 @@ public class TextExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExerciseGroupService exerciseGroupService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
             Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository) {
+            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -86,6 +89,7 @@ public class TextExerciseResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -115,10 +119,25 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
+        // Course and exerciseGroup must not be set simultaneously
+        if (textExercise.getCourse() != null && textExercise.getExerciseGroup() != null) {
+            throw new BadRequestAlertException("A new textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
+        }
+
+        // Fetch course from database to make sure client didn't change groups
+        Course course;
+        boolean isExamMode = textExercise.getExerciseGroup() != null;
+        if (isExamMode) {
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            course = courseService.findOne(exerciseGroup.getExam().getCourse().getId());
+        }
+        else {
+            course = courseService.findOne(textExercise.getCourse().getId());
+        }
+
+        // Check that user has the rights to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
@@ -127,7 +146,11 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
+
+        // Don't notify tutors if the text exercise is created for an exam
+        if (!isExamMode) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
+        }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
