@@ -83,7 +83,7 @@ public class ParticipationTeamWebsocketService {
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
         // participationId-username -> timestamp
         this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
-
+        // sessionId -> destination
         this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
     }
 
