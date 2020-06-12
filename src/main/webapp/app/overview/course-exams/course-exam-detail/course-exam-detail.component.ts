@@ -16,23 +16,14 @@ export class CourseExamDetailComponent {
     constructor(private router: Router) {}
 
     /**
-     * navigate to /courses/:courseid/exam/:examId/start if exam is visible
-     * navigate to /courses/:courseid/exam/:examId/summary if exam is over
+     * navigate to /courses/:courseid/exam/:examId
      */
     openExam(): void {
-        if (moment(this.exam.endDate).isAfter(moment())) {
-            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'start'], {
-                state: {
-                    exam: this.exam,
-                },
-            });
-        } else {
-            this.router.navigate(['courses', this.course.id, 'exam', this.exam.id, 'summary'], {
-                state: {
-                    exam: this.exam,
-                },
-            });
-        }
+        this.router.navigate(['courses', this.course.id, 'exam', this.exam.id], {
+            state: {
+                exam: this.exam,
+            },
+        });
     }
 
     /**

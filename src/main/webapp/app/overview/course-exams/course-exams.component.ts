@@ -31,7 +31,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
         this.courseUpdatesSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
         });
     }
