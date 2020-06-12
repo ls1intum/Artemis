@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -174,9 +173,8 @@ public class ExamResource {
 
     // TODO: move to a service as public method so it can be reused in other resources
     public <X> Optional<ResponseEntity<X>> checkCourseAccess(Long courseId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return Optional.of(forbidden());
         }
         return Optional.empty();
