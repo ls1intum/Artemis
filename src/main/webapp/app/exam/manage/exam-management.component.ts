@@ -29,25 +29,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        // Mock Values
-        const exam1 = new Exam();
-        exam1.id = 1;
-        exam1.title = 'EIST Exam SS 2020';
-        exam1.visibleDate = moment({ year: 2020, month: 6, day: 6, hour: 11, m: 45, s: 0, ms: 0 });
-        exam1.startDate = moment({ year: 2020, month: 6, day: 6, hour: 12, m: 0, s: 0, ms: 0 });
-        exam1.endDate = moment({ year: 2020, month: 6, day: 6, hour: 14, m: 0, s: 0, ms: 0 });
-        exam1.registeredUsers = 1186;
-        exam1.isAtLeastInstructor = true;
-        exam1.isAtLeastTutor = true;
-        const exam2 = new Exam();
-        exam2.id = 2;
-        exam2.title = 'EIST Repeat Exam SS 2020';
-        exam2.visibleDate = moment({ year: 2020, month: 8, day: 12, hour: 10, m: 45, s: 0, ms: 0 });
-        exam2.startDate = moment({ year: 2020, month: 8, day: 12, hour: 11, m: 0, s: 0, ms: 0 });
-        exam2.endDate = moment({ year: 2020, month: 8, day: 12, hour: 13, m: 0, s: 0, ms: 0 });
-        exam2.registeredUsers = 419;
-        exam2.isAtLeastTutor = true;
-        this.exams = [exam1, exam2];
+        this.exams = this.examManagementService.findAllForCourse(this.courseId);
+        console.log('Exam array size: '.concat(String(this.exams.length)));
     }
 
     /**
@@ -66,7 +49,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      */
     deleteExam(examId: number) {
         console.log('Delete pressed');
-        this.exams.filter((t) => t.id !== examId);
+        this.examManagementService.delete(this.courseId, examId);
         this.eventManager.broadcast({
             name: 'examListModification',
             content: 'Deleted an exam',
@@ -74,6 +57,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.next('');
         // also delete from server
     }
+
     trackId(index: number, item: Exam) {
         return item.id;
     }
