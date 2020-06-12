@@ -472,6 +472,10 @@ public abstract class Exercise implements Serializable {
         this.exerciseGroup = exerciseGroup;
     }
 
+    public boolean hasExerciseGroup() {
+        return this.exerciseGroup != null;
+    }
+
     public Set<ExampleSubmission> getExampleSubmissions() {
         return exampleSubmissions;
     }

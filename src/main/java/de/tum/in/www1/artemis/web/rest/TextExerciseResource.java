@@ -124,8 +124,8 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
         }
 
-        // If an exerciseGroup is set, the textExercise is created in exam-mode
-        boolean isExamMode = textExercise.getExerciseGroup() != null;
+        // If an exerciseGroup is set, we assume that the textExercise is created for an exam
+        boolean isExamMode = textExercise.hasExerciseGroup();
 
         // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
         Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
@@ -174,7 +174,7 @@ public class TextExerciseResource {
         }
 
         // If an exerciseGroup is set, the textExercise is updated in exam-mode
-        boolean isExamMode = textExercise.getExerciseGroup() != null;
+        boolean isExamMode = textExercise.hasExerciseGroup();
 
         // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
         Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
