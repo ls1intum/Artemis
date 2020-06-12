@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
@@ -18,7 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -81,7 +79,7 @@ public class ExamResource {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        Optional<ResponseEntity<Exam>> courseAccessFailure = checkCourseAccess(courseId);
+        Optional<ResponseEntity<Exam>> courseAccessFailure = examService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
         }
@@ -107,7 +105,7 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        Optional<ResponseEntity<Exam>> courseAccessFailure = checkCourseAccess(courseId);
+        Optional<ResponseEntity<Exam>> courseAccessFailure = examService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
         }
@@ -133,7 +131,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
         log.debug("REST request to get Exam : {}", examId);
-        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
         Exam exam = examService.findOne(examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exam));
     }
@@ -149,7 +147,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to get all exams for Course : {}", courseId);
-        Optional<ResponseEntity<List<Exam>>> courseAccessFailure = checkCourseAccess(courseId);
+        Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examService.checkCourseAccess(courseId);
         return courseAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findAllByCourseId(courseId)));
     }
 
@@ -165,7 +163,7 @@ public class ExamResource {
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
         log.info("REST request to delete Exam : {}", examId);
 
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -180,30 +178,5 @@ public class ExamResource {
         examService.delete(examId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
-    }
-
-    // TODO: move to a service as public method so it can be reused in other resources
-    public <X> Optional<ResponseEntity<X>> checkCourseAccess(Long courseId) {
-        Course course = courseService.findOne(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return Optional.of(forbidden());
-        }
-        return Optional.empty();
-    }
-
-    // TODO: move to a service as public method so it can be reused in other resources
-    private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Long examId) {
-        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccess(courseId);
-        if (courseAccessFailure.isPresent()) {
-            return courseAccessFailure;
-        }
-        Optional<Exam> exam = examRepository.findById(examId);
-        if (exam.isEmpty()) {
-            return Optional.of(notFound());
-        }
-        if (!exam.get().getCourse().getId().equals(courseId)) {
-            return Optional.of(forbidden());
-        }
-        return Optional.empty();
     }
 }
