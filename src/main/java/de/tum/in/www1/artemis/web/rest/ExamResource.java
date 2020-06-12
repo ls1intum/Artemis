@@ -70,8 +70,9 @@ public class ExamResource {
      *
      * @param courseId  the course to which the exam belongs
      * @param exam      the exam to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
+     *
      * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      */
     @PostMapping("/courses/{courseId}/exams")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
@@ -97,8 +98,8 @@ public class ExamResource {
      *
      * @param courseId      the course to which the exam belongs
      * @param updatedExam   the exam to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the updated exam or status 403 (FORBIDDEN) | 404 (NOT FOUND)
      */
     @PutMapping("/courses/{courseId}/exams")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
