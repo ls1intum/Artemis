@@ -63,7 +63,11 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId} : Get a exam by id
+     * POST /courses/{courseId}/exams/{examId} : Get a exam by id
+     *
+     * @param courseId the id of the course to which the exam belongs
+     * @param examId   the id of the exam to get
+     * @return ResponseEntity with exam in the body if it can be found, otherwise not found
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
