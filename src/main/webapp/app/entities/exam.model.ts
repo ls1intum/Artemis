@@ -21,8 +21,4 @@ export class Exam implements BaseEntity {
     public course: Course;
     public studentExams: StudentExam[] | null;
     public exerciseGroups: ExerciseGroup[] | null;
-
-    // helper Attributes
-    public isAtLeastInstructor = false;
-    public isAtLeastTutor = false;
 }

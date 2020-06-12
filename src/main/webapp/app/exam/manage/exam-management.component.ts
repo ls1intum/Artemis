@@ -10,6 +10,9 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -17,9 +20,10 @@ import { AlertService } from 'app/core/alert/alert.service';
     styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
-    courseId: number;
-    predicate: string;
+    private course: Course;
     exams: Exam[];
+    isAtLeastInstructor = false;
+    predicate: string;
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -30,15 +34,49 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     };
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    constructor(private route: ActivatedRoute, private examManagementService: ExamManagementService, private eventManager: JhiEventManager, private jhiAlertService: AlertService) {
+    constructor(
+        private route: ActivatedRoute,
+        private courseService: CourseManagementService,
+        private examManagementService: ExamManagementService,
+        private eventManager: JhiEventManager,
+        private accountService: AccountService,
+        private jhiAlertService: AlertService,
+    ) {
         this.predicate = 'id';
+    }
+
+    /**
+     * Initialize the course and all exams when this view is initialised.
+     * Subscribes to 'examListModification' event.
+     * @see registerChangeInExams
+     */
+    ngOnInit(): void {
+        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
+            (res: HttpResponse<Course>) => {
+                this.course = res.body!;
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                this.loadAll();
+                this.registerChangeInExams();
+            },
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+        );
+    }
+
+    /**
+     * unsubscribe on component destruction
+     */
+    ngOnDestroy() {
+        if (!this.eventSubscriber === undefined) {
+            this.eventManager.destroy(this.eventSubscriber);
+        }
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
      * Load all exams for a course.
      */
     loadAll() {
-        this.examManagementService.findAllForCourse(this.courseId).subscribe(
+        this.examManagementService.findAllForCourse(this.course.id).subscribe(
             (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
             },
@@ -61,7 +99,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number) {
-        this.examManagementService.delete(this.courseId, examId).subscribe(
+        this.examManagementService.delete(this.course.id, examId).subscribe(
             () => {
                 this.eventManager.broadcast(this.examListModificationDeleteEvent);
                 this.dialogErrorSource.next('');
@@ -70,28 +108,12 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Track the items on the Exams Table
+     * @param index {number}
+     * @param item {Exam}
+     */
     trackId(index: number, item: Exam) {
         return item.id;
-    }
-
-    /**
-     * Initialize the courseId and all exams when this view is initialised.
-     * Subscribes to 'examListModification' event.
-     * @see registerChangeInExams
-     */
-    ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.loadAll();
-        this.registerChangeInExams();
-    }
-
-    /**
-     * unsubscribe on component destruction
-     */
-    ngOnDestroy() {
-        if (!this.eventSubscriber === undefined) {
-            this.eventManager.destroy(this.eventSubscriber);
-        }
-        this.dialogErrorSource.unsubscribe();
     }
 }
