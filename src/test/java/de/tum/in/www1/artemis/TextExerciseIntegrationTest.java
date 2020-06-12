@@ -165,6 +165,43 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
+        assertThat(updatedTextExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(updatedTextExercise.getCourse().getId()).as("courseId was not updated").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExerciseForExam() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        // Update certain attributes of text exercise
+        String updateTitle = "After";
+        DifficultyLevel updateDifficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(updateTitle);
+        textExercise.setDifficulty(updateDifficulty);
+
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
+
+        assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
+        assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
+        assertThat(updatedTextExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_courseAndExerciseGroupSet() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setExerciseGroup(exerciseGroup);
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
