@@ -51,11 +51,27 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * subscribes to courseListModification event
+     */
+    registerChangeInExams() {
+        this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
+            console.log('reloading');
+            this.loadAll();
+        });
+    }
+
+    /**
      * Deletes the exam
      * @param examId id the course that will be deleted
      */
     deleteExam(examId: number) {
+        console.log('Delete pressed');
         this.exams.filter((t) => t.id !== examId);
+        this.eventManager.broadcast({
+            name: 'examListModification',
+            content: 'Deleted an exam',
+        });
+        this.dialogErrorSource.next('');
         // also delete from server
     }
     trackId(index: number, item: Exam) {
@@ -68,6 +84,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
+        this.registerChangeInExams();
     }
 
     /**

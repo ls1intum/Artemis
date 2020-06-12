@@ -111,18 +111,6 @@
                             <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
                             <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
                         </td>
-                        <td jhiOrionFilter [showInOrionWindow]="true">
-                            <button
-                                *ngIf="course.isAtLeastTutor"
-                                type="submit"
-                                [routerLink]="['/course-management', course.id, 'exercises']"
-                                class="btn btn-primary btn-sm mr-1 mb-1"
-                                id="exercises-ide-button-{{ course.id }}"
-                            >
-                                <fa-icon [icon]="'list-alt'"></fa-icon>
-                                <span>{{ 'entity.action.exercise' | translate }}</span>
-                            </button>
-                        </td>
                         <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical mr-1 mb-1">
