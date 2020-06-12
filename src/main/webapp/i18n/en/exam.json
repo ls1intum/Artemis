@@ -4,7 +4,7 @@
             "title": "Exam",
             "overview": {
                 "start": "Start: {{start}}",
-                "duration": "Duration: {{duration}}",
+                "duration": "Duration: {{duration}} min",
                 "maxPoints": "max. Points: {{points}}"
             }
         },
