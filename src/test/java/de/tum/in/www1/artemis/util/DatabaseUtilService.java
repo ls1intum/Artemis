@@ -213,11 +213,11 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
-        exerciseRepo.deleteAll();
         studentExamRepository.deleteAll();
+        exerciseRepo.deleteAll();
+        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         exerciseGroupRepository.deleteAll();
         examRepository.deleteAll();
-        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
