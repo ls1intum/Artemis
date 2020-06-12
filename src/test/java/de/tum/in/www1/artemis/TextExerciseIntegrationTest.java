@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -100,6 +102,30 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(newTextExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(newTextExercise.getCourse().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExerciseForExam() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+
+        String title = "New Exam Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
+        assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(newTextExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(newTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }
 
     @Test
