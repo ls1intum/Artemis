@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.Set;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,5 +16,5 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @Query("SELECT e FROM Exam e WHERE e.course.id = :#{#courseId}")
-    Set<Exam> findByCourseId(@Param("courseId") Long courseId);
+    List<Exam> findByCourseId(@Param("courseId") Long courseId);
 }

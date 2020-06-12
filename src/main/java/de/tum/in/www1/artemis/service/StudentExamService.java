@@ -1,0 +1,85 @@
+package de.tum.in.www1.artemis.service;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
+import java.util.List;
+import java.util.Optional;
+
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+
+/**
+ * Service Implementation for managing StudentExam.
+ */
+@Service
+public class StudentExamService {
+
+    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+
+    private final StudentExamRepository studentExamRepository;
+
+    private final ExamService examService;
+
+    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService) {
+        this.studentExamRepository = studentExamRepository;
+        this.examService = examService;
+    }
+
+    /**
+     * Get one student exam by id.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the entity
+     */
+    @NotNull
+    public StudentExam findOne(Long studentExamId) {
+        log.debug("Request to get student exam : {}", studentExamId);
+        return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    }
+
+    /**
+     * Get all student exams for the given exam.
+     *
+     * @param examId the id of the exam
+     * @return the list of all student exams
+     */
+    public List<StudentExam> findAllByExamId(Long examId) {
+        log.debug("REST request to get all student exams for Exam : {}", examId);
+        return studentExamRepository.findByExamId(examId);
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
+     * that the exam belongs to the given course and the student exam belongs to the given exam.
+     *
+     * @param courseId      The id of the course
+     * @param examId        The id of the exam
+     * @param studentExamId The if of the student exam
+     * @param <X>           The type of the return type of the requesting route so that the
+     *      *               response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
+        Optional<ResponseEntity<X>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure;
+        }
+        Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
+        if (studentExam.isEmpty()) {
+            return Optional.of(notFound());
+        }
+        if (!studentExam.get().getExam().getId().equals(examId)) {
+            return Optional.of(forbidden());
+        }
+        return Optional.empty();
+    }
+}
