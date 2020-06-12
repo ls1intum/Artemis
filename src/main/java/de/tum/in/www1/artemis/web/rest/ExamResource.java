@@ -8,8 +8,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -135,9 +133,9 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
         log.debug("REST request to get Exam : {}", examId);
-        Optional<Exam> exam = examRepository.findById(examId);
-        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, exam);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exam.get()));
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
+        Exam exam = examService.findOne(examId);
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exam));
     }
 
     /**
@@ -167,21 +165,21 @@ public class ExamResource {
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) throws URISyntaxException {
         log.info("REST request to delete Exam : {}", examId);
 
-        Optional<Exam> exam = examRepository.findById(examId);
-
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, exam);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
+        Exam exam = examService.findOne(examId);
+
         User user = userService.getUser();
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.get().getTitle());
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.get().getTitle());
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
 
         examService.delete(examId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
     // TODO: move to a service as public method so it can be reused in other resources
@@ -194,11 +192,12 @@ public class ExamResource {
     }
 
     // TODO: move to a service as public method so it can be reused in other resources
-    private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, @NotNull Optional<Exam> exam) {
+    private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Long examId) {
         Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure;
         }
+        Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
             return Optional.of(notFound());
         }
