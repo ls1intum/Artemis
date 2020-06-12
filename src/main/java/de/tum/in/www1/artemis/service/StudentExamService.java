@@ -23,15 +23,15 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class StudentExamService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+    private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamService examService;
+    private final ExamAccessService examAccessService;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ExamAccessService examAccessService) {
         this.studentExamRepository = studentExamRepository;
-        this.examService = examService;
+        this.examAccessService = examAccessService;
     }
 
     /**
@@ -69,7 +69,7 @@ public class StudentExamService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
-        Optional<ResponseEntity<X>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<X>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }

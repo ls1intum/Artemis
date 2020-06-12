@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.service.ExamService;
+import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.StudentExamService;
 
 /**
@@ -24,19 +23,14 @@ import de.tum.in.www1.artemis.service.StudentExamService;
 @RequestMapping("/api")
 public class StudentExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
 
-    private static final String ENTITY_NAME = "studentExam";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final ExamService examService;
+    private final ExamAccessService examAccessService;
 
     private final StudentExamService studentExamService;
 
-    public StudentExamResource(ExamService examService, StudentExamService studentExamService) {
-        this.examService = examService;
+    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService) {
+        this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
     }
 
@@ -69,7 +63,7 @@ public class StudentExamResource {
     public ResponseEntity<List<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
     }
 }

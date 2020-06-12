@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.service.ExamService;
+import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.ExerciseGroupService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ExerciseGroupResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
 
     private static final String ENTITY_NAME = "exerciseGroup";
 
@@ -39,15 +39,16 @@ public class ExerciseGroupResource {
 
     private final ExerciseGroupService exerciseGroupService;
 
-    private final ExamService examService;
+    private final ExamAccessService examAccessService;
 
     private final UserService userService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamService examService, UserService userService, AuditEventRepository auditEventRepository) {
+    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService,
+            AuditEventRepository auditEventRepository) {
         this.exerciseGroupService = exerciseGroupService;
-        this.examService = examService;
+        this.examAccessService = examAccessService;
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -71,7 +72,7 @@ public class ExerciseGroupResource {
             throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -137,7 +138,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllByExamId(examId)));
     }
 
