@@ -4,7 +4,22 @@
             "title": "Exam"
         },
         "examManagement": {
-            "title": "Exam Management"
+            "title": "Exam Management",
+            "createExam": "Create a new exam",
+            "editExam": "Edit an existing exam",
+            "courseTitle": "Course Title",
+            "examId": "Exam ID",
+            "examTitle": "Exam Title",
+            "visibleDate": "Visible from",
+            "startDate": "Start of working time",
+            "endDate": "End of working time",
+            "maxPoints": "Maximum number of points in exam",
+            "numberOfExercisesInExam": "Number of exercise groups",
+            "randomizeQuestionOrder": "Randomize order of exercise groups",
+            "startText": "Exam start text",
+            "endText": "Exam end text",
+            "confirmationStartText": "Exam start confirmation text",
+            "confirmationEndText": "Exam end confirmation text"
         }
     }
 }

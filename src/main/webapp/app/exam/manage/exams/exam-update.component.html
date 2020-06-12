@@ -1,72 +1,97 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
-            <h2>Create or Edit an Exam</h2>
+            <div *ngIf="!exam.id; else edit">
+                <h2>{{ 'artemisApp.examManagement.createExam' | translate }}</h2>
+            </div>
+
+            <ng-template #edit>
+                <h2>{{ 'artemisApp.examManagement.editExam' | translate }}</h2>
+            </ng-template>
+
             <div>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" *ngIf="exam.course">
-                    <label class="form-control-label" for="course">Course</label>
+                    <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
                     <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
                 </div>
                 <div class="form-group" *ngIf="exam.id">
-                    <label class="form-check-label" for="id">ID</label>
+                    <label class="form-check-label" for="id" jhiTranslate="artemisApp.examManagement.examID">Exam ID</label>
                     <input class="form-control" type="text" id="id" name="id" [value]="exam.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-check-label" for="title">Exam Title</label>
-                    <input class="form-control" placeholder="Exam Title" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
+                    <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.examTitle">Exam Title</label>
+                    <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="Visible Date" [(ngModel)]="exam.visibleDate" name="visibleDate" id="visibleDate"></jhi-date-time-picker>
-                    <small class="form-text text-muted">The exam will be visible starting starting from this date.</small>
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement.visibleDate' | translate }}"
+                        [(ngModel)]="exam.visibleDate"
+                        name="visibleDate"
+                        id="visibleDate"
+                    ></jhi-date-time-picker>
                 </div>
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="Start Date" [(ngModel)]="exam.startDate" name="startDate" id="startDate"></jhi-date-time-picker>
-                    <small class="form-text text-muted">The students can start working on the exam from this date.</small>
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement.startDate' | translate }}"
+                        [(ngModel)]="exam.startDate"
+                        name="startDate"
+                        id="startDate"
+                    ></jhi-date-time-picker>
                 </div>
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="End Date" [(ngModel)]="exam.endDate" name="endDate" id="endDate"></jhi-date-time-picker>
-                    <small class="form-text text-muted">The students can work on the exam until this date.</small>
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement.endDate' | translate }}"
+                        [(ngModel)]="exam.endDate"
+                        name="endDate"
+                        id="endDate"
+                    ></jhi-date-time-picker>
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="maxPoints">Maximum Number of Points in Exam</label>
+                    <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints">Maximum Number of Points in Exam</label>
                     <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="0" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="questionNumber">Number of Questions in Exam</label>
-                    <input id="questionNumber" name="questionNumber" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
+                    <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
+                        >Number of Exercises in Exam</label
+                    >
+                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
                 </div>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="randomizeExerciseOrder" name="randomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
-                <label class="form-check-label" for="randomizeExerciseOrder">
+                <label class="form-check-label" for="randomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder">
                     Randomize Question Order
                 </label>
             </div>
             <hr class="separator" />
             <div class="form-group">
-                <label for="startText">Start Text</label>
+                <label for="startText" jhiTranslate="artemisApp.examManagement.startText">>Start Text</label>
                 <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div class="form-group">
-                <label for="startText">End Text</label>
+                <label for="startText" jhiTranslate="artemisApp.examManagement.endText">End Text</label>
                 <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div class="form-group">
-                <label for="startText">Confirmation Start Text</label>
+                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText">Confirmation Start Text</label>
                 <jhi-markdown-editor id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div class="form-group">
-                <label for="startText">Confirmation End Text</label>
+                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText">Confirmation End Text</label>
                 <jhi-markdown-editor id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div>
-                <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span></button>
-                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary"><fa-icon [icon]="'save'"></fa-icon>&nbsp;<span>Save</span></button>
+                <button type="button" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+                </button>
+                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
             </div>
         </form>
     </div>
