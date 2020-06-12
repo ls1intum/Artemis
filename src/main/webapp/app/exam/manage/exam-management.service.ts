@@ -14,29 +14,8 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
-    // Mock Values
-    private exams: Exam[];
 
-    constructor(private router: Router, private http: HttpClient) {
-        const exam1 = new Exam();
-        exam1.id = 1;
-        exam1.title = 'EIST Exam SS 2020';
-        exam1.visibleDate = moment({ year: 2020, month: 6, day: 6, hour: 11, m: 45, s: 0, ms: 0 });
-        exam1.startDate = moment({ year: 2020, month: 6, day: 6, hour: 12, m: 0, s: 0, ms: 0 });
-        exam1.endDate = moment({ year: 2020, month: 6, day: 6, hour: 14, m: 0, s: 0, ms: 0 });
-        exam1.registeredUsers = 1186;
-        exam1.isAtLeastInstructor = true;
-        exam1.isAtLeastTutor = true;
-        const exam2 = new Exam();
-        exam2.id = 2;
-        exam2.title = 'EIST Repeat Exam SS 2020';
-        exam2.visibleDate = moment({ year: 2020, month: 8, day: 12, hour: 10, m: 45, s: 0, ms: 0 });
-        exam2.startDate = moment({ year: 2020, month: 8, day: 12, hour: 11, m: 0, s: 0, ms: 0 });
-        exam2.endDate = moment({ year: 2020, month: 8, day: 12, hour: 13, m: 0, s: 0, ms: 0 });
-        exam2.registeredUsers = 419;
-        exam2.isAtLeastTutor = true;
-        this.exams = [exam1, exam2];
-    }
+    constructor(private router: Router, private http: HttpClient) {}
 
     /**
      * Create an exam on the server using a POST request.
@@ -89,13 +68,10 @@ export class ExamManagementService {
      * Find all exams for the given course.
      * @param courseId The course id.
      */
-    findAllForCourse(courseId: number): Exam[] {
-        /*return this.http
+    findAllForCourse(courseId: number): Observable<HttpResponse<Exam[]>> {
+        return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
-
-         */
-        return this.exams;
     }
 
     /**
@@ -103,10 +79,8 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The id of the exam to delete.
      */
-    delete(courseId: number, examId: number) {
-        // return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
-        this.exams = this.exams.filter((t) => t.id !== examId);
-        console.log('Deleted from Server, length:'.concat(String(this.exams.length)));
+    delete(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {
