@@ -15,9 +15,9 @@ import { Course } from 'app/entities/course.model';
     styles: [],
 })
 export class ExamCoverComponent implements OnInit {
-    @Input() exam: Exam;
+    // boolean true - use start text, false - use end text
     @Input() startView: boolean;
-
+    exam: Exam;
     course: Course;
     courseId = 0;
 
@@ -27,6 +27,8 @@ export class ExamCoverComponent implements OnInit {
 
     formattedGeneralInformation: SafeHtml | null;
     formattedConfirmationText: SafeHtml | null;
+
+    interval: any;
 
     constructor(private courseService: CourseManagementService, private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService) {}
 
@@ -49,12 +51,28 @@ export class ExamCoverComponent implements OnInit {
         }
     }
 
+    ngOnDestroy() {
+        clearInterval(this.interval);
+    }
+
     /**
      * checks whether confirmation checkbox has been checked and change it's value
      * TODO add alerts for when exam has started but no confirmation etc.?
      */
     updateConfirmation() {
         this.confirmed = !this.confirmed;
+        // check if exam has started yet regularly if confirmed
+        if (this.confirmed) {
+            this.check();
+        } else {
+            this.submitEnabled = false;
+        }
+    }
+
+    check() {
+        this.interval = setInterval(() => {
+            this.submitEnabled = this.enableButton();
+        }, 100);
     }
 
     /**
@@ -63,12 +81,12 @@ export class ExamCoverComponent implements OnInit {
     enableButton() {
         if (this.confirmed) {
             if (this.exam && this.exam.startDate && this.exam.startDate.isBefore(moment())) {
-                return false;
-            } else {
                 return true;
+            } else {
+                return false;
             }
         } else {
-            return true;
+            return false;
         }
     }
 
@@ -97,7 +115,7 @@ export class ExamCoverComponent implements OnInit {
             endText: 'You can answer exam questions either in G o E.',
             confirmationStartText: 'Hereby I confirm that I will obey the stated rules and will write this exam alone with no outside help.',
             confirmationEndText: 'Hereby I confirm that I will obey the stated rules',
-            startDate: moment().add(10, 'minutes'),
+            startDate: moment().add(20, 'seconds'),
             endDate: moment(),
             visibleDate: null,
             maxPoints: null,
