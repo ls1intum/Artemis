@@ -20,6 +20,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     constructor(private route: ActivatedRoute, private courseManagementService: CourseManagementService, private courseCalculationService: CourseScoreCalculationService) {}
 
+    /**
+     * subscribe to changes in the course and fetch course by the path parameter
+     */
     ngOnInit(): void {
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
@@ -33,11 +36,18 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * unsubscribe from all unsubscriptions
+     */
     ngOnDestroy(): void {
         this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
     }
 
+    /**
+     * check for given exam if it is visible
+     * @param {Exam} exam
+     */
     isVisible(exam: Exam): boolean {
         return exam.visibleDate ? moment(exam.visibleDate).isBefore(moment()) : false;
     }

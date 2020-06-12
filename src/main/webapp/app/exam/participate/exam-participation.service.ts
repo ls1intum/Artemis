@@ -15,9 +15,9 @@ export class ExamParticipationService {
     constructor(private router: Router, private http: HttpClient) {}
 
     /**
-     * Update an exam on the server using a PUT request.
+     * Update an StudentExam on the server using a PUT request.
      * @param courseId The course id.
-     * @param exam The exam to update.
+     * @param {StudentExam} studentExam The StudentExam to update.
      */
     update(courseId: number, examId: number, studentExam: StudentExam): Observable<EntityResponseType> {
         return this.http.put<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams/${studentExam.id}`, studentExam, { observe: 'response' });
