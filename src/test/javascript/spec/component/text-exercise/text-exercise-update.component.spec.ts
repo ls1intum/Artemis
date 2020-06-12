@@ -68,11 +68,11 @@ describe('TextExercise Management Update Component', () => {
     });
 
     describe('ngOnInit with given exerciseGroup', () => {
-        let textExerciseForExam = new TextExercise(null, new ExerciseGroup());
+        const textExercise = new TextExercise(null, new ExerciseGroup());
 
         beforeEach(() => {
-            let route = TestBed.get(ActivatedRoute);
-            route.data = of({ textExercise: textExerciseForExam });
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ textExercise });
         });
 
         it('Should be in exam mode', fakeAsync(() => {
@@ -81,16 +81,16 @@ describe('TextExercise Management Update Component', () => {
             tick(); // simulate async
             // THEN
             expect(comp.isExamMode).toEqual(true);
-            expect(comp.textExercise).toEqual(textExerciseForExam);
+            expect(comp.textExercise).toEqual(textExercise);
         }));
     });
 
     describe('ngOnInit without given exerciseGroup', () => {
-        let textExercise = new TextExercise(new Course(), null);
+        const textExercise = new TextExercise(new Course(), null);
 
         beforeEach(() => {
-            let route = TestBed.get(ActivatedRoute);
-            route.data = of({ textExercise: textExercise });
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ textExercise });
         });
 
         it('Should not be in exam mode', fakeAsync(() => {
