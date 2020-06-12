@@ -52,6 +52,10 @@ export class StudentExamsComponent implements OnInit {
         //TODO: go to assessment
     }
 
+    generateStudentExams() {
+        //TODO: generate all exams
+    }
+
     /**
      * Update the number of filtered participations
      *
