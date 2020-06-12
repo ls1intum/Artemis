@@ -57,8 +57,8 @@
                     <td>{{ exam.visibleDate | artemisDate }}</td>
                     <td>{{ exam.startDate | artemisDate }}</td>
                     <td>{{ exam.endDate | artemisDate }}</td>
-                    <td>{{ exam.endDate.diff(exam.startDate) | amDuration: 'hours' }}</td>
-                    <td>{{ exam.registeredUsers }}</td>
+                    <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
+                    <td>{{ exam.registeredUsers || 0 }}</td>
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">

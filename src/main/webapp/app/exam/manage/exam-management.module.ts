@@ -15,6 +15,7 @@ import { MomentModule } from 'ngx-moment';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -30,6 +31,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamStudentsComponent,
         StudentExamsComponent,
         StudentExamDetailComponent,
+        DurationPipe,
     ],
 })
 export class ArtemisExamManagementModule {}
