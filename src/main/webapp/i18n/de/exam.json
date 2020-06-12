@@ -1,10 +1,23 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Klausur",
+            "visible": "Sichtbar",
+            "startDate": "Anfang",
+            "endDate": "Ende",
+            "duration": "Dauer",
+            "nrOfStudents": "Anzahl der registrierten Studenten"
         },
         "examManagement": {
-            "title": "Klausur Verwaltung"
+            "delete": {
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "title": "Klausur Verwaltung",
+            "exerciseGroups": "Aufgabengruppen",
+            "assessmentDashboard": "Bewertungstafel",
+            "studentExams": "Klausuren der Studenten",
+            "students": "Studenten"
         }
     }
 }
