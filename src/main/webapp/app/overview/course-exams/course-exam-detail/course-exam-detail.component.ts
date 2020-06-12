@@ -35,6 +35,9 @@ export class CourseExamDetailComponent {
         }
     }
 
+    /**
+     * calculate the duration in minutes between the start and end date of the exam
+     */
     get examDuration(): number {
         return Math.round(moment.duration(moment(this.exam.endDate).diff(moment(this.exam.startDate))).asMinutes());
     }
