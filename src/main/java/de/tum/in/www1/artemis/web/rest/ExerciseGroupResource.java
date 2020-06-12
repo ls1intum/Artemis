@@ -126,7 +126,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * GET courses/{courseId}/exams/{examId}/exerciseGroups
+     * GET courses/{courseId}/exams/{examId}/exerciseGroups : Get all exercise groups of the given exam
      *
      * @param courseId  the course to which the exercise groups belong to
      * @param examId    the exam to which the exercise groups belong to

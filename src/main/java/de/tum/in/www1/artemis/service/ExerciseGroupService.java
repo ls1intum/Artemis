@@ -99,7 +99,7 @@ public class ExerciseGroupService {
         if (exerciseGroup.isEmpty()) {
             return Optional.of(notFound());
         }
-        if (!exerciseGroup.get().getExam().getId().equals(exerciseGroupId)) {
+        if (!exerciseGroup.get().getExam().getId().equals(examId)) {
             return Optional.of(forbidden());
         }
         return Optional.empty();
