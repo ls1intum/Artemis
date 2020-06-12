@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs';
@@ -17,7 +17,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     exerciseGroup: ExerciseGroup;
     isSaving = false;
 
-    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService, private jhiAlertService: JhiAlertService) {}
+    constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private jhiAlertService: JhiAlertService) {}
 
     /**
      * Initialize the courseId and exerciseGroup
@@ -27,8 +27,6 @@ export class ExerciseGroupUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam, exerciseGroup }) => {
             this.exam = exam;
             this.exerciseGroup = exerciseGroup;
-            console.log(this.exam);
-            console.log(this.exerciseGroup);
         });
     }
 
@@ -48,7 +46,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
 
     // tslint:disable-next-line:completed-docs
     previousState() {
-        window.history.back();
+        this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exerciseGroups']);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseGroup>>) {
