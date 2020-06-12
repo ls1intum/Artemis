@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 import { Exam } from 'app/entities/exam.model';
@@ -14,7 +14,7 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './exam-cover.component.html',
     styles: [],
 })
-export class ExamCoverComponent implements OnInit {
+export class ExamCoverComponent implements OnInit, OnDestroy {
     // boolean true - use start text, false - use end text
     @Input() startView: boolean;
     exam: Exam;
