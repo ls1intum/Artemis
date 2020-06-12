@@ -64,7 +64,7 @@ public class ExamService {
      * Find all exams for a course.
      *
      * @param courseId the id of the course
-     * @return The Set of Exams for the given course
+     * @return The Set of exams for the given course
      */
     public Set<Exam> findAllByCourseId(Long courseId) {
         log.debug("Request to find exams by course id : {}", courseId);
