@@ -162,7 +162,7 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Load notifications', () => {
-        const replaceSubscribeToSocketMessages = () => {
+        const replaceSubscribeToNotificationUpdates = () => {
             const fake = sinon.fake.returns(new BehaviorSubject(notificationNow));
             sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
         };
@@ -193,7 +193,7 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should increase total notification count if a new notification is received via websocket', () => {
-            replaceSubscribeToSocketMessages();
+            replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
@@ -202,7 +202,7 @@ describe('Notification Sidebar Component', () => {
         it('should not add already existing notification received via websocket', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             notificationSidebarComponent.totalNotifications = 1;
-            replaceSubscribeToSocketMessages();
+            replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);

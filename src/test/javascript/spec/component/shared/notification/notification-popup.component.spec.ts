@@ -1,7 +1,9 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -14,6 +16,7 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { Notification } from 'app/entities/notification.model';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,13 +26,18 @@ describe('Notification Popup Component', () => {
     let notificationPopupComponentFixture: ComponentFixture<NotificationPopupComponent>;
     let notificationService: NotificationService;
     let accountService: AccountService;
+    let router: Router;
 
-    const notification = { id: 1, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
-    notification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exercise', id: 1 });
+    const generateNotification = (id: number) => {
+        const generatedNotification = { id, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
+        generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exercise', id: 1 });
+        return generatedNotification;
+    };
+    const notification = generateNotification(1);
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [NotificationPopupComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -45,6 +53,7 @@ describe('Notification Popup Component', () => {
                 notificationPopupComponent = notificationPopupComponentFixture.componentInstance;
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
+                router = TestBed.get(Router);
             });
     });
 
@@ -84,6 +93,42 @@ describe('Notification Popup Component', () => {
             const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
             button.nativeElement.click();
             expect(notificationPopupComponent.removeNotification).to.have.been.called;
+            expect(notificationPopupComponent.notifications).to.be.empty;
+        });
+
+        it('should navigate to target when notification is clicked', () => {
+            sinon.spy(notificationPopupComponent, 'navigateToTarget');
+            sinon.replace(router, 'navigateByUrl', sinon.fake());
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(notificationPopupComponent.navigateToTarget).to.have.been.calledOnce;
+            expect(router.navigateByUrl).to.have.been.calledOnce;
+        });
+    });
+
+    describe('Webscoket receive', () => {
+        const replaceSubscribeToNotificationUpdates = () => {
+            const fake = sinon.fake.returns(new BehaviorSubject(notification));
+            sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
+        };
+
+        it('should prepend received quiz notification', fakeAsync(() => {
+            sinon.replace(router, 'isActive', sinon.fake.returns(false));
+            replaceSubscribeToNotificationUpdates();
+            const otherNotification = generateNotification(2);
+            notificationPopupComponent.notifications = [otherNotification];
+            notificationPopupComponent.ngOnInit();
+            expect(notificationPopupComponent.notifications.length).to.be.equal(2);
+            expect(notificationPopupComponent.notifications[0]).to.be.equal(notification);
+            tick(30000);
+            expect(notificationPopupComponent.notifications.length).to.be.equal(1);
+            expect(notificationPopupComponent.notifications[0]).to.be.equal(otherNotification);
+        }));
+
+        it('should not add received notification if user is already on quiz page', () => {
+            sinon.replace(router, 'isActive', sinon.fake.returns(true));
+            replaceSubscribeToNotificationUpdates();
+            notificationPopupComponent.ngOnInit();
             expect(notificationPopupComponent.notifications).to.be.empty;
         });
     });
