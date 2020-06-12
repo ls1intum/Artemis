@@ -4,6 +4,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
+import { GroupNotification } from 'app/entities/group-notification.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -74,12 +75,20 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     /**
-     * Will add a notification about a started quiz to the component's state.
-     * The notification will only be added if the user is not already on the target page.
+     * Will add a notification about a started quiz to the component's state. The notification will
+     * only be added if the user is not already on the target page (or the live participation page).
      * @param notification {Notification}
      */
     private addQuizNotification(notification: Notification): void {
-        if (!this.router.isActive(this.notificationTargetRoute(notification), true)) {
+        const target = JSON.parse(notification.target);
+        target.entity = 'quiz-exercises';
+        const notificationWithLiveQuizTarget = {
+            target: JSON.stringify(target),
+        } as GroupNotification;
+        if (
+            !this.router.isActive(this.notificationTargetRoute(notification), true) &&
+            !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', true)
+        ) {
             this.notifications.unshift(notification);
         }
     }
