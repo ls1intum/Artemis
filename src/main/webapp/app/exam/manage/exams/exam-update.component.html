@@ -6,7 +6,7 @@
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" *ngIf="exam.course">
                     <label class="form-control-label" for="course">Course</label>
-                    <input id="course" readonly type="text" class="form-control" [value]="exam.course.title" />
+                    <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
                 </div>
                 <div class="form-group" *ngIf="exam.id">
                     <label class="form-check-label" for="id">ID</label>
@@ -19,26 +19,26 @@
             </div>
             <div class="form-row">
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="Visible Date" [(ngModel)]="exam.visibleDate" name="visibleDate"></jhi-date-time-picker>
+                    <jhi-date-time-picker labelName="Visible Date" [(ngModel)]="exam.visibleDate" name="visibleDate" id="visibleDate"></jhi-date-time-picker>
                     <small class="form-text text-muted">The exam will be visible starting starting from this date.</small>
                 </div>
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="Start Date" [(ngModel)]="exam.startDate" name="startDate"></jhi-date-time-picker>
+                    <jhi-date-time-picker labelName="Start Date" [(ngModel)]="exam.startDate" name="startDate" id="startDate"></jhi-date-time-picker>
                     <small class="form-text text-muted">The students can start working on the exam from this date.</small>
                 </div>
                 <div class="col-sm-4">
-                    <jhi-date-time-picker labelName="End Date" [(ngModel)]="exam.endDate" name="endDate"></jhi-date-time-picker>
+                    <jhi-date-time-picker labelName="End Date" [(ngModel)]="exam.endDate" name="endDate" id="endDate"></jhi-date-time-picker>
                     <small class="form-text text-muted">The students can work on the exam until this date.</small>
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints">Maximum Number of Points in Exam</label>
-                    <input id="maxPoints" class="form-control" type="number" min="0" name="maxPoints" [(ngModel)]="exam.maxPoints" />
+                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="0" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="questionNumber">Number of Questions in Exam</label>
-                    <input id="questionNumber" class="form-control" type="number" min="0" name="questionNumber" [(ngModel)]="exam.numberOfExercisesInExam" />
+                    <input id="questionNumber" name="questionNumber" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
                 </div>
             </div>
             <div class="form-check">
@@ -48,21 +48,21 @@
                 </label>
             </div>
             <hr class="separator" />
-            <div class="form-group" id="startText">
+            <div class="form-group">
                 <label for="startText">Start Text</label>
-                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
             </div>
-            <div class="form-group" id="endText">
+            <div class="form-group">
                 <label for="startText">End Text</label>
-                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
             </div>
-            <div class="form-group" id="confirmationStartText">
+            <div class="form-group">
                 <label for="startText">Confirmation Start Text</label>
-                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.confirmationStartText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" [enableResize]="true"></jhi-markdown-editor>
             </div>
-            <div class="form-group" id="confirmationEndText">
+            <div class="form-group">
                 <label for="startText">Confirmation End Text</label>
-                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.confirmationEndText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span></button>
