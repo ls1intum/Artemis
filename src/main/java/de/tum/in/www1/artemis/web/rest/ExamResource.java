@@ -62,6 +62,9 @@ public class ExamResource {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId} : Get a exam by id
+     */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
