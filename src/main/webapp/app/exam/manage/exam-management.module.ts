@@ -11,11 +11,13 @@ import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import {ArtemisSharedModule} from "app/shared/shared.module";
+import {ArtemisDataTableModule} from "app/shared/data-table/data-table.module";
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES)],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisDataTableModule],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,

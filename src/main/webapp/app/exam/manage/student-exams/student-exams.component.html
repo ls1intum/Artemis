@@ -1,1 +1,127 @@
-TODO
+<div>
+    <div class="d-flex">
+        <div class="mb-3">
+            <h2>
+                <span>Student exams</span>
+            </h2>
+        </div>
+    </div>
+    <jhi-alert></jhi-alert>
+    <jhi-data-table
+        [isLoading]="isLoading"
+        entityType="participation"
+        [allEntities]="studentExams"
+        entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+        [searchPlaceholderTranslation]="'Search for students by login or name (comma separated)'"
+        [searchFields]="['student.login', 'student.name']"
+        [searchTextFromEntity]="searchTextFromParticipation"
+        [searchResultFormatter]="searchResultFormatter"
+        (entitiesSizeChange)="handleStudentExamsSizeChange($event)"
+    >
+        <ng-template let-settings="settings" let-controls="controls">
+            <ngx-datatable
+                class="bootstrap"
+                [limit]="settings.limit"
+                [sortType]="settings.sortType"
+                [columnMode]="settings.columnMode"
+                [headerHeight]="settings.headerHeight"
+                [footerHeight]="settings.footerHeight"
+                [rowHeight]="settings.rowHeight"
+                [rows]="settings.rows"
+                [rowClass]="settings.rowClass"
+                [scrollbarH]="settings.scrollbarH"
+            >
+                <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                                ID
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div *ngIf="course.isAtLeastInstructor; else displayId">
+                            <a routerLink="{{ value }}/submissions">{{ value }}</a>     <!-- TODO: adjust link -->
+                        </div>
+                        <ng-template #displayId>
+                            {{ value }}
+                        </ng-template>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="studentExam" [minWidth]="80" [width]="80">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('studentExam')">
+                            <span class="datatable-header-cell-label bold sortable">
+                                Exam
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('studentExam')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="student" [minWidth]="120" [width]="120">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
+                            <span class="datatable-header-cell-label bold sortable">
+                                Student
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value?.name }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="result" [width]="180">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('result')">
+                            <span class="datatable-header-cell-label bold sortable">
+                                Result
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('result')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="creationDate" [width]="180">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('creationDate')">
+                            <span class="datatable-header-cell-label bold sortable">
+                                Created
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('creationDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value | artemisDate: 'long':true }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="w-100 text-right">
+                            <div class="btn-group">
+                                <button (click)="viewStudentExam(value)">
+                                    <span>View</span>
+                                </button>
+                                <button (click)="viewAssessment(value)">
+                                    <span>Assessment</span>
+                                </button>
+                            </div>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+        </ng-template>
+    </jhi-data-table>
+</div>
