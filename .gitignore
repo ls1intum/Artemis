@@ -6,9 +6,6 @@
 /src/test/javascript/PhantomJS*/
 /uploads
 /test-results.xml
-/src/main/resources/config/application-artemis.yml
-.yarn/
-.yarnrc.yml
 
 ######################
 # Node
