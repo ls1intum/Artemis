@@ -468,6 +468,10 @@ public abstract class Exercise implements Serializable {
         return exerciseGroup;
     }
 
+    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroup = exerciseGroup;
+    }
+
     public Set<ExampleSubmission> getExampleSubmissions() {
         return exampleSubmissions;
     }
