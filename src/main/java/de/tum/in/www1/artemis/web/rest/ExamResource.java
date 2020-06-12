@@ -113,7 +113,7 @@ public class ExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.debug("REST request to get Exam : {}", examId);
+        log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
         Exam exam = examService.findOne(examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exam));
@@ -136,13 +136,14 @@ public class ExamResource {
     /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
      *
-     * @param courseId the course to which the exam belongs
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the id of the exam to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.info("REST request to delete Exam : {}", examId);
+        log.info("REST request to delete exam : {}", examId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
