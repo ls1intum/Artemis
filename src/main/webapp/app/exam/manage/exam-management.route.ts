@@ -35,7 +35,7 @@ export class ExamResolve implements Resolve<Exam> {
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
-                map((course: HttpResponse<Exam>) => course.body!),
+                map((exam: HttpResponse<Exam>) => exam.body!),
             );
         }
         return of(new Exam());

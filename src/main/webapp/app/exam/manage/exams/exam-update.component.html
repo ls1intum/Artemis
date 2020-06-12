@@ -1,1 +1,73 @@
-TODO
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
+            <h2>Create or Edit an Exam</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" *ngIf="exam.course">
+                    <label class="form-control-label" for="course">Course</label>
+                    <input id="course" readonly type="text" class="form-control" [value]="exam.course.title" />
+                </div>
+                <div class="form-group" *ngIf="exam.id">
+                    <label class="form-check-label" for="id">ID</label>
+                    <input class="form-control" type="text" id="id" name="id" [value]="exam.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-check-label" for="title">Exam Title</label>
+                    <input class="form-control" placeholder="Exam Title" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-sm-4">
+                    <jhi-date-time-picker labelName="Visible Date" [(ngModel)]="exam.visibleDate" name="visibleDate"></jhi-date-time-picker>
+                    <small class="form-text text-muted">The exam will be visible starting starting from this date.</small>
+                </div>
+                <div class="col-sm-4">
+                    <jhi-date-time-picker labelName="Start Date" [(ngModel)]="exam.startDate" name="startDate"></jhi-date-time-picker>
+                    <small class="form-text text-muted">The students can start working on the exam from this date.</small>
+                </div>
+                <div class="col-sm-4">
+                    <jhi-date-time-picker labelName="End Date" [(ngModel)]="exam.endDate" name="endDate"></jhi-date-time-picker>
+                    <small class="form-text text-muted">The students can work on the exam until this date.</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="maxPoints">Maximum Number of Points in Exam</label>
+                    <input id="maxPoints" class="form-control" type="number" min="0" name="maxPoints" [(ngModel)]="exam.maxPoints" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="questionNumber">Number of Questions in Exam</label>
+                    <input id="questionNumber" class="form-control" type="number" min="0" name="questionNumber" [(ngModel)]="exam.numberOfExercisesInExam" />
+                </div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="randomizeExerciseOrder" name="randomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
+                <label class="form-check-label" for="randomizeExerciseOrder">
+                    Randomize Question Order
+                </label>
+            </div>
+            <hr class="separator" />
+            <div class="form-group" id="startText">
+                <label for="startText">Start Text</label>
+                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
+            </div>
+            <div class="form-group" id="endText">
+                <label for="startText">End Text</label>
+                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
+            </div>
+            <div class="form-group" id="confirmationStartText">
+                <label for="startText">Confirmation Start Text</label>
+                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.confirmationStartText" [enableResize]="true"></jhi-markdown-editor>
+            </div>
+            <div class="form-group" id="confirmationEndText">
+                <label for="startText">Confirmation End Text</label>
+                <jhi-markdown-editor class="markdown-editor" [(markdown)]="exam.confirmationEndText" [enableResize]="true"></jhi-markdown-editor>
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span></button>
+                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary"><fa-icon [icon]="'save'"></fa-icon>&nbsp;<span>Save</span></button>
+            </div>
+        </form>
+    </div>
+</div>

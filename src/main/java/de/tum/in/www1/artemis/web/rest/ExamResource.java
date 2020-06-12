@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -61,11 +62,27 @@ public class ExamResource {
         this.authCheckService = authCheckService;
     }
 
+    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get Exam : {}", examId);
+        Optional<Exam> exam = examRepository.findById(examId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (exam.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Course course = exam.get().getCourse();
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(exam.get());
+    }
+
     /**
      * POST /courses/{courseId}/exams : Create a new exam.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param exam      the exam to create
+     * @param courseId the course to which the exam belongs
+     * @param exam     the exam to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
