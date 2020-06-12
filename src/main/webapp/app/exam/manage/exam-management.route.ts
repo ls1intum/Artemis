@@ -147,6 +147,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exerciseGroups/new',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {

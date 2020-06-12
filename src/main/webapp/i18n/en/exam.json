@@ -4,7 +4,13 @@
             "title": "Exam"
         },
         "examManagement": {
-            "title": "Exam Management"
+            "title": "Exam Management",
+            "exerciseGroup": {
+                "create": "Create Exercise Group",
+                "update": "Edit Exercise Group",
+                "title": "Title",
+                "mandatory": "Mandatory"
+            }
         }
     }
 }

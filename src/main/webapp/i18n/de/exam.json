@@ -4,7 +4,13 @@
             "title": "Exam"
         },
         "examManagement": {
-            "title": "Klausur Verwaltung"
+            "title": "Klausur Verwaltung",
+            "exerciseGroup": {
+                "create": "Übungsgruppe erstellen",
+                "update": "Übungsgruppe bearbeiten",
+                "title": "Titel",
+                "mandatory": "Verpflichtend"
+            }
         }
     }
 }

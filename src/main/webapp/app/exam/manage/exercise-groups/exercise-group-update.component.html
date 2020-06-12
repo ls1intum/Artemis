@@ -1,1 +1,24 @@
-TODO
+<div>
+    <h4>{{ (exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create') | translate }}</h4>
+    <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group">
+            <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title">Title</label>
+            <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exerciseGroup.title" />
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="randomizeExerciseOrder" name="randomizeExerciseOrder" [(ngModel)]="exerciseGroup.mandatory" />
+            <label class="form-check-label" for="randomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory">
+                Mandatory
+            </label>
+        </div>
+        <div class="mt-3">
+            <button type="button" class="btn btn-secondary" (click)="previousState()">
+                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+            </button>
+            <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            </button>
+        </div>
+    </form>
+</div>

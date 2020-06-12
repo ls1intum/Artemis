@@ -6,6 +6,6 @@ export class ExerciseGroup implements BaseEntity {
     public id: number;
     public title: string;
     public mandatory: boolean;
-    public exam: Exam;
-    public exercises: Exercise[];
+    public exam: Exam | null;
+    public exercises: Exercise[] | null;
 }
