@@ -13,11 +13,15 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -51,12 +55,16 @@ public class ExamResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamRepository examRepository, AuthorizationCheckService authCheckService) {
+    private final AuditEventRepository auditEventRepository;
+
+    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamRepository examRepository, AuthorizationCheckService authCheckService,
+            AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.courseService = courseService;
         this.examService = examService;
         this.examRepository = examRepository;
         this.authCheckService = authCheckService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -165,6 +173,11 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
+
+        User user = userService.getUser();
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.get().getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.get().getTitle());
 
         examService.delete(examId);
 
