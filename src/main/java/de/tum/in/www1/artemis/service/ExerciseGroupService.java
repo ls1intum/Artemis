@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -108,7 +107,7 @@ public class ExerciseGroupService {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
-        Optional<ExerciseGroup> exerciseGroup = exerciseGroupRepository.findById(exerciseGroupId);
+        Optional<ExerciseGroup> exerciseGroup = exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId);
         if (exerciseGroup.isEmpty()) {
             return Optional.of(notFound());
         }

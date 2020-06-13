@@ -37,7 +37,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.exerciseGroup.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exerciseGroup.exam!.id, this.exerciseGroup));
+            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id, this.exerciseGroup));
         } else {
             this.exerciseGroup.exam = this.exam;
             this.subscribeToSaveResponse(this.exerciseGroupService.create(this.courseId, this.exam.id, this.exerciseGroup));

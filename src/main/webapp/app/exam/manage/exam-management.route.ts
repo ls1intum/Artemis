@@ -162,6 +162,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exerciseGroups/:exerciseGroupId/edit',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
