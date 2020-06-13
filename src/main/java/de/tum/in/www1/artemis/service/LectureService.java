@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 @Service
 public class LectureService {
 
-    private LectureRepository lectureRepository;
+    private final LectureRepository lectureRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -29,21 +29,6 @@ public class LectureService {
     }
 
     /**
-     * Finds all Lectures for a given Course
-     *
-     * @param course corresponding course
-     * @param user the user entity
-     * @return a List of all Lectures for the given course
-     */
-    public Set<Lecture> findAllForCourse(Course course, User user) {
-        Set<Lecture> lectures = lectureRepository.findAllByCourseId(course.getId());
-        if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            lectures = filterActiveAttachments(lectures, user);
-        }
-        return lectures;
-    }
-
-    /**
      * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
      *
      * @param lectureWithAttachments lecture that has attachments
@@ -52,7 +37,7 @@ public class LectureService {
      */
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
         Course course = lectureWithAttachments.getCourse();
-        if (user.getGroups().contains(course.getTeachingAssistantGroupName()) || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin()) {
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return lectureWithAttachments;
         }
 

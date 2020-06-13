@@ -287,7 +287,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 channel,
                 this.stompClient!.subscribe(channel, (data) => {
                     if (this.listenerObservers.has(channel)) {
-                        this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
+                        this.listenerObservers.get(channel)!.next(this.parseJSON(data.body));
                     }
                 }),
             );
@@ -386,5 +386,13 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      */
     ngOnDestroy(): void {
         this.disconnect();
+    }
+
+    private parseJSON(response: any): any {
+        try {
+            return JSON.parse(response);
+        } catch {
+            return response;
+        }
     }
 }

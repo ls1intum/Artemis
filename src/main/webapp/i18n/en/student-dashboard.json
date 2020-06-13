@@ -27,7 +27,8 @@
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
-                "lectures": "Lectures"
+                "lectures": "Lectures",
+                "exams": "Exams"
             },
             "exerciseList": {
                 "fullScore": "Hide full score",

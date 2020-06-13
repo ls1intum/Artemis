@@ -27,7 +27,8 @@
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
-                "lectures": "Vorlesungen"
+                "lectures": "Vorlesungen",
+                "exams": "Klausuren"
             },
             "exerciseList": {
                 "fullScore": "Keine mit voller Punktzahl",
