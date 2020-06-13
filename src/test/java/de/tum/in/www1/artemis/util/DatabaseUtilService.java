@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -1542,5 +1544,40 @@ public class DatabaseUtilService {
         fail("Could not find programming exercise with title " + title);
         // just to prevent compiler warnings, we have failed anyway here
         return new ProgrammingExercise();
+    }
+
+    public Exam addExamToCourse(Course course) {
+        ZonedDateTime currentTime = ZonedDateTime.now();
+        // create exam
+        Exam exam = new Exam();
+        exam.setTitle("Test exam 1");
+        exam.setVisibleDate(currentTime);
+        exam.setStartDate(currentTime);
+        exam.setEndDate(currentTime);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setCourse(course);
+        Exam savedExam = examRepository.save(exam);
+
+        // assert savedExam equals exam
+        assertThat(savedExam.getTitle()).isEqualTo(exam.getTitle());
+        assertThat(savedExam.getVisibleDate()).isEqualTo(exam.getVisibleDate());
+        assertThat(savedExam.getStartDate()).isEqualTo(exam.getStartDate());
+        assertThat(savedExam.getEndDate()).isEqualTo(exam.getEndDate());
+        assertThat(savedExam.getStartText()).isEqualTo(exam.getStartText());
+        assertThat(savedExam.getEndText()).isEqualTo(exam.getEndText());
+        assertThat(savedExam.getConfirmationStartText()).isEqualTo(exam.getConfirmationStartText());
+        assertThat(savedExam.getConfirmationEndText()).isEqualTo(exam.getConfirmationEndText());
+        assertThat(savedExam.getMaxPoints()).isEqualTo(exam.getMaxPoints());
+        assertThat(savedExam.getNumberOfExercisesInExam()).isEqualTo(exam.getNumberOfExercisesInExam());
+        assertThat(savedExam.getRandomizeExerciseOrder()).isEqualTo(exam.getRandomizeExerciseOrder());
+        assertThat(savedExam.getCourse()).isEqualTo(exam.getCourse());
+        assertThat(savedExam.getExerciseGroups()).isEqualTo(exam.getExerciseGroups());
+        return savedExam;
     }
 }

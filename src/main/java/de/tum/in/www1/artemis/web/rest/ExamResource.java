@@ -153,7 +153,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long examId, @PathVariable String courseId) {
         log.info("REST request to delete exam : {}", examId);
         User user = userService.getUserWithGroupsAndAuthorities();
