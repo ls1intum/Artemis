@@ -8,10 +8,13 @@
             "exerciseGroup": {
                 "create": "Neue Übungsgruppe erstellen",
                 "update": "Übungsgruppe bearbeiten",
+                "type": "Type",
                 "title": "Titel",
+                "maxPoints": "Max. Punktzahl",
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
                 "exerciseGroups": "Übungsgruppe",
+                "noExercises": "Es wurden noch keine Übungen hinzugefügt.",
                 "delete": {
                     "question": "Soll die Übungsgruppe <strong>{{ title }}</strong> wirklich gelöscht werden?",
                     "typeNameToConfirm": "Bitte gib den Namen der Übungsgruppe zur Bestätigung ein."

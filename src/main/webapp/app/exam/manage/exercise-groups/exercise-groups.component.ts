@@ -3,6 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -31,4 +33,23 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseGroupId
      */
     deleteExerciseGroup(exerciseGroupId: number) {}
+
+    /**
+     * Get an icon for the type of the given exercise.
+     * @param exercise {Exercise}
+     */
+    exerciseIcon(exercise: Exercise): string {
+        switch (exercise.type) {
+            case ExerciseType.QUIZ:
+                return 'check-double';
+            case ExerciseType.FILE_UPLOAD:
+                return 'file-upload';
+            case ExerciseType.MODELING:
+                return 'project-diagram';
+            case ExerciseType.PROGRAMMING:
+                return 'keyboard';
+            default:
+                return 'font';
+        }
+    }
 }

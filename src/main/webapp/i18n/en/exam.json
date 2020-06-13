@@ -8,10 +8,13 @@
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
                 "update": "Edit Exercise Group",
+                "type": "Type",
                 "title": "Title",
+                "maxPoints": "Max points",
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "exerciseGroups": "Exercise Group",
+                "noExercises": "No exercises have been added yet.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>?",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."

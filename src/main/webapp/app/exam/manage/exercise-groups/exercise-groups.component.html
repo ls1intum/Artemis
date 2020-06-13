@@ -51,6 +51,46 @@
         </div>
     </div>
     <div class="p-3">
-        <table class="table table-striped"></table>
+        <div *ngIf="exerciseGroup.exercises">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="d-none d-md-table-cell">
+                            <span>{{ 'global.field.id' | translate }}</span>
+                        </th>
+                        <th>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | translate }}</span>
+                        </th>
+                        <th>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | translate }}</span>
+                        </th>
+                        <th>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.maxPoints' | translate }}</span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of exerciseGroup.exercises">
+                        <td class="align-middle">
+                            {{ exercise.id }}
+                        </td>
+                        <td class="align-middle" style="font-size: 1.35rem;">
+                            <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
+                        </td>
+                        <td class="align-middle">
+                            {{ exercise.title }}
+                        </td>
+                        <td class="align-middle">
+                            {{ exercise.maxScore }}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div *ngIf="!exerciseGroup.exercises">
+            {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | translate }}
+        </div>
     </div>
 </div>
