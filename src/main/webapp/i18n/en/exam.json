@@ -1,7 +1,15 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Exam",
+            "overview": {
+                "start": "Start: {{start}}",
+                "duration": "Duration: {{duration}} min",
+                "maxPoints": "max. Points: {{points}}"
+            }
+        },
+        "examManagement": {
+            "title": "Exam Management"
         }
     }
 }

@@ -10,9 +10,7 @@ import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
-import { ExamCoverComponent } from 'app/exam/participate/exam-cover/exam-cover.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -102,30 +100,6 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.course.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/exams',
-        component: ExamManagementComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/examcover',
-        component: ExamCoverComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

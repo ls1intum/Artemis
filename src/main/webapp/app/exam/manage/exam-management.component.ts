@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -9,16 +8,14 @@ import { ActivatedRoute } from '@angular/router';
     styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit {
-    course: Course;
-    courseId = 0;
+    courseId: number;
 
-    constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private examManagementService: ExamManagementService) {}
 
     /**
-     * initializes courseId and course
+     * Initialize the courseId
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
     }
 }
