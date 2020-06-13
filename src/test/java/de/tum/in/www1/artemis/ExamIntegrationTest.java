@@ -138,7 +138,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(savedExam.getExerciseGroups().get(1)).isEqualTo(exam.getExerciseGroups().get(1));
         assertThat(savedExam.getExerciseGroups().get(2)).isEqualTo(exam.getExerciseGroups().get(2));
 
-        ExerciseGroup updatedExerciseGroup = exerciseGroupRepository.findByIdWithEagerExam(savedExerciseGroup1.getId()).get();
+        ExerciseGroup updatedExerciseGroup = exerciseGroupRepository.findWithEagerExamById(savedExerciseGroup1.getId()).get();
         assertThat(updatedExerciseGroup.getExam()).isEqualTo(savedExam);
 
         // create studentExam

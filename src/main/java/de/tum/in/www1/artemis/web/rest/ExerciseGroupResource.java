@@ -137,7 +137,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * GET courses/{courseId}/exams/{examId}/exerciseGroups : Get all exercise groups of the given exam
+     * GET courses/{courseId}/exams/{examId}/exerciseGroups : Get all exercise groups of the given exam with exercises
      *
      * @param courseId  the course to which the exercise groups belong to
      * @param examId    the exam to which the exercise groups belong to
@@ -149,7 +149,7 @@ public class ExerciseGroupResource {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
         Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllByExamId(examId)));
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllByExamIdWithExercises(examId)));
     }
 
     /**

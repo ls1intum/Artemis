@@ -65,8 +65,8 @@ public class ExerciseGroupService {
      */
     @NotNull
     public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
-        log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
-        return exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId)
+        log.debug("Request to get exercise group with exam : {}", exerciseGroupId);
+        return exerciseGroupRepository.findWithEagerExamById(exerciseGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
     }
 
@@ -76,9 +76,9 @@ public class ExerciseGroupService {
      * @param examId the id of the exam
      * @return the list of all exercise groups
      */
-    public List<ExerciseGroup> findAllByExamId(Long examId) {
+    public List<ExerciseGroup> findAllByExamIdWithExercises(Long examId) {
         log.debug("REST request to get all exercise groups for Exam : {}", examId);
-        return exerciseGroupRepository.findByExamId(examId);
+        return exerciseGroupRepository.findWithEagerExercisesByExamId(examId);
     }
 
     /**
@@ -107,7 +107,7 @@ public class ExerciseGroupService {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
-        Optional<ExerciseGroup> exerciseGroup = exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId);
+        Optional<ExerciseGroup> exerciseGroup = exerciseGroupRepository.findWithEagerExamById(exerciseGroupId);
         if (exerciseGroup.isEmpty()) {
             return Optional.of(notFound());
         }
