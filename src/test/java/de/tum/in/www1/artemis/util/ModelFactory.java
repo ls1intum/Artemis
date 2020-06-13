@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -81,6 +83,11 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
+    public static TextExercise generateTextExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = new TextExercise();
+        return (TextExercise) populateExerciseForExam(textExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+    }
+
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
             Course course) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
@@ -101,6 +108,22 @@ public class ModelFactory {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+        return exercise;
+    }
+
+    public static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            ExerciseGroup exerciseGroup) {
+        exercise.setTitle(UUID.randomUUID().toString());
+        exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        exercise.setProblemStatement("Exam Problem Statement");
+        exercise.setMaxScore(5.0);
+        exercise.setReleaseDate(releaseDate);
+        exercise.setDueDate(dueDate);
+        exercise.assessmentDueDate(assessmentDueDate);
+        exercise.setDifficulty(DifficultyLevel.MEDIUM);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        exercise.getCategories().add("Category");
+        exercise.setExerciseGroup(exerciseGroup);
         return exercise;
     }
 
@@ -256,6 +279,23 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
         return course;
+    }
+
+    public static Exam generateExam(Long id, String title, Course course) {
+        Exam exam = new Exam();
+        exam.setTitle(title);
+        exam.setId(id);
+        exam.setCourse(course);
+        return exam;
+    }
+
+    public static ExerciseGroup generateExerciseGroup(Long id, String title, boolean mandatory, Exam exam) {
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(id);
+        exerciseGroup.setTitle(title);
+        exerciseGroup.setIsMandatory(mandatory);
+        exerciseGroup.setExam(exam);
+        return exerciseGroup;
     }
 
     public static GradingCriterion generateGradingCriterion(String title) {

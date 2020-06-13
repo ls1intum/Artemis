@@ -59,6 +59,19 @@ public class ExerciseGroupService {
     }
 
     /**
+     * Get one exerciseGroup by id with the corresponding exam.
+     *
+     * @param exerciseGroupId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
+        log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
+        return exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
+    }
+
+    /**
      * Get all exercise groups for the given exam.
      *
      * @param examId the id of the exam
