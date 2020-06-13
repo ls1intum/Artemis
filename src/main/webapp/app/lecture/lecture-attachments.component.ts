@@ -109,7 +109,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     editAttachment(attachment: Attachment) {
         this.attachmentToBeCreated = attachment;
-        this.attachmentToBeCreated.useForEmbeddingTraining = true;
+        this.attachmentToBeCreated.useForEmbeddingTraining = false;
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 

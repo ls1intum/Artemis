@@ -147,7 +147,7 @@
                             />
                         </div>
 
-                        <div class="form-check">
+                        <div class="form-check" *ngIf="attachmentToBeCreated.link != null && attachmentToBeCreated.link.toLocaleLowerCase().endsWith('.pdf')">
                             <input
                                 type="checkbox"
                                 class="form-check-input"
