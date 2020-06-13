@@ -28,6 +28,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -505,6 +506,12 @@ public class DatabaseUtilService {
         studentQuestions.add(studentQuestion2);
 
         return studentQuestions;
+    }
+
+    public Exam addExam(Course course) {
+        Exam exam = ModelFactory.generateExam(course);
+        examRepository.save(exam);
+        return exam;
     }
 
     /**
