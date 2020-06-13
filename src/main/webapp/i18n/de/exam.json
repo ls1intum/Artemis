@@ -6,10 +6,17 @@
         "examManagement": {
             "title": "Klausur Verwaltung",
             "exerciseGroup": {
-                "create": "Übungsgruppe erstellen",
+                "create": "Neue Übungsgruppe erstellen",
                 "update": "Übungsgruppe bearbeiten",
                 "title": "Titel",
-                "mandatory": "Verpflichtend"
+                "mandatory": "Verpflichtend",
+                "optional": "Optional",
+                "exerciseGroups": "Übungsgruppe",
+                "delete": {
+                    "question": "Soll die Übungsgruppe <strong>{{ title }}</strong> wirklich gelöscht werden?",
+                    "typeNameToConfirm": "Bitte gib den Namen der Übungsgruppe zur Bestätigung ein."
+                },
+                "addTextExercise": "Textaufgabe hinzufügen"
             }
         }
     }

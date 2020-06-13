@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subject } from 'rxjs';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
@@ -11,6 +12,8 @@ export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
     examId: number;
     exerciseGroups: ExerciseGroup[] | null;
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService) {}
 
@@ -22,4 +25,10 @@ export class ExerciseGroupsComponent implements OnInit {
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe((res) => (this.exerciseGroups = res.body));
     }
+
+    /**
+     * TODO
+     * @param exerciseGroupId
+     */
+    deleteExerciseGroup(exerciseGroupId: number) {}
 }

@@ -6,10 +6,17 @@
         "examManagement": {
             "title": "Exam Management",
             "exerciseGroup": {
-                "create": "Create Exercise Group",
+                "create": "Create new Exercise Group",
                 "update": "Edit Exercise Group",
                 "title": "Title",
-                "mandatory": "Mandatory"
+                "mandatory": "Mandatory",
+                "optional": "Optional",
+                "exerciseGroups": "Exercise Group",
+                "delete": {
+                    "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>?",
+                    "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
+                },
+                "addTextExercise": "Add text exercise"
             }
         }
     }

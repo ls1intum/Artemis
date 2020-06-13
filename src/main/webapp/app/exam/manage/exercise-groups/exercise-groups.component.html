@@ -1,1 +1,56 @@
-TODO
+<div class="d-flex pb-3 border-bottom">
+    <div class="d-flex flex-column justify-content-center">
+        <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroup.exerciseGroups' | translate }}</h4>
+    </div>
+    <div class="d-flex justify-content-end" style="flex: 1;">
+        <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create">
+                Create new Exercise Group
+            </span>
+        </button>
+    </div>
+</div>
+<div *ngFor="let exerciseGroup of exerciseGroups" class="mt-4" style="border: 1px solid #cccccc;">
+    <div class="d-flex p-3" style="background-color: #e1e1e1;">
+        <div>
+            <input type="number" value="0" class="text-center" style="width: 50px; height: 32px;" />
+        </div>
+        <div class="d-flex flex-column justify-content-center ml-3">
+            <h5 class="font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
+        </div>
+        <div class="d-flex flex-column justify-content-center ml-3">
+            <span class="d-block rounded px-2 py-1" style="font-size: 0.85rem; background-color: #ffc107;">
+                {{ (exerciseGroup.mandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional') | translate | lowercase }}
+            </span>
+        </div>
+        <div class="d-flex justify-content-end" style="flex: 1;">
+            <div class="d-flex flex-column justify-content-center">
+                <div>
+                    <button [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm mr-1">
+                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | translate }}</span>
+                    </button>
+                    <button type="submit" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-primary btn-sm mr-1">
+                        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                    </button>
+                    <button
+                        *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                        jhiDeleteButton
+                        [entityTitle]="exerciseGroup.title"
+                        deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                        deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                        (delete)="deleteExerciseGroup(exerciseGroup.id)"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="'times'"></fa-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="p-3">
+        <table class="table table-striped"></table>
+    </div>
+</div>
