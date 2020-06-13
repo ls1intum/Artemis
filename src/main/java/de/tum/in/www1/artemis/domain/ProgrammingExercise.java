@@ -264,7 +264,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Nullable
     @Override
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
                 return submission.getResult().isRated();

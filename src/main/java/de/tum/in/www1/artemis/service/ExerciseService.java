@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -15,10 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -41,6 +42,8 @@ public class ExerciseService {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final QuizScheduleService quizScheduleService;
+
     private final ExampleSubmissionService exampleSubmissionService;
 
     private final AuditEventRepository auditEventRepository;
@@ -52,9 +55,9 @@ public class ExerciseService {
     private final TeamService teamService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -66,6 +69,7 @@ public class ExerciseService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -332,6 +336,82 @@ public class ExerciseService {
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
+     * result. Filter everything else that is not relevant
+     *
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username used to get quiz submission for the user
+     * @param isStudent defines if the current user is a student
+     */
+    public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
+        // remove the unnecessary inner course attribute
+        exercise.setCourse(null);
+
+        // remove the problem statement, which is loaded in the exercise details call
+        exercise.setProblemStatement(null);
+
+        if (exercise instanceof ProgrammingExercise) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercise.setTestRepositoryUrl(null);
+        }
+
+        // get user's participation for the exercise
+        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && exercise instanceof QuizExercise) {
+            QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new StudentParticipation().exercise(exercise);
+                participation.initializationState(InitializationState.INITIALIZED);
+            }
+        }
+
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
+        if (participation != null) {
+            // find the latest submission with a rated result, otherwise the latest submission with
+            // an unrated result or alternatively the latest submission without a result
+            Set<Submission> submissions = participation.getSubmissions();
+
+            // only transmit the relevant result
+            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : exercise.findAppropriateSubmissionByResults(submissions);
+            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
+
+            Set<Result> results = Set.of();
+
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
+                results = Set.of(latestSubmissionWithRatedResult.getResult());
+                // remove inner participation from result
+                latestSubmissionWithRatedResult.getResult().setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
+                }
+            }
+
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getResult() != null) {
+                submission.getResult().filterSensitiveInformation();
+            }
+
+            // add submission to participation
+            if (submission != null) {
+                participation.setSubmissions(Set.of(submission));
+            }
+
+            participation.setResults(results);
+
+            // remove inner exercise from participation
+            participation.setExercise(null);
+
+            // add participation into an array
+            exercise.setStudentParticipations(Set.of(participation));
+        }
     }
 
     /**

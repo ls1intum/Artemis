@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -467,7 +466,7 @@ public class CourseResource {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
+                exerciseService.filterForCourseDashboard(exercise, participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();

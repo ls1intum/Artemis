@@ -37,26 +37,26 @@ public class QuizScheduleService {
     /**
      * quizExerciseId -> Map<username -> QuizSubmission>
      */
-    private static Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
+    private Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
 
     /**
      * quizExerciseId -> Map<username -> StudentParticipation>
      */
-    private static Map<Long, Map<String, StudentParticipation>> participationHashMap = new ConcurrentHashMap<>();
+    private Map<Long, Map<String, StudentParticipation>> participationHashMap = new ConcurrentHashMap<>();
 
     /**
      * quizExerciseId -> [Result]
      */
-    private static Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
+    private Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
 
     /**
      * quizExerciseId -> ScheduledFuture
      */
-    private static Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
+    private Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
 
-    private static Map<Long, QuizExercise> quizExerciseMap = new ConcurrentHashMap<>();
+    private Map<Long, QuizExercise> quizExerciseMap = new ConcurrentHashMap<>();
 
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler;
+    private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
     private ScheduledFuture<?> scheduledProcessQuizSubmissions;
 
@@ -108,7 +108,7 @@ public class QuizScheduleService {
      * @param username       the username of the user, who submitted the submission (second Key)
      * @param quizSubmission the quizSubmission, which should be added (Value)
      */
-    public static void updateSubmission(Long quizExerciseId, String username, QuizSubmission quizSubmission) {
+    public void updateSubmission(Long quizExerciseId, String username, QuizSubmission quizSubmission) {
 
         if (quizSubmission != null && quizExerciseId != null && username != null) {
             // check if there is already a quizSubmission with the same quiz
@@ -126,7 +126,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quizExerciseId of the quiz the result belongs to (first Key)
      * @param result the result, which should be added
      */
-    public static void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
+    public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
         log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
         if (quizExerciseId != null && result != null) {
             // check if there is already a result with the same quiz
@@ -143,7 +143,7 @@ public class QuizScheduleService {
      * @param quizExerciseId        the quizExerciseId of the quiz the result belongs to (first Key)
      * @param participation the result, which should be added
      */
-    private static void addParticipation(Long quizExerciseId, StudentParticipation participation) {
+    private void addParticipation(Long quizExerciseId, StudentParticipation participation) {
 
         if (quizExerciseId != null && participation != null) {
             // check if there is already a result with the same quiz
@@ -162,7 +162,7 @@ public class QuizScheduleService {
      * @return the quizSubmission, with the given quizExerciseId and username -> return an empty QuizSubmission if there is no quizSubmission -> return null if the quizExerciseId or if the
      *         username is null
      */
-    public static QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
+    public QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
 
         if (quizExerciseId == null || username == null) {
             return null;
@@ -187,7 +187,7 @@ public class QuizScheduleService {
      * @param username the username of the user, the participation belongs to (second Key)
      * @return the participation with the given quizExerciseId and username -> return null if there is no participation -> return null if the quizExerciseId or if the username is null
      */
-    public static StudentParticipation getParticipation(Long quizExerciseId, String username) {
+    public StudentParticipation getParticipation(Long quizExerciseId, String username) {
         if (quizExerciseId == null || username == null) {
             return null;
         }
@@ -200,7 +200,7 @@ public class QuizScheduleService {
         return null;
     }
 
-    public static QuizExercise getQuizExercise(Long quizExerciseId) {
+    public QuizExercise getQuizExercise(Long quizExerciseId) {
         if (quizExerciseId == null) {
             return null;
         }
@@ -211,7 +211,7 @@ public class QuizScheduleService {
      * stores the quiz exercise in a HashMap for faster retrieval during the quiz
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
-    public static void updateQuizExercise(QuizExercise quizExercise) {
+    public void updateQuizExercise(QuizExercise quizExercise) {
         log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         quizExerciseMap.put(quizExercise.getId(), quizExercise);
     }
