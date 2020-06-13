@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -72,6 +74,10 @@ public class ExerciseGroupResource {
             throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
+        if (exerciseGroup.getExam() == null) {
+            return badRequest();
+        }
+
         Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -98,6 +104,10 @@ public class ExerciseGroupResource {
         log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
         if (updatedExerciseGroup.getId() == null) {
             return createExerciseGroup(courseId, examId, updatedExerciseGroup);
+        }
+
+        if (updatedExerciseGroup.getExam() == null) {
+            return badRequest();
         }
 
         Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
