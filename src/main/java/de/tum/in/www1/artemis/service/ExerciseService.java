@@ -342,6 +342,7 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
+     * @param exercise the exercise that should be filtered (this deletes many field values of the passed exercise object)
      * @param participations the set of participations, wherein to search for the relevant participation
      * @param username used to get quiz submission for the user
      * @param isStudent defines if the current user is a student
