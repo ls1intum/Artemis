@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.Optional;
 
@@ -64,7 +63,7 @@ public class ExamAccessService {
             return Optional.of(notFound());
         }
         if (!exam.get().getCourse().getId().equals(courseId)) {
-            return Optional.of(forbidden());
+            return Optional.of(conflict());
         }
         return Optional.empty();
     }

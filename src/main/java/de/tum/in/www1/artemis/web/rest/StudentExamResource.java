@@ -47,8 +47,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         Optional<ResponseEntity<StudentExam>> accessFailure = studentExamService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        StudentExam studentExam = studentExamService.findOne(studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExam));
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOne(studentExamId)));
     }
 
     /**

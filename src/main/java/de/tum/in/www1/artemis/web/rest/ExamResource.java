@@ -115,8 +115,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        Exam exam = examService.findOne(examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exam));
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findOne(examId)));
     }
 
     /**

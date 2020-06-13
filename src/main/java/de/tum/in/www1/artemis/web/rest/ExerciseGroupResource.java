@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -75,7 +75,7 @@ public class ExerciseGroupResource {
         }
 
         if (exerciseGroup.getExam() == null) {
-            return badRequest();
+            return conflict();
         }
 
         Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
@@ -107,7 +107,7 @@ public class ExerciseGroupResource {
         }
 
         if (updatedExerciseGroup.getExam() == null) {
-            return badRequest();
+            return conflict();
         }
 
         Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
@@ -132,8 +132,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
         Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
-        ExerciseGroup exerciseGroup = exerciseGroupService.findOne(exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroup));
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOne(exerciseGroupId)));
     }
 
     /**
