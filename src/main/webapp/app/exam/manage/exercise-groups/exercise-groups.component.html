@@ -84,7 +84,14 @@
                         <td class="align-middle">
                             {{ exercise.maxScore }}
                         </td>
-                        <td></td>
+                        <td class="d-flex justify-content-end">
+                            <jhi-text-exercise-row-buttons
+                                [courseId]="courseId"
+                                [textExercise]="exercise"
+                                [examMode]="true"
+                                [exerciseGroupId]="exerciseGroup.id"
+                            ></jhi-text-exercise-row-buttons>
+                        </td>
                     </tr>
                 </tbody>
             </table>
