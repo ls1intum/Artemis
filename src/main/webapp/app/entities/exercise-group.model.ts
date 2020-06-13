@@ -5,7 +5,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 export class ExerciseGroup implements BaseEntity {
     public id: number;
     public title: string;
-    public mandatory: boolean;
+    public isMandatory: boolean;
     public exam: Exam | null;
     public exercises: Exercise[] | null;
 }

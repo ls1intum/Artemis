@@ -21,7 +21,7 @@
         </div>
         <div class="d-flex flex-column justify-content-center ml-3">
             <span class="d-block rounded px-2 py-1" style="font-size: 0.85rem; background-color: #ffc107;">
-                {{ (exerciseGroup.mandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional') | translate | lowercase }}
+                {{ (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional') | translate | lowercase }}
             </span>
         </div>
         <div class="d-flex justify-content-end" style="flex: 1;">

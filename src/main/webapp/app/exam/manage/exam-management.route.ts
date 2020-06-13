@@ -63,7 +63,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
                 map((course: HttpResponse<ExerciseGroup>) => course.body!),
             );
         }
-        return of({ mandatory: true } as ExerciseGroup);
+        return of({ isMandatory: true } as ExerciseGroup);
     }
 }
 
