@@ -6,7 +6,8 @@
                 "start": "Start: {{start}}",
                 "duration": "Duration: {{duration}} min",
                 "maxPoints": "max. Points: {{points}}"
-            }
+            },
+            "startExam": "Start Exam"
         },
         "examManagement": {
             "title": "Exam Management"

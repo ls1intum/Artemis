@@ -1,2 +1,2 @@
-<jhi-exam-participation-start *ngIf="isVisible() && !isOver()"></jhi-exam-participation-start>
+<jhi-exam-cover [startView]="true" [exam]="exam" *ngIf="isVisible() && !isOver()"></jhi-exam-cover>
 <jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>

@@ -2,14 +2,14 @@
     <h2 style="text-align: center;">
         <span>{{ title }}</span>
     </h2>
-    <div><span [innerHTML]="formattedGeneralInformation"></span></div>
+    <div style="text-align: center;"><span [innerHTML]="formattedGeneralInformation"></span></div>
     <div style="text-align: center;">
         <label for="confirmBox"><span [innerHTML]="formattedConfirmationText"></span></label>
         <input type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
     </div>
     <div style="text-align: center;">
         <button [disabled]="!submitEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
-            <span jhiTranslate="">Start Exam</span>
+            <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
         </button>
     </div>
 </div>

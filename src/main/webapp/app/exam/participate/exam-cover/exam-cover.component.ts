@@ -16,8 +16,11 @@ import { Course } from 'app/entities/course.model';
 })
 export class ExamCoverComponent implements OnInit, OnDestroy {
     // boolean true - use start text, false - use end text
+    /**
+     *
+     */
     @Input() startView: boolean;
-    exam: Exam;
+    @Input() exam: Exam;
     course: Course;
     courseId = 0;
 
@@ -37,7 +40,7 @@ export class ExamCoverComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         // mocks values
-        this.mock();
+        // this.mock();
 
         this.confirmed = false;
         this.submitEnabled = false;
@@ -56,31 +59,27 @@ export class ExamCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * checks whether confirmation checkbox has been checked and change it's value
-     * TODO add alerts for when exam has started but no confirmation etc.?
+     * checks whether confirmation checkbox has been checked
+     * if checked, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
         this.confirmed = !this.confirmed;
         // check if exam has started yet regularly if confirmed
         if (this.confirmed) {
-            this.check();
+            this.interval = setInterval(() => {
+                this.submitEnabled = this.enableButton();
+            }, 100);
         } else {
             this.submitEnabled = false;
         }
     }
 
-    check() {
-        this.interval = setInterval(() => {
-            this.submitEnabled = this.enableButton();
-        }, 100);
-    }
-
     /**
-     * temporary, find more efficient way of enabling button after exam has started, e.g. timeout
+     * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
     enableButton() {
         if (this.confirmed) {
-            if (this.exam && this.exam.startDate && this.exam.startDate.isBefore(moment())) {
+            if (this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
                 return true;
             } else {
                 return false;

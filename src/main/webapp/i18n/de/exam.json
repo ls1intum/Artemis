@@ -6,7 +6,8 @@
                 "start": "Beginn: {{start}}",
                 "duration": "Dauer: {{duration}} min",
                 "maxPoints": "max. Punkte: {{points}}"
-            }
+            },
+            "startExam": "Klausur starten"
         },
         "examManagement": {
             "title": "Klausur Verwaltung"
