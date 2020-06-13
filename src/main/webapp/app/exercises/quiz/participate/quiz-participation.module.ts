@@ -6,12 +6,13 @@ import { QuizParticipationComponent } from './quiz-participation.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { QuizExamParticipationComponent } from 'app/exercises/quiz/participate/exam/quiz-exam-participation.component';
 
 const ENTITY_STATES = [...quizParticipationRoute];
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedComponentModule, ArtemisQuizQuestionTypesModule],
     providers: [DeviceDetectorService],
-    declarations: [QuizParticipationComponent],
+    declarations: [QuizParticipationComponent, QuizExamParticipationComponent],
 })
 export class ArtemisQuizParticipationModule {}
