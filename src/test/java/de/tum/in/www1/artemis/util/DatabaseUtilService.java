@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -509,6 +510,24 @@ public class DatabaseUtilService {
         return studentQuestions;
     }
 
+    public Exam addExam(Course course) {
+        Exam exam = ModelFactory.generateExam(course);
+        examRepository.save(exam);
+        return exam;
+    }
+
+    public ExerciseGroup addExerciseGroup(Exam exam, boolean mandatory) {
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        exerciseGroupRepository.save(exerciseGroup);
+        return exerciseGroup;
+    }
+
+    public StudentExam addStudentExam(Exam exam) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
@@ -695,8 +714,8 @@ public class DatabaseUtilService {
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Exam exam = ModelFactory.generateExam(null, "Test Exam", course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(null, "Exam Exercise 1", mandatory, exam);
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
         final var examNrBefore = examRepository.count();
         final var exerciseGroupNrBefore = exerciseGroupRepository.count();

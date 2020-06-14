@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -283,21 +284,25 @@ public class ModelFactory {
         return course;
     }
 
-    public static Exam generateExam(Long id, String title, Course course) {
+    public static Exam generateExam(Course course) {
         Exam exam = new Exam();
-        exam.setTitle(title);
-        exam.setId(id);
+        exam.setTitle("Exam title");
         exam.setCourse(course);
         return exam;
     }
 
-    public static ExerciseGroup generateExerciseGroup(Long id, String title, boolean mandatory, Exam exam) {
+    public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
-        exerciseGroup.setId(id);
-        exerciseGroup.setTitle(title);
+        exerciseGroup.setTitle("Exercise group title");
         exerciseGroup.setIsMandatory(mandatory);
         exerciseGroup.setExam(exam);
         return exerciseGroup;
+    }
+
+    public static StudentExam generateStudentExam(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        return studentExam;
     }
 
     public static GradingCriterion generateGradingCriterion(String title) {
