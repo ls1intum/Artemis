@@ -37,7 +37,7 @@ export class ExamResolve implements Resolve<Exam> {
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
-                map((course: HttpResponse<Exam>) => course.body!),
+                map((exam: HttpResponse<Exam>) => exam.body!),
             );
         }
         return of(new Exam());
@@ -60,7 +60,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
-                map((course: HttpResponse<ExerciseGroup>) => course.body!),
+                map((exerciseGroup: HttpResponse<ExerciseGroup>) => exerciseGroup.body!),
             );
         }
         return of({ isMandatory: true } as ExerciseGroup);
@@ -83,7 +83,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((course: HttpResponse<StudentExam>) => course.body!),
+                map((studentExam: HttpResponse<StudentExam>) => studentExam.body!),
             );
         }
         return of(new StudentExam());
