@@ -24,12 +24,16 @@ import { Result } from 'app/entities/result.model';
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    /**
+     * @property personal Whether the participation belongs to the user (by being a student) or not (by being an instructor)
+     */
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
     @Input() showTestNames = false;
+    @Input() personalParticipation = true;
 
     result: Result | null;
     isBuilding: boolean;
@@ -83,7 +87,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
@@ -104,7 +108,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personalParticipation)
             .pipe(
                 // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
                 // (otherwise the building animation will be shown even though not relevant).
