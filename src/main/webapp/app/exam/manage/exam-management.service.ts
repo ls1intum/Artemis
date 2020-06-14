@@ -68,7 +68,7 @@ export class ExamManagementService {
      * Find all exams for the given course.
      * @param courseId The course id.
      */
-    findAllForCourse(courseId: number): Observable<HttpResponse<Exam[]>> {
+    findAllExamsForCourse(courseId: number): Observable<HttpResponse<Exam[]>> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));

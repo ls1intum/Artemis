@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
-    private course: Course;
+    course: Course;
     exams: Exam[];
     isAtLeastInstructor = false;
     predicate: string;
@@ -55,7 +55,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                this.loadAll();
+                this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
@@ -75,8 +75,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     /**
      * Load all exams for a course.
      */
-    loadAll() {
-        this.examManagementService.findAllForCourse(this.course.id).subscribe(
+    loadAllExamsForCourse() {
+        this.examManagementService.findAllExamsForCourse(this.course.id).subscribe(
             (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
             },
@@ -89,7 +89,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      */
     registerChangeInExams() {
         this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
-            this.loadAll();
+            this.loadAllExamsForCourse();
         });
     }
 

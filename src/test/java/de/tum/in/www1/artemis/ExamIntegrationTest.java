@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +27,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -176,6 +175,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
+
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExamsForCourseAsTutor_forbidden() throws Exception {
@@ -183,6 +183,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
+
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamsForCourseAsInstructor() throws Exception {
@@ -191,6 +192,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
         assertThat(exams.size()).isEqualTo(1);
     }
+
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testGetExamsForCourseAsAdmin() throws Exception {
@@ -234,5 +236,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
         assertThat(exams.size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void DeleteExamThatDoesNotExist() throws Exception {
+        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/1", HttpStatus.NOT_FOUND);
     }
 }
