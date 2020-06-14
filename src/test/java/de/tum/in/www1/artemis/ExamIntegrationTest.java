@@ -5,9 +5,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -244,76 +242,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testDeleteExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void testGetExamsForCourseAsUser_forbidden() throws Exception {
-        database.addExamToCourse(course);
-
-        request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExamsForCourseAsTutor_forbidden() throws Exception {
-        database.addExamToCourse(course);
-
-        request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamsForCourseAsInstructor() throws Exception {
-        database.addExamToCourse(course);
-
-        Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
-        assertThat(exams.size()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testGetExamsForCourseAsAdmin() throws Exception {
-        database.addExamToCourse(course);
-
-        Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
-        assertThat(exams.size()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void DeleteExamCourseAsUser_forbidden() throws Exception {
-        final Exam exam = database.addExamToCourse(course);
-
-        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void DeleteExamCourseAsTutor_forbidden() throws Exception {
-        final Exam exam = database.addExamToCourse(course);
-
-        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void DeleteExamCourseAsInstructor() throws Exception {
-        final Exam exam = database.addExamToCourse(course);
-
-        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-        Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
-        assertThat(exams.size()).isEqualTo(0);
-    }
-
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void DeleteExamCourseAsAdmin() throws Exception {
-        final Exam exam = database.addExamToCourse(course);
-
-        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-        Set<Exam> exams = request.get("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams", HttpStatus.OK, HashSet.class);
-        assertThat(exams.size()).isEqualTo(0);
     }
 
     @Test
