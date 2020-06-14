@@ -2,7 +2,7 @@
     <div class="d-flex">
         <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title">Exams</h4>
         <div class="ml-auto d-flex">
-            <button jhiOrionFilter class="btn btn-primary jh-create-entity create-exam" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['new']">
+            <button class="btn btn-primary jh-create-entity create-exam" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['new']">
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down">
                     Create new Exam
@@ -59,7 +59,7 @@
                     <td>{{ exam.endDate | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
                     <td>{{ exam.registeredUsers || 0 }}</td>
-                    <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
+                    <td [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
