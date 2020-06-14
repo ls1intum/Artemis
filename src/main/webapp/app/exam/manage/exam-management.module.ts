@@ -21,7 +21,15 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, FormDateTimePickerModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, NgxDatatableModule],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
+    ],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
