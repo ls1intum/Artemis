@@ -3,7 +3,7 @@
         "exam": {
             "title": "Klausur",
             "visible": "Sichtbar",
-            "startDate": "Anfang",
+            "startDate": "Beginn",
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten"
