@@ -141,6 +141,15 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), null);
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
@@ -201,7 +210,17 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setCourse(null);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
