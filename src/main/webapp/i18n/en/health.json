@@ -23,7 +23,8 @@
             "readinessState": "Readiness",
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server",
-            "userManagement": "User Management"
+            "userManagement": "User Management",
+            "hazelcast": "Hazelcast"
         },
         "table": {
             "service": "Service name",
