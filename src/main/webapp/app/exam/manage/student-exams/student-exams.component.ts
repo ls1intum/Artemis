@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription } from 'rxjs/Subscription';
-import { StudentExam } from "app/entities/student-exam.model";
-import { CourseManagementService } from "app/course/manage/course-management.service";
-import { Course } from "app/entities/course.model";
+import { StudentExam } from 'app/entities/student-exam.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-student-exams',

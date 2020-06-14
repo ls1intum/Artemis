@@ -11,8 +11,8 @@ import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
-import {ArtemisSharedModule} from "app/shared/shared.module";
-import {ArtemisDataTableModule} from "app/shared/data-table/data-table.module";
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 const ENTITY_STATES = [...examManagementState];
 

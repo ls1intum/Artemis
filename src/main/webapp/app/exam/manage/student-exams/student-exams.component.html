@@ -46,7 +46,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div *ngIf="course.isAtLeastInstructor; else displayId">
-                            <a routerLink="{{ value }}/submissions">{{ value }}</a>     <!-- TODO: adjust link -->
+                            <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/studentExams/{{ value }}/view">{{ value }}</a>
                         </div>
                         <ng-template #displayId>
                             {{ value }}
@@ -64,7 +64,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value }}
+                        <a routerLink="/course-management/{{ courseId }}">{{ course.title }}</a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -114,10 +114,10 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <div class="btn-group">
-                                <button (click)="viewStudentExam(value)">
+                                <button class="d-none d-md-table-cell" routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/studentExams/{{ value }}/view">
                                     <span>View</span>
                                 </button>
-                                <button (click)="viewAssessment(value)">
+                                <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="viewAssessment(value)">
                                     <span>Assessment</span>
                                 </button>
                             </div>
