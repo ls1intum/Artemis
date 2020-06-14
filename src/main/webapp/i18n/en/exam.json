@@ -22,7 +22,7 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text"
-          },
+        },
         "studentExams": {
             "studentExams": "Student exams",
             "generateStudentExams": "Generate student exams",

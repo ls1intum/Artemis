@@ -13,6 +13,5 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
-    @Query("SELECT e FROM Exam e WHERE e.course.id = :#{#courseId}")
-    List<Exam> findByCourseId(@Param("courseId") Long courseId);
+    List<Exam> findByCourseId(Long courseId);
 }
