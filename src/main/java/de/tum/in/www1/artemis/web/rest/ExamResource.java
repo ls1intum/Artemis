@@ -55,33 +55,10 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId} : Get a exam by id
-     *
-     * @param courseId the id of the course to which the exam belongs
-     * @param examId   the id of the exam to get
-     * @return ResponseEntity with exam in the body if it can be found, otherwise not found
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.debug("REST request to get Exam : {}", examId);
-        Optional<Exam> exam = examRepository.findById(examId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (exam.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Course course = exam.get().getCourse();
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
-        return ResponseEntity.ok(exam.get());
-    }
-
-    /**
      * POST /courses/{courseId}/exams : Create a new exam.
      *
-     * @param courseId the course to which the exam belongs
-     * @param exam     the exam to create
+     * @param courseId  the course to which the exam belongs
+     * @param exam      the exam to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
