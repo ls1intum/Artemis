@@ -5,6 +5,16 @@
         },
         "examManagement": {
             "title": "Exam Management"
+        },
+        "studentExams": {
+            "studentExams": "Student exams",
+            "generateStudentExams": "Generate student exams",
+            "searchForStudents": "Search for students by login or name (comma separated)",
+            "student": "Student",
+            "result": "Result",
+            "created": "Created",
+            "View": "View",
+            "assessment": "Assessment"
         }
     }
 }

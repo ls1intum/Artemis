@@ -5,6 +5,16 @@
         },
         "examManagement": {
             "title": "Klausur Verwaltung"
+        },
+        "studentExams": {
+            "studentExams": "Klausuren",
+            "generateStudentExams": "Klausuren erstellen",
+            "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
+            "student": "Student",
+            "result": "Ergebnis",
+            "created": "Erstellt",
+            "View": "Ansich",
+            "assessment": "Bewertung"
         }
     }
 }
