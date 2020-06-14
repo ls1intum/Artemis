@@ -13,11 +13,12 @@ import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exa
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedModule, ArtemisDataTableModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedModule, ArtemisDataTableModule, NgxDatatableModule],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
