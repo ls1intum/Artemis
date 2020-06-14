@@ -2,28 +2,30 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,10 +39,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     DatabaseUtilService database;
 
     @Autowired
+    JiraRequestMockProvider jiraRequestMockProvider;
+
+    @Autowired
+    RequestUtilService request;
+
+    @Autowired
     CourseRepository courseRepo;
 
     @Autowired
     ExerciseRepository exerciseRepo;
+
+    @Autowired
+    UserRepository userRepo;
 
     @Autowired
     ExamRepository examRepository;
@@ -59,9 +70,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Course course;
 
     @BeforeEach
-    public void initTestCase() {
+    public void initTestCase() throws URISyntaxException {
         users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
         course = database.addEmptyCourse();
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
     }
 
     @AfterEach
@@ -70,9 +83,87 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testSaveExamToDatabase() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void registerUsersInExam() throws Exception {
+        var exam = createExam();
+        var savedExam = examRepository.save(exam);
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var student3 = database.getUserByLogin("student3");
+        var registrationNumber1 = "1234567";
+        var registrationNumber2 = "2345678";
+        var registrationNumber3 = "3456789";
+        var registrationNumber6 = "9876543";
+        student1.setRegistrationNumber(registrationNumber1);
+        student2.setRegistrationNumber(registrationNumber2);
+        student3.setRegistrationNumber(registrationNumber3);
+        student1 = userRepo.save(student1);
+        student2 = userRepo.save(student2);
+        student3 = userRepo.save(student3);
+
+        var student6 = ModelFactory.generateActivatedUser("student6");     // not registered for the course
+        student6.setRegistrationNumber(registrationNumber6);
+        student6 = userRepo.save(student6);
+        student6 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student6").get();
+        assertThat(student6.getGroups()).doesNotContain(course.getStudentGroupName());
+
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + savedExam.getId() + "/students/student1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
+
+        Exam storedExam = examRepository.findWithRegisteredUsersById(savedExam.getId()).get();
+        assertThat(storedExam.getRegisteredUsers()).containsExactly(student1);
+
+        request.delete("/api/courses/" + course.getId() + "/exams/" + savedExam.getId() + "/students/student1", HttpStatus.OK);
+        request.delete("/api/courses/" + course.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
+        storedExam = examRepository.findWithRegisteredUsersById(savedExam.getId()).get();
+        assertThat(storedExam.getRegisteredUsers()).isEmpty();
+
+        var studentDto1 = new StudentDTO();
+        studentDto1.setRegistrationNumber(registrationNumber1);
+        var studentDto2 = new StudentDTO();
+        studentDto2.setRegistrationNumber(registrationNumber2);
+        var studentDto3 = new StudentDTO();
+        studentDto3.setRegistrationNumber(registrationNumber3 + "0"); // explicit typo, should be a registration failure
+        var studentDto6 = new StudentDTO();
+        studentDto6.setRegistrationNumber(registrationNumber6);
+        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto6);
+
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + savedExam.getId() + "/students", studentsToRegister,
+                StudentDTO.class, HttpStatus.OK);
+        assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto3);
+        storedExam = examRepository.findWithRegisteredUsersById(savedExam.getId()).get();
+        assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student6);
+
+        for (var user : storedExam.getRegisteredUsers()) {
+            // all registered users must have access to the course
+            user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
+            assertThat(user.getGroups()).contains(course.getStudentGroupName());
+        }
+
+        // TODO: also mock the LdapService to make sure students who are not yet in the Artemis database can be registered for an exam using a registration number
+    }
+
+    public Exam createExam() {
         ZonedDateTime currentTime = ZonedDateTime.now();
+        Exam exam = new Exam();
+        exam.setTitle("Test exam 1");
+        exam.setVisibleDate(currentTime);
+        exam.setStartDate(currentTime);
+        exam.setEndDate(currentTime);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setCourse(course);
+        return exam;
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSaveExamToDatabase() {
 
         // create exercise
         TextExercise savedTextExercise1 = textExerciseRepository.save(new TextExercise());
@@ -98,23 +189,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(savedExerciseGroup1.getExercises()).isEqualTo(exerciseGroup.getExercises());
 
         // create exam
-        Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime);
-        exam.setEndDate(currentTime);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(false);
-        exam.setCourse(course);
+        Exam exam = createExam();
         exam.addExerciseGroup(savedExerciseGroup1);
         exam.addExerciseGroup(savedExerciseGroup2);
         exam.addExerciseGroup(savedExerciseGroup3);
         Exam savedExam = examRepository.save(exam);
+
         exerciseGroupRepository.save(savedExerciseGroup1);
         exerciseGroupRepository.save(savedExerciseGroup2);
         exerciseGroupRepository.save(savedExerciseGroup3);

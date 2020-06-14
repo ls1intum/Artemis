@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
@@ -144,19 +143,6 @@ public class UserService {
                     createUser(userDto);
                 }
             }
-
-            if (ldapUserService.isPresent()) {
-                // fetch the registration number of all students
-                long start = System.currentTimeMillis();
-                List<User> users = userRepository.findAllByRegistrationNumberIsNull();
-                for (User user : users) {
-                    if (TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
-                        loadUserDetailsFromLdap(user);
-                    }
-                }
-                long end = System.currentTimeMillis();
-                log.info("LDAP search took " + (end - start) + "ms");
-            }
         }
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
@@ -172,7 +158,7 @@ public class UserService {
             return;
         }
         try {
-            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findOne(user.getLogin());
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByUsername(user.getLogin());
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
@@ -323,6 +309,35 @@ public class UserService {
         userRepository.flush();
         this.clearUserCaches(existingUser);
         return true;
+    }
+
+    /**
+     * searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user
+     * Note: this method should only be used if the user does not yet exist in the database
+     *
+     * @param registrationNumber the matriculation number of the student
+     * @return a new user or null if the LDAP user was not found
+     */
+    public Optional<User> createUserFromLdap(String registrationNumber) {
+        if (ldapUserService.isPresent()) {
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
+            if (ldapUserOptional.isPresent()) {
+                LdapUserDto ldapUser = ldapUserOptional.get();
+                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
+                User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), null, "en");
+                user.setRegistrationNumber(ldapUser.getRegistrationNumber());
+                return Optional.of(userRepository.save(user));
+            }
+            else {
+                log.warn("Ldap User with registration number " + registrationNumber + " not found");
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
+        return userRepository.findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
     }
 
     /**

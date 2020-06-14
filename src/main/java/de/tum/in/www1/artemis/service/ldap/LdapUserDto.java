@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
+
 import javax.naming.Name;
 
 import org.springframework.context.annotation.Profile;
@@ -14,11 +16,13 @@ final public class LdapUserDto {
 
     private @Attribute(name = "uid") String username;
 
-    private @Attribute(name = "imMatrikelNr") String registrationNumber;
+    private @Attribute(name = TUM_LDAP_MATRIKEL_NUMBER) String registrationNumber;
 
     private @Attribute(name = "imVorname") String firstName;
 
     private @Attribute(name = "sn") String lastName;
+
+    private @Attribute(name = "imHauptEMail") String email;
 
     public String getUsername() {
         return username;
@@ -50,5 +54,13 @@ final public class LdapUserDto {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

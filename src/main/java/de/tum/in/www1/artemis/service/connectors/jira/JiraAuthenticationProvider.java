@@ -108,7 +108,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             long start = System.currentTimeMillis();
             userService.loadUserDetailsFromLdap(user);
             long end = System.currentTimeMillis();
-            log.info("LDAP search took " + (end - start) + "ms");
+            log.debug("LDAP search took " + (end - start) + "ms");
         }
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
@@ -120,7 +120,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
-    // TODO this method is way too long, split it up
     @SuppressWarnings("unchecked")
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();

@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +21,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @Query("SELECT e FROM Exam e WHERE e.course.id = :#{#courseId}")
     Set<Exam> findByCourseId(@Param("courseId") Long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
+    Optional<Exam> findWithRegisteredUsersById(Long id);
 }
