@@ -20,7 +20,7 @@ import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, OrionModule, SortByModule, MomentModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, SortByModule, MomentModule],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
