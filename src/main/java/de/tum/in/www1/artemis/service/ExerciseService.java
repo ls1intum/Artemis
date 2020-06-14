@@ -349,7 +349,9 @@ public class ExerciseService {
      * Otherwise the course is already set and the id can be used to retrieve the course from the database.
      *
      * @param exercise the Exercise for which the course is retrieved
+     * @param entityName name of the entity
      * @return the Course of the Exercise
+     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public Course validateExerciseAndRetrieveCourse(Exercise exercise, String entityName) throws BadRequestAlertException {
         // Either course or exerciseGroup must be set
