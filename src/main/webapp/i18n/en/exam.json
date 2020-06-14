@@ -1,7 +1,9 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Exam",
+            "created": "New exam created",
+            "updated": "Exam updated"
         },
         "examManagement": {
             "title": "Exam Management",

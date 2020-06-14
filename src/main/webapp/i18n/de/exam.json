@@ -1,7 +1,9 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam"
+            "title": "Klausur",
+            "created": "Neue Klausur erstellt",
+            "updated": "Klausur bearbeitet"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",
