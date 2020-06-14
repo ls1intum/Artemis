@@ -113,7 +113,7 @@
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
-                            <div class="btn-group">
+                            <div *ngIf="course.isAtLeastInstructor" class="btn-group">
                                 <button class="d-none d-md-table-cell" routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/studentExams/{{ value }}/view">
                                     <span jhitranslate="artemisApp.studentExams.View">View</span>
                                 </button>
