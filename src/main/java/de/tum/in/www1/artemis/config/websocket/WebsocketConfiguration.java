@@ -136,22 +136,43 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // config.setCacheLimit(10000);
         //
 
+        // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
+        // If tcpClient, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages");
-            config.enableStompBrokerRelay("/topic").setUserDestinationBroadcast("/topic/unresolved-user").setUserRegistryBroadcast("/topic/user-registry")
-                    .setClientLogin(brokerUsername).setClientPasscode(brokerPassword).setSystemLogin(brokerUsername).setSystemPasscode(brokerPassword).setTcpClient(tcpClient);
+            config
+                    // Enable the relay for "/topic"
+                    .enableStompBrokerRelay("/topic")
+                    // Messages that could not be sent to an user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
+                    .setUserDestinationBroadcast("/topic/unresolved-user")
+                    // Information about connected users will be sent to "/topic/user-registry"
+                    .setUserRegistryBroadcast("/topic/user-registry")
+                    // Set client username and password to the one loaded from the config
+                    .setClientLogin(brokerUsername).setClientPasscode(brokerPassword)
+                    // Set system username and password to the one loaded from the config
+                    .setSystemLogin(brokerUsername).setSystemPasscode(brokerPassword)
+                    // Set the TCP client to the one generated above
+                    .setTcpClient(tcpClient);
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
         }
     }
 
-    // https://github.com/spring-projects/spring-framework/issues/17057
-    // https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+    /**
+     * Create a TCP client that will connect to the broker defined in the config.
+     * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
+     * If the last broker goes down, the first one is retried.
+     * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
+     * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+     * @return a TCP client with a round robin use
+     */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
         final List<InetSocketAddress> addressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
+
+        // Return null if no valid addresses can be found. This is e.g. due to a invalid config or a development setup without a broker.
         if (!addressList.isEmpty()) {
             // This provides a round-robin use of the brokers, we only want to fail over to the fallback broker if the primary broker fails, so we have the same order of brokers in
             // all nodes
