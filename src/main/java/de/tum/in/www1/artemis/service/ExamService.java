@@ -73,17 +73,6 @@ public class ExamService {
     }
 
     /**
-     * Find all exams for a course.
-     *
-     * @param courseId the id of the course
-     * @return The Set of exams for the given course
-     */
-    public Set<Exam> findAllByCourseId(Long courseId) {
-        log.debug("Request to find exams by course id : {}", courseId);
-        return examRepository.findByCourseId(courseId);
-    }
-
-    /**
      * Filters the visible exams (excluding the ones that are not visible yet)
      *
      * @param exams a set of exams (e.g. the ones of a course)
