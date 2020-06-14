@@ -27,6 +27,7 @@ export class StudentExamsComponent implements OnInit {
      * Initialize the courseId and examId
      */
     ngOnInit(): void {
+        this.isLoading = true;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
@@ -34,13 +35,13 @@ export class StudentExamsComponent implements OnInit {
 
     loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
-            this.isLoading = true;
             this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((studentExamResponse) => {
                 this.studentExams = studentExamResponse.body!;
             });
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
+            this.isLoading = false;
         });
     }
 
