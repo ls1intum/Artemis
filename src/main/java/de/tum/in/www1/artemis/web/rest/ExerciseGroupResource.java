@@ -110,7 +110,7 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
@@ -131,7 +131,7 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOne(exerciseGroupId)));
     }
 
@@ -164,7 +164,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
 
-        Optional<ResponseEntity<Void>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
