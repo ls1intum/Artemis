@@ -22,9 +22,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.result result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
-
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor

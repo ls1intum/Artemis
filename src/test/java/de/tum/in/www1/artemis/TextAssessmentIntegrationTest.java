@@ -171,7 +171,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void updateTextAssessmentAfterComplaint_withTextBlocks() throws Exception {
-        // Seetup
+        // Setup
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         database.addTextBlocksToTextSubmission(asList(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
@@ -185,6 +185,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final Result result = participation.getResults().iterator().next();
         final Complaint complaint = request.get("/api/complaints/result/" + result.getId(), HttpStatus.OK, Complaint.class);
 
+        // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         TextAssessmentUpdateDTO assessmentUpdate = new TextAssessmentUpdateDTO();
         assessmentUpdate.feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
