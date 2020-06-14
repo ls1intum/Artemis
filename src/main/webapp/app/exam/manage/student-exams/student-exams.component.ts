@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -45,16 +44,12 @@ export class StudentExamsComponent implements OnInit {
         });
     }
 
-    viewStudentExam(studentExam: StudentExam) {
-        //TODO: go to student exam view
-    }
-
     viewAssessment(studentExam: StudentExam) {
-        //TODO: go to assessment
+        // TODO: go to assessment
     }
 
     generateStudentExams() {
-        //TODO: generate all exams
+        // TODO: generate all exams
     }
 
     /**
