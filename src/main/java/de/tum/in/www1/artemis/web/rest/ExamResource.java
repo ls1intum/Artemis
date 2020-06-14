@@ -1,30 +1,25 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -46,20 +41,17 @@ public class ExamResource {
 
     private final UserService userService;
 
-    private final CourseService courseService;
-
     private final ExamService examService;
 
-    private final ExamRepository examRepository;
+    private final ExamAccessService examAccessService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final AuditEventRepository auditEventRepository;
 
-    public ExamResource(UserService userService, CourseService courseService, ExamService examService, ExamRepository examRepository, AuthorizationCheckService authCheckService) {
+    public ExamResource(UserService userService, ExamService examService, ExamAccessService examAccessService, AuditEventRepository auditEventRepository) {
         this.userService = userService;
-        this.courseService = courseService;
         this.examService = examService;
-        this.examRepository = examRepository;
-        this.authCheckService = authCheckService;
+        this.examAccessService = examAccessService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -101,10 +93,17 @@ public class ExamResource {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
+        if (exam.getCourse() == null) {
+            return conflict();
+        }
+
+        if (!exam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
+        Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
+        if (courseAccessFailure.isPresent()) {
+            return courseAccessFailure.get();
         }
 
         Exam result = examService.save(exam);
@@ -128,18 +127,77 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
+        if (updatedExam.getCourse() == null) {
+            return conflict();
         }
 
-        Optional<Exam> existingExam = examRepository.findById(updatedExam.getId());
-        if (existingExam.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        if (!updatedExam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, updatedExam.getId());
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
         }
 
         Exam result = examService.save(updatedExam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam : {}", examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findOne(examId)));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams : Find all exams for the given course.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all exams for Course : {}", courseId);
+        Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
+        return courseAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findAllByCourseId(courseId)));
+    }
+
+    /**
+     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     *
+     * @param courseId  the course to which the exam belongs
+     * @param examId    the id of the exam to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to delete exam : {}", examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Exam exam = examService.findOne(examId);
+
+        User user = userService.getUser();
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
+
+        examService.delete(examId);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 }
