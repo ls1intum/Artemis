@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -256,6 +259,26 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
         return course;
+    }
+
+    public static Exam generateExam(Course course) {
+        Exam exam = new Exam();
+        exam.setTitle("Exam title");
+        exam.setCourse(course);
+        return exam;
+    }
+
+    public static ExerciseGroup generateExerciseGroup(Exam exam) {
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setTitle("Exercise group title");
+        exerciseGroup.setExam(exam);
+        return exerciseGroup;
+    }
+
+    public static StudentExam generateStudentExam(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        return studentExam;
     }
 
     public static GradingCriterion generateGradingCriterion(String title) {
