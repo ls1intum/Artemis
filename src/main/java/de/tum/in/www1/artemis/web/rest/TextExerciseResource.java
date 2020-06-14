@@ -118,8 +118,11 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
-        // Retrieve the course for a valid exercise. Valid exercises have either a course or an exerciseGroup
-        Course course = exerciseService.validateExerciseAndRetrieveCourse(textExercise, ENTITY_NAME);
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -159,8 +162,11 @@ public class TextExerciseResource {
             return createTextExercise(textExercise);
         }
 
-        // Retrieve the course for a valid exercise. Valid exercises have either a course or an exerciseGroup
-        Course course = exerciseService.validateExerciseAndRetrieveCourse(textExercise, ENTITY_NAME);
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to update the exercise
         User user = userService.getUserWithGroupsAndAuthorities();

@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -36,14 +38,17 @@ public class CourseService {
 
     private final ExamService examService;
 
+    private final ExerciseGroupService exerciseGroupService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, ExamService examService) {
+            LectureService lectureService, ExamService examService, ExerciseGroupService exerciseGroupService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
         this.examService = examService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -196,5 +201,22 @@ public class CourseService {
     public long countNumberOfStudentsForCourse(Course course) {
         String groupName = course.getStudentGroupName();
         return userRepository.countByGroupsIsContaining(groupName);
+    }
+
+    /**
+     * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
+     * Otherwise the course is already set and the id can be used to retrieve the course from the database.
+     *
+     * @param exercise the Exercise for which the course is retrieved
+     * @return the Course of the Exercise
+     */
+    public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
+        if (exercise.hasExerciseGroup()) {
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
+            return findOne(exerciseGroup.getExam().getCourse().getId());
+        }
+        else {
+            return findOne(exercise.getCourse().getId());
+        }
     }
 }

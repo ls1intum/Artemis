@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -53,14 +52,10 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
-    private final ExerciseGroupService exerciseGroupService;
-
-    private final CourseService courseService;
-
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
             ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, ExerciseGroupService exerciseGroupService, CourseService courseService) {
+            ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -72,8 +67,6 @@ public class ExerciseService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
-        this.exerciseGroupService = exerciseGroupService;
-        this.courseService = courseService;
     }
 
     /**
@@ -343,29 +336,15 @@ public class ExerciseService {
     }
 
     /**
-     * Check whether the exercise is valid and retrieve the course for it.
-     * An exercise must have set either a course or an exerciseGroup.
-     * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
-     * Otherwise the course is already set and the id can be used to retrieve the course from the database.
+     * Check whether the exercise has either a course or an exerciseGroup.
      *
-     * @param exercise the Exercise for which the course is retrieved
+     * @param exercise the Exercise to be validated
      * @param entityName name of the entity
-     * @return the Course of the Exercise
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
-    public Course validateExerciseAndRetrieveCourse(Exercise exercise, String entityName) throws BadRequestAlertException {
-        // Either course or exerciseGroup must be set
+    public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
         if (exercise.hasCourse() == exercise.hasExerciseGroup()) {
             throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
-        }
-
-        // Fetch course from database over exerciseGroup or already set course
-        if (exercise.hasExerciseGroup()) {
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
-            return courseService.findOne(exerciseGroup.getExam().getCourse().getId());
-        }
-        else {
-            return courseService.findOne(exercise.getCourse().getId());
         }
     }
 
