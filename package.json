@@ -119,7 +119,7 @@
         "chai-as-promised": "7.1.1",
         "chai-string": "1.5.0",
         "codelyzer": "5.2.2",
-        "copy-webpack-plugin": "5.1.1",
+        "copy-webpack-plugin": "6.0.2",
         "css-loader": "3.6.0",
         "eslint": "7.2.0",
         "eslint-config-prettier": "6.11.0",
