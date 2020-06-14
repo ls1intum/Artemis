@@ -14,11 +14,14 @@ import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/studen
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedModule, ArtemisDataTableModule, NgxDatatableModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, FormDateTimePickerModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, NgxDatatableModule],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
