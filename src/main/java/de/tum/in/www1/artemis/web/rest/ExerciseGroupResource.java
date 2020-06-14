@@ -163,7 +163,6 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
-
         Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
@@ -175,7 +174,6 @@ public class ExerciseGroupResource {
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
-
         exerciseGroupService.delete(exerciseGroupId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
