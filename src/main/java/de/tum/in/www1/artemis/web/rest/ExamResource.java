@@ -74,6 +74,10 @@ public class ExamResource {
             return conflict();
         }
 
+        if (!exam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
@@ -101,6 +105,10 @@ public class ExamResource {
         }
 
         if (updatedExam.getCourse() == null) {
+            return conflict();
+        }
+
+        if (!updatedExam.getCourse().getId().equals(courseId)) {
             return conflict();
         }
 

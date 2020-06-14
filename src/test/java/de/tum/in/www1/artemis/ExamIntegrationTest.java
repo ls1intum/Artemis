@@ -34,12 +34,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final int numberOfStudents = 4;
-
-    private final int numberOfTutors = 5;
-
-    private final int numberOfInstructors = 1;
-
     @Autowired
     DatabaseUtilService database;
 
@@ -71,12 +65,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Course course1;
 
+    private Course course2;
+
     private Exam exam1;
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        users = database.addUsers(4, 5, 1);
         course1 = database.addEmptyCourse();
+        course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
     }
 
@@ -205,6 +202,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         exam = ModelFactory.generateExam(course1);
+        exam.setCourse(null);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        exam = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        exam = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
@@ -214,7 +216,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_asInstructor() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         exam.setCourse(null);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        exam = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
