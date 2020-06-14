@@ -9,11 +9,11 @@ import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 
 @Component({
-    selector: 'jhi-exam-cover',
-    templateUrl: './exam-cover.component.html',
+    selector: 'jhi-exam-participation-cover',
+    templateUrl: './exam-participation-cover.component.html',
     styles: [],
 })
-export class ExamCoverComponent implements OnInit, OnDestroy {
+export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
@@ -23,7 +23,7 @@ export class ExamCoverComponent implements OnInit, OnDestroy {
     course: Course | null;
     courseId = 0;
     title: string;
-    submitEnabled: boolean;
+    startEnabled: boolean;
     confirmed: boolean;
     examId: number;
 
@@ -35,11 +35,11 @@ export class ExamCoverComponent implements OnInit, OnDestroy {
     constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
-     * initializes the component
+     * initializes the componecnt
      */
     ngOnInit(): void {
         this.confirmed = false;
-        this.submitEnabled = false;
+        this.startEnabled = false;
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
@@ -59,13 +59,12 @@ export class ExamCoverComponent implements OnInit, OnDestroy {
      */
     updateConfirmation() {
         this.confirmed = !this.confirmed;
-        // check if exam has started yet regularly if confirmed
         if (this.confirmed) {
             this.interval = setInterval(() => {
-                this.submitEnabled = this.enableButton();
+                this.startEnabled = this.enableButton();
             }, 100);
         } else {
-            this.submitEnabled = false;
+            this.startEnabled = false;
         }
     }
 
