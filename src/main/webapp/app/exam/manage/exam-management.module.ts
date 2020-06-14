@@ -17,7 +17,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisDataTableModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisDataTableModule, ArtemisSharedModule, ArtemisDataTableModule],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
