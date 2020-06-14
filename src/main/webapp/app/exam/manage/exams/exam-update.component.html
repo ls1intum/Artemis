@@ -2,11 +2,11 @@
     <div class="col-8">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
             <div *ngIf="!exam.id; else edit">
-                <h2>{{ 'artemisApp.examManagement.createExam' | translate }}</h2>
+                <h4>{{ 'artemisApp.examManagement.createExam' | translate }}</h4>
             </div>
 
             <ng-template #edit>
-                <h2>{{ 'artemisApp.examManagement.editExam' | translate }}</h2>
+                <h4>{{ 'artemisApp.examManagement.editExam' | translate }}</h4>
             </ng-template>
 
             <div>
@@ -68,7 +68,6 @@
                     Randomize Question Order
                 </label>
             </div>
-            <hr class="separator" />
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText">>Start Text</label>
                 <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
