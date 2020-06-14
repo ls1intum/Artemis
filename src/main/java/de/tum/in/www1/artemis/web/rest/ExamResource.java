@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -68,6 +70,10 @@ public class ExamResource {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
+        if (exam.getCourse() == null) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
@@ -92,6 +98,10 @@ public class ExamResource {
         log.debug("REST request to update an exam : {}", updatedExam);
         if (updatedExam.getId() == null) {
             return createExam(courseId, updatedExam);
+        }
+
+        if (updatedExam.getCourse() == null) {
+            return conflict();
         }
 
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, updatedExam.getId());
@@ -143,7 +153,6 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
-
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
