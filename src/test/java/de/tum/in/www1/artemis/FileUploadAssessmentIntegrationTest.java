@@ -69,8 +69,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testSubmitFileUploadAssessment_asInstructor() throws Exception {
         database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
         exerciseRepo.save(afterReleaseFileUploadExercise);
-        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(), afterReleaseFileUploadExercise,
-            FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
+                afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
 
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
@@ -78,7 +78,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
-
 
         var gradingInstructionWithNoLimit = receivedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
         var gradingInstructionWithLimit = receivedFileUploadExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
@@ -88,7 +87,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
 
         Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-            params);
+                params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
@@ -145,7 +144,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
         Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-            params);
+                params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
