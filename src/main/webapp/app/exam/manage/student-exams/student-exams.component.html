@@ -6,7 +6,7 @@
             </h2>
         </div>
         <div class="ml-auto d-flex">
-            <button class="btn btn-primary" style="height: 40px" (click)="generateStudentExams()">
+            <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor">
                 <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
             </button>
         </div>
@@ -67,7 +67,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="student" [minWidth]="120" [width]="120">
+                <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.student">
@@ -95,7 +95,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="creationDate" [width]="180">
+                <ngx-datatable-column prop="exam" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('creationDate')">
                             <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.created">
@@ -105,15 +105,18 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value | artemisDate: 'long':true }}
+                        {{ value?.startDate | artemisDate: 'long':true }}
                     </ng-template>
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
-                            <div class="btn-group">
-                                <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'studentExams', value?.id, 'view']">
+                            <div class="btn-group" *ngIf="course?.isAtLeastTutor">
+                                <button
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    [routerLink]="['/course-management', courseId, 'exams', examId, 'studentExams', value?.id, 'view']"
+                                >
                                     <span jhitranslate="artemisApp.studentExams.View">View</span>
                                 </button>
                                 <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="viewAssessment(value)">
