@@ -95,7 +95,7 @@ public class ModelFactory {
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+    private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
@@ -103,15 +103,16 @@ public class ModelFactory {
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setCourse(course);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+        exercise.setCourse(course);
+        exercise.setExerciseGroup(null);
         return exercise;
     }
 
-    public static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+    private static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
             ExerciseGroup exerciseGroup) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -124,6 +125,7 @@ public class ModelFactory {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setExerciseGroup(exerciseGroup);
+        exercise.setCourse(null);
         return exercise;
     }
 
