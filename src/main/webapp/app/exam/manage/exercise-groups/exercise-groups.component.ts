@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
+import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -17,7 +20,7 @@ export class ExerciseGroupsComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService) {}
+    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService, private jhiEventManager: JhiEventManager, private alertService: AlertService) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam.
@@ -25,14 +28,36 @@ export class ExerciseGroupsComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe((res) => (this.exerciseGroups = res.body));
+        this.loadExerciseGroups();
     }
 
     /**
-     * TODO
-     * @param exerciseGroupId
+     * Load all exercise groups of the current exam.
      */
-    deleteExerciseGroup(exerciseGroupId: number) {}
+    loadExerciseGroups() {
+        this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe(
+            (res) => (this.exerciseGroups = res.body),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
+    }
+
+    /**
+     * Delete the exercise group with the given id.
+     * @param exerciseGroupId {number}
+     */
+    deleteExerciseGroup(exerciseGroupId: number) {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId).subscribe(
+            () => {
+                this.jhiEventManager.broadcast({
+                    name: 'exerciseGroupOverviewModification',
+                    content: 'Deleted an exercise group',
+                });
+                this.dialogErrorSource.next('');
+                this.loadExerciseGroups();
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
 
     /**
      * Get an icon for the type of the given exercise.

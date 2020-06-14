@@ -3,6 +3,11 @@
         "exam": {
             "title": "Exam"
         },
+        "exerciseGroup": {
+            "created": "New exercise group created",
+            "updated": "Exercise group updated",
+            "deleted": "Deleted exercise group with title {{ param }}"
+        },
         "examManagement": {
             "title": "Exam Management",
             "exerciseGroup": {

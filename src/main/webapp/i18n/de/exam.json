@@ -3,6 +3,11 @@
         "exam": {
             "title": "Exam"
         },
+        "exerciseGroup": {
+            "created": "Neue Übungsgruppe erstellt",
+            "updated": "Übungsgruppe bearbeitet",
+            "deleted": "Übungsgruppe mit Titel {{ param }} gelöscht"
+        },
         "examManagement": {
             "title": "Klausur Verwaltung",
             "exerciseGroup": {
