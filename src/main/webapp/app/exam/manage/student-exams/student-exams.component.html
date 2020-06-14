@@ -69,7 +69,7 @@
 
                 <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user')">
                             <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.student">
                                 Student
                             </span>
@@ -97,7 +97,7 @@
 
                 <ngx-datatable-column prop="exam" [width]="180">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('creationDate')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exam')">
                             <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.created">
                                 Created
                             </span>
