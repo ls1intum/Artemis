@@ -644,6 +644,8 @@ public class DatabaseUtilService {
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
         List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");

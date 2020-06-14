@@ -45,6 +45,9 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     ComplaintRepository complaintRepo;
 
+    @Autowired
+    FileUploadExerciseRepository exerciseRepo;
+
     private FileUploadExercise afterReleaseFileUploadExercise;
 
     private Course course;
@@ -59,6 +62,40 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitFileUploadAssessment_asInstructor() throws Exception {
+        database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
+        exerciseRepo.save(afterReleaseFileUploadExercise);
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(), afterReleaseFileUploadExercise,
+            FileUploadExercise.class, HttpStatus.OK);
+
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+
+
+        var gradingInstructionWithNoLimit = receivedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
+        var gradingInstructionWithLimit = receivedFileUploadExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
+
+        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
+
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+            params);
+
+        assertThat(result).as("submitted result found").isNotNull();
+        assertThat(result.isRated()).isTrue();
+        assertThat(result.getResultString()).isEqualTo("1 of 5 points");
+        assertThat(result.getFeedbacks().size()).isEqualTo(3);
+        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test
@@ -81,7 +118,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(updatedResult.getFeedbacks().size()).isEqualTo(2);
+        assertThat(updatedResult.getFeedbacks().size()).isEqualTo(3);
     }
 
     @Test
@@ -108,13 +145,12 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
         Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-                params);
+            params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
-
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(result.getFeedbacks().size()).isEqualTo(2);
+        assertThat(result.getFeedbacks().size()).isEqualTo(3);
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }

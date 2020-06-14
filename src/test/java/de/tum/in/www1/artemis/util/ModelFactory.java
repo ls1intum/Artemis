@@ -269,11 +269,11 @@ public class ModelFactory {
         var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
             exampleInstruction1.setGradingCriterion(criterion);
-            exampleInstruction1.setCredits(0.5);
+            exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");
             exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
             exampleInstruction1.setFeedback("test feedback");
-            exampleInstruction1.setUsageCount(3);
+            exampleInstruction1.setUsageCount(1);
             instructions.add(exampleInstruction1);
             numberOfTestInstructions--;
         }
@@ -286,6 +286,10 @@ public class ModelFactory {
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
         feedbacks.add(positiveFeedback);
+        Feedback positiveFeedback2 = new Feedback();
+        positiveFeedback2.setCredits(1D);
+        positiveFeedback2.setReference("theory2");
+        feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
