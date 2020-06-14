@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -72,6 +74,10 @@ public class ExerciseGroupResource {
             throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
+        if (exerciseGroup.getExam() == null) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -100,7 +106,11 @@ public class ExerciseGroupResource {
             return createExerciseGroup(courseId, examId, updatedExerciseGroup);
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
+        if (updatedExerciseGroup.getExam() == null) {
+            return conflict();
+        }
+
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
@@ -121,9 +131,8 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
-        ExerciseGroup exerciseGroup = exerciseGroupService.findOne(exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroup));
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOne(exerciseGroupId)));
     }
 
     /**
@@ -155,7 +164,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
 
-        Optional<ResponseEntity<Void>> accessFailure = exerciseGroupService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
