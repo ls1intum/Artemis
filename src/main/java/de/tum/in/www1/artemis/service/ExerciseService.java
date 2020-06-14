@@ -349,6 +349,20 @@ public class ExerciseService {
     }
 
     /**
+     * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
+     *
+     * @param updatedExercise the updated Exercise
+     * @param oldExercise the old Exercise
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if updated exercise was converted
+     */
+    public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
+        if (updatedExercise.hasExerciseGroup() != oldExercise.hasExerciseGroup() || updatedExercise.hasCourse() != oldExercise.hasCourse()) {
+            throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
+        }
+    }
+
+    /**
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute

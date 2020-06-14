@@ -178,7 +178,8 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // TODO: Should we forbid conversion between exam <-> normal text-exercise?
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
