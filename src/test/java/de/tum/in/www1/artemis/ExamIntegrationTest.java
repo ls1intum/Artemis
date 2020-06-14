@@ -69,15 +69,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private List<User> users;
 
-    private Course course;
+    private Course course1;
 
     private Exam exam1;
 
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
-        course = database.addEmptyCourse();
-        exam1 = database.addExam(course);
+        course1 = database.addEmptyCourse();
+        exam1 = database.addExam(course1);
     }
 
     @AfterEach
@@ -126,7 +126,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
-        exam.setCourse(course);
+        exam.setCourse(course1);
         exam.addExerciseGroup(savedExerciseGroup1);
         exam.addExerciseGroup(savedExerciseGroup2);
         exam.addExerciseGroup(savedExerciseGroup3);
@@ -190,53 +190,53 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private void testAllPreAuthorize() throws Exception {
-        Exam exam = ModelFactory.generateExam(course);
-        request.post("/api/courses/" + course.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
-        request.put("/api/courses/" + course.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
-        request.getList("/api/courses/" + course.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
+        Exam exam = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExam_asInstructor() throws Exception {
-        Exam exam = ModelFactory.generateExam(course);
+        Exam exam = ModelFactory.generateExam(course1);
         exam.setId(55L);
-        request.post("/api/courses/" + course.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
-        exam = ModelFactory.generateExam(course);
-        request.post("/api/courses/" + course.getId() + "/exams", exam, HttpStatus.CREATED);
-        verify(examAccessService, times(1)).checkCourseAccess(course.getId());
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        exam = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateExam_asInstructor() throws Exception {
-        Exam exam = ModelFactory.generateExam(course);
+        Exam exam = ModelFactory.generateExam(course1);
         exam.setCourse(null);
-        request.put("/api/courses/" + course.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        request.put("/api/courses/" + course.getId() + "/exams", exam1, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAccess(course.getId());
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExam_asInstructor() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccess(course.getId(), exam1.getId());
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamsForCourse_asInstructor() throws Exception {
-        request.getList("/api/courses/" + course.getId() + "/exams", HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAccess(course.getId());
+        request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
+        verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExam_asInstructor() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccess(course.getId(), exam1.getId());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
     }
 }
