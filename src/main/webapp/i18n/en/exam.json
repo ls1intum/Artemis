@@ -2,6 +2,11 @@
     "artemisApp": {
         "exam": {
             "title": "Exam",
+            "visible": "Visible",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "duration": "Duration",
+            "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated"
         },
@@ -27,6 +32,10 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
+            "assessmentDashboard": "Assessment Dashboard",
+            "studentExams": "Student Exams",
+            "students": "Students",
+            "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
                 "update": "Edit Exercise Group",
@@ -35,13 +44,16 @@
                 "maxPoints": "Max points",
                 "mandatory": "Mandatory",
                 "optional": "Optional",
-                "exerciseGroups": "Exercise Group",
                 "noExercises": "No exercises have been added yet.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add text exercise"
+            },
+            "delete": {
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             }
         }
     }

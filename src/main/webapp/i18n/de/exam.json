@@ -2,13 +2,18 @@
     "artemisApp": {
         "exam": {
             "title": "Klausur",
+            "visible": "Sichtbar",
+            "startDate": "Beginn",
+            "endDate": "Ende",
+            "duration": "Dauer",
+            "nrOfStudents": "Anzahl der registrierten Studenten",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet"
         },
         "exerciseGroup": {
-            "created": "Neue Übungsgruppe erstellt",
-            "updated": "Übungsgruppe bearbeitet",
-            "deleted": "Übungsgruppe mit Titel {{ param }} gelöscht"
+            "created": "Neue Aufgabengruppe erstellt",
+            "updated": "Aufgabengruppe bearbeitet",
+            "deleted": "Aufgabengruppe mit Titel {{ param }} gelöscht"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",
@@ -27,21 +32,28 @@
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
+            "assessmentDashboard": "Bewertungstafel",
+            "studentExams": "Klausuren der Studenten",
+            "students": "Studenten",
+            "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
-                "create": "Neue Übungsgruppe erstellen",
-                "update": "Übungsgruppe bearbeiten",
+                "create": "Neue Aufgabengruppe erstellen",
+                "update": "Aufgabengruppe bearbeiten",
                 "type": "Type",
                 "title": "Titel",
                 "maxPoints": "Max. Punktzahl",
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
-                "exerciseGroups": "Übungsgruppe",
-                "noExercises": "Es wurden noch keine Übungen hinzugefügt.",
+                "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
                 "delete": {
-                    "question": "Soll die Übungsgruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Übungen werden ebenfalls gelöscht.",
-                    "typeNameToConfirm": "Bitte gib den Namen der Übungsgruppe zur Bestätigung ein."
+                    "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen"
+            },
+            "delete": {
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }
         }
     }

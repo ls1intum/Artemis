@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing TextExercise. */
 @RestController
@@ -233,16 +232,29 @@ public class TextExerciseResource {
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
+
+        if (!optionalTextExercise.isPresent()) {
+            notFound();
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+
+        // If the exercise belongs to an exam, only instructors and admins are allowed to access it
+        if (textExercise.hasExerciseGroup()) {
+            Course course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
 
         Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        optionalTextExercise.ifPresent(textExercise -> textExercise.setGradingCriteria(gradingCriteria));
-        optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
+        textExercise.setGradingCriteria(gradingCriteria);
+        textExercise.setExampleSubmissions(exampleSubmissions);
 
-        return ResponseUtil.wrapOrNotFound(optionalTextExercise);
+        return ResponseEntity.ok().body(textExercise);
     }
 
     /**
