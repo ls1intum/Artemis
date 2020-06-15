@@ -131,11 +131,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
-        // increase the limit of concurrent connections (default is 1024 which is much too low)
-        // config.setCacheLimit(10000);
-        //
-
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
@@ -157,6 +152,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
+            config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
+            // increase the limit of concurrent connections (default is 1024 which is much too low)
+            // config.setCacheLimit(10000);
+            //
         }
     }
 
