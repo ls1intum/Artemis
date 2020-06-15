@@ -213,6 +213,12 @@ public class ExamResource {
             return notFound();
         }
         exam.addUser(student.get());
+        // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
+        // has access to the course of the exam.
+        // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
+        if (!student.get().getGroups().contains(course.getStudentGroupName())) {
+            userService.addUserToGroup(student.get(), course.getStudentGroupName());
+        }
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
     }
@@ -227,13 +233,13 @@ public class ExamResource {
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
-     * @param students     the list of students (with at least registration number) who should get access to the exam
+     * @param studentDtos     the list of students (with at least registration number) who should get access to the exam
      * @return             the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> students) {
-        log.debug("REST request to add {} as students to exam {}", students, examId);
+    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
+        log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
         var course = courseService.findOne(courseId);
         var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
@@ -243,27 +249,29 @@ public class ExamResource {
         if (!course.equals(exam.getCourse())) {
             return conflict();
         }
-        List<StudentDTO> notFoundStudents = new ArrayList<>();
-        for (var student : students) {
-            var registrationNumber = student.getRegistrationNumber();
+        List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
+        for (var studentDto : studentDtos) {
+            var registrationNumber = studentDto.getRegistrationNumber();
             try {
                 // 1) we use the registration number and try to find the student in the Artemis user database
-                Optional<User> user = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
-                if (user.isPresent()) {
-                    exam.addUser(user.get());
-                    // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
-                    if (!user.get().getGroups().contains(course.getStudentGroupName())) {
-                        userService.addUserToGroup(user.get(), course.getStudentGroupName());
+                Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    exam.addUser(student);
+                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
+                    if (!student.getGroups().contains(course.getStudentGroupName())) {
+                        userService.addUserToGroup(student, course.getStudentGroupName());
                     }
                     continue;
                 }
-                // 2) if we cannot find the user, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
+                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
                 // external user management system
-                user = userService.createUserFromLdap(registrationNumber);
-                if (user.isPresent()) {
-                    exam.addUser(user.get());
-                    // the newly created user needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(user.get(), course.getStudentGroupName());
+                optionalStudent = userService.createUserFromLdap(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    exam.addUser(student);
+                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(student, course.getStudentGroupName());
                     continue;
                 }
                 // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
@@ -273,10 +281,10 @@ public class ExamResource {
                 log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
             }
 
-            notFoundStudents.add(student);
+            notFoundStudentsDtos.add(studentDto);
         }
         examRepository.save(exam);
-        return ResponseEntity.ok().body(notFoundStudents);
+        return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
     /**
@@ -305,6 +313,8 @@ public class ExamResource {
             return notFound();
         }
         exam.removeUser(student.get());
+        // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
+        // still have access to the course.
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
     }
