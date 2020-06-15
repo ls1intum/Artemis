@@ -35,7 +35,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
-     * initializes the componecnt
+     * on init use the correct information to display in either start or final view
+     * changes in the exam and subscription is handled in the exam-participation.component
      */
     ngOnInit(): void {
         this.confirmed = false;
@@ -55,23 +56,26 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     /**
      * checks whether confirmation checkbox has been checked
-     * if checked, we further check whether exam has started yet regularly
+     * if startView true:
+     * if confirmed, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
         this.confirmed = !this.confirmed;
-        if (this.confirmed) {
-            this.interval = setInterval(() => {
-                this.startEnabled = this.enableButton();
-            }, 100);
-        } else {
-            this.startEnabled = false;
+        if (this.startView) {
+            if (this.confirmed) {
+                this.interval = setInterval(() => {
+                    this.startEnabled = this.enableStartButton();
+                }, 100);
+            } else {
+                this.startEnabled = false;
+            }
         }
     }
 
     /**
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
-    enableButton() {
+    enableStartButton() {
         if (this.confirmed) {
             if (this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
                 return true;
