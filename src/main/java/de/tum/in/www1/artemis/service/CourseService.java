@@ -204,6 +204,17 @@ public class CourseService {
     }
 
     /**
+     * Retrieve the course through ExerciseGroup -> Exam -> Course
+     *
+     * @param exerciseGroupId the id of the exerciseGroup for which the course is retrieved
+     * @return the Course of the Exercise
+     */
+    public Course retrieveCourseOverExerciseGroup(Long exerciseGroupId) {
+        ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exerciseGroupId);
+        return findOne(exerciseGroup.getExam().getCourse().getId());
+    }
+
+    /**
      * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
      * Otherwise the course is already set and the id can be used to retrieve the course from the database.
      *
@@ -212,8 +223,7 @@ public class CourseService {
      */
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
         if (exercise.hasExerciseGroup()) {
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
-            return findOne(exerciseGroup.getExam().getCourse().getId());
+            return retrieveCourseOverExerciseGroup(exercise.getExerciseGroup().getId());
         }
         else {
             return findOne(exercise.getCourse().getId());

@@ -273,6 +273,30 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExamTextExerciseAsTutor_forbidden() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getExamTextExerciseAsInstructor() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+        assertThat(textExercise.getId()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getTextExerciseAsStudent() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
