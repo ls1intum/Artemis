@@ -231,6 +231,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         body.put("key", user.getLogin());
         body.put("name", user.getName());
         body.put("emailAddress", user.getEmail());
+        // TODO: does this work or do we need additional parameters?
         // body.put("displayName", user.getName());
         body.put("applicationKeys", List.of("jira-software"));
         HttpEntity<?> entity = new HttpEntity<>(body);

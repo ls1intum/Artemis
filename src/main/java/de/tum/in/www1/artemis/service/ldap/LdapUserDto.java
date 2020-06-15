@@ -14,15 +14,20 @@ final public class LdapUserDto {
     @Id
     private Name uid;
 
-    private @Attribute(name = "uid") String username;
+    @Attribute(name = "uid")
+    private String username;
 
-    private @Attribute(name = TUM_LDAP_MATRIKEL_NUMBER) String registrationNumber;
+    @Attribute(name = TUM_LDAP_MATRIKEL_NUMBER)
+    private String registrationNumber;
 
-    private @Attribute(name = "imVorname") String firstName;
+    @Attribute(name = "imVorname")
+    private String firstName;
 
-    private @Attribute(name = "sn") String lastName;
+    @Attribute(name = "sn")
+    private String lastName;
 
-    private @Attribute(name = "imHauptEMail") String email;
+    @Attribute(name = "imHauptEMail")
+    private String email;
 
     public String getUsername() {
         return username;
@@ -30,6 +35,11 @@ final public class LdapUserDto {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public LdapUserDto username(String username) {
+        this.username = username;
+        return this;
     }
 
     public String getRegistrationNumber() {
@@ -40,12 +50,22 @@ final public class LdapUserDto {
         this.registrationNumber = registrationNumber;
     }
 
+    public LdapUserDto registrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+        return this;
+    }
+
     public String getFirstName() {
         return firstName;
     }
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    public LdapUserDto firstName(String firstName) {
+        this.firstName = firstName;
+        return this;
     }
 
     public String getLastName() {
@@ -56,11 +76,21 @@ final public class LdapUserDto {
         this.lastName = lastName;
     }
 
+    public LdapUserDto lastName(String lastName) {
+        this.lastName = lastName;
+        return this;
+    }
+
     public String getEmail() {
         return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public LdapUserDto email(String email) {
+        this.email = email;
+        return this;
     }
 }

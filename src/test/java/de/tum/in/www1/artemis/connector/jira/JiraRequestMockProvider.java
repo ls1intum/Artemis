@@ -52,7 +52,13 @@ public class JiraRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
-    public void mockIsGroupAvailable(Set<String> groups) throws URISyntaxException {
+    public void mockIsGroupAvailable(String group) throws URISyntaxException {
+        final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=" + group);
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockIsGroupAvailableForMultiple(Set<String> groups) throws URISyntaxException {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=(" + regexGroups + ")");
 
@@ -60,8 +66,15 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddUserToGroup(Set<String> groups) throws URISyntaxException {
-        mockIsGroupAvailable(groups);
+    public void mockAddUserToGroup(String group) throws URISyntaxException {
+        mockIsGroupAvailable(group);
+        final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=" + group);
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockAddUserToGroupForMultipleGroups(Set<String> groups) throws URISyntaxException {
+        mockIsGroupAvailableForMultiple(groups);
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")");
 
@@ -164,5 +177,17 @@ public class JiraRequestMockProvider {
         headers.add("X-Authentication-Denied-Reason", "captcha");
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.UNAUTHORIZED).contentType(MediaType.APPLICATION_JSON).headers(headers).body(mapper.writeValueAsString(response)));
+    }
+
+    public void mockCreateUserInExternalUserManagement(String username, String name, String email) throws URISyntaxException, JsonProcessingException {
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").build().toUri();
+        Map<String, Object> body = new HashMap<>();
+        body.put("key", username);
+        body.put("name", name);
+        body.put("emailAddress", email);
+        // body.put("displayName", user.getName());
+        body.put("applicationKeys", List.of("jira-software"));
+
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
 }

@@ -39,6 +39,11 @@ public class StudentDTO {
         this.registrationNumber = registrationNumber;
     }
 
+    public StudentDTO registrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
