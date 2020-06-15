@@ -135,8 +135,8 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
-        // If an exerciseGroup is set, we assume that the exercise is created for an exam. Then don't notify tutors when the exercise is created
-        if (!textExercise.hasExerciseGroup()) {
+        // Only notify tutors when the exercise is created for a course
+        if (textExercise.hasCourse()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
@@ -190,8 +190,8 @@ public class TextExerciseResource {
         }
 
         // TODO: Should we leave this activated in case the exercise is changed during the exam?
-        // Don't notify students about changes if the exercise was updated in exam-mode
-        if (notificationText != null && !textExercise.hasExerciseGroup()) {
+        // Only notify students about changes if a regular exercise was updated
+        if (notificationText != null && textExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
