@@ -64,7 +64,7 @@ public class ExerciseGroupService {
     @NotNull
     public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
         log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
-        return exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId)
+        return exerciseGroupRepository.findWithEagerExamById(exerciseGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
     }
 
