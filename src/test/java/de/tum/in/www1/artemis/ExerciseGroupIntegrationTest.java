@@ -55,10 +55,10 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         course1 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
         exam2 = database.addExam(course1);
-        exerciseGroup1 = database.addExerciseGroup(exam1);
+        exerciseGroup1 = database.addExerciseGroup(exam1, true);
         textExercise1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), exerciseGroup1);
         textExercise1 = textExerciseRepository.save(textExercise1);
-        database.addExerciseGroup(exam2);
+        database.addExerciseGroup(exam2, true);
     }
 
     @AfterEach
