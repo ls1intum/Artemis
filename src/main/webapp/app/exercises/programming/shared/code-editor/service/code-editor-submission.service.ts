@@ -49,7 +49,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             this.exerciseId = (domainValue as StudentParticipation).exercise
                 ? (domainValue as StudentParticipation).exercise.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
-            const personalParticipation = (domainValue as StudentParticipation).exercise ? true : false;
+            const personalParticipation = !!(domainValue as StudentParticipation).exercise;
             this.submissionSubscription = this.submissionService
                 .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
                 .pipe(
