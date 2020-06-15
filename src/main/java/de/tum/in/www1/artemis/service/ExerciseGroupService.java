@@ -24,11 +24,8 @@ public class ExerciseGroupService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService) {
+    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
@@ -53,6 +50,19 @@ public class ExerciseGroupService {
         log.debug("Request to get exercise group : {}", exerciseGroupId);
         return exerciseGroupRepository.findById(exerciseGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Exercise group with id \"" + exerciseGroupId + "\" does not exist"));
+    }
+
+    /**
+     * Get one exerciseGroup by id with the corresponding exam.
+     *
+     * @param exerciseGroupId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
+        log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
+        return exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
     }
 
     /**
