@@ -215,7 +215,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private void getExamExercise() throws Exception {
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         request.get("/api/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
-        request.get("/api/exercises/" + textExercise.getId()+ "/details", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
