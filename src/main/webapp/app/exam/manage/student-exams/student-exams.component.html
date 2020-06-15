@@ -2,7 +2,7 @@
     <div class="d-flex">
         <div class="mb-3">
             <h2>
-                <span jhiTranslate="artemisApp.studentExams.studentExams">Student exams</span>
+                <span jhiTranslate="artemisApp.studentExams.title">Student exams</span>
             </h2>
         </div>
         <div class="ml-auto d-flex">
@@ -40,7 +40,7 @@
                 <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id">
                                 ID
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
@@ -56,7 +56,7 @@
                 <ngx-datatable-column prop="studentExam" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('studentExam')">
-                            <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.exam.title">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.exam">
                                 Exam
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('studentExam')"></fa-icon>
@@ -70,7 +70,7 @@
                 <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user')">
-                            <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.student">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student">
                                 Student
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
@@ -84,7 +84,7 @@
                 <ngx-datatable-column prop="result" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('result')">
-                            <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.result">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.result">
                                 Result
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('result')"></fa-icon>
@@ -98,7 +98,7 @@
                 <ngx-datatable-column prop="exam" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exam')">
-                            <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.created">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.created">
                                 Created
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('creationDate')"></fa-icon>
@@ -117,10 +117,10 @@
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                     [routerLink]="['/course-management', courseId, 'exams', examId, 'studentExams', value?.id, 'view']"
                                 >
-                                    <span jhitranslate="artemisApp.studentExams.View">View</span>
+                                    <span jhiTranslate="artemisApp.studentExams.view">View</span>
                                 </button>
                                 <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="viewAssessment(value)">
-                                    <span jhitranslate="artemisApp.studentExams.assessment">Assessment</span>
+                                    <span jhiTranslate="artemisApp.studentExams.assessment">Assessment</span>
                                 </button>
                             </div>
                         </div>

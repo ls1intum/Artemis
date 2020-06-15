@@ -37,14 +37,16 @@
             "students": "Students"
         },
         "studentExams": {
-            "studentExams": "Student exams",
+            "title": "Student exams",
             "generateStudentExams": "Generate student exams",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "result": "Result",
             "created": "Created",
-            "View": "View",
-            "assessment": "Assessment"
+            "view": "View",
+            "assessment": "Assessment",
+            "id": "ID",
+            "exam": "Exam"
         }
     }
 }

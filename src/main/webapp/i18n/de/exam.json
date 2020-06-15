@@ -37,14 +37,16 @@
             "students": "Studenten"
         },
         "studentExams": {
-            "studentExams": "Klausuren",
+            "title": "Klausuren",
             "generateStudentExams": "Klausuren erstellen",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
             "created": "Erstellt",
-            "View": "Ansich",
-            "assessment": "Bewertung"
+            "view": "Ansicht",
+            "assessment": "Bewertung",
+            "id": "ID",
+            "exam": "Klausur"
         }
     }
 }
