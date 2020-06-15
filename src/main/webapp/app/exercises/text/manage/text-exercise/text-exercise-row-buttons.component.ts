@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
@@ -15,6 +15,7 @@ export class TextExerciseRowButtonsComponent {
     @Input() examMode = false;
     @Input() examId: number;
     @Input() exerciseGroupId: number;
+    @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -32,6 +33,7 @@ export class TextExerciseRowButtonsComponent {
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
