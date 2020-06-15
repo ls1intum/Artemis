@@ -103,7 +103,6 @@ public class ProgrammingSubmissionResource {
             SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
             // Remove unnecessary information from the new submission.
-            submission.getParticipation().setExercise(null);
             submission.getParticipation().setSubmissions(null);
 
             programmingSubmissionService.notifyUserAboutSubmission(submission);
@@ -196,9 +195,13 @@ public class ProgrammingSubmissionResource {
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
         // TODO: If the submission is not the latest but the latest graded submission, this does not work if there have been commits since. To make it work we would have to find
         // the correct build for the given commit hash.
-        Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
-        if (result.isPresent()) {
-            resultService.notifyUserAboutNewResult(result.get(), participationId);
+        Optional<Result> optionalResult = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
+        if (optionalResult.isPresent()) {
+            Result result = optionalResult.get();
+            if (result.getParticipation() == null) {
+                result.setParticipation(participation);
+            }
+            resultService.notifyUserAboutNewResult(result, participation);
             return ResponseEntity.ok().build();
         }
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.

@@ -98,6 +98,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 getFileStub = stub(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+
+                comp.personalParticipation = true;
             });
     });
 
@@ -122,7 +124,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.to.equal(oldSubscription);
         expect(comp.isInitial).to.be.true;
         expect(getHintsForExerciseStub).to.have.been.calledOnceWithExactly(exercise.id);
