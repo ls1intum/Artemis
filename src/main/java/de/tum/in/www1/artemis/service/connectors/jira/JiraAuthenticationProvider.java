@@ -227,20 +227,26 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public void createUserInExternalUserManagement(User user) {
+        log.info("Try to create user " + user.getLogin() + " in JIRA");
         Map<String, Object> body = new HashMap<>();
         body.put("key", user.getLogin());
-        body.put("name", user.getName());
+        body.put("name", user.getLogin());
         body.put("emailAddress", user.getEmail());
-        // TODO: does this work or do we need additional parameters?
-        // body.put("displayName", user.getName());
+        body.put("displayName", user.getName());
         body.put("applicationKeys", List.of("jira-software"));
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
             restTemplate.exchange(JIRA_URL + "/rest/api/2/user", HttpMethod.POST, entity, Map.class);
+            log.info("Creating user " + user.getLogin() + " was successful");
         }
         catch (HttpClientErrorException e) {
             // ignore the error if the user cannot be created, this can e.g. happen if the user already exists in the external user management system
-            log.error("Could not create user " + user.getLogin() + " in JIRA group. Error: " + e.getMessage());
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user with that username already exists")) {
+                log.info("User " + user.getLogin() + " already exists in JIRA");
+            }
+            else {
+                log.warn("Could not create user " + user.getLogin() + " in JIRA. Error: " + e.getMessage());
+            }
         }
     }
 
