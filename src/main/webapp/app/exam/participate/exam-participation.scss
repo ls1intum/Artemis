@@ -1,5 +1,5 @@
 .exam-footer {
-    height: 90px;
+    height: 50px;
     position: fixed;
     padding: 0 10px;
     bottom: 0;
@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 20px;
+    font-size: 14px;
 
     .connection-status-exam-participation {
         @media (max-width: 767.98px) {
