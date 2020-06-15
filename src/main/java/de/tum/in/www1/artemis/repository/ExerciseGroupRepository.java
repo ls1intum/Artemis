@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 @Repository
 public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Long> {
 
+    List<ExerciseGroup> findByExamId(Long examId);
+
     @Query("select exerciseGroup from ExerciseGroup exerciseGroup left join fetch exerciseGroup.exam where exerciseGroup.id = :#{#exerciseGroupId}")
     Optional<ExerciseGroup> findWithEagerExamById(@Param("exerciseGroupId") Long exerciseGroupId);
 

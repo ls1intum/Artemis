@@ -1,16 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -55,31 +52,5 @@ public class StudentExamService {
     public List<StudentExam> findAllByExamId(Long examId) {
         log.debug("REST request to get all student exams for Exam : {}", examId);
         return studentExamRepository.findByExamId(examId);
-    }
-
-    /**
-     * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
-     * that the exam belongs to the given course and the student exam belongs to the given exam.
-     *
-     * @param courseId      The id of the course
-     * @param examId        The id of the exam
-     * @param studentExamId The if of the student exam
-     * @param <X>           The type of the return type of the requesting route so that the
-     *      *               response can be returned there
-     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
-     */
-    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
-        Optional<ResponseEntity<X>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure;
-        }
-        Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
-        if (studentExam.isEmpty()) {
-            return Optional.of(notFound());
-        }
-        if (!studentExam.get().getExam().getId().equals(examId)) {
-            return Optional.of(forbidden());
-        }
-        return Optional.empty();
     }
 }

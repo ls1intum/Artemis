@@ -12,13 +12,22 @@ import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.co
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    // TODO: For better modularization we could define an exercise module with the corresponding exam routes
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisTextExerciseModule, ArtemisSharedModule],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisTextExerciseModule,
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
+    ],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,

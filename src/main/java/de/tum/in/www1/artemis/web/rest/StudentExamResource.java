@@ -46,9 +46,8 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
-        Optional<ResponseEntity<StudentExam>> accessFailure = studentExamService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        StudentExam studentExam = studentExamService.findOne(studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExam));
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOne(studentExamId)));
     }
 
     /**
@@ -62,7 +61,6 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
-
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
     }
