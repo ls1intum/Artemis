@@ -712,6 +712,16 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(textExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return textExercise;
+    }
+
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
