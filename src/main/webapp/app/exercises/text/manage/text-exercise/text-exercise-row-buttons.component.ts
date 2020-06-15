@@ -29,7 +29,7 @@ export class TextExerciseRowButtonsComponent {
             () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
-                    content: 'Deleted an textExercise',
+                    content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
             },
