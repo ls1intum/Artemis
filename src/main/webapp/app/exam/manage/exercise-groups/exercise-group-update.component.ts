@@ -46,7 +46,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
 
     // tslint:disable-next-line:completed-docs
     previousState() {
-        this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exerciseGroups']);
+        this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseGroup>>) {

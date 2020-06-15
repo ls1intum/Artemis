@@ -137,7 +137,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups',
+        path: ':examId/exercise-groups',
         component: ExerciseGroupsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -146,7 +146,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/new',
+        path: ':examId/exercise-groups/new',
         component: ExerciseGroupUpdateComponent,
         resolve: {
             exam: ExamResolve,
@@ -159,7 +159,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/edit',
         component: ExerciseGroupUpdateComponent,
         resolve: {
             exam: ExamResolve,
@@ -172,7 +172,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/view',
+        path: ':examId/exercise-groups/:exerciseGroupId/view',
         component: ExerciseGroupDetailComponent,
         resolve: {
             exerciseGroup: ExerciseGroupResolve,
@@ -214,7 +214,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:groupId/text-exercises/new',
+        path: ':examId/exercise-groups/:groupId/text-exercises/new',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -226,7 +226,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:groupId/text-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,

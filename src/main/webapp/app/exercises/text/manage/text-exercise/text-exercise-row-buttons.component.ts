@@ -43,7 +43,7 @@ export class TextExerciseRowButtonsComponent {
     createRouterLink(type: string): any[] {
         let link = ['/course-management', this.courseId, 'text-exercises'];
         if (this.examMode) {
-            link = ['/course-management', this.courseId, 'exams', this.examId, 'exerciseGroups', this.exerciseGroupId, 'text-exercises'];
+            link = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', this.exerciseGroupId, 'text-exercises'];
         }
         switch (type) {
             default:
