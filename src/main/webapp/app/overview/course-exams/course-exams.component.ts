@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -15,8 +16,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
     public course: Course | null;
     private paramSubscription: Subscription;
+    private courseUpdatesSubscription: Subscription;
 
-    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {}
+    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private courseManagementService: CourseManagementService) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -27,6 +29,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
+
+        this.courseUpdatesSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseCalculationService.updateCourse(course);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+        });
     }
 
     /**
@@ -34,6 +41,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.paramSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
     }
 
     /**
