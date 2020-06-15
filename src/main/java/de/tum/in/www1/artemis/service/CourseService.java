@@ -211,7 +211,7 @@ public class CourseService {
      */
     public Course retrieveCourseOverExerciseGroup(Long exerciseGroupId) {
         ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exerciseGroupId);
-        return findOne(exerciseGroup.getExam().getCourse().getId());
+        return exerciseGroup.getExam().getCourse();
     }
 
     /**
