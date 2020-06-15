@@ -72,8 +72,14 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(fileUploadExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
+
+        // Check that the user is authorized to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -87,7 +93,11 @@ public class FileUploadExerciseResource {
         }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
+
+        // Only notify tutors when the exercise is created for a course
+        if (fileUploadExercise.hasCourse()) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
+        }
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
