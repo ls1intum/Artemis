@@ -13,6 +13,8 @@ import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exa
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -31,6 +33,8 @@ const ENTITY_STATES = [...examManagementState];
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
         ArtemisTextExerciseModule,
         SortByModule,
         MomentModule,

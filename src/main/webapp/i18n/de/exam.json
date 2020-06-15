@@ -15,6 +15,18 @@
             "updated": "Aufgabengruppe bearbeitet",
             "deleted": "Aufgabengruppe mit Titel {{ param }} gelöscht"
         },
+        "studentExams": {
+            "title": "Klausuren",
+            "generateStudentExams": "Klausuren erstellen",
+            "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
+            "student": "Student",
+            "result": "Ergebnis",
+            "created": "Erstellt",
+            "view": "Ansicht",
+            "assessment": "Bewertung",
+            "id": "ID",
+            "exam": "Klausur"
+        },
         "examManagement": {
             "title": "Klausur Verwaltung",
             "createExam": "Erstelle eine neue Klausur",

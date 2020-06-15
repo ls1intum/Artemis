@@ -193,7 +193,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams',
+        path: ':examId/student-exams',
         component: StudentExamsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -202,7 +202,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams/:studentExamId/view',
+        path: ':examId/student-exams/:studentExamId/view',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,
