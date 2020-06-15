@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -30,6 +36,9 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @SpyBean
     ExamAccessService examAccessService;
 
+    @Autowired
+    TextExerciseRepository textExerciseRepository;
+
     private Course course1;
 
     private Exam exam1;
@@ -38,6 +47,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     private ExerciseGroup exerciseGroup1;
 
+    private TextExercise textExercise1;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
@@ -45,6 +56,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         exam1 = database.addExam(course1);
         exam2 = database.addExam(course1);
         exerciseGroup1 = database.addExerciseGroup(exam1);
+        textExercise1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), exerciseGroup1);
+        textExercise1 = textExerciseRepository.save(textExercise1);
         database.addExerciseGroup(exam2);
     }
 
@@ -108,8 +121,11 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseGroupsForExam_asInstructor() throws Exception {
-        request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
+        List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getExercises().size()).isEqualTo(1);
+        assertThat(result.get(0).getExercises()).contains(textExercise1);
     }
 
     @Test
@@ -117,5 +133,6 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     public void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
     }
 }
