@@ -179,13 +179,13 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.UNAUTHORIZED).contentType(MediaType.APPLICATION_JSON).headers(headers).body(mapper.writeValueAsString(response)));
     }
 
-    public void mockCreateUserInExternalUserManagement(String username, String name, String email) throws URISyntaxException, JsonProcessingException {
+    public void mockCreateUserInExternalUserManagement(String username, String fullname, String email) throws URISyntaxException, JsonProcessingException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").build().toUri();
         Map<String, Object> body = new HashMap<>();
         body.put("key", username);
-        body.put("name", name);
+        body.put("name", username);
+        body.put("displayName", fullname);
         body.put("emailAddress", email);
-        // body.put("displayName", user.getName());
         body.put("applicationKeys", List.of("jira-software"));
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
