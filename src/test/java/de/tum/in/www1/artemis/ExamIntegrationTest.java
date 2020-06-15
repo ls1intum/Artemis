@@ -247,6 +247,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void DeleteExamThatDoesNotExist() throws Exception {
-        request.delete("/api/courses/" + courseRepo.findAll().get(0).getId() + "/exams/1", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course2.getId() + "/exams/2", HttpStatus.NOT_FOUND);
     }
 }
