@@ -67,13 +67,11 @@ public class TextExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    private final ExerciseGroupService exerciseGroupService;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
             Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
+            TextBlockRepository textBlockRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -88,7 +86,6 @@ public class TextExerciseResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
-        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
