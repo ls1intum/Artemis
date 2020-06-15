@@ -14,6 +14,23 @@
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
             "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
         },
+        "exerciseGroup": {
+            "created": "Neue Aufgabengruppe erstellt",
+            "updated": "Aufgabengruppe bearbeitet",
+            "deleted": "Aufgabengruppe mit Titel {{ param }} gelöscht"
+        },
+        "studentExams": {
+            "title": "Klausuren",
+            "generateStudentExams": "Klausuren erstellen",
+            "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
+            "student": "Student",
+            "result": "Ergebnis",
+            "created": "Erstellt",
+            "view": "Ansicht",
+            "assessment": "Bewertung",
+            "id": "ID",
+            "exam": "Klausur"
+        },
         "examManagement": {
             "title": "Klausur Verwaltung",
             "createExam": "Erstelle eine neue Klausur",
@@ -31,14 +48,29 @@
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
+            "assessmentDashboard": "Bewertungstafel",
+            "studentExams": "Klausuren der Studenten",
+            "students": "Studenten",
+            "exerciseGroups": "Aufgabengruppen",
+            "exerciseGroup": {
+                "create": "Neue Aufgabengruppe erstellen",
+                "update": "Aufgabengruppe bearbeiten",
+                "type": "Type",
+                "title": "Titel",
+                "maxPoints": "Max. Punktzahl",
+                "mandatory": "Verpflichtend",
+                "optional": "Optional",
+                "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
+                "delete": {
+                    "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
+                },
+                "addTextExercise": "Textaufgabe hinzufügen"
+            },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            },
-            "exerciseGroups": "Aufgabengruppen",
-            "assessmentDashboard": "Bewertungstafel",
-            "studentExams": "Klausuren der Studenten",
-            "students": "Studenten"
+            }
         }
     }
 }

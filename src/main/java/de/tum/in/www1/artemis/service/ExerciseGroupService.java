@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,11 +22,8 @@ public class ExerciseGroupService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService) {
+    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
@@ -56,14 +51,40 @@ public class ExerciseGroupService {
     }
 
     /**
-     * Get all exercise groups for the given exam.
+     * Get one exerciseGroup by id with the corresponding exam.
+     *
+     * @param exerciseGroupId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
+        log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
+        return exerciseGroupRepository.findWithEagerExamById(exerciseGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
+    }
+
+    /**
+     * Get one exerciseGroup by id with all exercises.
+     *
+     * @param exerciseGroupId the id of the entity
+     * @return the exercise group with all exercise
+     */
+    @NotNull
+    public ExerciseGroup findOneWithExercises(Long exerciseGroupId) {
+        log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
+        return exerciseGroupRepository.findWithEagerExercisesById(exerciseGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
+    }
+
+    /**
+     * Get all exercise groups for the given exam with all exercises.
      *
      * @param examId the id of the exam
      * @return the list of all exercise groups
      */
-    public List<ExerciseGroup> findAllByExamId(Long examId) {
+    public List<ExerciseGroup> findAllWithExamAndExercises(Long examId) {
         log.debug("REST request to get all exercise groups for Exam : {}", examId);
-        return exerciseGroupRepository.findByExamId(examId);
+        return exerciseGroupRepository.findWithEagerExamAndExercisesByExamId(examId);
     }
 
     /**
