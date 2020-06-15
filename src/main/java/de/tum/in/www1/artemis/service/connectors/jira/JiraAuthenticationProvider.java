@@ -113,7 +113,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
-    @SuppressWarnings("unchecked")
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
@@ -151,25 +150,24 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         if (authenticationResponse != null && authenticationResponse.getBody() != null) {
             final var jiraUserDTO = authenticationResponse.getBody();
             final var login = jiraUserDTO.getName();
-            // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-            User user = null;
+            User user;
             final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
             }
             else {
-                // the user does not exist
-                // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
+                // the user does not exist yet, we have to create it in the Artemis database
+                // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
+                user = userService.createUser(login, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                // load additional details if the ldap service is available and the user follows the TUM pattern
                 if (ldapUserService.isPresent() && TUM_USERNAME_PATTERN.matcher(username).matches()) {
-                    long start = System.currentTimeMillis();
                     LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(username);
-                    long end = System.currentTimeMillis();
-                    log.debug("LDAP search took " + (end - start) + "ms");
-                    user = userService.createUser(login, "", ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(), ldapUserDto.getRegistrationNumber(),
-                            null, "en");
-                }
-                else {
-                    user = userService.createUser(login, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                    if (ldapUserDto != null) {
+                        user.setFirstName(ldapUserDto.getFirstName());
+                        user.setLastName(ldapUserDto.getLastName());
+                        user.setEmail(ldapUserDto.getEmail());
+                        user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                    }
                 }
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
