@@ -68,19 +68,21 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam
      */
     searchResultFormatter = (studentExam: StudentExam) => {
-        if (studentExam.student) {
-            const { login, name } = studentExam.student;
-            return `${login} (${name})`;
+        // studentExam has student but it comes as user from the server
+        // @ts-ignore
+        if (studentExam.user) {
+            // @ts-ignore
+            return `${studentExam.user.login} (${studentExam.user.name})`;
         }
     };
 
     /**
-     * Converts a participation object to a string that can be searched for. This is
+     * Converts a student exam object to a string that can be searched for. This is
      * used by the autocomplete select inside the data table.
      *
      * @param studentExam Student exam
      */
-    searchTextFromParticipation = (studentExam: StudentExam): string => {
+    searchTextFromStudentExam = (studentExam: StudentExam): string => {
         return studentExam.student?.login || '';
     };
 }

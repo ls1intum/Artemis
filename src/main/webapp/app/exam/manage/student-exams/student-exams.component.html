@@ -14,13 +14,13 @@
     <jhi-alert></jhi-alert>
     <jhi-data-table
         [isLoading]="isLoading"
-        entityType="participation"
+        entityType="studentExam"
         [allEntities]="studentExams"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         [searchPlaceholderTranslation]="'artemisApp.studentExams.searchForStudents'"
-        [searchFields]="['student.login', 'student.name']"
-        [searchTextFromEntity]="searchTextFromParticipation"
+        [searchFields]="['user.login', 'user.name']"
+        [searchTextFromEntity]="searchTextFromStudentExam"
         [searchResultFormatter]="searchResultFormatter"
         (entitiesSizeChange)="handleStudentExamsSizeChange($event)"
     >
@@ -73,7 +73,7 @@
                             <span class="datatable-header-cell-label bold sortable" jhitranslate="artemisApp.studentExams.student">
                                 Student
                             </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
