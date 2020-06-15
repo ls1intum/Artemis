@@ -62,7 +62,7 @@ public class ExerciseGroupService {
     public ExerciseGroup findOneWithExam(Long exerciseGroupId) {
         log.debug("Request to get exerciseGroup with exam : {}", exerciseGroupId);
         return exerciseGroupRepository.findByIdWithEagerExam(exerciseGroupId)
-            .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("ExerciseGroup with id: \"" + exerciseGroupId + "\" does not exist"));
     }
 
     /**

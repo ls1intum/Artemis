@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing TextExercise. */
 @RestController
@@ -245,10 +244,11 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
         if (textExercise.hasExerciseGroup()) {
             Course course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
-            if (!authCheckService.isAtLeastInstructorInCourse(course,null)) {
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
-        } else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
+        }
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
 
