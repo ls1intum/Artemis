@@ -11,6 +11,7 @@ import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -24,6 +25,7 @@ import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
+    // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
@@ -32,6 +34,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisMarkdownEditorModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
+        ArtemisTextExerciseModule,
         SortByModule,
         MomentModule,
     ],
