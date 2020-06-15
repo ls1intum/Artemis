@@ -715,8 +715,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course1.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course2.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
@@ -744,8 +744,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
         finishedCourse = courseRepo.save(finishedCourse);
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(notYetStartedCourse.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(finishedCourse.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(notYetStartedCourse.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(finishedCourse.getStudentGroupName()));
 
         request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
         request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
@@ -844,9 +844,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getTeachingAssistantGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getInstructorGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getTeachingAssistantGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getInstructorGroupName()));
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
@@ -855,9 +855,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private void testAddStudentOrTutorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getTeachingAssistantGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getInstructorGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getTeachingAssistantGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getInstructorGroupName()));
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);

@@ -56,7 +56,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, "en");
+            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
         }
         else {
             user = optionalUser.get();
@@ -88,6 +88,11 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
             // we only save if this is needed
             userRepository.save(user);
         }
+    }
+
+    @Override
+    public void createUserInExternalUserManagement(User user) {
+        // This should not be invoked. As we only use internal management, nothing needs to be done in case it is invoked.
     }
 
     @Override
