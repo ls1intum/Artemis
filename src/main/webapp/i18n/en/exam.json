@@ -22,6 +22,10 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text"
+        },
+        "examParticipation": {
+            "connected": "Connected. Your answers will be saved every 60s.",
+            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
         }
     }
 }

@@ -1,0 +1,34 @@
+.exam-footer {
+    height: 90px;
+    position: fixed;
+    padding: 0 10px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+    background: white;
+
+    .container {
+        height: 100%;
+    }
+}
+.exam-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 20px;
+
+    .connection-status-exam-participation {
+        @media (max-width: 767.98px) {
+            font-size: 11px;
+        }
+    }
+}
+.connected {
+    background-color: #d1ecf1;
+}
+.disconnected {
+    background-color: #fff2cc;
+}

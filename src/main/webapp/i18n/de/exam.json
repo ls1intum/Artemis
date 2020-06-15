@@ -22,6 +22,10 @@
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext"
+        },
+        "examParticipation": {
+            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
+            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
         }
     }
 }

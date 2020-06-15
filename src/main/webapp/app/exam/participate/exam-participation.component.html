@@ -1,1 +1,18 @@
 <p>exam-participation works!</p>
+<div *ngIf="!disconnected" class="exam-footer connected">
+    <div class="container">
+        <div class="exam-footer-content">
+            <p jhiTranslate="artemisApp.examParticipation.connected"></p>
+            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="disconnected" class="exam-footer disconnected">
+    <div class="container">
+        <div class="exam-footer-content">
+            <p jhiTranslate="artemisApp.examParticipation.disconnected"></p>
+            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+        </div>
+    </div>
+</div>
