@@ -16,10 +16,10 @@ export class CourseExamDetailComponent {
     constructor(private router: Router) {}
 
     /**
-     * navigate to /courses/:courseid/exam/:examId
+     * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        this.router.navigate(['courses', this.course.id, 'exam', this.exam.id], {
+        this.router.navigate(['courses', this.course.id, 'exams', this.exam.id], {
             state: {
                 exam: this.exam,
             },
