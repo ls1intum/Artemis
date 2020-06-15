@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing TextExercise. */
 @RestController
@@ -67,11 +66,13 @@ public class TextExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExerciseGroupService exerciseGroupService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
             Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository) {
+            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -86,6 +87,7 @@ public class TextExerciseResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -115,10 +117,15 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
+
+        // Check that the user is authorized to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
@@ -127,7 +134,11 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
+
+        // Only notify tutors when the exercise is created for a course
+        if (textExercise.hasCourse()) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
+        }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -149,16 +160,25 @@ public class TextExerciseResource {
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
+
+        // Check that the user is authorized to update the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
         if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
@@ -169,7 +189,9 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        if (notificationText != null) {
+        // TODO: Should we leave this activated in case the exercise is changed during the exam?
+        // Only notify students about changes if a regular exercise was updated
+        if (notificationText != null && textExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
@@ -213,16 +235,29 @@ public class TextExerciseResource {
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
+
+        if (optionalTextExercise.isEmpty()) {
+            notFound();
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+
+        // If the exercise belongs to an exam, only instructors and admins are allowed to access it
+        if (textExercise.hasExerciseGroup()) {
+            Course course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
 
         Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        optionalTextExercise.ifPresent(textExercise -> textExercise.setGradingCriteria(gradingCriteria));
-        optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
+        textExercise.setGradingCriteria(gradingCriteria);
+        textExercise.setExampleSubmissions(exampleSubmissions);
 
-        return ResponseUtil.wrapOrNotFound(optionalTextExercise);
+        return ResponseEntity.ok().body(textExercise);
     }
 
     /**
@@ -235,21 +270,30 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
-        Optional<TextExercise> textExercise = textExerciseRepository.findById(exerciseId);
-        if (textExercise.isEmpty()) {
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
-        Course course = textExercise.get().getCourse();
+        TextExercise textExercise = optionalTextExercise.get();
+
+        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
+        Course course;
+        if (textExercise.hasExerciseGroup()) {
+            course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+        }
+        else {
+            course = textExercise.getCourse();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
+        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise));
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise.get(), course, user);
+        exerciseService.logDeletion(textExercise, course, user);
         exerciseService.delete(exerciseId, false, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.get().getTitle())).build();
-
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 
     /**
