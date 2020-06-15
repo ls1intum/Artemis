@@ -212,7 +212,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:groupId/text-exercises/new',
+        path: ':examId/exercise-groups/:groupId/text-exercises/new',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -224,7 +224,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:groupId/text-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,

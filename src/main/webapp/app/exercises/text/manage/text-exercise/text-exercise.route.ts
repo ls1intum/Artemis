@@ -17,7 +17,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
-    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService, public exerciseGroupService: ExerciseGroupService) {}
+    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
 
     /**
      * Resolves the route and initializes text exercise
