@@ -21,6 +21,8 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
+import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
+import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -234,6 +236,30 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:groupId/file-upload-exercises/new',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:groupId/file-upload-exercises/:exerciseId/edit',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
