@@ -1,17 +1,34 @@
 {
     "artemisApp": {
         "exam": {
-            "title": "Exam",
             "overview": {
                 "start": "Beginn: {{start}}",
                 "duration": "Dauer: {{duration}} min",
                 "maxPoints": "max. Punkte: {{points}}"
             },
+            "title": "Klausur",
             "startExam": "Klausur starten",
-            "summary": "Zusammenfassung"
+            "summary": "Zusammenfassung",        
+            "created": "Neue Klausur erstellt",
+            "updated": "Klausur bearbeitet"
         },
         "examManagement": {
-            "title": "Klausur Verwaltung"
+            "title": "Klausur Verwaltung",
+            "createExam": "Erstelle eine neue Klausur",
+            "editExam": "Bearbeite eine existierende Klausur",
+            "courseTitle": "Kursname",
+            "examId": "Klausur ID",
+            "examTitle": "Klausurname",
+            "visibleDate": "Sichtbar ab",
+            "startDate": "Bearbeitungszeit ab",
+            "endDate": "Bearbeitungszeit bis",
+            "maxPoints": "Anzahl an erreichbaren Punkten",
+            "numberOfExercisesInExam": "Anzahl an Aufgabengruppen",
+            "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
+            "startText": "Klausurbeginn Text",
+            "endText": "Klausurende Text",
+            "confirmationStartText": "Klausurbeginn Bestätigungstext",
+            "confirmationEndText": "Klausurende Bestätigungstext"
         }
     }
 }
