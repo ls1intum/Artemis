@@ -17,10 +17,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.ExerciseGroupService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -45,13 +47,16 @@ public class ExerciseGroupResource {
 
     private final UserService userService;
 
+    private final ExerciseService exerciseService;
+
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService,
+    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService, ExerciseService exerciseService,
             AuditEventRepository auditEventRepository) {
         this.exerciseGroupService = exerciseGroupService;
         this.examAccessService = examAccessService;
         this.userService = userService;
+        this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -168,12 +173,16 @@ public class ExerciseGroupResource {
             return accessFailure.get();
         }
 
-        ExerciseGroup exerciseGroup = exerciseGroupService.findOne(exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExercises(exerciseGroupId);
 
         User user = userService.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
+
+        for (Exercise exercise : exerciseGroup.getExercises()) {
+            exerciseService.delete(exercise.getId(), false, false);
+        }
 
         exerciseGroupService.delete(exerciseGroupId);
 

@@ -25,6 +25,10 @@ public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Lo
     Optional<ExerciseGroup> findWithEagerExamById(@Param("exerciseGroupId") Long exerciseGroupId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
+    @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :#{#exerciseGroupId}")
+    Optional<ExerciseGroup> findWithEagerExercisesById(@Param("exerciseGroupId") Long exerciseGroupId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     @Query("SELECT e FROM ExerciseGroup e WHERE e.exam.id = :#{#examId}")
     List<ExerciseGroup> findWithEagerExercisesByExamId(@Param("examId") Long examId);
 }
