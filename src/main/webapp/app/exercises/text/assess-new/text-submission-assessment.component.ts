@@ -203,9 +203,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService
-                .cancelAssessment(this.exercise.id, this.submission.id)
-                .subscribe(() => this.router.navigate(['course-management', this.exercise?.course?.id, 'exercises', this.exercise?.id, 'tutor-dashboard']));
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
         }
     }
 
@@ -240,8 +238,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
-    goToExerciseDashboard() {
-        if (this.exercise && this.exercise.course) {
+    navigateBack() {
+        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
             this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();

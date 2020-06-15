@@ -28,6 +28,9 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -177,6 +180,15 @@ public class DatabaseUtilService {
     @Autowired
     private TextClusterRepository textClusterRepository;
 
+    @Autowired
+    private ExerciseGroupRepository exerciseGroupRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
+
     public void resetDatabase() {
 
         conflictRepo.deleteAll();
@@ -202,6 +214,9 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
+        studentExamRepository.deleteAll();
+        exerciseGroupRepository.deleteAll();
+        examRepository.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
@@ -493,6 +508,24 @@ public class DatabaseUtilService {
         studentQuestions.add(studentQuestion2);
 
         return studentQuestions;
+    }
+
+    public Exam addExam(Course course) {
+        Exam exam = ModelFactory.generateExam(course);
+        examRepository.save(exam);
+        return exam;
+    }
+
+    public ExerciseGroup addExerciseGroup(Exam exam) {
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(exam);
+        exerciseGroupRepository.save(exerciseGroup);
+        return exerciseGroup;
+    }
+
+    public StudentExam addStudentExam(Exam exam) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
     }
 
     /**

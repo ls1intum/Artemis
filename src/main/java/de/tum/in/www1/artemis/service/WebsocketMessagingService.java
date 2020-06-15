@@ -1,10 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
+
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * This service sends out websocket messages.
@@ -40,9 +48,48 @@ public class WebsocketMessagingService {
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
 
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
+        // TODO: Are there other cases that must be handled here?
+        if (participation instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) participation;
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+        }
+
+        // Send to tutors, instructors and admins
+        messagingTemplate.convertAndSend(getResultDestination(participation.getExercise().getId()), result);
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);
+    }
+
+    /**
+     * Returns true if the given destination should be handled by this service.
+     * This is the case if this is a 'non-personal' subscription (a result subscription for a whole exercise).
+     * Only teaching assistants, instructors and admins should be allowed to subscribe to this topic.
+     *
+     * @param destination Websocket destination topic which to check
+     * @return flag whether the destination belongs to this controller (is a 'non-personal' result subscription)
+     */
+    public static boolean isResultNonPersonalDestination(String destination) {
+        return Optional.ofNullable(getExerciseIdFromResultDestination(destination)).isPresent();
+    }
+
+    /**
+     * Returns the exercise id from the destination route
+     *
+     * @param destination Websocket destination topic from which to extract the exercise id
+     * @return exercise id
+     */
+    public static Long getExerciseIdFromResultDestination(String destination) {
+        Pattern pattern = Pattern.compile("^" + getResultDestination("(\\d*)"));
+        Matcher matcher = pattern.matcher(destination);
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+    }
+
+    private static String getResultDestination(long exerciseId) {
+        return getResultDestination(String.valueOf(exerciseId));
+    }
+
+    private static String getResultDestination(String exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

@@ -123,13 +123,13 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime != null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,
+            submittedTime: complaint.submittedTime && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,
         });
     }
 
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submittedTime = res.body.submittedTime != null ? moment(res.body.submittedTime) : null;
+            res.body.submittedTime = res.body.submittedTime ? moment(res.body.submittedTime) : null;
         }
         return res;
     }
@@ -137,7 +137,7 @@ export class ComplaintService implements IComplaintService {
     private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
             res.body.forEach((complaint) => {
-                complaint.submittedTime = complaint.submittedTime != null ? moment(complaint.submittedTime) : null;
+                complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : null;
             });
         }
 

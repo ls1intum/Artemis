@@ -294,16 +294,16 @@ export class CourseManagementService {
 
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
-            startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
-            endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
+            startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
+            endDate: course.endDate && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
         });
         return copy;
     }
 
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
             res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
             res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
         }
@@ -313,8 +313,8 @@ export class CourseManagementService {
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.startDate = course.startDate != null ? moment(course.startDate) : null;
-                course.endDate = course.endDate != null ? moment(course.endDate) : null;
+                course.startDate = course.startDate ? moment(course.startDate) : null;
+                course.endDate = course.endDate ? moment(course.endDate) : null;
                 course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
                 course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
             });
@@ -377,14 +377,6 @@ export class CourseExerciseService {
 
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
-    // exercise specific calls
-
-    findProgrammingExercise(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
-        return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}`)
-            .map((res: ProgrammingExercise) => this.convertDateFromServer(res));
-    }
-
     /**
      * returns all programming exercises for the course corresponding to courseId
      * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
@@ -394,15 +386,6 @@ export class CourseExerciseService {
         return this.http
             .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
-    /**
-     * returns a modeling exercise with the given exerciseId of the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findModelingExercise(courseId: number, exerciseId: number): Observable<ModelingExercise> {
-        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}`).map((res: ModelingExercise) => this.convertDateFromServer(res));
     }
 
     /**
@@ -417,15 +400,6 @@ export class CourseExerciseService {
     }
 
     /**
-     * returns the text exercise with the identifier exerciseId for the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findTextExercise(courseId: number, exerciseId: number): Observable<TextExercise> {
-        return this.http.get<TextExercise>(`${this.resourceUrl}/${courseId}/text-exercises/${exerciseId}`).map((res: TextExercise) => this.convertDateFromServer(res));
-    }
-
-    /**
      * returns all text exercises for the course corresponding to courseId
      * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
      * @param courseId - the unique identifier of the course
@@ -434,17 +408,6 @@ export class CourseExerciseService {
         return this.http
             .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
-    /**
-     * returns the file upload exercise with the identifier exerciseId for the course corresponding to courseId
-     * @param courseId - the unique identifier of the course
-     * @param exerciseId - the unique identifier of the modelling exercise
-     */
-    findFileUploadExercise(courseId: number, exerciseId: number): Observable<FileUploadExercise> {
-        return this.http
-            .get<FileUploadExercise>(`${this.resourceUrl}/${courseId}/file-upload-exercises/${exerciseId}`)
-            .map((res: FileUploadExercise) => this.convertDateFromServer(res));
     }
 
     /**
@@ -502,8 +465,8 @@ export class CourseExerciseService {
     }
 
     convertDateFromServer<T extends Exercise>(res: T): T {
-        res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
-        res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
+        res.releaseDate = res.releaseDate ? moment(res.releaseDate) : null;
+        res.dueDate = res.dueDate ? moment(res.dueDate) : null;
         return res;
     }
 

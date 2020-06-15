@@ -275,7 +275,8 @@
         "course": "Course details",
         "lectures": "Lectures",
         "exercise": "Exercise details",
-        "statistics": "Course statistics"
+        "statistics": "Course statistics",
+        "exams": "Exams"
     },
     "connectionStatus": {
         "connected": "Connected",

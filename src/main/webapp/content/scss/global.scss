@@ -697,6 +697,10 @@ Course Info Bar
         color: #6a737d;
         border-left: 0.25em solid #dfe2e5;
     }
+
+    img {
+        max-width: 100%;
+    }
 }
 
 ngb-tooltip-window {
