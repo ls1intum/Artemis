@@ -101,7 +101,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var registrationNumber1 = "1234567";
         var registrationNumber2 = "2345678";
         var registrationNumber3 = "3456789";
-        var registrationNumber3WithType = "3456789" + "0";
+        var registrationNumber3WithTypo = registrationNumber3 + "0";
         var registrationNumber6 = "9876543";
         student1.setRegistrationNumber(registrationNumber1);
         student2.setRegistrationNumber(registrationNumber2);
@@ -111,7 +111,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student3 = userRepo.save(student3);
 
         // mock the ldap service
-        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithType);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithTypo);
 
         var student6 = ModelFactory.generateActivatedUser("student6");     // not registered for the course
         student6.setRegistrationNumber(registrationNumber6);
@@ -135,7 +135,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentDto2 = new StudentDTO();
         studentDto2.setRegistrationNumber(registrationNumber2);
         var studentDto3 = new StudentDTO();
-        studentDto3.setRegistrationNumber(registrationNumber3WithType); // explicit typo, should be a registration failure
+        studentDto3.setRegistrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure
         var studentDto6 = new StudentDTO();
         studentDto6.setRegistrationNumber(registrationNumber6);
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto6);
