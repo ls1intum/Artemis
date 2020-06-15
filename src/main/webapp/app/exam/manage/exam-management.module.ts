@@ -26,6 +26,7 @@ const ENTITY_STATES = [...examManagementState];
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
         RouterModule.forChild(ENTITY_STATES),
+        ArtemisTextExerciseModule,
         ArtemisSharedModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
