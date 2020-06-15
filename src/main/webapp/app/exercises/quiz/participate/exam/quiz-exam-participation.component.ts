@@ -18,7 +18,7 @@ import { ActivatedRoute } from '@angular/router';
     selector: 'jhi-exam-quiz',
     templateUrl: './quiz-exam-participation.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./quiz-participation.component.scss'],
+    styleUrls: ['../quiz-participation.component.scss'],
 })
 export class QuizExamParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -71,10 +71,9 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Determines if the current device is a mobile device
-     */
-    isMobile(): boolean {
-        return this.deviceService.isMobile();
+    onSelectionChanged() {
+        this.applySelection();
     }
+
+    applySelection() {}
 }

@@ -6,12 +6,8 @@
             [question]="question"
             [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
             [fnOnSelection]="onSelectionChanged.bind(this)"
-            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-            [showResult]="showingResult"
-            [submittedResult]="result"
             [submittedQuizExercise]="quizExercise"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
         ></jhi-multiple-choice-question>
         <jhi-drag-and-drop-question
             id="question{{ i }}"
@@ -19,10 +15,7 @@
             [question]="question"
             [(mappings)]="dragAndDropMappings[question.id]"
             [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
-            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-            [showResult]="showingResult"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
         ></jhi-drag-and-drop-question>
         <jhi-short-answer-question
             id="question{{ i }}"
@@ -30,10 +23,7 @@
             [question]="question"
             [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
-            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-            [showResult]="showingResult"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
         ></jhi-short-answer-question>
     </div>
 </div>
@@ -47,7 +37,7 @@
                             *ngIf="question.type === DRAG_AND_DROP"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                             (click)="navigateToQuestion(i)"
-                            [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngbTooltip]="dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                             [ngClass]="{ 'changed-question': dragAndDropMappings[question.id]?.length }"
                         >
                             <b class="fa">DD</b>
@@ -56,7 +46,7 @@
                             *ngIf="question.type === MULTIPLE_CHOICE"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                             (click)="navigateToQuestion(i)"
-                            [ngbTooltip]="mode !== 'solution' ? (selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                             [ngClass]="{ 'changed-question': selectedAnswerOptions[question.id]?.length }"
                         >
                             <b class="fa">MC</b>
@@ -65,9 +55,7 @@
                             *ngIf="question.type === SHORT_ANSWER"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                             (click)="navigateToQuestion(i)"
-                            [ngbTooltip]="
-                                mode !== 'solution' ? (shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
-                            "
+                            [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                             [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts[question.id]?.length }"
                         >
                             <b class="fa">SA</b>
