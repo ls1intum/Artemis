@@ -168,6 +168,9 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                     user = userService.createUser(login, "", ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(), ldapUserDto.getRegistrationNumber(),
                             null, "en");
                 }
+                else {
+                    user = userService.createUser(login, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                }
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
