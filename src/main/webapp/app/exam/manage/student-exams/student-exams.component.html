@@ -48,7 +48,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div>
-                            <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/studentExams/{{ value }}/view">{{ value }}</a>
+                            <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/student-exams/{{ value }}/view">{{ value }}</a>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>
@@ -115,7 +115,7 @@
                             <div class="btn-group" *ngIf="course?.isAtLeastTutor">
                                 <button
                                     class="btn btn-primary btn-sm mr-1 mb-1"
-                                    [routerLink]="['/course-management', courseId, 'exams', examId, 'studentExams', value?.id, 'view']"
+                                    [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id, 'view']"
                                 >
                                     <span jhiTranslate="artemisApp.studentExams.view">View</span>
                                 </button>
