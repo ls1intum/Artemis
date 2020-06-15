@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,17 @@ public class ExamService {
     }
 
     /**
+     * Get all exams for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the list of all exams
+     */
+    public List<Exam> findAllByCourseId(Long courseId) {
+        log.debug("REST request to get all exams for Course : {}", courseId);
+        return examRepository.findByCourseId(courseId);
+    }
+
+    /**
      * Delete the exam by id.
      *
      * @param examId the id of the entity
@@ -62,7 +74,7 @@ public class ExamService {
 
     /**
      * Filters the visible exams (excluding the ones that are not visible yet)
-     * 
+     *
      * @param exams a set of exams (e.g. the ones of a course)
      * @return only the visible exams
      */
