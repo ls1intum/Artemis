@@ -115,11 +115,11 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String DELETE_EXAM = "DELETE_EXAM";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
-
-    public static final String DELETE_EXAM = "DELETE_EXAM";
 
     public static final String DELETE_EXERCISE_GROUP = "DELETE_EXERCISE_GROUP";
 
