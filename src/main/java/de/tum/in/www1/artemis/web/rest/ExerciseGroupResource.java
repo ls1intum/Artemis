@@ -167,7 +167,6 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
-
         Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         if (accessFailure.isPresent()) {
             return accessFailure.get();

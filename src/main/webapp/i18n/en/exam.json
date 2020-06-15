@@ -15,6 +15,18 @@
             "updated": "Exercise group updated",
             "deleted": "Deleted exercise group with title {{ param }}"
         },
+        "studentExams": {
+            "title": "Student exams",
+            "generateStudentExams": "Generate student exams",
+            "searchForStudents": "Search for students by login or name (comma separated)",
+            "student": "Student",
+            "result": "Result",
+            "created": "Created",
+            "view": "View",
+            "assessment": "Assessment",
+            "id": "ID",
+            "exam": "Exam"
+        },
         "examManagement": {
             "title": "Exam Management",
             "createExam": "Create a new exam",
