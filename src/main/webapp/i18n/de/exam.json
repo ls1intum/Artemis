@@ -38,7 +38,7 @@
                 "exerciseGroups": "Übungsgruppe",
                 "noExercises": "Es wurden noch keine Übungen hinzugefügt.",
                 "delete": {
-                    "question": "Soll die Übungsgruppe <strong>{{ title }}</strong> wirklich gelöscht werden?",
+                    "question": "Soll die Übungsgruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Übungen werden ebenfalls gelöscht.",
                     "typeNameToConfirm": "Bitte gib den Namen der Übungsgruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen"

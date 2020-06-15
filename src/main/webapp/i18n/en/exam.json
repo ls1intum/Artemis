@@ -38,7 +38,7 @@
                 "exerciseGroups": "Exercise Group",
                 "noExercises": "No exercises have been added yet.",
                 "delete": {
-                    "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>?",
+                    "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add text exercise"
