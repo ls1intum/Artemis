@@ -2,6 +2,11 @@
     "artemisApp": {
         "exam": {
             "title": "Klausur",
+            "visible": "Sichtbar",
+            "startDate": "Beginn",
+            "endDate": "Ende",
+            "duration": "Dauer",
+            "nrOfStudents": "Anzahl der registrierten Studenten",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet"
         },
@@ -21,7 +26,15 @@
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
-            "confirmationEndText": "Klausurende Bestätigungstext"
+            "confirmationEndText": "Klausurende Bestätigungstext",
+            "delete": {
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "exerciseGroups": "Aufgabengruppen",
+            "assessmentDashboard": "Bewertungstafel",
+            "studentExams": "Klausuren der Studenten",
+            "students": "Studenten"
         },
         "studentExams": {
             "studentExams": "Klausuren",
@@ -32,6 +45,6 @@
             "created": "Erstellt",
             "View": "Ansich",
             "assessment": "Bewertung"
-        }
+          },
     }
 }
