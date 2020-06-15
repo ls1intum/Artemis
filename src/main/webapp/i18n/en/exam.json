@@ -35,7 +35,7 @@
             "assessmentDashboard": "Assessment Dashboard",
             "studentExams": "Student Exams",
             "students": "Students"
-        }
+        },
         "studentExams": {
             "studentExams": "Student exams",
             "generateStudentExams": "Generate student exams",
@@ -45,6 +45,6 @@
             "created": "Created",
             "View": "View",
             "assessment": "Assessment"
-         },
+        }
     }
 }
