@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,11 +22,8 @@ public class ExerciseGroupService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService) {
+    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
