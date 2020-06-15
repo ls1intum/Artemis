@@ -144,8 +144,30 @@ information about the setup for programming exercises provided:
    Be careful that you don’t commit changes in this file.
    Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
 
-The Artemis server should startup by running the main class
-``de.tum.in.www1.artemis.ArtemisApp`` using Spring Boot.
+If you use a password, you need to adapt it in
+``gradle/liquibase.gradle``.
+
+Run the server via a run configuration in IntelliJ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
+When you import the project into IntelliJ the run configurations will also be imported.
+
+The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
+
+* **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
+* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <setup.rst#client-setup>`__).
+
+Other run / debug configurations
+""""""""""""""""""""""""""""""""
+
+* **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
+* **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, Text Clustering):** The server will be started separated from the client with ``automaticText`` profile enabled (see `Text Assessment Clustering Service <setup.rst#text-assessment-clustering-service>`__).
+
+
+Typical problems with Liquibase checksums
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One typical problem in the development setup is that an exception occurs
 during the database initialization. Artemis uses
@@ -159,10 +181,13 @@ command in your terminal / command line:
 
    ./gradlew liquibaseClearChecksums
 
-If you use a password, you need to adapt it in
-``gradle/liquibase.gradle``.
+Run the server with Spring Boot and Spring profiles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note:: 
+The Artemis server should startup by running the main class
+``de.tum.in.www1.artemis.ArtemisApp`` using Spring Boot.
+
+.. note::
     Artemis uses Spring profiles to segregate parts of the
     application configuration and make it only available in certain
     environments. For development purposes, the following program arguments
@@ -175,9 +200,14 @@ If you use a password, you need to adapt it in
 
 If you use IntelliJ (Community or Ultimate) you can set the active
 profiles by
-* Choosing ``Run | Edit Configurations...`` * Going to the ``Configuration Tab``
+
+* Choosing ``Run | Edit Configurations...``
+* Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
 ``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis``
+
+Set Spring profiles with IntelliJ Ultimate
+""""""""""""""""""""""""""""""""""""""""""
 
 If you use IntelliJ Ultimate, add the following entry to the section
 ``Active Profiles`` (within ``Spring Boot``) in the server run
@@ -186,6 +216,9 @@ configuration:
 ::
 
    dev,bamboo,bitbucket,jira,artemis
+
+Run the server with the command line (Gradle wrapper)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you want to run the application via the command line instead, make
 sure to pass the active profiles to the ``gradlew`` command like this:
@@ -204,7 +237,22 @@ internal user management in Artemis, then you would use the profiles:
 Client Setup
 ------------
 
-After installing Node and Yarn, you should be able to run the following
+You need to install Node and Yarn on your local machine.
+
+Using IntelliJ
+^^^^^^^^^^^^^^
+
+If you are using **IntelliJ** you can use the pre-configured ``Artemis (Client)``
+run configuration that will be delivered with this repository:
+
+* Choose ``Run | Edit Configurations...``
+* Select the ``Artemis (Client)`` configuration from the ``npm section``
+* Now you can run the configuration in the upper right corner of IntelliJ
+
+Using the command line
+^^^^^^^^^^^^^^^^^^^^^^
+
+You should be able to run the following
 command to install development tools and dependencies. You will only
 need to run this command when dependencies change in
 `package.json <package.json>`__.

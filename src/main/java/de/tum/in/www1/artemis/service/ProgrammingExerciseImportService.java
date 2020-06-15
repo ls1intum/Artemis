@@ -174,6 +174,8 @@ public class ProgrammingExerciseImportService {
         continuousIntegrationService.get().createProjectForExercise(newExercise);
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
+        continuousIntegrationService.get().givePlanPermissions(newExercise, templatePlanName);
+        continuousIntegrationService.get().givePlanPermissions(newExercise, solutionPlanName);
         programmingExerciseService.giveCIProjectPermissions(newExercise);
         continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());

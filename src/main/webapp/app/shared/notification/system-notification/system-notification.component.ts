@@ -14,7 +14,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 export class SystemNotificationComponent implements OnInit {
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
-    notification: SystemNotification;
+    notification: SystemNotification | undefined;
     alertClass: string;
     alertIcon: string;
     websocketChannel: string;
@@ -27,7 +27,7 @@ export class SystemNotificationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.identity().then((user: User | null) => {
             this.loadActiveNotification();
             if (user) {
                 // maybe use connectedPromise as a set function
@@ -40,15 +40,19 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    loadActiveNotification() {
+    private loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
-            this.notification = notification;
-            this.setAlertClass();
-            this.setAlertIcon();
+            if (notification) {
+                this.notification = notification;
+                this.setAlertClass();
+                this.setAlertIcon();
+            } else {
+                this.notification = undefined;
+            }
         });
     }
 
-    subscribeSocket() {
+    private subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
@@ -72,7 +76,7 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    checkNotificationDates(systemNotification: SystemNotification) {
+    private checkNotificationDates(systemNotification: SystemNotification) {
         if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
             this.notification = systemNotification;
             this.setAlertClass();
@@ -83,7 +87,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    setAlertClass(): void {
+    private setAlertClass(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertClass = 'alert-warning';
@@ -93,7 +97,7 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    setAlertIcon(): void {
+    private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
                 this.alertIcon = 'exclamation-triangle';

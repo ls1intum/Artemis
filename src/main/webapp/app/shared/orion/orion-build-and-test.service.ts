@@ -61,7 +61,7 @@ export class OrionBuildAndTestService {
             this.buildLogSubscription.unsubscribe();
         }
         this.resultSubsription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(participationId)
+            .subscribeForLatestResultOfParticipation(participationId, true)
             .pipe(
                 filter(Boolean),
                 map((result) => result as Result),

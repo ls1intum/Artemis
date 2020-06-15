@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -95,7 +96,7 @@ public class ExerciseHint implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        return Objects.hashCode(getId());
     }
 
     @Override

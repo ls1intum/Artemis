@@ -274,7 +274,8 @@
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
-        "statistics": "Kursstatistiken"
+        "statistics": "Kursstatistiken",
+        "exams": "Klausuren"
     },
     "connectionStatus": {
         "connected": "Verbunden",

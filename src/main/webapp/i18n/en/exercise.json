@@ -123,7 +123,7 @@
                     "minlength": "The short name must be at least 3 characters long!"
                 },
                 "packageName": {
-                    "pattern": "The package name must have at least 1 dot and must not start with a number"
+                    "pattern": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!"
                 },
                 "maxScore": {
                     "pattern": "The maximum score must be between 1 and 9999!"
