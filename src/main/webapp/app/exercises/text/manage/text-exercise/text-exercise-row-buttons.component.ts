@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
-import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 
@@ -14,6 +13,7 @@ export class TextExerciseRowButtonsComponent {
     @Input() courseId: number;
     @Input() textExercise: TextExercise;
     @Input() examMode = false;
+    @Input() examId: number;
     @Input() exerciseGroupId: number;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -40,10 +40,15 @@ export class TextExerciseRowButtonsComponent {
     /**
      * Assemble the router link for editing the exercise.
      */
-    createRouterLinkForEdit(): any[] {
+    createRouterLink(type: string): any[] {
+        let link = ['/course-management', this.courseId, 'text-exercises'];
         if (this.examMode) {
-            return [this.exerciseGroupId, 'text-exercises', this.textExercise.id, 'edit'];
+            link = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', this.exerciseGroupId, 'text-exercises'];
         }
-        return ['/course-management', this.courseId, 'text-exercises', this.textExercise.id, 'edit'];
+        switch (type) {
+            default:
+                link = link.concat([this.textExercise.id, 'edit']);
+        }
+        return link;
     }
 }

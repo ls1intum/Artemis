@@ -44,7 +44,7 @@
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
     </button>
-    <button *ngIf="examMode || textExercise.isAtLeastInstructor" type="submit" [routerLink]="createRouterLinkForEdit()" class="btn btn-primary btn-sm mr-1">
+    <button *ngIf="examMode || textExercise.isAtLeastInstructor" type="submit" [routerLink]="createRouterLink('edit')" class="btn btn-primary btn-sm mr-1">
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </button>
