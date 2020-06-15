@@ -52,6 +52,18 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with registered users.
+     *
+     * @param examId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public Exam findOneWithRegisteredUsers(Long examId) {
+        log.debug("Request to get exam : {}", examId);
+        return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get all exams for the given course.
      *
      * @param courseId the id of the course
