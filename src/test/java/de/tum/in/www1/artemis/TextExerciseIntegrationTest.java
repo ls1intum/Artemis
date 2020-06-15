@@ -87,6 +87,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExamTextExercise() throws Exception {
+        TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);

@@ -236,7 +236,7 @@ public class TextExerciseResource {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
-        if (!optionalTextExercise.isPresent()) {
+        if (optionalTextExercise.isEmpty()) {
             notFound();
         }
         TextExercise textExercise = optionalTextExercise.get();
@@ -270,21 +270,30 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
-        Optional<TextExercise> textExercise = textExerciseRepository.findById(exerciseId);
-        if (textExercise.isEmpty()) {
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
-        Course course = textExercise.get().getCourse();
+        TextExercise textExercise = optionalTextExercise.get();
+
+        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
+        Course course;
+        if (textExercise.hasExerciseGroup()) {
+            course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+        }
+        else {
+            course = textExercise.getCourse();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
+        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise));
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise.get(), course, user);
+        exerciseService.logDeletion(textExercise, course, user);
         exerciseService.delete(exerciseId, false, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.get().getTitle())).build();
-
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 
     /**
