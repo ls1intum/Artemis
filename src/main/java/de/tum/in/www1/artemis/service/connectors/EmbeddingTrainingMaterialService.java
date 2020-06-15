@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Profile("automaticText")
 public class EmbeddingTrainingMaterialService {
 
-    private final Logger log = LoggerFactory.getLogger(TextSimilarityClusteringService.class);
+    private final Logger log = LoggerFactory.getLogger(EmbeddingTrainingMaterialService.class);
 
     // region Request/Response DTOs
     private static class Request {
