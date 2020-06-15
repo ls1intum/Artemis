@@ -14,10 +14,12 @@
 <jhi-alert></jhi-alert>
 <div *ngFor="let exerciseGroup of exerciseGroups" class="mt-4" style="border: 1px solid #cccccc;">
     <div class="d-flex p-3" style="background-color: #e1e1e1;">
-        <div>
+        <!--
+        <div class="mr-3">
             <input type="number" value="0" class="text-center" style="width: 50px; height: 32px;" />
         </div>
-        <div class="d-flex flex-column justify-content-center ml-3">
+        -->
+        <div class="d-flex flex-column justify-content-center">
             <h5 class="font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
         </div>
         <div class="d-flex flex-column justify-content-center ml-3">
