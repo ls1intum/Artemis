@@ -130,11 +130,20 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_courseAndExerciseGroupSet() throws Exception {
+    public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), null);
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -195,13 +204,51 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void updateTextExercise_courseAndExerciseGroupSet() throws Exception {
+    public void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         Course course = database.addCourseWithOneReleasedTextExercise();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setCourse(null);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+
+        textExercise.setCourse(null);
+        textExercise.setExerciseGroup(exerciseGroup);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        textExercise.setExerciseGroup(null);
+        textExercise.setCourse(course);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

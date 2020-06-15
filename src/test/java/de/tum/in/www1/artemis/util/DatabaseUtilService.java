@@ -516,8 +516,8 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public ExerciseGroup addExerciseGroup(Exam exam) {
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(exam);
+    public ExerciseGroup addExerciseGroup(Exam exam, boolean mandatory) {
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         exerciseGroupRepository.save(exerciseGroup);
         return exerciseGroup;
     }
@@ -714,8 +714,8 @@ public class DatabaseUtilService {
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Exam exam = ModelFactory.generateExam(null, "Test Exam", course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(null, "Exam Exercise 1", mandatory, exam);
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
         final var examNrBefore = examRepository.count();
         final var exerciseGroupNrBefore = exerciseGroupRepository.count();

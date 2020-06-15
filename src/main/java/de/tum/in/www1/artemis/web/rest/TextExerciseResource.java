@@ -16,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -119,16 +118,11 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
-        // Course and exerciseGroup must not be set simultaneously
-        if (textExercise.getCourse() != null && textExercise.getExerciseGroup() != null) {
-            throw new BadRequestAlertException("A new textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
-        }
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
 
-        // If an exerciseGroup is set, we assume that the textExercise is created for an exam
-        boolean isExamMode = textExercise.hasExerciseGroup();
-
-        // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
-        Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to create the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -142,8 +136,8 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
-        // Don't notify tutors if the text exercise is created for an exam
-        if (!isExamMode) {
+        // If an exerciseGroup is set, we assume that the exercise is created for an exam. Then don't notify tutors when the exercise is created
+        if (!textExercise.hasExerciseGroup()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
@@ -168,16 +162,11 @@ public class TextExerciseResource {
             return createTextExercise(textExercise);
         }
 
-        // Course and exerciseGroup must not be set simultaneously
-        if (textExercise.getCourse() != null && textExercise.getExerciseGroup() != null) {
-            throw new BadRequestAlertException("An update for a textExercise cannot have a course and an exerciseGroup", ENTITY_NAME, "courseAndExerciseGroupSet");
-        }
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(textExercise, ENTITY_NAME);
 
-        // If an exerciseGroup is set, the textExercise is updated in exam-mode
-        boolean isExamMode = textExercise.hasExerciseGroup();
-
-        // Fetch course from database over exerciseGroup or already set course to make sure client didn't change groups
-        Course course = retrieveCourseThroughExerciseGroupOrGivenCourse(textExercise);
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to update the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -189,7 +178,8 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // TODO: Should we forbid conversion between exam <-> normal text-exercise?
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
@@ -202,7 +192,7 @@ public class TextExerciseResource {
 
         // TODO: Should we leave this activated in case the exercise is changed during the exam?
         // Don't notify students about changes if the exercise was updated in exam-mode
-        if (notificationText != null && !isExamMode) {
+        if (notificationText != null && !textExercise.hasExerciseGroup()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
@@ -381,24 +371,6 @@ public class TextExerciseResource {
         }
         else {
             return ResponseEntity.badRequest().build();
-        }
-    }
-
-    /**
-     * Retrieve the Course for a given TextExercise.
-     * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
-     * Otherwise the Course is already set and the id can be used to retrieve the Course again from the database.
-     *
-     * @param textExercise the TextExercise for which the course is retrieved
-     * @return the Course for the TextExercise
-     */
-    private Course retrieveCourseThroughExerciseGroupOrGivenCourse(TextExercise textExercise) {
-        if (textExercise.getExerciseGroup() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
-            return courseService.findOne(exerciseGroup.getExam().getCourse().getId());
-        }
-        else {
-            return courseService.findOne(textExercise.getCourse().getId());
         }
     }
 }
