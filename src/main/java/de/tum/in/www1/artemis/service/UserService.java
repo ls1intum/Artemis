@@ -155,7 +155,9 @@ public class UserService {
     /**
      * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
      * @param login the login of the user for which the details should be retrieved
+     * @return the found Ldap user details or null if the user cannot be found
      */
+    @Nullable
     public LdapUserDto loadUserDetailsFromLdap(@NotNull String login) {
         try {
             Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByUsername(login);
