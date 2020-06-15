@@ -197,7 +197,7 @@ public class ExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
+    public ResponseEntity<Void> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
         var course = courseService.findOne(courseId);
         var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
@@ -206,7 +206,7 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         if (!course.equals(exam.getCourse())) {
-            return forbidden();
+            return conflict();
         }
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
@@ -232,8 +232,8 @@ public class ExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentDTO>> addStudentToCourse(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> students) {
-        log.debug("REST request to add {} as students to exam : {}", students, examId);
+    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> students) {
+        log.debug("REST request to add {} as students to exam {}", students, examId);
         var course = courseService.findOne(courseId);
         var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
@@ -241,31 +241,38 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         if (!course.equals(exam.getCourse())) {
-            return forbidden();
+            return conflict();
         }
         List<StudentDTO> notFoundStudents = new ArrayList<>();
         for (var student : students) {
             var registrationNumber = student.getRegistrationNumber();
-            // 1) we use the registration number and try to find the student in the Artemis user database
-            Optional<User> user = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
-            if (user.isPresent()) {
-                exam.addUser(user.get());
-                // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
-                if (!user.get().getGroups().contains(course.getStudentGroupName())) {
-                    userService.addUserToGroup(user.get(), course.getStudentGroupName());
+            try {
+                // 1) we use the registration number and try to find the student in the Artemis user database
+                Optional<User> user = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                if (user.isPresent()) {
+                    exam.addUser(user.get());
+                    // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
+                    if (!user.get().getGroups().contains(course.getStudentGroupName())) {
+                        userService.addUserToGroup(user.get(), course.getStudentGroupName());
+                    }
+                    continue;
                 }
-                continue;
+                // 2) if we cannot find the user, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
+                // external user management system
+                user = userService.createUserFromLdap(registrationNumber);
+                if (user.isPresent()) {
+                    exam.addUser(user.get());
+                    // the newly created user needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(user.get(), course.getStudentGroupName());
+                    continue;
+                }
+                // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
+                log.warn("User with registration number " + registrationNumber + " not found in Artemis user database and not found in (TUM) LDAP");
             }
-            // 2) if we cannot find the user, we use the registration number and try to find the student in the (TUM) LDAP
-            user = userService.createUserFromLdap(registrationNumber);
-            if (user.isPresent()) {
-                exam.addUser(user.get());
-                // the newly created user needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                userService.addUserToGroup(user.get(), course.getStudentGroupName());
-                continue;
+            catch (Exception ex) {
+                log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
             }
-            // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
-            log.warn("User with registration number " + registrationNumber + " not found in Artemis user database and not found in (TUM) LDAP");
+
             notFoundStudents.add(student);
         }
         examRepository.save(exam);
@@ -291,7 +298,7 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         if (!course.equals(exam.getCourse())) {
-            return forbidden();
+            return conflict();
         }
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {

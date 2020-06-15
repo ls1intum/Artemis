@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -92,6 +92,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void registerUsersInExam() throws Exception {
+
         var exam = createExam();
         var savedExam = examRepository.save(exam);
         var student1 = database.getUserByLogin("student1");
@@ -100,6 +101,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var registrationNumber1 = "1234567";
         var registrationNumber2 = "2345678";
         var registrationNumber3 = "3456789";
+        var registrationNumber3WithType = "3456789" + "0";
         var registrationNumber6 = "9876543";
         student1.setRegistrationNumber(registrationNumber1);
         student2.setRegistrationNumber(registrationNumber2);
@@ -107,6 +109,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student1 = userRepo.save(student1);
         student2 = userRepo.save(student2);
         student3 = userRepo.save(student3);
+
+        // mock the ldap service
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithType);
 
         var student6 = ModelFactory.generateActivatedUser("student6");     // not registered for the course
         student6.setRegistrationNumber(registrationNumber6);
@@ -130,7 +135,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentDto2 = new StudentDTO();
         studentDto2.setRegistrationNumber(registrationNumber2);
         var studentDto3 = new StudentDTO();
-        studentDto3.setRegistrationNumber(registrationNumber3 + "0"); // explicit typo, should be a registration failure
+        studentDto3.setRegistrationNumber(registrationNumber3WithType); // explicit typo, should be a registration failure
         var studentDto6 = new StudentDTO();
         studentDto6.setRegistrationNumber(registrationNumber6);
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto6);
@@ -147,7 +152,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
 
-        // TODO: also mock the LdapService to make sure students who are not yet in the Artemis database can be registered for an exam using a registration number
+        // TODO: also mock the positive case in LdapService to make sure students who are not yet in the Artemis database can be registered for an exam using a registration number
+        // TODO: also test the case that the user is created in the external user management (and mock this call in the JIRA RestTemplate)
     }
 
     public Exam createExam() {

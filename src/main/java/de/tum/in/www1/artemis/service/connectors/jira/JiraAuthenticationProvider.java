@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -102,14 +103,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
         User user = getOrCreateUser(authentication, false);
-
-        // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
-        if (ldapUserService.isPresent() && user.getRegistrationNumber() == null && TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
-            long start = System.currentTimeMillis();
-            userService.loadUserDetailsFromLdap(user);
-            long end = System.currentTimeMillis();
-            log.debug("LDAP search took " + (end - start) + "ms");
-        }
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
     }
@@ -156,15 +149,27 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
 
         if (authenticationResponse != null && authenticationResponse.getBody() != null) {
-            final var content = authenticationResponse.getBody();
-            final var login = content.getName();
-            final var emailAddress = content.getEmailAddress();
+            final var jiraUserDTO = authenticationResponse.getBody();
+            final var login = jiraUserDTO.getName();
             // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-            final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login)
-                    .orElseGet(() -> userService.createUser(login, "", content.getDisplayName(), "", emailAddress, null, "en"));
-            final var groups = content.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
-
-            user.setEmail(emailAddress);
+            User user = null;
+            final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
+            if (optionalUser.isPresent()) {
+                user = optionalUser.get();
+            }
+            else {
+                // the user does not exist
+                // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
+                if (ldapUserService.isPresent() && TUM_USERNAME_PATTERN.matcher(username).matches()) {
+                    long start = System.currentTimeMillis();
+                    LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(username);
+                    long end = System.currentTimeMillis();
+                    log.debug("LDAP search took " + (end - start) + "ms");
+                    user = userService.createUser(login, "", ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(), ldapUserDto.getRegistrationNumber(),
+                            null, "en");
+                }
+            }
+            final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
             user.setAuthorities(userService.buildAuthorities(user));
 
@@ -172,7 +177,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 userService.activateRegistration(user.getActivationKey());
             }
             userRepository.save(user);
-
             return user;
         }
         else {
@@ -215,6 +219,24 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
             log.error("Could not add user " + user.getLogin() + " to JIRA group " + group + ". Error: " + e.getMessage());
             throw new ArtemisAuthenticationException("Error while adding " + user.getLogin() + " to JIRA group " + group, e);
+        }
+    }
+
+    @Override
+    public void createUserInExternalUserManagement(User user) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("key", user.getLogin());
+        body.put("name", user.getName());
+        body.put("emailAddress", user.getEmail());
+        // body.put("displayName", user.getName());
+        body.put("applicationKeys", List.of("jira-software"));
+        HttpEntity<?> entity = new HttpEntity<>(body);
+        try {
+            restTemplate.exchange(JIRA_URL + "/rest/api/2/user", HttpMethod.POST, entity, Map.class);
+        }
+        catch (HttpClientErrorException e) {
+            // ignore the error if the user cannot be created, this can e.g. happen if the user already exists in the external user management system
+            log.error("Could not create user " + user.getLogin() + " in JIRA group. Error: " + e.getMessage());
         }
     }
 

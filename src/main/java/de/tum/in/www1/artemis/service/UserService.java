@@ -61,6 +61,9 @@ public class UserService {
     @Value("${artemis.user-management.external.admin-group-name:#{null}}")
     private Optional<String> ADMIN_GROUP_NAME;
 
+    @Value("${artemis.user-management.use-external}")
+    private Boolean useExternalUserManagement;
+
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
@@ -151,29 +154,24 @@ public class UserService {
 
     /**
      * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
-     * @param user the existing user for which the details should be retrieved
+     * @param login the login of the user for which the details should be retrieved
      */
-    public void loadUserDetailsFromLdap(@NotNull User user) {
-        if (user == null || user.getLogin() == null) {
-            return;
-        }
+    public LdapUserDto loadUserDetailsFromLdap(@NotNull String login) {
         try {
-            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByUsername(user.getLogin());
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByUsername(login);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
-                user.setFirstName(ldapUser.getFirstName());
-                user.setLastName(ldapUser.getLastName());
-                user.setRegistrationNumber(ldapUser.getRegistrationNumber());
-                userRepository.save(user);
+                return ldapUserOptional.get();
             }
             else {
-                log.warn("Ldap User " + user.getLogin() + " not found");
+                log.warn("Ldap User " + login + " not found");
             }
         }
         catch (Exception ex) {
             log.error("Error in LDAP Search " + ex.getMessage());
         }
+        return null;
     }
 
     private PBEPasswordEncoder passwordEncoder;
@@ -312,7 +310,8 @@ public class UserService {
     }
 
     /**
-     * searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user
+     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user-
+     * Also creates the user in the external user management (e.g. JIRA), in case this is activated
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param registrationNumber the matriculation number of the student
@@ -325,9 +324,11 @@ public class UserService {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-                User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), null, "en");
-                user.setRegistrationNumber(ldapUser.getRegistrationNumber());
-                return Optional.of(userRepository.save(user));
+                User user = createUser(ldapUser.getUsername(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(), registrationNumber, null, "en");
+                if (useExternalUserManagement) {
+                    artemisAuthenticationProvider.createUserInExternalUserManagement(user);
+                }
+                return Optional.of(user);
             }
             else {
                 log.warn("Ldap User with registration number " + registrationNumber + " not found");
@@ -348,12 +349,13 @@ public class UserService {
      * @param firstName first name of user
      * @param lastName  last name of the user
      * @param email     email of the user
+     * @param registrationNumber the matriculation number of the student
      * @param imageUrl  user image url
      * @param langKey   user language
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, String imageUrl, String langKey) {
-        return createUser(login, password, new HashSet<>(), firstName, lastName, email, imageUrl, langKey);
+    public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, String registrationNumber, String imageUrl, String langKey) {
+        return createUser(login, password, new HashSet<>(), firstName, lastName, email, registrationNumber, imageUrl, langKey);
     }
 
     /**
@@ -364,12 +366,13 @@ public class UserService {
      * @param firstName first name of user
      * @param lastName  last name of the user
      * @param email     email of the user
+     * @param registrationNumber the matriculation number of the student
      * @param imageUrl  user image url
      * @param langKey   user language
      * @return newly created user
      */
-    public User createUser(String login, Set<String> groups, String firstName, String lastName, String email, String imageUrl, String langKey) {
-        return createUser(login, null, groups, firstName, lastName, email, imageUrl, langKey);
+    public User createUser(String login, Set<String> groups, String firstName, String lastName, String email, String registrationNumber, String imageUrl, String langKey) {
+        return createUser(login, null, groups, firstName, lastName, email, registrationNumber, imageUrl, langKey);
     }
 
     /**
@@ -381,11 +384,13 @@ public class UserService {
      * @param firstName first name of user
      * @param lastName  last name of the user
      * @param email     email of the user
+     * @param registrationNumber the matriculation number of the student*
      * @param imageUrl  user image url
      * @param langKey   user language
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, Set<String> groups, String firstName, String lastName, String email, String imageUrl, String langKey) {
+    public User createUser(String login, @Nullable String password, Set<String> groups, String firstName, String lastName, String email, String registrationNumber, String imageUrl,
+            String langKey) {
         User newUser = new User();
 
         // Set random password for null passwords
@@ -401,6 +406,7 @@ public class UserService {
         newUser.setLastName(lastName);
         newUser.setGroups(groups);
         newUser.setEmail(email);
+        newUser.setRegistrationNumber(registrationNumber);
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // new user is not active

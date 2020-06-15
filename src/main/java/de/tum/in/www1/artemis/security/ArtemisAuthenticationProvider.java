@@ -35,6 +35,13 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     void addUserToGroup(User user, String group);
 
     /**
+     * creates the given user in the external user management (in case it is used)
+     *
+     * @param user the user that should be created
+     */
+    void createUserInExternalUserManagement(User user);
+
+    /**
      * Adds a user to the specified set of groups.
      * NOTE: this method should only be invoked for newly created users!
      * If you want to update an existing user, please use addUserToGroup(username, group)
