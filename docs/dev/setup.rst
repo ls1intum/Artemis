@@ -119,10 +119,11 @@ have to configure the file ``application-artemis.yml`` in the folder
            name: Artemis
            email: artemis@in.tum.de
        automatic-text:
-           embedding-url: http://localhost:8000/embed
+           segmentation-url: http://localhost:8000/segment
+           material-upload-url: http://localhost:8001/upload
+           embedding-url: http://localhost:8001/embed
            embedding-chunk-size: 50
-           clustering-url: http://localhost:8000/cluster
-           segmentation-url: http://localhost:8080/segment
+           clustering-url: http://localhost:8002/cluster
            secret: null
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
@@ -347,7 +348,7 @@ Enable the ``automaticText`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The TAC service is running on a dedicated machine and is adressed via
+The Athene service is running on a dedicated machine and is adressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -356,9 +357,11 @@ HTTP. We need to extend the configuration in the file
    artemis:
      # ...
      automatic-text:
-       embedding-url: http://localhost:8000/embed
+       segmentation-url: http://localhost:8000/segment
+       material-upload-url: http://localhost:8001/upload
+       embedding-url: http://localhost:8001/embed
        embedding-chunk-size: 50
-       clustering-url: http://localhost:8000/cluster
+       clustering-url: http://localhost:8002/cluster
        secret: null
 
 .. _Athene: https://github.com/ls1intum/Athene

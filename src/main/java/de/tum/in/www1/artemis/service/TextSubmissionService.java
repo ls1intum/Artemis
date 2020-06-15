@@ -292,13 +292,8 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmission;
     }
 
-    public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    public TextSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+    public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
+        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
     }
 }
