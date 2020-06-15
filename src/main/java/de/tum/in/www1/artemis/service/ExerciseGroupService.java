@@ -82,9 +82,9 @@ public class ExerciseGroupService {
      * @param examId the id of the exam
      * @return the list of all exercise groups
      */
-    public List<ExerciseGroup> findAllWithExercises(Long examId) {
+    public List<ExerciseGroup> findAllWithExamAndExercises(Long examId) {
         log.debug("REST request to get all exercise groups for Exam : {}", examId);
-        return exerciseGroupRepository.findWithEagerExercisesByExamId(examId);
+        return exerciseGroupRepository.findWithEagerExamAndExercisesByExamId(examId);
     }
 
     /**

@@ -137,7 +137,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
         Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOne(exerciseGroupId)));
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOneWithExam(exerciseGroupId)));
     }
 
     /**
@@ -152,7 +152,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
         Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllWithExercises(examId)));
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllWithExamAndExercises(examId)));
     }
 
     /**

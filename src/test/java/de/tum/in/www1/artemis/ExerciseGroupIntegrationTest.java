@@ -114,8 +114,10 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseGroup_asInstructor() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK, ExerciseGroup.class);
+        ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
+                ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        assertThat(result.getExam()).isEqualTo(exam1);
     }
 
     @Test
@@ -126,6 +128,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getExercises().size()).isEqualTo(1);
         assertThat(result.get(0).getExercises()).contains(textExercise1);
+        assertThat(result.get(0).getExam()).isEqualTo(exam1);
     }
 
     @Test
