@@ -31,6 +31,7 @@ const ENTITY_STATES = [...examManagementState];
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
+        ArtemisTextExerciseModule,
         SortByModule,
         MomentModule,
     ],

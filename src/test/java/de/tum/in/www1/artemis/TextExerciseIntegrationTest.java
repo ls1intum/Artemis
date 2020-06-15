@@ -87,6 +87,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExamTextExercise() throws Exception {
+        TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
@@ -111,7 +119,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExerciseForExam() throws Exception {
         var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
 
         String title = "New Exam Text Exercise";
@@ -132,7 +140,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
 
@@ -183,7 +191,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExerciseForExam() throws Exception {
         var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExerciseRepository.save(textExercise);
 
@@ -206,7 +214,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         Course course = database.addCourseWithOneReleasedTextExercise();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         textExercise.setExerciseGroup(exerciseGroup);
 
@@ -228,7 +236,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
         textExercise.setCourse(null);
         textExercise.setExerciseGroup(exerciseGroup);
@@ -241,7 +249,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         Course course = database.addEmptyCourse();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExerciseRepository.save(textExercise);
 
@@ -276,7 +284,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExamTextExerciseAsTutor_forbidden() throws Exception {
         var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExerciseRepository.save(textExercise);
 
@@ -287,7 +295,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void getExamTextExerciseAsInstructor() throws Exception {
         var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
         textExerciseRepository.save(textExercise);
 

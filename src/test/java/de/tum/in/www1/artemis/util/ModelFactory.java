@@ -291,9 +291,10 @@ public class ModelFactory {
         return exam;
     }
 
-    public static ExerciseGroup generateExerciseGroup(Exam exam) {
+    public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setTitle("Exercise group title");
+        exerciseGroup.setIsMandatory(mandatory);
         exerciseGroup.setExam(exam);
         return exerciseGroup;
     }

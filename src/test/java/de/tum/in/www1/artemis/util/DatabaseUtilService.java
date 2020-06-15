@@ -516,8 +516,8 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public ExerciseGroup addExerciseGroup(Exam exam) {
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(exam);
+    public ExerciseGroup addExerciseGroup(Exam exam, boolean mandatory) {
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         exerciseGroupRepository.save(exerciseGroup);
         return exerciseGroup;
     }
@@ -712,10 +712,20 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public ExerciseGroup addExerciseGroupWithExamAndCourse() {
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(textExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return textExercise;
+    }
+
+    public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(exam);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
         final var examNrBefore = examRepository.count();
         final var exerciseGroupNrBefore = exerciseGroupRepository.count();
