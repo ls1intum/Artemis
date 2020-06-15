@@ -2,8 +2,17 @@
     "artemisApp": {
         "exam": {
             "title": "Exam",
+            "visible": "Visible",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "duration": "Duration",
+            "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated"
+        },
+        "examParticipation": {
+            "connected": "Connected. Your answers will be saved every 60s.",
+            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
         },
         "examManagement": {
             "title": "Exam Management",
@@ -21,11 +30,15 @@
             "startText": "Exam start text",
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
-            "confirmationEndText": "Exam end confirmation text"
-        },
-        "examParticipation": {
-            "connected": "Connected. Your answers will be saved every 60s.",
-            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
+            "confirmationEndText": "Exam end confirmation text",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Exam to confirm."
+            },
+            "exerciseGroups": "Exercise Groups",
+            "assessmentDashboard": "Assessment Dashboard",
+            "studentExams": "Student Exams",
+            "students": "Students"
         }
     }
 }
