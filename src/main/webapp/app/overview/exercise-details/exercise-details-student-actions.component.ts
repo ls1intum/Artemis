@@ -18,7 +18,6 @@ import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { take, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -74,14 +73,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        this.profileService
-            .getProfileInfo()
-            .subscribe((info: ProfileInfo) => {
-                console.log(info);
-                this.sshKeysUrl = info.sshKeysURL;
-                this.sshTemplateUrl = info.sshCloneURLTemplate;
-                this.sshEnabled = !!this.sshTemplateUrl;
-            });
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.sshKeysUrl = info.sshKeysURL;
+            this.sshTemplateUrl = info.sshCloneURLTemplate;
+            this.sshEnabled = !!this.sshTemplateUrl;
+        });
     }
 
     /**
@@ -256,15 +252,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * Transforms the repository url to a ssh url
      */
     getSshCloneUrl(url: string) {
-        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/,    this.sshTemplateUrl + '$2');
+        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
     }
 
     /**
      * Inserts the correct link to the translated ssh tip.
      */
     getSshKeyTip() {
-        return this.translateService
-            .instant('artemisApp.exerciseActions.sshKeyTip')
-            .replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
+        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
     }
 }

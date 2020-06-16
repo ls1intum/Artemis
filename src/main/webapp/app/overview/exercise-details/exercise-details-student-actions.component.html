@@ -241,9 +241,13 @@
                     (cbOnError)="onCopyFailure()"
                     >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
                 >
-                <pre *ngIf="sshEnabled" class="btn btn-primary d-inline-flex align-items-center ml-0" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" (click)="useSsh = !useSsh">{{
-                    useSsh ? 'USE HTTPS' : 'USE SSH'
-                }}</pre>
+                <pre
+                    *ngIf="sshEnabled"
+                    class="btn btn-primary d-inline-flex align-items-center ml-0"
+                    style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
+                    (click)="useSsh = !useSsh"
+                    >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
+                >
             </div>
             <p *ngIf="repositoryPassword">
                 {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>

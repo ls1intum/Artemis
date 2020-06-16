@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import de.tum.in.www1.artemis.config.Constants;
+import java.net.URL;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.net.URL;
+import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("gitlab")
