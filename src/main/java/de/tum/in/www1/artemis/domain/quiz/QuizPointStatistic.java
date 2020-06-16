@@ -151,7 +151,7 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
 
         Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score / 100));
 
-        if (rated == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(rated)) {
             // change rated participants
             setParticipantsRated(getParticipantsRated() + change);
 

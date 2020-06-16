@@ -87,7 +87,7 @@ public class TextSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(textSubmission.isExampleSubmission())) {
             textSubmission = save(textSubmission);
         }
         else {
@@ -270,7 +270,7 @@ public class TextSubmissionService extends SubmissionService {
                 continue;
             }
 
-            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
+            if (submittedOnly && !Boolean.TRUE.equals(optionalTextSubmission.get().isSubmitted())) {
                 continue;
             }
 
