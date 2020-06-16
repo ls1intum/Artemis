@@ -76,7 +76,7 @@ public class EmbeddingTrainingMaterialService {
         if (fileData != null) {
             String encodedFileData = Base64.encodeBase64String(fileData);
             final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, encodedFileData);
-            final HttpHeaders headers =  authenticationHeaderForSecret(API_SECRET);
+            final HttpHeaders headers = authenticationHeaderForSecret(API_SECRET);
             headers.setContentType(MediaType.APPLICATION_JSON);
             final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, headers, 2);
             log.info("File successfully uploaded to " + response.remotePath);
