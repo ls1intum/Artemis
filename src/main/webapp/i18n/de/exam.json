@@ -1,6 +1,11 @@
 {
     "artemisApp": {
         "exam": {
+            "overview": {
+                "start": "Beginn: {{start}}",
+                "duration": "Dauer: {{duration}} min",
+                "maxPoints": "max. Punkte: {{points}}"
+            },
             "title": "Klausur",
             "visible": "Sichtbar",
             "startDate": "Beginn",

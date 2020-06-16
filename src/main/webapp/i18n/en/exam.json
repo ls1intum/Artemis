@@ -1,6 +1,11 @@
 {
     "artemisApp": {
         "exam": {
+            "overview": {
+                "start": "Start: {{start}}",
+                "duration": "Duration: {{duration}} min",
+                "maxPoints": "max. Points: {{points}}"
+            },
             "title": "Exam",
             "visible": "Visible",
             "startDate": "Start Date",
