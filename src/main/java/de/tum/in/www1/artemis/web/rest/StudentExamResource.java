@@ -64,4 +64,34 @@ public class StudentExamResource {
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
     }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id. This
+     * will be used for the actual conduction of the exam.
+     *
+     * @param courseId      the course to which the student exam belongs to
+     * @param examId        the exam to which the student exam belongs to
+     * @param studentExamId the id of the student exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        log.debug("REST request to get student exam : {}", studentExamId);
+
+        // TODO: is student of course
+
+        // TODO: exam belongs to course
+
+        // TODO: student of student exam is registered for exam
+
+        // TODO: exam is live
+
+        // TODO: performance is relevant here --> maybe own StudentExamAccessService
+
+        // TODO: use a DTO here
+
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithExercises(studentExamId)));
+    }
 }
