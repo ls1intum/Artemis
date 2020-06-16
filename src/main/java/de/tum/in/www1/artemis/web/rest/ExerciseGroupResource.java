@@ -19,11 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.service.ExamAccessService;
-import de.tum.in.www1.artemis.service.ExerciseGroupService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -43,6 +41,8 @@ public class ExerciseGroupResource {
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final ExamService examService;
+
     private final ExamAccessService examAccessService;
 
     private final UserService userService;
@@ -52,8 +52,9 @@ public class ExerciseGroupResource {
     private final AuditEventRepository auditEventRepository;
 
     public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService, ExerciseService exerciseService,
-            AuditEventRepository auditEventRepository) {
+            AuditEventRepository auditEventRepository, ExamService examService) {
         this.exerciseGroupService = exerciseGroupService;
+        this.examService = examService;
         this.examAccessService = examAccessService;
         this.userService = userService;
         this.exerciseService = exerciseService;
@@ -83,12 +84,21 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
+        if (!exerciseGroup.getExam().getId().equals(examId)) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
-        ExerciseGroup savedExerciseGroup = exerciseGroupService.save(exerciseGroup);
+        // Save the exerciseGroup as part of the exam to ensure that the order column is set correctly
+        Exam examFromDB = examService.findOneWithExerciseGroups(examId);
+        examFromDB.addExerciseGroup(exerciseGroup);
+        Exam savedExam = examService.save(examFromDB);
+        ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().get(savedExam.getExerciseGroups().size() - 1);
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exerciseGroups/" + savedExerciseGroup.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedExerciseGroup.getTitle())).body(savedExerciseGroup);
     }
