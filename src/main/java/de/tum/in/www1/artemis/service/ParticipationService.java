@@ -847,7 +847,7 @@ public class ParticipationService {
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
                         // this should not happen because the database call above only retrieves rated results
-                        if (result.isRated() == Boolean.FALSE) {
+                        if (Boolean.FALSE.equals(result.isRated())) {
                             continue;
                         }
                         if (result.getCompletionDate() == null || result.getScore() == null) {

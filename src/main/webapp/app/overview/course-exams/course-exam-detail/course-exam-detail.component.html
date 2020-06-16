@@ -1,5 +1,7 @@
 <div *ngIf="exam" (click)="openExam()">
-    <div class="row card-header text-white bg-secondary"><h4 class="card-title text-center">TITLE</h4></div>
+    <div class="row card-header text-white bg-secondary">
+        <h4 class="card-title text-center">{{ exam.title }}</h4>
+    </div>
     <div class="row card-body justify-content-center">
         <h4 class="col-auto"><fa-icon [icon]="'pen-alt'" size="3x"></fa-icon></h4>
     </div>

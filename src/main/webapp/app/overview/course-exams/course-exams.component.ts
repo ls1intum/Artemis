@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -18,7 +18,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 
-    constructor(private route: ActivatedRoute, private courseManagementService: CourseManagementService, private courseCalculationService: CourseScoreCalculationService) {}
+    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private courseManagementService: CourseManagementService) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -31,6 +31,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
         this.courseUpdatesSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
         });
     }
@@ -39,8 +40,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all unsubscriptions
      */
     ngOnDestroy(): void {
-        this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
+        this.courseUpdatesSubscription.unsubscribe();
     }
 
     /**
