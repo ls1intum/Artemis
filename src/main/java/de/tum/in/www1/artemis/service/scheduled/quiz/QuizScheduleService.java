@@ -411,6 +411,17 @@ public class QuizScheduleService {
         });
     }
 
+    void executeQuizStartTask(Long quizExerciseId) {
+        performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
+            quizExerciseCache.getQuizStart().clear();
+            log.debug("Removed quiz {} start tasks", quizExerciseId);
+            return quizExerciseCache;
+        });
+        log.debug("Sending quiz {} start", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
+    }
+
     /*
      * Clears all quiz data for all quiz exercises from the 4 hash maps for quizzes
      */
@@ -547,17 +558,6 @@ public class QuizScheduleService {
         catch (Exception e) {
             log.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
         }
-    }
-
-    void executeQuizStartTask(Long quizExerciseId) {
-        performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
-            quizExerciseCache.getQuizStart().clear();
-            log.debug("Removed quiz {} start tasks", quizExerciseId);
-            return quizExerciseCache;
-        });
-        log.debug("Sending quiz {} start", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
     }
 
     private static String printDuration(long timeNanoStart) {
