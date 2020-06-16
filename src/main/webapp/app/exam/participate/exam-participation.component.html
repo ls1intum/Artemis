@@ -1,3 +1,5 @@
+<jhi-exam-participation-start *ngIf="isVisible() && !isOver()"></jhi-exam-participation-start>
+<jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
 <p>exam-participation works!</p>
 <div *ngIf="!disconnected" class="exam-footer connected">
     <div class="container">

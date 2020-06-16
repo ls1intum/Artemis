@@ -113,6 +113,10 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
+        // TODO: use the exam access service
+        // TODO: check that the exam id in the body was NOT changed
+        // TODO: make sure that the request body does not mess up the exercise groups (we might need to fetch the original exam and reassign the existing exercise groups)
+
         if (updatedExam.getCourse() == null) {
             return conflict();
         }
@@ -181,6 +185,7 @@ public class ExamResource {
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
+        // TODO: make sure to delete all exercises in the references exercise groups first, because Cascade won't work fully here
         examService.delete(examId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
