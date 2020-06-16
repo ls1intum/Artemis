@@ -185,7 +185,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
                     }
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
                         if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
-                                && Boolean.TRUE == shortAnswerSubmittedText.isIsCorrect()) {
+                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }

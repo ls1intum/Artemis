@@ -19,7 +19,7 @@
     <div class="table-responsive" *ngIf="textExercises && textExercises.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
@@ -35,7 +35,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                <tr *ngFor="let textExercise of textExercises | sortBy: predicate:reverse; trackBy: trackId">
+                <tr *ngFor="let textExercise of textExercises; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>

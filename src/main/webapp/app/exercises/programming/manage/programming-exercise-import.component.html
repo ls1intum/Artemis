@@ -10,7 +10,7 @@
         </div>
         <table class="table table-striped">
             <thead class="thead-dark">
-                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="callback">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="{{ column.ID }}">
                         <span>#</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -31,7 +31,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of content.resultsOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
+                <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId">
                     <td>
                         <span>{{ exercise.id }}</span>
                     </td>

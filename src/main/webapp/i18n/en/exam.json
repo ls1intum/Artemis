@@ -1,7 +1,14 @@
 {
     "artemisApp": {
         "exam": {
+            "overview": {
+                "start": "Start: {{start}}",
+                "duration": "Duration: {{duration}} min",
+                "maxPoints": "max. Points: {{points}}"
+            },
             "title": "Exam",
+            "startExam": "Start Exam",
+            "summary": "Summary",
             "visible": "Visible",
             "startDate": "Start Date",
             "endDate": "End Date",
@@ -9,6 +16,10 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated"
+        },
+        "examParticipation": {
+            "connected": "Connected. Your answers will be saved every 60s.",
+            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -64,7 +75,7 @@
                 "addTextExercise": "Add text exercise"
             },
             "delete": {
-                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             }
         }
