@@ -784,7 +784,7 @@ public class CourseResource {
     }
 
     /**
-     * DELETE /courses/:courseId : deletedelete the "id" course.
+     * DELETE /courses/:courseId : delete the "id" course.
      *
      * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
