@@ -158,6 +158,7 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties(value = "exercises")
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -464,6 +465,22 @@ public abstract class Exercise implements Serializable {
         this.course = course;
     }
 
+    public boolean hasCourse() {
+        return this.course != null;
+    }
+
+    public ExerciseGroup getExerciseGroup() {
+        return exerciseGroup;
+    }
+
+    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroup = exerciseGroup;
+    }
+
+    public boolean hasExerciseGroup() {
+        return this.exerciseGroup != null;
+    }
+
     public Set<ExampleSubmission> getExampleSubmissions() {
         return exampleSubmissions;
     }
@@ -633,7 +650,7 @@ public abstract class Exercise implements Serializable {
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
+            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -778,7 +795,7 @@ public abstract class Exercise implements Serializable {
         for (Submission submission : submissions) {
             Result result = submission.getResult();
             if (result != null) {
-                if (result.isRated() == Boolean.TRUE) {
+                if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);
                 }
                 else {
