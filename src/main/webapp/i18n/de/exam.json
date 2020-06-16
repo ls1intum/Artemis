@@ -61,7 +61,7 @@
             "students": "Studenten",
             "examStudents": {
                 "registeredStudents": "Angemeldete Studenten",
-                "outOf": "von",
+                "searchResults": "Suchergebnisse",
                 "usersPerPage": "{{number}} Studenten pro Seite",
                 "showAllUsers": "Alle Studenten anzeigen",
                 "searchForUsers": "Studenten für diese Klausur anmelden durch Suchen nach Login oder Namen",

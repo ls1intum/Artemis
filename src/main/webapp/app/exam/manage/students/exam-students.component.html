@@ -7,7 +7,10 @@
         <div>
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">
                 Registered students </span
-            >: {{ allRegisteredUsers.length }}
+            ><span>: {{ allRegisteredUsers.length }}</span>
+            <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
+                (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
+            </span>
             <jhi-button
                 class="ml-4"
                 [btnType]="ButtonType.PRIMARY"

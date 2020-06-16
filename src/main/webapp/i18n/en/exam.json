@@ -60,7 +60,7 @@
             "students": "Students",
             "examStudents": {
                 "registeredStudents": "Registered students",
-                "outOf": "out of",
+                "searchResults": "search results",
                 "usersPerPage": "{{number}} students per page",
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
