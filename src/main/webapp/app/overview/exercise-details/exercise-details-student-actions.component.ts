@@ -45,7 +45,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
     public useSsh = false;
 
-    private usesBitbucket = true;
+    public sshEnabled = false;
+    private sshTemplateUrl: string;
+    public sshKeysUrl: string;
+
     private user: User;
 
     constructor(
@@ -73,13 +76,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         });
         this.profileService
             .getProfileInfo()
-            .pipe(
-                take(1),
-                tap((info: ProfileInfo) => {
-                    this.usesBitbucket = (info.activeProfiles || []).includes('bitbucket');
-                }),
-            )
-            .subscribe();
+            .subscribe((info: ProfileInfo) => {
+                console.log(info);
+                this.sshKeysUrl = info.sshKeysURL;
+                this.sshTemplateUrl = info.sshCloneURLTemplate;
+                this.sshEnabled = !!this.sshTemplateUrl;
+            });
     }
 
     /**
@@ -254,33 +256,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * Transforms the repository url to a ssh url
      */
     getSshCloneUrl(url: string) {
-        if (this.usesBitbucket) {
-            // (https://)(user@)(bitbucket.ase.in.tum.de)(/scm)/(....git)  =>  ssh://git@(bitbucket.ase.in.tum.de):7999/(....git)
-            return url.replace(/^(\w*:\/\/)(\w*?@)?([^/]*?)(:\d*)?\/(scm\/)?(.*)$/, `ssh://git@$3:7999/$6`);
-        } else {
-            return url.replace(/^(\w*:\/\/)(\w*?@)?([^/]*?)(:\d*)\/(.*)$/, `ssh://git@$3:$5`);
-        }
+        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/,    this.sshTemplateUrl + '$2');
     }
 
     /**
      * Inserts the correct link to the translated ssh tip.
      */
-    getSshKeyTip(participation: Participation) {
-        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+    getSshKeyTip() {
         return this.translateService
             .instant('artemisApp.exerciseActions.sshKeyTip')
-            .replace(/{link:(.*)}/, '<a href="' + this.getSshKeyLink(programmingParticipation.repositoryUrl) + '" target="_blank">$1</a>')
-            .replace(/{server:(.*)\/(.*)}/, this.usesBitbucket ? '$1' : '$2');
-    }
-
-    /**
-     * Returns the link to bitbucket or gitlab to manage the users ssh keys
-     */
-    getSshKeyLink(url: string) {
-        if (this.usesBitbucket) {
-            return url.replace(/^(\w*:\/\/[^/]*)\/.*$/, '$1/plugins/servlet/ssh/account/keys');
-        } else {
-            return url.replace(/^(\w*:\/\/[^/]*)\/.*$/, '$1/profile/keys');
-        }
+            .replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
     }
 }

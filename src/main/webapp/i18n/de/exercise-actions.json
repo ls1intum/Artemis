@@ -26,7 +26,7 @@
             "copiedUrl": "URL kopiert",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
-            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem {server:Bitbucket/Gitlab} Konto hinzufügen."
+            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Account hinzufügen."
         }
     }
 }
