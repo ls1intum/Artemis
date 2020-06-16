@@ -18,6 +18,10 @@
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet"
         },
+        "examParticipation": {
+            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
+            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
+        },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
             "updated": "Aufgabengruppe bearbeitet",
