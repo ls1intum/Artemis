@@ -84,6 +84,11 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
+    public static TextExercise generateTextExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = new TextExercise();
+        return (TextExercise) populateExerciseForExam(textExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+    }
+
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
             Course course) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
@@ -91,7 +96,7 @@ public class ModelFactory {
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+    private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
@@ -99,11 +104,29 @@ public class ModelFactory {
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setCourse(course);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+        exercise.setCourse(course);
+        exercise.setExerciseGroup(null);
+        return exercise;
+    }
+
+    private static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            ExerciseGroup exerciseGroup) {
+        exercise.setTitle(UUID.randomUUID().toString());
+        exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        exercise.setProblemStatement("Exam Problem Statement");
+        exercise.setMaxScore(5.0);
+        exercise.setReleaseDate(releaseDate);
+        exercise.setDueDate(dueDate);
+        exercise.assessmentDueDate(assessmentDueDate);
+        exercise.setDifficulty(DifficultyLevel.MEDIUM);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        exercise.getCategories().add("Category");
+        exercise.setExerciseGroup(exerciseGroup);
+        exercise.setCourse(null);
         return exercise;
     }
 
@@ -268,9 +291,10 @@ public class ModelFactory {
         return exam;
     }
 
-    public static ExerciseGroup generateExerciseGroup(Exam exam) {
+    public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setTitle("Exercise group title");
+        exerciseGroup.setIsMandatory(mandatory);
         exerciseGroup.setExam(exam);
         return exerciseGroup;
     }
