@@ -195,6 +195,15 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExamFileUploadExercise() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        assertThat(exerciseRepo.findAll().isEmpty());
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();

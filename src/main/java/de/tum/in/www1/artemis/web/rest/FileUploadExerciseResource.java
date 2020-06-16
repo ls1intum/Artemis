@@ -240,18 +240,28 @@ public class FileUploadExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (fileUploadExercise.isEmpty()) {
+        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        if (optionalFileUploadExercise.isEmpty()) {
             return notFound();
         }
-        Course course = fileUploadExercise.get().getCourse();
+        FileUploadExercise fileUploadExercise = optionalFileUploadExercise.get();
+
+        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
+        Course course;
+        if (fileUploadExercise.hasExerciseGroup()) {
+            course = courseService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
+        }
+        else {
+            course = fileUploadExercise.getCourse();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(fileUploadExercise.get(), course, user);
+        exerciseService.logDeletion(fileUploadExercise, course, user);
         exerciseService.delete(exerciseId, false, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getTitle())).build();
     }
 }
