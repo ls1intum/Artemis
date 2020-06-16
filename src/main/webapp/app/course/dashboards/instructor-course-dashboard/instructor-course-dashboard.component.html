@@ -145,11 +145,12 @@
                             </div>
                         </td>
                         <td>
-                            <div class="btn-group flex-btn-group-container">
+                            <div class="btn-group">
                                 <button class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
                                     {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
                                 </button>
                                 <button
+                                    *ngIf="exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT"
                                     class="btn btn-primary btn-sm mr-1"
                                     [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
                                 >

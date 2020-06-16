@@ -22,6 +22,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
     ) {
         super(submissionService, participationWebsocketService, alertService);
         this.showForSuccessfulSubmissions = true;
+        this.personalParticipation = false;
     }
 
     triggerBuild = (event: any) => {

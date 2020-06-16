@@ -73,7 +73,12 @@
                     [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
                 ></button>
-                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
+                <jhi-programming-exercise-instructions
+                    *ngIf="exercise"
+                    [exercise]="exercise"
+                    [participation]="exercise.studentParticipations && exercise.studentParticipations[0]"
+                    [personalParticipation]="true"
+                >
                 </jhi-programming-exercise-instructions>
             </div>
             <ng-template #exerciseTemplate>

@@ -40,6 +40,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
+    // True if the student triggers. false if an instructor triggers it
+    protected personalParticipation: boolean;
+
     protected constructor(
         protected submissionService: ProgrammingSubmissionService,
         protected participationWebsocketService: ParticipationWebsocketService,
@@ -87,7 +90,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personalParticipation)
             .pipe(
                 tap(({ submissionState }) => {
                     switch (submissionState) {
@@ -117,7 +120,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
