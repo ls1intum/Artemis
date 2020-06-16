@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing FileUploadExercise. */
 @RestController
@@ -207,15 +206,28 @@ public class FileUploadExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        fileUploadExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
-        Course course = fileUploadExercise.get().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
+
+        if (optionalFileUploadExercise.isEmpty()) {
+            notFound();
+        }
+        FileUploadExercise fileUploadExercise = optionalFileUploadExercise.get();
+
+        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        if (fileUploadExercise.hasExerciseGroup()) {
+            Course course = courseService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             return forbidden();
         }
-        return ResponseUtil.wrapOrNotFound(fileUploadExercise);
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
+
+        return ResponseEntity.ok().body(fileUploadExercise);
     }
 
     /**

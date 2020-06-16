@@ -147,6 +147,33 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getExamFileUploadExercise_asStudent_forbidden() throws Exception {
+        getExamFileUploadExercise();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExamFileUploadExercise_asTutor_forbidden() throws Exception {
+        getExamFileUploadExercise();
+    }
+
+    private void getExamFileUploadExercise() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getExamFileUploadExercise_asInstructor() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+
+        FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        assertThat(receivedFileUploadExercise).as("text exercise was retrieved").isNotNull();
+        assertThat(receivedFileUploadExercise.getId()).as("Text exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
