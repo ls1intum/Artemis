@@ -63,45 +63,57 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         database.resetDatabase();
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public FileUploadExercise exerciseWithSGI() throws Exception {
+        database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
+                afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        return receivedFileUploadExercise;
+    }
+
+    public List<Feedback> applySGIonFeedback() throws Exception {
+        FileUploadExercise receivedFileUploadExercise = exerciseWithSGI();
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+
+        var gradingInstructionWithNoLimit = receivedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
+        var gradingInstructionWithLimit = receivedFileUploadExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
+
+        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
+        feedbacks.get(2).setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        var moreFeedback = new Feedback();
+        moreFeedback.setGradingInstruction(gradingInstructionWithNoLimit);
+        moreFeedback.setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        feedbacks.add(moreFeedback);
+
+        return feedbacks; // total score should be 3P
+    }
+
     @Order(1)
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitFileUploadAssessment_asInstructor() throws Exception {
-            database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
-            FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
-                afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
 
-            FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-            fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        List<Feedback> feedbacks = applySGIonFeedback();
 
-            var params = new LinkedMultiValueMap<String, String>();
-            params.add("submit", "true");
-            List<Feedback> feedbacks = ModelFactory.generateFeedback();
-
-            var gradingInstructionWithNoLimit = receivedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
-            var gradingInstructionWithLimit = receivedFileUploadExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
-
-            feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
-            feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
-            feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
-            feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
-            feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
-            feedbacks.get(2).setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
-            var moreFeedback = new Feedback();
-            moreFeedback.setGradingInstruction(gradingInstructionWithNoLimit);
-            moreFeedback.setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
-            feedbacks.add(moreFeedback);
-
-            Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
                 params);
 
-            assertThat(result).as("submitted result found").isNotNull();
-            assertThat(result.isRated()).isTrue();
-            assertThat(result.getResultString()).isEqualTo("3 of 5 points"); // total score 3P because gradingInstructionWithLimit was applied twice but only counts once
-            assertThat(result.getFeedbacks().size()).isEqualTo(4);
-            assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
-            assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
-        }
+        assertThat(result).as("submitted result found").isNotNull();
+        assertThat(result.isRated()).isTrue();
+        assertThat(result.getResultString()).isEqualTo("3 of 5 points"); // total score 3P because gradingInstructionWithLimit was applied twice but only counts once
+        assertThat(result.getFeedbacks().size()).isEqualTo(4);
+        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+    }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
