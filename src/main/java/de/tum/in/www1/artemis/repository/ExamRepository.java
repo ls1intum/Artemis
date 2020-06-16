@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -24,4 +26,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
     Optional<Exam> findWithRegisteredUsersById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "studentExams" })
+    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id =:#{#courseId})")
+    Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("courseId") long courseId);
 }

@@ -86,6 +86,11 @@ public class ExamService {
         return examRepository.findByCourseId(courseId);
     }
 
+    public Exam findOneWithEagerExercisesGroupsAndStudentExams(Long courseId) {
+        log.debug("REST request to get all exams with student exams and exercise groups for Course : {}", courseId);
+        return examRepository.findOneWithEagerExercisesGroupsAndStudentExams(courseId);
+    }
+
     /**
      * Delete the exam by id.
      *

@@ -16,8 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -46,30 +48,20 @@ public class ExamResource {
 
     private final ExamService examService;
 
-    private final StudentExamService studentExamService;
-
     private final ExamAccessService examAccessService;
 
-    private final ExerciseGroupService exerciseGroupService;
-
     private final ExerciseService exerciseService;
-
-    private final AuthorizationCheckService authCheckService;
 
     private final AuditEventRepository auditEventRepository;
 
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            StudentExamService studentExamService, ExerciseGroupService exerciseGroupService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            AuditEventRepository auditEventRepository) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
         this.examService = examService;
         this.examAccessService = examAccessService;
-        this.studentExamService = studentExamService;
-        this.exerciseGroupService = exerciseGroupService;
         this.exerciseService = exerciseService;
-        this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -196,29 +188,25 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Exam exam = examService.findOne(examId);
+        Exam exam = examService.findOneWithEagerExercisesGroupsAndStudentExams(examId);
 
         User user = userService.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        for (final var exerciseGroup : exam.getExerciseGroups()) {
-            for (final var exercise : exerciseGroup.getExercises()) {
-                // This also deletes all participations
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
                 exerciseService.delete(exercise.getId(), false, false);
             }
-            exerciseGroupService.delete(exerciseGroup.getId());
         }
-        for (final var studentExam : exam.getStudentExams()) {
-            studentExamService.deleteStudentExam(studentExam.getId());
-        }
-        examService.delete(examId);
 
+        // The database operation cascades to Student Exams and Exercise Groups
+        examService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
     /**
-     * Post /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
+     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
