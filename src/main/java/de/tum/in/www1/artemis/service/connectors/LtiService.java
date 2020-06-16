@@ -238,11 +238,11 @@ public class LtiService {
             final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label())) {
                 groups.add(USER_GROUP_NAME_EDX);
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX, fullname, email, null, "en");
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX, fullname, email, null, null, "en");
             }
             else if (U4I.equals(launchRequest.getContext_label())) {
                 groups.add(USER_GROUP_NAME_U4I);
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I, fullname, email, null, "en");
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I, fullname, email, null, null, "en");
             }
             else {
                 throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());

@@ -156,6 +156,7 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties(value = "exercises")
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -460,6 +461,22 @@ public abstract class Exercise implements Serializable {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public boolean hasCourse() {
+        return this.course != null;
+    }
+
+    public ExerciseGroup getExerciseGroup() {
+        return exerciseGroup;
+    }
+
+    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroup = exerciseGroup;
+    }
+
+    public boolean hasExerciseGroup() {
+        return this.exerciseGroup != null;
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {

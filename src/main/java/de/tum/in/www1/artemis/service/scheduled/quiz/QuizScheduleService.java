@@ -447,7 +447,7 @@ public class QuizScheduleService {
      *      a. Process each Submission (set submissionType to “SubmissionType.MANUAL”) and create Participation and Result and save them to Database (DB WRITE)
      *      b. Remove processed Submissions from SubmissionHashMap and write Participation with Result into ParticipationHashMap and write Result into ResultHashMap
      * 2. If Quiz has ended:
-     *      a. Process all Submissions in SubmissionHashMap that belong to this quiz i. set “isSubmitted”   to “true” and submissionType to “SubmissionType.TIMEOUT”
+     *      a. Process all Submissions in SubmissionHashMap that belong to this quiz i. set “isSubmitted” to “true” and submissionType to “SubmissionType.TIMEOUT”
      *          ii. Create Participation and Result and save to Database (DB WRITE)
      *          iii. Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
      *      b. Send out Participations (including QuizExercise and Result) from ParticipationHashMap to each participant and remove them from ParticipationHashMap (WEBSOCKET SEND)
@@ -517,7 +517,7 @@ public class QuizScheduleService {
                 if (hasNewParticipations && hasEnded) {
                     // Send the participation with containing result and quiz back to the users via websocket and remove the participation from the ParticipationHashMap
                     Collection<Entry<String, StudentParticipation>> finishedParticipations = cachedQuiz.getParticipations().entrySet();
-                    // TODO maybe find a better way to optimize the performance
+                    // TODO maybe find a better way to optimize the performance (use an executor service with e.g. X parallel threads)
                     finishedParticipations.parallelStream().forEach(entry -> {
                         StudentParticipation participation = entry.getValue();
                         if (participation.getParticipant() == null || participation.getParticipantIdentifier() == null) {

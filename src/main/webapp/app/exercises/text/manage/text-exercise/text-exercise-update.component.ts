@@ -23,6 +23,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 })
 export class TextExerciseUpdateComponent implements OnInit {
     checkedFlag: boolean;
+    isExamMode: boolean;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
 
@@ -61,13 +62,16 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
-            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-                (categoryRes: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                },
-                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-            );
+            this.isExamMode = !!this.textExercise.exerciseGroup;
+            if (!this.isExamMode) {
+                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+                this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                    (categoryRes: HttpResponse<string[]>) => {
+                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                    },
+                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                );
+            }
         });
 
         this.isSaving = false;
