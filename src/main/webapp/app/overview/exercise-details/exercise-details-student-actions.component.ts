@@ -88,6 +88,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (this.useSsh) {
+            // the same ssh url is used for individual and team exercises
             return this.getSshCloneUrl(programmingParticipation.repositoryUrl);
         }
         if (programmingParticipation.team) {
