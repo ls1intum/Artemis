@@ -178,7 +178,7 @@ jhipster:
 # Eureka configuration
 eureka:
     client:
-        enabled: true
+        enabled: false
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
         healthcheck:
