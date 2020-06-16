@@ -119,8 +119,6 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        // TODO: check that the exam id in the body was NOT changed
-
         if (updatedExam.getCourse() == null) {
             return conflict();
         }
