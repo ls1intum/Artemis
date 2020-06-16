@@ -59,6 +59,22 @@
             "assessmentDashboard": "Bewertungstafel",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
+            "examStudents": {
+                "registeredStudents": "Angemeldete Studenten",
+                "outOf": "von",
+                "usersPerPage": "{{number}} Studenten pro Seite",
+                "showAllUsers": "Alle Studenten anzeigen",
+                "searchForUsers": "Studenten für diese Klausur anmelden durch Suchen nach Login oder Namen",
+                "searchNoResults": "Keine Studenten gefunden",
+                "login": "Login",
+                "name": "Name",
+                "email": "E-Mail",
+                "visibleRegistrationNumber": "Matrikelnummer",
+                "removeFromGroup": {
+                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden?"
+                },
+                "importStudents": "Studenten importieren"
+            },
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
                 "create": "Neue Aufgabengruppe erstellen",

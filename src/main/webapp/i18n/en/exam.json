@@ -58,6 +58,22 @@
             "assessmentDashboard": "Assessment Dashboard",
             "studentExams": "Student Exams",
             "students": "Students",
+            "examStudents": {
+                "registeredStudents": "Registered students",
+                "outOf": "out of",
+                "usersPerPage": "{{number}} students per page",
+                "showAllUsers": "Show all students",
+                "searchForUsers": "Register a student for this exam by searching for login or name",
+                "searchNoResults": "No students found",
+                "login": "Login",
+                "name": "Name",
+                "email": "Email",
+                "visibleRegistrationNumber": "Matriculation number",
+                "removeFromExam": {
+                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?"
+                },
+                "importStudents": "Import students"
+            },
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",

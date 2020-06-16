@@ -137,16 +137,20 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param examId    the exam to find
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to find
+     * @param withStudents  boolean flag whether to include all students registered for the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findOne(examId)));
+        return courseAndExamAccessFailure.orElseGet(() -> {
+            Exam exam = withStudents ? examService.findOneWithRegisteredUsers(examId) : examService.findOne(examId);
+            return ResponseEntity.ok(exam);
+        });
     }
 
     /**
