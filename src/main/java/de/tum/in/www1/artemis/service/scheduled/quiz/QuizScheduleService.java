@@ -127,7 +127,6 @@ public class QuizScheduleService {
                 .setEvictionConfig(evictionConfig) //
                 .setCacheLocalEntries(true) //
                 .setLocalUpdatePolicy(NearCacheConfig.LocalUpdatePolicy.INVALIDATE);
-        // .setPreloaderConfig(preloaderConfig);
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
     }
 
