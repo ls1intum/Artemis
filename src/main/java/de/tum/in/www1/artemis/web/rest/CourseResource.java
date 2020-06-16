@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -796,13 +798,14 @@ public class CourseResource {
         if (course == null) {
             return notFound();
         }
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
-        }
 
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
+
+        for (Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId(), false, false);
+        }
 
         for (Lecture lecture : course.getLectures()) {
             lectureService.delete(lecture);
@@ -826,15 +829,13 @@ public class CourseResource {
         }
 
         // delete the Exams
-        for (final var exam : course.getExams()) {
-            for (final var exerciseGroup : exam.getExerciseGroups()) {
-                for (final var exercise : exerciseGroup.getExercises()) {
+        List<Exam> exams = examService.findAllByCourseId(courseId);
+        for (Exam exam : exams) {
+            exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(exam.getId());
+            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
                     exerciseService.delete(exercise.getId(), false, false);
                 }
-                exerciseGroupService.delete(exerciseGroup.getId());
-            }
-            for (final var studentExam : exam.getStudentExams()) {
-                studentExamService.deleteStudentExam(studentExam.getId());
             }
             examService.delete(exam.getId());
         }
