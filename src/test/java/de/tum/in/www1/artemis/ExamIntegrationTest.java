@@ -85,6 +85,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1 = database.addExam(course1);
         exerciseGroup1 = database.addExerciseGroup(exam1, true);
         exam1.setExerciseGroups(Collections.singletonList(exerciseGroup1));
+        examRepository.save(exam1);
     }
 
     @AfterEach
@@ -349,7 +350,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void DeleteExamThatDoesNotExist() throws Exception {
+    public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/2", HttpStatus.NOT_FOUND);
     }
 }
