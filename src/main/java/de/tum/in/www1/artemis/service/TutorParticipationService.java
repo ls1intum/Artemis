@@ -159,7 +159,7 @@ public class TutorParticipationService {
         }
 
         // Check if it is a tutorial or not
-        boolean isTutorial = originalExampleSubmission.isUsedForTutorial() == Boolean.TRUE;
+        boolean isTutorial = Boolean.TRUE.equals(originalExampleSubmission.isUsedForTutorial());
 
         // If it is a tutorial we check the assessment
         if (isTutorial) {

@@ -76,12 +76,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
     enableStartButton() {
-        if (this.confirmed) {
-            if (this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
-                return true;
-            } else {
-                return false;
-            }
+        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
+            return true;
         } else {
             return false;
         }
