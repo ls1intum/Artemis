@@ -54,7 +54,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 // ===== EXAM =====
                 {
-                    path: 'courses/:courseId/exam/:examId',
+                    path: 'courses/:courseId/exams/:examId',
                     loadChildren: () => import('./exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
                 },
                 {
