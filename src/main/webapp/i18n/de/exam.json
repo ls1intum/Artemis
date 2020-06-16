@@ -1,12 +1,20 @@
 {
     "artemisApp": {
         "exam": {
+            "overview": {
+                "start": "Beginn: {{start}}",
+                "duration": "Dauer: {{duration}} min",
+                "maxPoints": "max. Punkte: {{points}}"
+            },
             "title": "Klausur",
+            "startExam": "Klausur starten",
+            "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
+
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet"
         },
