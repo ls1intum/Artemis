@@ -17,6 +17,8 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exam-quiz',
@@ -51,7 +53,7 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     submission = new QuizSubmission();
 
-    constructor(private deviceService: DeviceDetectorService, private route: ActivatedRoute) {
+    constructor(private deviceService: DeviceDetectorService, private route: ActivatedRoute, private participationService: ParticipationService) {
         smoothscroll.polyfill();
     }
 
@@ -59,6 +61,9 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
         this.subscription = this.route.params.subscribe((params) => {
             this.quizId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
+        });
+        this.participationService.findParticipation(this.quizId).subscribe((response: HttpResponse<StudentParticipation>) => {
+            this.updateParticipationFromServer(response.body!);
         });
     }
 
@@ -199,5 +204,20 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
+    }
+
+    /**
+     * Apply the data of the participation, replacing all old data
+     */
+    updateParticipationFromServer(participation: StudentParticipation) {
+        // apply submission if it exists
+        if (participation && participation.results.length) {
+            this.submission = participation.results[0].submission as QuizSubmission;
+
+            // show submission answers in UI
+            this.applySubmission();
+        } else {
+            this.submission = new QuizSubmission();
+        }
     }
 }
