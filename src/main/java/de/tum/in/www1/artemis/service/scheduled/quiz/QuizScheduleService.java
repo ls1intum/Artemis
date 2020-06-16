@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -371,12 +370,12 @@ public class QuizScheduleService {
             // schedule sending out filtered quiz over websocket
             try {
                 long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFutures = threadPoolTaskScheduler.scheduleOnAllMembers(
+                var scheduledFuture = threadPoolTaskScheduler.schedule(
                         TaskUtils.named(Constants.HAZELCAST_QUIZ_PREFIX + quizExerciseId + HAZELCAST_QUIZ_START_TASK, new QuizStartTask(quizExerciseId)), delay,
                         TimeUnit.MILLISECONDS);
                 // save scheduled future in HashMap
                 performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
-                    quizExerciseCache.setQuizStart(scheduledFutures.values().stream().map(IScheduledFuture::getHandler).collect(Collectors.toList()));
+                    quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
                     return quizExerciseCache;
                 });
             }
