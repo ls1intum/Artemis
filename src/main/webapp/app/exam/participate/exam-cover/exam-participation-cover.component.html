@@ -1,0 +1,20 @@
+<div class="container">
+    <h2 style="text-align: center;">
+        <span>{{ exam.title }}</span>
+    </h2>
+    <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
+    <div style="text-align: center;">
+        <label for="confirmBox"><span [innerHTML]="formattedConfirmationText"></span></label>
+        <input type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
+    </div>
+    <div *ngIf="startView" style="text-align: center;">
+        <button [disabled]="!startEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
+            <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
+        </button>
+    </div>
+    <div *ngIf="!startView" style="text-align: center;">
+        <button [disabled]="!confirmed" type="submit" class="btn btn-primary" id="summaryBtn">
+            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+        </button>
+    </div>
+</div>
