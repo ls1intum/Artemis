@@ -14,5 +14,9 @@ if (module['hot']) {
 
 platformBrowserDynamic()
     .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
-    .then(() => {})
+    .then(() => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker');
+        }
+    })
     .catch((err) => console.error(err));
