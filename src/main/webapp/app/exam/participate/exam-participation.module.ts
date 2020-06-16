@@ -8,11 +8,12 @@ import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/
 import { QuizExamParticipationComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-participation.component';
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisQuizQuestionTypesModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamParticipationSummaryComponent, QuizExamParticipationComponent],
 })
 export class ArtemisExamParticipationModule {}

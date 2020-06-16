@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -17,8 +18,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     exam: Exam;
     examId: number;
+    unsavedChanges = false;
+    disconnected = false;
 
-    constructor(private courseCalculationService: CourseScoreCalculationService, private route: ActivatedRoute) {}
+    /**
+     * Websocket channels
+     */
+    onConnected: () => void;
+    onDisconnected: () => void;
+
+    constructor(private courseCalculationService: CourseScoreCalculationService, private jhiWebsocketService: JhiWebsocketService, private route: ActivatedRoute) {}
 
     /**
      * initializes courseId and course
@@ -32,6 +41,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // load exam like this until service is ready
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
+        this.initLiveMode();
     }
 
     /**
@@ -55,5 +65,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.paramSubscription.unsubscribe();
+    }
+    initLiveMode() {
+        // listen to connect / disconnect events
+        this.onConnected = () => {
+            if (this.disconnected) {
+                // if the disconnect happened during the live exam and there are unsaved changes, we trigger a selection changed event to save the submission on the server
+                if (this.unsavedChanges) {
+                    // ToDo: save submission on server
+                }
+            }
+            this.disconnected = false;
+        };
+        this.jhiWebsocketService.bind('connect', () => {
+            this.onConnected();
+        });
+        this.onDisconnected = () => {
+            this.disconnected = true;
+        };
+        this.jhiWebsocketService.bind('disconnect', () => {
+            this.onDisconnected();
+        });
     }
 }
