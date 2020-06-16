@@ -11,6 +11,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
@@ -185,7 +186,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
                     }
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
                         if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
-                                && Boolean.TRUE == shortAnswerSubmittedText.isIsCorrect()) {
+                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }
