@@ -6,9 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
@@ -64,6 +63,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         database.resetDatabase();
     }
 
+    @Order(1)
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitFileUploadAssessment_asInstructor() throws Exception {
