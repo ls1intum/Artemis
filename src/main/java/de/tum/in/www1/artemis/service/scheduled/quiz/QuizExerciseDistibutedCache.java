@@ -46,7 +46,6 @@ final class QuizExerciseDistibutedCache extends QuizExerciseCache implements Haz
     QuizExerciseDistibutedCache(Long id, List<ScheduledTaskHandler> quizStart) {
         super(id);
         setQuizStart(quizStart);
-//        log.debug("Creating new QuizExerciseCacheImpl for {}", getId(), new Exception());
     }
 
     QuizExerciseDistibutedCache(Long id) {
