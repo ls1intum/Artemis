@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled;
+package de.tum.in.www1.artemis.service.scheduled.quiz;
 
 import java.time.ZonedDateTime;
 import java.util.*;
