@@ -7,6 +7,8 @@
                 "maxPoints": "max. Points: {{points}}"
             },
             "title": "Exam",
+            "startExam": "Start Exam",
+            "summary": "Summary",
             "visible": "Visible",
             "startDate": "Start Date",
             "endDate": "End Date",
