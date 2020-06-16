@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.cp.IAtomicReference;
 import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -55,6 +56,8 @@ public class QuizScheduleService {
 
     private static final String HAZELCAST_PROCESS_CACHE_TASK = Constants.HAZELCAST_QUIZ_PREFIX + "process-cache";
 
+    private static final String HAZELCAST_PROCESS_CACHE_HANDLER = HAZELCAST_PROCESS_CACHE_TASK + "-handler";
+
     /**
      * Mainly for testing, default is false
      * <p>
@@ -66,7 +69,7 @@ public class QuizScheduleService {
 
     private IScheduledExecutorService threadPoolTaskScheduler;
 
-    private IScheduledFuture<?> scheduledProcessQuizSubmissions;
+    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -92,6 +95,7 @@ public class QuizScheduleService {
         this.userService = userService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.hazelcastInstance = hazelcastInstance;
+        this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         if (USE_LOCAL_CACHE_ONLY) {
             cachedQuizExercises = new ConcurrentHashMap<>();
         }
@@ -306,8 +310,9 @@ public class QuizScheduleService {
         if (threadPoolTaskScheduler == null) {
             try {
                 threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
-                scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleAtFixedRate(TaskUtils.named(HAZELCAST_PROCESS_CACHE_TASK, new QuizCacheTask()), 0, delayInMillis,
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(TaskUtils.named(HAZELCAST_PROCESS_CACHE_TASK, new QuizCacheTask()), 0, delayInMillis,
                         TimeUnit.MILLISECONDS);
+                scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
@@ -334,12 +339,12 @@ public class QuizScheduleService {
     public void stopSchedule() {
         if (threadPoolTaskScheduler != null) {
             log.info("Try to stop quiz schedule service");
-
-            if (scheduledProcessQuizSubmissions != null && !scheduledProcessQuizSubmissions.isCancelled()) {
-                boolean cancelSuccess = scheduledProcessQuizSubmissions.cancel(false);
+            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
+            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+                boolean cancelSuccess = scheduledFuture.cancel(false);
                 log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
-                scheduledProcessQuizSubmissions.dispose();
-                scheduledProcessQuizSubmissions = null;
+                scheduledFuture.dispose();
+                scheduledFuture = null;
             }
             for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
                 if (cachedQuiz.getQuizStart() != null)
@@ -395,8 +400,8 @@ public class QuizScheduleService {
         getReadCacheFor(quizExerciseId).getQuizStart().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             if (scheduledFuture != null) {
-                if (!scheduledFuture.isCancelled() && !scheduledFuture.isDone()) {
-                    boolean cancelSuccess = scheduledFuture.cancel(true);
+                if (!scheduledFuture.isDone()) {
+                    boolean cancelSuccess = scheduledFuture.cancel(false);
                     log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful: " + cancelSuccess);
                 }
                 scheduledFuture.dispose();
