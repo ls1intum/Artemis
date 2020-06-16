@@ -208,16 +208,24 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExam_asInstructor() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
-        exam.setId(55L);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
-        exam = ModelFactory.generateExam(course1);
-        exam.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        exam = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        exam = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        // Test for bad request when exam id is already set.
+        Exam examA = ModelFactory.generateExam(course1);
+        examA.setId(55L);
+        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
+        // Test for conflict when course is null.
+        Exam examB = ModelFactory.generateExam(course1);
+        examB.setCourse(null);
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CONFLICT);
+        // Test for conflict when course deviates from course specified in route.
+        Exam examC = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        // Test for forbidden when user tries to create an exam with exercise groups.
+        Exam examD = ModelFactory.generateExam(course1);
+        examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.FORBIDDEN);
+        // Test examAccessService.
+        Exam examE = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
 

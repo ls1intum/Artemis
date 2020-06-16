@@ -87,6 +87,11 @@ public class ExamResource {
             return conflict();
         }
 
+        // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
+        if (exam.getExerciseGroups() != null) {
+            return forbidden();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
