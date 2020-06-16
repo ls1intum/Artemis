@@ -47,7 +47,6 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
 
     quizExercise: QuizExercise;
     quizId: number;
-    courseId: number;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
@@ -60,10 +59,8 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             this.quizId = Number(params['exerciseId']);
-            this.courseId = Number(params['courseId']);
         });
         this.participationService.findParticipation(this.quizId).subscribe((response: HttpResponse<StudentParticipation>) => {
-            console.log(response.body);
             this.quizExercise = <QuizExercise>response.body!.exercise;
             this.updateParticipationFromServer(response.body!);
         });
@@ -71,6 +68,33 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
+    }
+
+    /**
+     * Initialize the selections / mappings for each question with an empty array
+     */
+    initQuiz() {
+        // prepare selection arrays for each question
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach((question) => {
+                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.selectedAnswerOptions[question.id] = [];
+                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.dragAndDropMappings[question.id] = [];
+                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.shortAnswerSubmittedTexts[question.id] = [];
+                } else {
+                    console.error('Unknown question type: ' + question);
+                }
+            }, this);
+        }
     }
 
     /**
@@ -212,14 +236,14 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
      * Apply the data of the participation, replacing all old data
      */
     updateParticipationFromServer(participation: StudentParticipation) {
+        this.quizExercise = participation.exercise as QuizExercise;
+        this.initQuiz();
         // apply submission if it exists
         if (participation && participation.results.length) {
             this.submission = participation.results[0].submission as QuizSubmission;
 
             // show submission answers in UI
             this.applySubmission();
-        } else {
-            this.submission = new QuizSubmission();
         }
     }
 }
