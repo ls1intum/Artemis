@@ -104,6 +104,13 @@ public class ExerciseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+
+        // TODO: Create alternative route so that instructors and admins can access the exercise
+        // The users are not allowed to access the exercise over this route if the exercise belongs to an exam
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
@@ -189,17 +196,18 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         DueDateStat numberOfSubmissions;
+        DueDateStat numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
+            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-
-        final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
@@ -306,6 +314,13 @@ public class ExerciseResource {
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+
+        // TODO: Create alternative route so that instructors and admins can access the exercise details
+        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();

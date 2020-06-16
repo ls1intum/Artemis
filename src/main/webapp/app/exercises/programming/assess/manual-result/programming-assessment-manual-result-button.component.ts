@@ -52,7 +52,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
                 this.latestResultSubscription.unsubscribe();
             }
             this.latestResultSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.participationId)
+                .subscribeForLatestResultOfParticipation(this.participationId, false, this.exercise.id)
                 .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
                 .subscribe((manualResult) => {
                     let assessor: User | null = null;

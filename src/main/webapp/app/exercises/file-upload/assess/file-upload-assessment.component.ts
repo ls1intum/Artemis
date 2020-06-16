@@ -131,10 +131,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
@@ -152,7 +152,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
                 (error: HttpErrorResponse) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.goToExerciseDashboard();
+                        this.navigateBack();
                     } else {
                         this.onError('');
                     }
@@ -345,7 +345,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 .cancelAssessment(this.submission.id)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 });
         }
     }
@@ -371,8 +371,12 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             },
         );
     }
-    goToExerciseDashboard() {
-        if (this.exercise && this.exercise.course) {
+
+    navigateBack() {
+        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
             this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();

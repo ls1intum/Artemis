@@ -32,7 +32,9 @@ public final class Constants {
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
+    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
+
+    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
@@ -50,7 +52,9 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
+
+    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -66,6 +70,8 @@ public final class Constants {
     public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
 
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
+
+    public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
 
@@ -109,9 +115,13 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String DELETE_EXAM = "DELETE_EXAM";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
+
+    public static final String DELETE_EXERCISE_GROUP = "DELETE_EXERCISE_GROUP";
 
     public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 

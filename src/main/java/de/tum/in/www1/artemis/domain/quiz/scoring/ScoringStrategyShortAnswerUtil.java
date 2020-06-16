@@ -10,7 +10,7 @@ public class ScoringStrategyShortAnswerUtil {
 
     /**
      * Get number of correct and incorrect solutions for the short answer question
-     * 
+     *
      * @param shortAnswerQuestion for which the correct and incorrect solutions should be counted
      * @param shortAnswerAnswer for the given short answer question
      * @return array with correct and incorrect solution count
@@ -24,7 +24,7 @@ public class ScoringStrategyShortAnswerUtil {
 
         // iterate through each spot and compare its correct solutions with the submitted texts
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-            if (spot.isInvalid() == Boolean.TRUE) {
+            if (Boolean.TRUE.equals(spot.isInvalid())) {
                 correctSolutionsCount++;
                 continue;
             }

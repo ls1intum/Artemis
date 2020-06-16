@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -97,10 +97,10 @@ public class ExerciseService {
      * @param user the user entity
      * @return a List of all Exercises for the given course
      */
-    public List<Exercise> findAllForCourse(Course course, User user) {
-        List<Exercise> exercises = null;
+    public Set<Exercise> findAllForCourse(Course course, User user) {
+        Set<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // user can see all exercises of the course
+            // tutors/instructors/admins can see all exercises of the course
             exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
@@ -113,9 +113,9 @@ public class ExerciseService {
                 exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
-            // user is student for this course and might not have the right to see it so we have to filter
+            // students for this course might not have the right to see it so we have to
             // filter out exercises that are not released (or explicitly made visible to students) yet
-            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
+            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
 
         if (exercises != null) {
@@ -333,6 +333,33 @@ public class ExerciseService {
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Check whether the exercise has either a course or an exerciseGroup.
+     *
+     * @param exercise the Exercise to be validated
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     */
+    public void checkCourseAndExerciseGroupExclusivity(Exercise exercise, String entityName) throws BadRequestAlertException {
+        if (exercise.hasCourse() == exercise.hasExerciseGroup()) {
+            throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
+        }
+    }
+
+    /**
+     * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
+     *
+     * @param updatedExercise the updated Exercise
+     * @param oldExercise the old Exercise
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if updated exercise was converted
+     */
+    public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
+        if (updatedExercise.hasExerciseGroup() != oldExercise.hasExerciseGroup() || updatedExercise.hasCourse() != oldExercise.hasCourse()) {
+            throw new BadRequestAlertException("Course exercise cannot be converted to exam exercise and vice versa", entityName, "conversionBetweenExamAndCourseExercise");
+        }
     }
 
     /**

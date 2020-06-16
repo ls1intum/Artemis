@@ -49,7 +49,7 @@ public class Feedback implements Serializable {
     /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
      */
-    @Column(name = "credits ")
+    @Column(name = "credits")
     private Double credits;
 
     @Column(name = "positive")
