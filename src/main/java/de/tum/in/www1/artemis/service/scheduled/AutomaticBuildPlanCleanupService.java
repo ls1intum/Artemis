@@ -90,7 +90,7 @@ public class AutomaticBuildPlanCleanupService {
                     }
                 }
 
-                if (programmingExercise.isPublishBuildPlanUrl() == Boolean.TRUE) {
+                if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl())) {
                     // this was an exercise where students needed to configure the build plan, therefore we should not clean it up
                     continue;
                 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
 import java.util.Optional;
@@ -18,9 +19,14 @@ public class LdapUserService {
     private String ldapBase;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    private LdapUserRepository ldapUserRepository;
 
-    public Optional<LdapUserDto> findOne(final String username) {
-        return userRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes("cn").where("cn").is(username));
+    public Optional<LdapUserDto> findByUsername(final String username) {
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes("cn").where("cn").is(username));
+    }
+
+    public Optional<LdapUserDto> findByRegistrationNumber(final String registrationNumber) {
+        return ldapUserRepository
+                .findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes(TUM_LDAP_MATRIKEL_NUMBER).where(TUM_LDAP_MATRIKEL_NUMBER).is(registrationNumber));
     }
 }

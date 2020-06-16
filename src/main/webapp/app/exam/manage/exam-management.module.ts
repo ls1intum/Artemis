@@ -11,15 +11,34 @@ import { ExerciseGroupDetailComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MomentModule } from 'ngx-moment';
+import { SortByModule } from 'app/shared/pipes/sort-by.module';
+import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, FormDateTimePickerModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule],
+    // TODO: For better modularization we could define an exercise module with the corresponding exam routes
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisTextExerciseModule,
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
+        ArtemisTextExerciseModule,
+        SortByModule,
+        MomentModule,
+    ],
     declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
@@ -30,6 +49,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamStudentsComponent,
         StudentExamsComponent,
         StudentExamDetailComponent,
+        DurationPipe,
     ],
 })
 export class ArtemisExamManagementModule {}
