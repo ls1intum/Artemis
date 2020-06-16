@@ -46,6 +46,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
         super(id);
         setQuizStart(quizStart);
+        log.debug("Creating new QuizExerciseDistributedCache, id {}", getId());
     }
 
     QuizExerciseDistributedCache(Long id) {
@@ -118,7 +119,6 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        log.debug("Initializing QuizExerciseCacheImpl of {}", getId());
         participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_PARTICIPATIONS);
         submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_SUBMISSIONS);
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_RESULTS);
