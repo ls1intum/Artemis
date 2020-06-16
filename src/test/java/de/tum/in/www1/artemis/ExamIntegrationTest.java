@@ -267,7 +267,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam2.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
     }
 
     @Test
