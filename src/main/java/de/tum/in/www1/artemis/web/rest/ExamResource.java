@@ -97,6 +97,11 @@ public class ExamResource {
             return conflict();
         }
 
+        // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
+        if (!exam.getExerciseGroups().isEmpty()) {
+            return forbidden();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
@@ -124,13 +129,10 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        // TODO: check that the exam id in the body was NOT changed
-
         if (updatedExam.getCourse() == null) {
             return conflict();
         }
 
-        // TODO: maybe move to checkCourseAndExamAccess()
         if (!updatedExam.getCourse().getId().equals(courseId)) {
             return conflict();
         }
@@ -227,15 +229,15 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
         var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
-        }
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
+
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();
@@ -252,7 +254,7 @@ public class ExamResource {
     }
 
     /**
-     * Post /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
+     * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
      *
@@ -268,15 +270,14 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
+
+        Optional<ResponseEntity<List<StudentDTO>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
         var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
-        }
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
         List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
         for (var studentDto : studentDtos) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -327,15 +328,13 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from exam : {}", studentLogin, examId);
-        var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
         }
+
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();

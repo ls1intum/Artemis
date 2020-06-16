@@ -80,7 +80,7 @@
         </div>
     </ng-template>
 
-    <button *ngIf="!readOnly" class="btn btn-warning mb-2 align-self-start" (click)="open(help)">
+    <button *ngIf="!readOnly && showHelpButton" class="btn btn-warning mb-2 align-self-start" (click)="open(help)">
         <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
     </button>
