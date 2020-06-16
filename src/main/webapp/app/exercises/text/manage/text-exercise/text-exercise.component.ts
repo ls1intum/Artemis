@@ -60,23 +60,6 @@ export class TextExerciseComponent extends ExerciseComponent {
         return item.id;
     }
 
-    /**
-     * Deletes text exercise
-     * @param textExerciseId id of the exercise that will be deleted
-     */
-    deleteTextExercise(textExerciseId: number) {
-        this.textExerciseService.delete(textExerciseId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted an textExercise',
-                });
-                this.dialogErrorSource.next('');
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
     protected getChangeEventName(): string {
         return 'textExerciseListModification';
     }

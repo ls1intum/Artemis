@@ -77,11 +77,11 @@ public class QuizStatisticService {
             for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
                 // find latest rated Result
-                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
                 // find latest unrated Result
-                if (result.isRated() == Boolean.FALSE && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (Boolean.FALSE.equals(result.isRated()) && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestUnratedResult = result;
                 }
             }
@@ -116,7 +116,7 @@ public class QuizStatisticService {
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
-                if (result.isRated() == Boolean.FALSE) {
+                if (Boolean.FALSE.equals(result.isRated())) {
                     removeResultFromAllStatistics(quiz, getPreviousResult(result));
                 }
                 addResultToAllStatistics(quiz, result);

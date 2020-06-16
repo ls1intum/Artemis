@@ -87,7 +87,7 @@ public class TextSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(textSubmission.isExampleSubmission())) {
             textSubmission = save(textSubmission);
         }
         else {
@@ -270,7 +270,7 @@ public class TextSubmissionService extends SubmissionService {
                 continue;
             }
 
-            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
+            if (submittedOnly && !Boolean.TRUE.equals(optionalTextSubmission.get().isSubmitted())) {
                 continue;
             }
 
@@ -292,13 +292,8 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmission;
     }
 
-    public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    public TextSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+    public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
+        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
     }
 }

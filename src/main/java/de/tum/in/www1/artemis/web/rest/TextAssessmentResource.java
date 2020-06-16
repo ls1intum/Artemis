@@ -174,7 +174,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);

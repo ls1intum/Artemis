@@ -526,6 +526,24 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("abc.final.xyz");
+        programmingExercise.setShortName("testShortName");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("eist.2020something");
+        programmingExercise.setShortName("testShortName");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);

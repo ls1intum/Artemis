@@ -193,8 +193,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
                 this.getSubmissions();
 
-                // We don't want to assess submissions before the exercise due date
-                if (!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) {
+                // 1. We don't want to assess submissions before the exercise due date
+                // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
+                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode) {
                     this.getSubmissionWithoutAssessment();
                 }
             },

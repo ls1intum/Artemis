@@ -295,7 +295,7 @@ public class ResultService {
         savedResult = savedResultOpt.get();
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
-        if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
+        if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
@@ -419,12 +419,12 @@ public class ResultService {
         return objectMapper.writeValueAsString(resultCopy);
     }
 
-    public void notifyUserAboutNewResult(Result result, Long participationId) {
-        notifyNewResult(result, participationId);
+    public void notifyUserAboutNewResult(Result result, Participation participation) {
+        notifyNewResult(result, participation);
     }
 
-    private void notifyNewResult(Result result, Long participationId) {
-        websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
+    private void notifyNewResult(Result result, Participation participation) {
+        websocketMessagingService.broadcastNewResult(participation, result);
     }
 
     /**

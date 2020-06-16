@@ -73,16 +73,17 @@ public class GitLabService extends AbstractVersionControlService {
 
     private GitLabApi gitlab;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabUserManagementService gitLabUserManagementService) {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
+            GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
     }
 
     @PostConstruct
     public void init() {
         this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
-        this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
     }
 
     @Override

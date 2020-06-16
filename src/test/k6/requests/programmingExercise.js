@@ -167,7 +167,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         // Subscribe to new results and participations
         function subscribe(exerciseId, participationId) {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/topic/participation/' + participationId + '/newResults\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
         }
 
@@ -193,7 +193,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationSimulation.participationId + '/newResults')) {
+            if (message.startsWith('MESSAGE\ndestination:/user/topic/newResults')) {
                 socket.close();
                 const result = participationSimulation.extractResultFromWebSocketMessage(message);
                 participationSimulation.returnsExpectedResult(result, expectedResult, resultString);

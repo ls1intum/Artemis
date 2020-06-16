@@ -125,7 +125,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
         expect(loadSessionStub).to.have.been.calledOnceWithExactly();
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true);
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.buildLogErrors.errors).to.deep.equal(expectedBuildLogErrors.errors);
         expect(comp.buildLogErrors.timestamp).to.deep.equal(expectedBuildLogErrors.timestamp);
