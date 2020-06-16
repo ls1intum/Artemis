@@ -265,6 +265,21 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             String destination = headerAccessor.getDestination();
 
             if (StompCommand.SUBSCRIBE.equals(headerAccessor.getCommand())) {
+
+                // This code prevents users to subscribe to the same topic twice. This can happen if the broker got changed in the background
+                if (principal != null) {
+                    var user = userRegistry().getUser(principal.getName());
+                    if (user != null && headerAccessor.getSessionId() != null) {
+                        var session = user.getSession(headerAccessor.getSessionId());
+                        if (session != null) {
+                            var subscriptions = session.getSubscriptions();
+                            if (subscriptions.stream().anyMatch(s -> s.getDestination().equals(destination))) {
+                                return null;
+                            }
+                        }
+                    }
+                }
+
                 if (!allowSubscription(principal, destination)) {
                     logUnauthorizedDestinationAccess(principal, destination);
                     return null; // erase the forbidden SUBSCRIBE command the user was trying to send
