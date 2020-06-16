@@ -22,22 +22,22 @@
                         <span>{{ 'global.field.id' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>
+                    <th jhiSortBy="title">
                         <span>{{ 'artemisApp.exam.title' | translate }}</span>
                     </th>
-                    <th class="d-none d-md-table-cell">
+                    <th class="d-none d-md-table-cell" jhiSortBy="visibleDate">
                         <span>{{ 'artemisApp.exam.visible' | translate }}</span>
                     </th>
-                    <th>
+                    <th jhiSortBy="startDate">
                         <span>{{ 'artemisApp.exam.startDate' | translate }}</span>
                     </th>
-                    <th>
+                    <th jhiSortBy="endDate">
                         <span>{{ 'artemisApp.exam.endDate' | translate }}</span>
                     </th>
                     <th>
                         <span>{{ 'artemisApp.exam.duration' | translate }}</span>
                     </th>
-                    <th>
+                    <th jhiSortBy="registeredUsers">
                         <span>{{ 'artemisApp.exam.nrOfStudents' | translate }}</span>
                     </th>
                     <th></th>
