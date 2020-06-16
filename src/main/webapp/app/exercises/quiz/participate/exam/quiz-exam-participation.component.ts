@@ -18,7 +18,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exam-quiz',
@@ -63,6 +63,8 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
             this.courseId = Number(params['courseId']);
         });
         this.participationService.findParticipation(this.quizId).subscribe((response: HttpResponse<StudentParticipation>) => {
+            console.log(response.body);
+            this.quizExercise = <QuizExercise>response.body!.exercise;
             this.updateParticipationFromServer(response.body!);
         });
     }
