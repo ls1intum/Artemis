@@ -482,7 +482,7 @@ public class QuizScheduleService {
                 if (!hasNewSubmissions && !hasNewParticipations && !hasNewResults) {
                     // Remove quiz if it is not scheduled for start
                     if (hasEnded && cachedQuiz.getQuizStart().isEmpty()) {
-                        cachedQuizExercises.remove(quizExerciseId, cachedQuiz);
+                        removeCachedQuiz(cachedQuiz);
                     }
                     continue;
                 }
@@ -558,6 +558,23 @@ public class QuizScheduleService {
         }
         catch (Exception e) {
             log.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
+        }
+    }
+
+    private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
+        cachedQuizExercises.remove(cachedQuiz.getId(), cachedQuiz);
+        // safety due to concurrency, values could be added in parallel
+        if (USE_LOCAL_CACHE_ONLY) {
+            boolean hasNewSubmissions = !cachedQuiz.getSubmissions().isEmpty();
+            boolean hasNewParticipations = !cachedQuiz.getParticipations().isEmpty();
+            boolean hasNewResults = !cachedQuiz.getResults().isEmpty();
+            // add values again if they are present
+            if (hasNewSubmissions || hasNewParticipations || hasNewResults) {
+                var newCachedQuiz = getTransientWriteCacheFor(cachedQuiz.getId());
+                newCachedQuiz.getSubmissions().putAll(cachedQuiz.getSubmissions());
+                newCachedQuiz.getParticipations().putAll(cachedQuiz.getParticipations());
+                newCachedQuiz.getResults().putAll(cachedQuiz.getResults());
+            }
         }
     }
 
