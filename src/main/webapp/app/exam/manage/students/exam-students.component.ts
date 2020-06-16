@@ -64,7 +64,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
-            this.allRegisteredUsers = exam.registeredUsers!;
+            this.allRegisteredUsers = exam.registeredUsers! || [];
             this.isLoading = false;
         });
     }
