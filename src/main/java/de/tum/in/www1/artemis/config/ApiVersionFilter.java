@@ -13,14 +13,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(1)
 @Profile("artemis")
 public class ApiVersionFilter implements Filter {
 
@@ -55,23 +51,4 @@ public class ApiVersionFilter implements Filter {
         chain.doFilter(httpRequest, httpResponse);
     }
 
-    /**
-     * Instantiate Bean and register URL Patterns to apply filter to:
-     *   - /api/**
-     *   - /management/**
-     *
-     * @return Register the ApiVersionFilter Bean
-     */
-    @Bean
-    public FilterRegistrationBean<ApiVersionFilter> registerFilter() {
-        final FilterRegistrationBean<ApiVersionFilter> bean = new FilterRegistrationBean<>();
-
-        bean.setFilter(new ApiVersionFilter());
-        bean.addUrlPatterns("/api/**");
-        bean.addUrlPatterns("/management/**");
-
-        logger.debug("Register API Version Filter for Paths {}.", bean.getUrlPatterns());
-
-        return bean;
-    }
 }

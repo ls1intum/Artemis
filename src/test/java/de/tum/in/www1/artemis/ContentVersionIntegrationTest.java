@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import java.net.URI;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -14,14 +15,23 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.in.www1.artemis.config.ApiVersionFilter;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 public class ContentVersionIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
+    DatabaseUtilService database;
+
+    @Autowired
     private MockMvc mvc;
 
+    @BeforeEach
+    public void initTestCase() {
+        database.addUsers(1, 0, 0);
+    }
+
     @Test
-    @WithMockUser("authenticateduser")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getAccountWithoutLoggedInUser() throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI("/api/account")).with(csrf())).andReturn();
         final MockHttpServletResponse response = res.getResponse();
