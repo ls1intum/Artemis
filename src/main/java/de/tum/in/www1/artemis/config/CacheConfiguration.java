@@ -15,6 +15,7 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -25,6 +26,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.cache.PrefixedKeyGenerator;
@@ -132,6 +134,9 @@ public class CacheConfiguration {
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        QuizScheduleService.configureHazelcast(config);
+
         return Hazelcast.newHazelcastInstance(config);
     }
 
