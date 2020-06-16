@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { QuizParticipationComponent } from './quiz-participation.component';
-import { QuizExamParticipationComponent } from 'app/exercises/quiz/participate/exam/quiz-exam-participation.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const quizParticipationRoute: Routes = [
@@ -17,7 +16,7 @@ export const quizParticipationRoute: Routes = [
     },
     {
         path: 'practice',
-        component: QuizExamParticipationComponent,
+        component: QuizParticipationComponent,
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',

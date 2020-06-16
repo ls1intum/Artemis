@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChildren, Input } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -6,19 +6,15 @@ import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/question
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { Subscription } from 'rxjs/Subscription';
-import { ActivatedRoute } from '@angular/router';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exam-quiz',
@@ -26,7 +22,7 @@ import { HttpResponse } from '@angular/common/http';
     providers: [ParticipationService],
     styleUrls: ['../quiz-participation.component.scss'],
 })
-export class QuizExamParticipationComponent implements OnInit, OnDestroy {
+export class QuizExamParticipationComponent implements OnInit {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -43,31 +39,21 @@ export class QuizExamParticipationComponent implements OnInit, OnDestroy {
     @ViewChildren(ShortAnswerQuestionComponent)
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
-    private subscription: Subscription;
+    @Input() studentParticipation: StudentParticipation;
 
     quizExercise: QuizExercise;
-    quizId: number;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     submission = new QuizSubmission();
 
-    constructor(private deviceService: DeviceDetectorService, private route: ActivatedRoute, private participationService: ParticipationService) {
+    constructor() {
         smoothscroll.polyfill();
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.quizId = Number(params['exerciseId']);
-        });
-        this.participationService.findParticipation(this.quizId).subscribe((response: HttpResponse<StudentParticipation>) => {
-            this.quizExercise = <QuizExercise>response.body!.exercise;
-            this.updateParticipationFromServer(response.body!);
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.subscription.unsubscribe();
+        this.quizExercise = this.studentParticipation.exercise as QuizExercise;
+        this.updateParticipationFromServer(this.studentParticipation);
     }
 
     /**
