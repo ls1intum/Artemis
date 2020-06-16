@@ -57,6 +57,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void tearDown() {
         database.resetDatabase();
         quizScheduleService.stopSchedule();
+        quizScheduleService.clearAllQuizData();
     }
 
     @Test
