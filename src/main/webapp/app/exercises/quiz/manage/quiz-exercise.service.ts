@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -15,14 +15,6 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
-
-    QuizStatus = {
-        HIDDEN: 'Hidden',
-        VISIBLE: 'Visible',
-        ACTIVE: 'Active',
-        CLOSED: 'Closed',
-        OPEN_FOR_PRACTICE: 'Open for Practice',
-    };
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -193,21 +185,17 @@ export class QuizExerciseService {
             document.body.removeChild(anchor);
         }
     }
-    /**
-     * Start the given quiz-exercise immediately
-     *
-     * @param quizExercise the quiz exercise id to start
-     */
-    statusForQuiz(quizExercise: QuizExercise) {
+
+    getStatus(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
             if (quizExercise.remainingTime <= 0) {
                 // the quiz is over
-                return quizExercise.isOpenForPractice ? this.QuizStatus.OPEN_FOR_PRACTICE : this.QuizStatus.CLOSED;
+                return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
             } else {
-                return this.QuizStatus.ACTIVE;
+                return QuizStatus.ACTIVE;
             }
         }
         // the quiz hasn't started yet
-        return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
+        return quizExercise.isVisibleBeforeStart ? QuizStatus.VISIBLE : QuizStatus.HIDDEN;
     }
 }
