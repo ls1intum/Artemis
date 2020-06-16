@@ -66,9 +66,6 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
     private UserService userService;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     protected DatabaseUtilService database;
 
     @Autowired

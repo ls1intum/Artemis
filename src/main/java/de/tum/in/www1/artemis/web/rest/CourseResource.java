@@ -354,7 +354,7 @@ public class CourseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
                     .body(null);
         }
-        if (course.isRegistrationEnabled() != Boolean.TRUE) {
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);

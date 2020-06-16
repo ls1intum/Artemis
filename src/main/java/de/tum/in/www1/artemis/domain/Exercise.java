@@ -648,7 +648,7 @@ public abstract class Exercise implements Serializable {
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
+            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -717,7 +717,7 @@ public abstract class Exercise implements Serializable {
         for (Submission submission : submissions) {
             Result result = submission.getResult();
             if (result != null) {
-                if (result.isRated() == Boolean.TRUE) {
+                if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);
                 }
                 else {
