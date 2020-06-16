@@ -459,12 +459,13 @@ public class QuizScheduleService {
         // global try-catch for error logging
         try {
             for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
+                Long quizExerciseId = cachedQuiz.getId();
                 // Get fresh QuizExercise from DB
-                QuizExercise quizExercise = quizExerciseService.findOne(cachedQuiz.getId());
+                QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz " + cachedQuiz.getId() + " from resultHashMap");
-                    cachedQuizExercises.remove(cachedQuiz.getId());
+                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
+                    cachedQuizExercises.remove(quizExerciseId);
                     cachedQuiz.destroy();
                     continue;
                 }
@@ -481,13 +482,13 @@ public class QuizScheduleService {
                 if (!hasNewSubmissions && !hasNewParticipations && !hasNewResults) {
                     // Remove quiz if it is not scheduled for start
                     if (hasEnded && cachedQuiz.getQuizStart().isEmpty()) {
-                        cachedQuizExercises.remove(cachedQuiz.getId(), cachedQuiz);
+                        cachedQuizExercises.remove(quizExerciseId, cachedQuiz);
                     }
                     continue;
                 }
 
                 // Update cached exercise object
-                quizExercise = quizExerciseService.findOneWithQuestions(cachedQuiz.getId());
+                quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
                 cachedQuiz.setExercise(quizExercise);
 
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
@@ -523,7 +524,7 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
-                            sendQuizResultToUser(cachedQuiz.getId(), participation);
+                            sendQuizResultToUser(quizExerciseId, participation);
                             cachedQuiz.getParticipations().remove(entry.getKey());
                         }
                     });
@@ -537,7 +538,7 @@ public class QuizScheduleService {
 
                 if (hasNewResults) {
                     // Fetch a new quiz exercise here including deeper attribute paths (this is relatively expensive, so we only do that if necessary)
-                    quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(cachedQuiz.getId());
+                    quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
                     try {
                         // Get a Set because QuizStatisticService needs one (currently)
                         Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
