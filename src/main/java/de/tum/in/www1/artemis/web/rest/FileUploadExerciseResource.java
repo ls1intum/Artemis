@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -33,6 +34,8 @@ public class FileUploadExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final FileUploadExerciseService fileUploadExerciseService;
+
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     private final ExerciseService exerciseService;
@@ -47,8 +50,10 @@ public class FileUploadExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
+    public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService,
+            AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
+            GradingCriterionService gradingCriterionService) {
+        this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -73,8 +78,8 @@ public class FileUploadExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
 
-        // Valid exercises have set either a course or an exerciseGroup
-        exerciseService.checkCourseAndExerciseGroupExclusivity(fileUploadExercise, ENTITY_NAME);
+        // Validate the new file upload exercise
+        validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
@@ -83,13 +88,6 @@ public class FileUploadExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
-        }
-
-        if (!isFilePatternValid(fileUploadExercise)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').", "filepattern.invalid"))
-                    .body(null);
         }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
@@ -122,6 +120,16 @@ public class FileUploadExerciseResource {
         return false;
     }
 
+    private void validateNewOrUpdatedFileUploadExercise(FileUploadExercise fileUploadExercise) throws BadRequestAlertException {
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(fileUploadExercise, ENTITY_NAME);
+
+        if (!isFilePatternValid(fileUploadExercise)) {
+            throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",
+                    ENTITY_NAME, "filepattern.invalid");
+        }
+    }
+
     /**
      * PUT /file-upload-exercises : Updates an existing fileUploadExercise.
      *
@@ -137,22 +145,29 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
+
+        // TODO: The route has an exerciseId but we don't do anything useful with it. Change route and client requests?
+
+        // Validate the updated file upload exercise
+        validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
+
+        // Check that the user is authorized to update the exercise
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+        FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseService.findOne(fileUploadExercise.getId());
 
-        if (!isFilePatternValid(fileUploadExercise)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').", "filepattern.invalid"))
-                    .body(null);
-        }
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        if (notificationText != null) {
+
+        // Only notify students about changes if a regular exercise was updated
+        if (notificationText != null && fileUploadExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(result);

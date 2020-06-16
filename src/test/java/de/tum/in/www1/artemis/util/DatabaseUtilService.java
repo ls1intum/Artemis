@@ -722,6 +722,16 @@ public class DatabaseUtilService {
         return textExercise;
     }
 
+    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(fileUploadExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return fileUploadExercise;
+    }
+
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
