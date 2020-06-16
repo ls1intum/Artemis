@@ -52,14 +52,26 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NotNull
+    public Exam findOneWithExerciseGroups(Long examId) {
+        log.debug("Request to get exam with exercise groups : {}", examId);
+        return examRepository.findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one exam by id with registered users.
      *
      * @param examId the id of the entity
-     * @return the entity
+     * @return the exam with registered user
      */
     @NotNull
     public Exam findOneWithRegisteredUsers(Long examId) {
-        log.debug("Request to get exam : {}", examId);
+        log.debug("Request to get exam with registered users : {}", examId);
         return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 

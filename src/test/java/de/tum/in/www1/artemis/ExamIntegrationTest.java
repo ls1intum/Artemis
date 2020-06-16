@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,12 +75,16 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam1;
 
+    private ExerciseGroup exerciseGroup1;
+
     @BeforeEach
     public void initTestCase() throws URISyntaxException {
         users = database.addUsers(4, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
+        exerciseGroup1 = database.addExerciseGroup(exam1, true);
+        exam1.setExerciseGroups(Collections.singletonList(exerciseGroup1));
     }
 
     @AfterEach
@@ -90,7 +95,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void registerUsersInExam() throws Exception {
-
         jiraRequestMockProvider.enableMockingOfRequests();
 
         var exam = createExam();
@@ -313,6 +317,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
+        // Make sure that the original exercise groups are preserved.
+        exam1.setExerciseGroups(Collections.emptyList());
+        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        Optional<Exam> exam1FromDatabase = examRepository.findWithExerciseGroupsById(exam1.getId());
+        assertThat(exam1FromDatabase.isPresent()).isTrue();
+        assertThat(exam1FromDatabase.get().getExerciseGroups().size()).isEqualTo(1);
+        assertThat(exam1FromDatabase.get().getExerciseGroups().get(0)).isEqualTo(exerciseGroup1);
     }
 
     @Test

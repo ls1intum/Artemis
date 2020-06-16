@@ -99,6 +99,7 @@ public class ExamResource {
 
     /**
      * PUT /courses/{courseId}/exams : Updates an existing exam.
+     * This route does not save changes to the exercise groups. This should be done via the ExerciseGroupResource.
      *
      * @param courseId      the course to which the exam belongs
      * @param updatedExam   the exam to update
@@ -113,14 +114,13 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        // TODO: use the exam access service
         // TODO: check that the exam id in the body was NOT changed
-        // TODO: make sure that the request body does not mess up the exercise groups (we might need to fetch the original exam and reassign the existing exercise groups)
 
         if (updatedExam.getCourse() == null) {
             return conflict();
         }
 
+        // TODO: maybe move to checkCourseAndExamAccess()
         if (!updatedExam.getCourse().getId().equals(courseId)) {
             return conflict();
         }
@@ -129,6 +129,10 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
+
+        // Make sure that the original exercise groups are preserved.
+        Exam originalExam = examService.findOneWithExerciseGroups(updatedExam.getId());
+        updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
 
         Exam result = examService.save(updatedExam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
