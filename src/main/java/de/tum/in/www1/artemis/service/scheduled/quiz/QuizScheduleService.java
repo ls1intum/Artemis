@@ -173,7 +173,7 @@ public class QuizScheduleService {
             if (USE_LOCAL_CACHE_ONLY) {
                 return new QuizExerciseLocalCache(id);
             }
-            QuizExerciseDistibutedCache cachedQuiz = new QuizExerciseDistibutedCache(id);
+            QuizExerciseDistributedCache cachedQuiz = new QuizExerciseDistributedCache(id);
             cachedQuiz.setHazelcastInstance(hazelcastInstance);
             return cachedQuiz;
         });

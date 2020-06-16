@@ -90,6 +90,6 @@ abstract class QuizExerciseCache {
     }
 
     static void registerSerializers(Config config) {
-        QuizExerciseDistibutedCache.registerSerializer(config);
+        QuizExerciseDistributedCache.registerSerializer(config);
     }
 }

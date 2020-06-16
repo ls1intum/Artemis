@@ -24,9 +24,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
-final class QuizExerciseDistibutedCache extends QuizExerciseCache implements HazelcastInstanceAware {
+final class QuizExerciseDistributedCache extends QuizExerciseCache implements HazelcastInstanceAware {
 
-    private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistibutedCache.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
 
     private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
 
@@ -43,12 +43,12 @@ final class QuizExerciseDistibutedCache extends QuizExerciseCache implements Haz
 
     private transient IMap<Long, Result> results;
 
-    QuizExerciseDistibutedCache(Long id, List<ScheduledTaskHandler> quizStart) {
+    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
         super(id);
         setQuizStart(quizStart);
     }
 
-    QuizExerciseDistibutedCache(Long id) {
+    QuizExerciseDistributedCache(Long id) {
         this(id, getEmptyQuizStartList());
     }
 
@@ -124,7 +124,7 @@ final class QuizExerciseDistibutedCache extends QuizExerciseCache implements Haz
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_RESULTS);
     }
 
-    static class QuizExerciseCacheImplStreamSerializer implements StreamSerializer<QuizExerciseDistibutedCache> {
+    static class QuizExerciseCacheImplStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
 
         @Override
         public int getTypeId() {
@@ -132,22 +132,22 @@ final class QuizExerciseDistibutedCache extends QuizExerciseCache implements Haz
         }
 
         @Override
-        public void write(ObjectDataOutput out, QuizExerciseDistibutedCache exerciseCacheImpl) throws IOException {
+        public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
             out.writeLong(exerciseCacheImpl.getId());
             out.writeObject(exerciseCacheImpl.quizStart);
         }
 
         @Override
-        public QuizExerciseDistibutedCache read(ObjectDataInput in) throws IOException {
+        public QuizExerciseDistributedCache read(ObjectDataInput in) throws IOException {
             Long id = in.readLong();
             List<ScheduledTaskHandler> quizStart = in.readObject();
-            return new QuizExerciseDistibutedCache(id, quizStart);
+            return new QuizExerciseDistributedCache(id, quizStart);
         }
     }
 
     static void registerSerializer(Config config) {
         SerializerConfig serializerConfig = new SerializerConfig();
-        serializerConfig.setTypeClass(QuizExerciseDistibutedCache.class);
+        serializerConfig.setTypeClass(QuizExerciseDistributedCache.class);
         serializerConfig.setImplementation(new QuizExerciseCacheImplStreamSerializer());
         config.getSerializationConfig().addSerializerConfig(serializerConfig);
     }
