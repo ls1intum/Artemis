@@ -32,6 +32,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,7 +69,15 @@ describe('Courses Component', () => {
                         },
                     ]),
                 ],
-                declarations: [GuidedTourComponent, NavbarComponent, NotificationSidebarComponent, FooterComponent, ActiveMenuDirective, MockHasAnyAuthorityDirective],
+                declarations: [
+                    GuidedTourComponent,
+                    NavbarComponent,
+                    NotificationSidebarComponent,
+                    FooterComponent,
+                    LoadingNotificationComponent,
+                    ActiveMenuDirective,
+                    MockHasAnyAuthorityDirective,
+                ],
                 providers: [
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: CookieService, useClass: MockCookieService },
