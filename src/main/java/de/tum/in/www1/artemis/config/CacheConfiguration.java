@@ -23,6 +23,7 @@ import org.springframework.core.env.Profiles;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.context.SpringManagedContext;
 
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
@@ -46,6 +47,8 @@ public class CacheConfiguration {
 
     private Registration registration;
 
+    private ApplicationContext applicationContext;
+
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
@@ -58,6 +61,11 @@ public class CacheConfiguration {
     @Autowired(required = false)
     public void setRegistration(Registration registration) {
         this.registration = registration;
+    }
+
+    @Autowired
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @PreDestroy
@@ -88,6 +96,8 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        // Allows using @SpringAware and therefore Spring Services in distributed tasks
+        config.setManagedContext(new SpringManagedContext(applicationContext));
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
         }
