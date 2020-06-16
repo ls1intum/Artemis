@@ -20,7 +20,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     selector: 'jhi-exam-quiz',
     templateUrl: './quiz-exam-participation.component.html',
     providers: [ParticipationService],
-    styleUrls: ['../quiz-participation.component.scss'],
+    styleUrls: ['../../../../exercises/quiz/participate/quiz-participation.component.scss'],
 })
 export class QuizExamParticipationComponent implements OnInit {
     // make constants available to html for comparison
