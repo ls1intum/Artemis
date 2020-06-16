@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Attachment;
@@ -74,7 +76,9 @@ public class EmbeddingTrainingMaterialService {
         if (fileData != null) {
             String encodedFileData = Base64.encodeBase64String(fileData);
             final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, encodedFileData);
-            final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), 2);
+            final HttpHeaders headers =  authenticationHeaderForSecret(API_SECRET);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, headers, 2);
             log.info("File successfully uploaded to " + response.remotePath);
         }
     }
