@@ -16,7 +16,9 @@
             "nrOfStudents": "Anzahl der registrierten Studenten",
 
             "created": "Neue Klausur erstellt",
-            "updated": "Klausur bearbeitet"
+            "updated": "Klausur bearbeitet",
+            "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
+            "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

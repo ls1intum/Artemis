@@ -32,6 +32,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     interval: any;
 
+    fullname?: string;
+    falseName = false;
+
     constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
@@ -64,7 +67,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.startView) {
             if (this.confirmed) {
                 this.interval = setInterval(() => {
-                    this.startEnabled = this.enableStartButton();
+                    this.enableStartButton().then((enable) => (this.startEnabled = enable));
+                    console.log(this.startEnabled);
                 }, 100);
             } else {
                 this.startEnabled = false;
@@ -75,8 +79,19 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
-    enableStartButton() {
-        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
+    async enableStartButton() {
+        let fullname = '';
+        await this.accountService.identity().then((user) => {
+            fullname = user?.name ?? '';
+        });
+
+        if (this.fullname && this.fullname !== fullname) {
+            this.falseName = true;
+        } else {
+            this.falseName = false;
+        }
+
+        if (this.fullname && this.fullname === fullname && this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
             return true;
         } else {
             return false;

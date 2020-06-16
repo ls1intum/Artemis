@@ -8,6 +8,34 @@
         <input type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
     </div>
     <div *ngIf="startView" style="text-align: center;">
+        <div class="login-form">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <label class="font-weight-bold" for="fullname" jhiTranslate="artemisApp.exam.consentText"></label>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="form-group">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="fullname"
+                        id="fullname"
+                        placeholder="Name"
+                        [(ngModel)]="fullname"
+                        [ngModelOptions]="{ updateOn: 'blur' }"
+                        (change)="enableStartButton()"
+                    />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="form-group">
+                    <div class="alert alert-danger mt-1" *ngIf="falseName">
+                        <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <button [disabled]="!startEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
             <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
         </button>
