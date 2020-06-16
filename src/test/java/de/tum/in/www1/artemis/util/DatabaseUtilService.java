@@ -217,8 +217,9 @@ public class DatabaseUtilService {
         studentExamRepository.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
-        exerciseGroupRepository.deleteAll();
         examRepository.deleteAll();
+        assertThat(examRepository.findAll()).as("result data has been cleared").isEmpty();
+        exerciseGroupRepository.deleteAll();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
@@ -516,10 +517,11 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public ExerciseGroup addExerciseGroup(Exam exam, boolean mandatory) {
+    public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
+        Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
-        exerciseGroupRepository.save(exerciseGroup);
-        return exerciseGroup;
+        examRepository.save(exam);
+        return exam;
     }
 
     public StudentExam addStudentExam(Exam exam) {
@@ -732,7 +734,6 @@ public class DatabaseUtilService {
 
         courseRepo.save(course);
         examRepository.save(exam);
-        exerciseGroupRepository.save(exerciseGroup);
 
         assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
         assertThat(examNrBefore + 1).as("an exam got stored").isEqualTo(examRepository.count());

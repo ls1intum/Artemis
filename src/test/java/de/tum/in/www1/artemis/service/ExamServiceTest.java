@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -29,10 +28,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @BeforeEach
     void init() {
         Course course1 = database.addEmptyCourse();
-        exam1 = database.addExam(course1);
-        exerciseGroup1 = ModelFactory.generateExerciseGroup(true, exam1);
-        exam1.addExerciseGroup(exerciseGroup1);
-        exam1 = examService.save(exam1);
+        exam1 = database.addExamWithExerciseGroup(course1, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
     }
 
