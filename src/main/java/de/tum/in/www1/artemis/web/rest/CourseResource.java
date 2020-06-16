@@ -75,6 +75,12 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExamService examService;
+
+    private final StudentExamService studentExamService;
+
+    private final ExerciseGroupService exerciseGroupService;
+
     private final ExerciseService exerciseService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
@@ -108,7 +114,8 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ExamService examService, StudentExamService studentExamService, ExerciseGroupService exerciseGroupService, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
@@ -117,6 +124,9 @@ public class CourseResource {
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
+        this.examService = examService;
+        this.studentExamService = studentExamService;
+        this.exerciseGroupService = exerciseGroupService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
@@ -772,7 +782,7 @@ public class CourseResource {
     }
 
     /**
-     * DELETE /courses/:courseId : delete the "id" course.
+     * DELETE /courses/:courseId : deletedelete the "id" course.
      *
      * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -813,6 +823,20 @@ public class CourseResource {
         }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        }
+
+        // delete the Exams
+        for (final var exam : course.getExams()) {
+            for (final var exerciseGroup : exam.getExerciseGroups()) {
+                for (final var exercise : exerciseGroup.getExercises()) {
+                    exerciseService.delete(exercise.getId(), false, false);
+                }
+                exerciseGroupService.delete(exerciseGroup.getId());
+            }
+            for (final var studentExam : exam.getStudentExams()) {
+                studentExamService.deleteStudentExam(studentExam.getId());
+            }
+            examService.delete(exam.getId());
         }
 
         courseService.delete(courseId);

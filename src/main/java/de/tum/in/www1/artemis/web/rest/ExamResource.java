@@ -46,19 +46,29 @@ public class ExamResource {
 
     private final ExamService examService;
 
+    private final StudentExamService studentExamService;
+
     private final ExamAccessService examAccessService;
+
+    private final ExerciseGroupService exerciseGroupService;
+
+    private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final AuditEventRepository auditEventRepository;
 
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository) {
+            StudentExamService studentExamService, ExerciseGroupService exerciseGroupService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
         this.examService = examService;
         this.examAccessService = examAccessService;
+        this.studentExamService = studentExamService;
+        this.exerciseGroupService = exerciseGroupService;
+        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -169,6 +179,7 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
      * @param courseId  the course to which the exam belongs
      * @param examId    the id of the exam to delete
@@ -189,7 +200,16 @@ public class ExamResource {
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        // TODO: make sure to delete all exercises in the references exercise groups first, because Cascade won't work fully here
+        for (final var exerciseGroup : exam.getExerciseGroups()) {
+            for (final var exercise : exerciseGroup.getExercises()) {
+                // This also deletes all participations
+                exerciseService.delete(exercise.getId(), false, false);
+            }
+            exerciseGroupService.delete(exerciseGroup.getId());
+        }
+        for (final var studentExam : exam.getStudentExams()) {
+            studentExamService.deleteStudentExam(studentExam.getId());
+        }
         examService.delete(examId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
