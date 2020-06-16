@@ -9,6 +9,7 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { skipWaiting, clientsClaim } from 'workbox-core';
 import { NetworkFirst, NetworkOnly, StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
 
 declare const self: any;
@@ -25,11 +26,13 @@ const YEAR_IN_SECONDS = DAY_IN_SECONDS * 365;
 /**
  * The current version of the service worker.
  */
-const SERVICE_WORKER_VERSION = '1.0.0';
+const SERVICE_WORKER_VERSION = '1.0.5';
 
-// if (DEBUG_MODE) {
-//     console.debug(`Service worker version ${SERVICE_WORKER_VERSION} loading...`);
-// }
+if (DEBUG_MODE) {
+    // eslint-disable-next-line no-console
+    // tslint:disable-next-line no-console
+    console.debug(`Service worker version ${SERVICE_WORKER_VERSION} loading...`);
+}
 
 // -------------------------------------------------------------
 // Precaching configuration
@@ -40,14 +43,21 @@ cleanupOutdatedCaches();
 // Make sure that all the assets passed in the array below are fetched and cached
 // The empty array below is replaced at build time with the full list of assets to cache
 // This is done by workbox-build-inject.js for the production build
-const assetsToCache = self.__WB_MANIFEST;
+const assetsToCache: { revision: string; url: string }[] = self.__WB_MANIFEST;
 // To customize the assets afterwards:
 // assetsToCache = [...assetsToCache, ???];
 
-// if (DEBUG_MODE) {
-//     console.trace(`${componentName}:: Assets that will be cached: `, assetsToCache);
-// }
+if (DEBUG_MODE) {
+    // eslint-disable-next-line no-console
+    // tslint:disable-next-line no-console
+    console.trace(`${componentName}:: Assets that will be cached: `, assetsToCache);
+}
 
+// TODO: evaluate if needed -> relevant for offline first
+skipWaiting();
+clientsClaim();
+
+// precaching of assets
 precacheAndRoute(assetsToCache);
 
 // -------------------------------------------------------------
@@ -92,6 +102,7 @@ registerRoute(
 // Make JS/CSS fast by returning assets from the cache
 // But make sure they're updating in the background for next use
 registerRoute(/\.(?:js|css)$/, new StaleWhileRevalidate());
+registerRoute(/\.(?:json)\?buildTimestamp.*$/, new StaleWhileRevalidate());
 
 registerRoute(/(https:\/\/)?([^\/\s]+\/)api\/.*/, new StaleWhileRevalidate());
 

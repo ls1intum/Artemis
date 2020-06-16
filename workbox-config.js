@@ -1,6 +1,6 @@
 module.exports = {
     globDirectory: "build/resources/main/static/",
-    globPatterns: ["**/*.{css,eot,html,ico,jpg,js,json*,png,svg,ttf,txt,webmanifest,woff,woff2,webm,xml}"],
+    globPatterns: ["**/*.{css,eot,html,ico,jpg,js,json**,png,svg,ttf,txt,webmanifest,woff,woff2,webm,xml}"],
     globFollow: true, // follow symlinks
     globStrict: true, // fail the build if anything goes wrong while reading the files
     globIgnores: [
@@ -14,7 +14,8 @@ module.exports = {
     // Look for a 20 character hex string in the file names
     // Allows to avoid using cache busting for Angular files because Angular already takes care of that!
     dontCacheBustURLsMatching: new RegExp(".+.[a-f0-9]{20}..+"),
-    maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 11Mb
+    // TODO: change in development mode
+    maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10Mb
     swSrc: "build/resources/main/static/service-worker.js",
     swDest: "build/resources/main/static/service-worker.js",
 };

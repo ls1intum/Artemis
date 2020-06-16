@@ -175,7 +175,7 @@ export class AccountService implements IAccountService {
     }
 
     isAuthenticated(): boolean {
-        return this.authenticated;
+        return this.authenticated || !window.navigator.onLine;
     }
 
     getAuthenticationState(): Observable<User | null> {

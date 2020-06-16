@@ -38,9 +38,15 @@ export class LoginService {
                     return cb();
                 },
                 (err) => {
-                    this.logout();
-                    reject(err);
-                    return cb(err);
+                    if (!window.navigator.onLine) {
+                        // we are in offline mode
+                        resolve();
+                        return cb();
+                    } else {
+                        this.logout();
+                        reject(err);
+                        return cb(err);
+                    }
                 },
             );
         });
