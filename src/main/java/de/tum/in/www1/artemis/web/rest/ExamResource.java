@@ -188,7 +188,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Exam exam = examService.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByCourseId(examId);
 
         User user = userService.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());

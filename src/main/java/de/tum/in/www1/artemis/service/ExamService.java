@@ -86,7 +86,12 @@ public class ExamService {
         return examRepository.findByCourseId(courseId);
     }
 
-    public Exam findOneWithEagerExercisesGroupsAndStudentExams(Long courseId) {
+    /**
+     * Get the exam of a course with exercise groups and student exams
+     * @param courseId {Long} The courseId of the course which contains the exam
+     * @return The exam
+     */
+    public Exam findOneWithExercisesGroupsAndStudentExamsByCourseId(Long courseId) {
         log.debug("REST request to get all exams with student exams and exercise groups for Course : {}", courseId);
         return examRepository.findOneWithEagerExercisesGroupsAndStudentExams(courseId);
     }

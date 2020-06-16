@@ -28,6 +28,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithRegisteredUsersById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "studentExams" })
-    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id =:#{#courseId})")
-    Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("courseId") long courseId);
+    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id =:#{#examId})")
+    Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 }
