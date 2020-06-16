@@ -135,7 +135,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
-            log.info("Enabling StompBrokerRelay for WebSocket messages");
+            log.info("Enabling StompBrokerRelay for WebSocket messages using " + String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
@@ -153,9 +153,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
             config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
-            // increase the limit of concurrent connections (default is 1024 which is much too low)
-            // config.setCacheLimit(10000);
-            //
         }
     }
 
@@ -168,14 +165,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * @return a TCP client with a round robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> addressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
+        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
         // Return null if no valid addresses can be found. This is e.g. due to a invalid config or a development setup without a broker.
-        if (!addressList.isEmpty()) {
+        if (!brokerAddressList.isEmpty()) {
             // This provides a round-robin use of the brokers, we only want to fail over to the fallback broker if the primary broker fails, so we have the same order of brokers in
             // all nodes
-            Iterator<InetSocketAddress> addressIterator = Iterables.cycle(addressList).iterator();
+            Iterator<InetSocketAddress> addressIterator = Iterables.cycle(brokerAddressList).iterator();
             return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
         }
         return null;
