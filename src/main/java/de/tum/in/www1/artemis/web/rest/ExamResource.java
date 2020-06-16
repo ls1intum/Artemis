@@ -16,8 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -48,18 +50,18 @@ public class ExamResource {
 
     private final ExamAccessService examAccessService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final ExerciseService exerciseService;
 
     private final AuditEventRepository auditEventRepository;
 
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
         this.examService = examService;
         this.examAccessService = examAccessService;
-        this.authCheckService = authCheckService;
+        this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -87,6 +89,11 @@ public class ExamResource {
             return conflict();
         }
 
+        // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
+        if (!exam.getExerciseGroups().isEmpty()) {
+            return forbidden();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
@@ -99,6 +106,7 @@ public class ExamResource {
 
     /**
      * PUT /courses/{courseId}/exams : Updates an existing exam.
+     * This route does not save changes to the exercise groups. This should be done via the ExerciseGroupResource.
      *
      * @param courseId      the course to which the exam belongs
      * @param updatedExam   the exam to update
@@ -113,10 +121,6 @@ public class ExamResource {
             return createExam(courseId, updatedExam);
         }
 
-        // TODO: use the exam access service
-        // TODO: check that the exam id in the body was NOT changed
-        // TODO: make sure that the request body does not mess up the exercise groups (we might need to fetch the original exam and reassign the existing exercise groups)
-
         if (updatedExam.getCourse() == null) {
             return conflict();
         }
@@ -129,6 +133,10 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
+
+        // Make sure that the original exercise groups are preserved.
+        Exam originalExam = examService.findOneWithExerciseGroups(updatedExam.getId());
+        updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
 
         Exam result = examService.save(updatedExam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -165,6 +173,7 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
      * @param courseId  the course to which the exam belongs
      * @param examId    the id of the exam to delete
@@ -179,20 +188,25 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        Exam exam = examService.findOne(examId);
+        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
 
         User user = userService.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        // TODO: make sure to delete all exercises in the references exercise groups first, because Cascade won't work fully here
-        examService.delete(examId);
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                exerciseService.delete(exercise.getId(), false, false);
+            }
+        }
 
+        // The database operation cascades to Student Exams and Exercise Groups
+        examService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
     /**
-     * Post /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
+     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
@@ -203,15 +217,15 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
         var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
-        }
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
+
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();
@@ -228,7 +242,7 @@ public class ExamResource {
     }
 
     /**
-     * Post /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
+     * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
      *
@@ -244,15 +258,14 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
+
+        Optional<ResponseEntity<List<StudentDTO>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
         var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
-        }
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
         List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
         for (var studentDto : studentDtos) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -303,15 +316,13 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from exam : {}", studentLogin, examId);
-        var course = courseService.findOne(courseId);
-        var instructorOrAdmin = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            return forbidden();
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
         }
+
         var exam = examService.findOneWithRegisteredUsers(examId);
-        if (!course.equals(exam.getCourse())) {
-            return conflict();
-        }
         Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (student.isEmpty()) {
             return notFound();

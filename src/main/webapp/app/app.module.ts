@@ -13,7 +13,7 @@ import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
-import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
+import { ArtemisConnectionNotificationModule } from 'app/shared/notification/connection-notification/connection-notification.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisLegalModule } from 'app/core/legal/legal.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
@@ -24,6 +24,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -53,6 +54,7 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         FooterComponent,
         NotificationSidebarComponent,
         SystemNotificationComponent,
+        LoadingNotificationComponent,
     ],
     bootstrap: [JhiMainComponent],
 })
