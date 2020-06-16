@@ -60,8 +60,6 @@ public class QuizScheduleService {
 
     /**
      * Mainly for testing, default is false
-     * <p>
-     * (using local cache only does not seems to provide any visible performance benefits)
      */
     private static final boolean USE_LOCAL_CACHE_ONLY = false;
 
