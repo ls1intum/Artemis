@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.config.*;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.IAtomicReference;
+import com.hazelcast.map.IMap;
 import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -58,12 +57,7 @@ public class QuizScheduleService {
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
-    /**
-     * Mainly for testing, default is false
-     */
-    private static final boolean USE_LOCAL_CACHE_ONLY = false;
-
-    private ConcurrentMap<Long, QuizExerciseCache> cachedQuizExercises;
+    private IMap<Long, QuizExerciseCache> cachedQuizExercises;
 
     private IScheduledExecutorService threadPoolTaskScheduler;
 
@@ -94,12 +88,7 @@ public class QuizScheduleService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.hazelcastInstance = hazelcastInstance;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
-        if (USE_LOCAL_CACHE_ONLY) {
-            cachedQuizExercises = new ConcurrentHashMap<>();
-        }
-        else {
-            cachedQuizExercises = hazelcastInstance.getMap(Constants.HAZELCAST_EXERCISE_CACHE);
-        }
+        this.cachedQuizExercises = hazelcastInstance.getMap(Constants.HAZELCAST_EXERCISE_CACHE);
     }
 
     /**
@@ -116,17 +105,15 @@ public class QuizScheduleService {
                 .setMaxSizePolicy(MaxSizePolicy.ENTRY_COUNT) //
                 .setEvictionPolicy(EvictionPolicy.LRU) //
                 .setSize(1000);
-
         NearCacheConfig nearCacheConfig = new NearCacheConfig() //
                 .setName(Constants.HAZELCAST_EXERCISE_CACHE + "-local") //
                 .setInMemoryFormat(InMemoryFormat.OBJECT) //
                 .setSerializeKeys(true) //
                 .setInvalidateOnChange(true) //
                 .setTimeToLiveSeconds(3600) //
-                .setMaxIdleSeconds(600) //
+                .setMaxIdleSeconds(2 * 60) //
                 .setEvictionConfig(evictionConfig) //
-                .setCacheLocalEntries(true) //
-                .setLocalUpdatePolicy(NearCacheConfig.LocalUpdatePolicy.INVALIDATE);
+                .setCacheLocalEntries(true); //
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
     }
 
@@ -169,14 +156,22 @@ public class QuizScheduleService {
      * @param quizExerciseId the id of the quiz exercise, must not be null
      */
     private QuizExerciseCache getTransientWriteCacheFor(Long quizExerciseId) {
-        return cachedQuizExercises.computeIfAbsent(quizExerciseId, id -> {
-            if (USE_LOCAL_CACHE_ONLY) {
-                return new QuizExerciseLocalCache(id);
-            }
-            QuizExerciseDistributedCache cachedQuiz = new QuizExerciseDistributedCache(id);
-            cachedQuiz.setHazelcastInstance(hazelcastInstance);
+        var cachedQuiz = cachedQuizExercises.get(quizExerciseId);
+        if (cachedQuiz != null)
             return cachedQuiz;
-        });
+        cachedQuizExercises.lock(quizExerciseId);
+        try {
+            cachedQuiz = cachedQuizExercises.get(quizExerciseId);
+            if (cachedQuiz != null)
+                return cachedQuiz;
+            var newCachedQuiz = new QuizExerciseDistributedCache(quizExerciseId);
+            newCachedQuiz.setHazelcastInstance(hazelcastInstance);
+            cachedQuizExercises.set(quizExerciseId, newCachedQuiz);
+            return cachedQuizExercises.get(quizExerciseId);
+        }
+        finally {
+            cachedQuizExercises.unlock(quizExerciseId);
+        }
     }
 
     /**
@@ -189,7 +184,13 @@ public class QuizScheduleService {
      */
     private void performCacheWrite(Long quizExerciseId, UnaryOperator<QuizExerciseCache> writeOperation) {
         log.info("Write quiz cache {}", quizExerciseId);
-        cachedQuizExercises.put(quizExerciseId, writeOperation.apply(getTransientWriteCacheFor(quizExerciseId)));
+        cachedQuizExercises.lock(quizExerciseId);
+        try {
+            cachedQuizExercises.set(quizExerciseId, writeOperation.apply(getTransientWriteCacheFor(quizExerciseId)));
+        }
+        finally {
+            cachedQuizExercises.unlock(quizExerciseId);
+        }
     }
 
     /**
@@ -201,10 +202,16 @@ public class QuizScheduleService {
      * @param writeOperation gets non-null and has  to return non-null.
      */
     private void performCacheWriteIfPresent(Long quizExerciseId, UnaryOperator<QuizExerciseCache> writeOperation) {
-        QuizExerciseCache cachedQuiz = getReadCacheFor(quizExerciseId);
-        if (!cachedQuiz.isDummy()) {
-            log.info("Write quiz cache {}", quizExerciseId);
-            cachedQuizExercises.put(quizExerciseId, writeOperation.apply(cachedQuiz));
+        cachedQuizExercises.lock(quizExerciseId);
+        try {
+            QuizExerciseCache cachedQuiz = getReadCacheFor(quizExerciseId);
+            if (!cachedQuiz.isDummy()) {
+                log.info("Write quiz cache {}", quizExerciseId);
+                cachedQuizExercises.set(quizExerciseId, writeOperation.apply(cachedQuiz));
+            }
+        }
+        finally {
+            cachedQuizExercises.unlock(quizExerciseId);
         }
     }
 
@@ -486,14 +493,15 @@ public class QuizScheduleService {
                     continue;
                 }
 
-                // Update cached exercise object
-                quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
+                // Update cached exercise object (use the expensive operation upfront)
+                quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
                 cachedQuiz.setExercise(quizExercise);
+                updateQuizExercise(quizExercise);
 
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
                 long start = System.nanoTime();
 
-                // TODO avoid distribution?
+                // TODO avoid some distribution?
 
                 if (hasNewSubmissions) {
                     // Create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
@@ -537,7 +545,6 @@ public class QuizScheduleService {
 
                 if (hasNewResults) {
                     // Fetch a new quiz exercise here including deeper attribute paths (this is relatively expensive, so we only do that if necessary)
-                    quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
                     try {
                         // Get a Set because QuizStatisticService needs one (currently)
                         Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
@@ -562,19 +569,6 @@ public class QuizScheduleService {
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
         cachedQuizExercises.remove(cachedQuiz.getId(), cachedQuiz);
-        // safety due to concurrency, values could be added in parallel
-        if (USE_LOCAL_CACHE_ONLY) {
-            boolean hasNewSubmissions = !cachedQuiz.getSubmissions().isEmpty();
-            boolean hasNewParticipations = !cachedQuiz.getParticipations().isEmpty();
-            boolean hasNewResults = !cachedQuiz.getResults().isEmpty();
-            // add values again if they are present
-            if (hasNewSubmissions || hasNewParticipations || hasNewResults) {
-                var newCachedQuiz = getTransientWriteCacheFor(cachedQuiz.getId());
-                newCachedQuiz.getSubmissions().putAll(cachedQuiz.getSubmissions());
-                newCachedQuiz.getParticipations().putAll(cachedQuiz.getParticipations());
-                newCachedQuiz.getResults().putAll(cachedQuiz.getResults());
-            }
-        }
     }
 
     private static String printDuration(long timeNanoStart) {
