@@ -234,7 +234,8 @@
             <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
             <div class="row" style="margin: 0; max-width: 100%;">
                 <pre
-                    style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"
+                    style="flex: 1;"
+                    [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
                     ngxClipboard
                     [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
                     (cbOnSuccess)="onCopySuccess()"
