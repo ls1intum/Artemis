@@ -60,10 +60,10 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
-                map((course: HttpResponse<ExerciseGroup>) => course.body!),
+                map((exerciseGroup: HttpResponse<ExerciseGroup>) => exerciseGroup.body!),
             );
         }
-        return of(new ExerciseGroup());
+        return of({ isMandatory: true } as ExerciseGroup);
     }
 }
 
@@ -83,7 +83,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((course: HttpResponse<StudentExam>) => course.body!),
+                map((studentExam: HttpResponse<StudentExam>) => studentExam.body!),
             );
         }
         return of(new StudentExam());
@@ -137,7 +137,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups',
+        path: ':examId/exercise-groups',
         component: ExerciseGroupsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -146,9 +146,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/new',
+        path: ':examId/exercise-groups/new',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
@@ -158,9 +159,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/edit',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
@@ -170,7 +172,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/view',
+        path: ':examId/exercise-groups/:exerciseGroupId/view',
         component: ExerciseGroupDetailComponent,
         resolve: {
             exerciseGroup: ExerciseGroupResolve,
@@ -191,7 +193,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams',
+        path: ':examId/student-exams',
         component: StudentExamsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -200,7 +202,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams/:studentExamId/view',
+        path: ':examId/student-exams/:studentExamId/view',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,

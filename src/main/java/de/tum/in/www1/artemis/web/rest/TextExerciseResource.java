@@ -189,7 +189,6 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        // TODO: Should we leave this activated in case the exercise is changed during the exam?
         // Only notify students about changes if a regular exercise was updated
         if (notificationText != null && textExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
