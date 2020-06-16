@@ -169,8 +169,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
-        assertThat(receivedFileUploadExercise).as("text exercise was retrieved").isNotNull();
-        assertThat(receivedFileUploadExercise.getId()).as("Text exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
+        assertThat(receivedFileUploadExercise).as("exercise was retrieved").isNotNull();
+        assertThat(receivedFileUploadExercise.getId()).as("exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
     }
 
     @Test
