@@ -46,7 +46,7 @@ public class ApiVersionFilter implements Filter {
 
         httpResponse.addHeader(CONTENT_VERSION_HEADER, VERSION);
 
-        chain.doFilter(httpRequest, httpResponse);
+        chain.doFilter(request, response);
     }
 
 }
