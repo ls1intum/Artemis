@@ -450,7 +450,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 if (result == null) {
                     continue;
                 }
-                if (result.isRated() == Boolean.TRUE && result.getCompletionDate() != null) {
+                if (Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null) {
                     // take the first found result that fulfills the above requirements
                     if (latestSubmission == null) {
                         latestSubmission = submission;
