@@ -127,6 +127,10 @@ public final class Constants {
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
+    public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
+
+    public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
+
     public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";

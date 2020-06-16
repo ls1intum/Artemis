@@ -9,6 +9,8 @@ export class ProfileInfo {
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
     buildPlanURLTemplate: string;
+    sshCloneURLTemplate: string;
+    sshKeysURL: string;
     externalUserManagementURL: string;
     externalUserManagementName: string;
     imprint: string;
