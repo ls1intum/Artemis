@@ -4,7 +4,8 @@
             "home": {
                 "title": "Textaufgaben",
                 "createLabel": "Neue Textaufgabe erstellen",
-                "editLabel": "Textaufgabe bearbeiten"
+                "editLabel": "Textaufgabe bearbeiten",
+                "importLabel": "Neue Textaufgabe importieren"
             },
             "wordCount": "Anzahl der Wörter: {{ count }}",
             "characterCount": "Anzahl der Zeichen: {{ count }}",

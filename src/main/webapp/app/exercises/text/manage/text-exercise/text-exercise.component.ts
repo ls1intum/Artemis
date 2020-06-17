@@ -4,13 +4,16 @@ import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseExerciseService, CourseManagementService } from '../../../../course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -22,6 +25,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     constructor(
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private modalService: NgbModal,
+        private router: Router,
         courseService: CourseManagementService,
         translateService: TranslateService,
         private jhiAlertService: AlertService,
@@ -66,5 +71,20 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
+    }
+
+    /**
+     * Used in the template for jhiSort
+     */
+    callback() {}
+
+    openImportModal() {
+        const modalRef = this.modalService.open(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: ProgrammingExercise) => {
+                this.router.navigate(['course-management', this.courseId, 'text-exercises', 'import', result.id]);
+            },
+            () => {},
+        );
     }
 }

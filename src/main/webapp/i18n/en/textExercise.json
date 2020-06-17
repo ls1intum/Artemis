@@ -4,7 +4,8 @@
             "home": {
                 "title": "Text Exercises",
                 "createLabel": "Create new Text Exercise",
-                "editLabel": "Edit Text Exercise"
+                "editLabel": "Edit Text Exercise",
+                "importLabel": "Import a Text Exercise"
             },
             "wordCount": "Number of words: {{ count }}",
             "characterCount": "Number of characters: {{ count }}",
