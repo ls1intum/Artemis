@@ -28,6 +28,12 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
 
+    private static final String HAZELCAST_CACHE_PARTICIPATIONS = "-participations";
+
+    private static final String HAZELCAST_CACHE_SUBMISSIONS = "-submissions";
+
+    private static final String HAZELCAST_CACHE_RESULTS = "-results";
+
     private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
 
     /**
@@ -41,6 +47,9 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     private transient IMap<String, QuizSubmission> submissions;
 
+    /**
+     * Must be a Map because Hazelcast uses serialized objects for set operations and not hashCode()/equals()
+     */
     private transient IMap<Long, Result> results;
 
     QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
@@ -95,7 +104,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     }
 
     @Override
-    void destroy() {
+    void clear() {
         int participationsSize = participations.size();
         int submissionsSize = submissions.size();
         int resultsSize = results.size();
@@ -113,15 +122,10 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     }
 
     @Override
-    boolean isDummy() {
-        return false;
-    }
-
-    @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_PARTICIPATIONS);
-        submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_SUBMISSIONS);
-        results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + QuizScheduleService.HAZELCAST_CACHE_RESULTS);
+        participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + HAZELCAST_CACHE_PARTICIPATIONS);
+        submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + HAZELCAST_CACHE_SUBMISSIONS);
+        results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getId() + HAZELCAST_CACHE_RESULTS);
     }
 
     static class QuizExerciseCacheImplStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {

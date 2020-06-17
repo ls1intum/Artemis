@@ -130,6 +130,7 @@ public class QuizSubmissionService {
         QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
         if (quizExercise == null) {
             // Fallback solution
+            log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
             if (optionalQuizExercise.isEmpty()) {
                 log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);

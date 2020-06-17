@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
+/**
+ * Empty cache object representing a cache miss
+ */
 final class EmptyQuizExerciseCache extends QuizExerciseCache {
 
     static final Logger log = LoggerFactory.getLogger(EmptyQuizExerciseCache.class);
@@ -59,13 +62,8 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
     }
 
     @Override
-    void destroy() {
+    void clear() {
         log.warn("EmptyQuizExerciseCache cannot be destroyed");
-    }
-
-    @Override
-    boolean isDummy() {
-        return true;
     }
 
     private static void throwModificationAttemptException() {

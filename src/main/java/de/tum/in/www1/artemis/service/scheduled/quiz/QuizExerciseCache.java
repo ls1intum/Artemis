@@ -26,7 +26,8 @@ abstract class QuizExerciseCache {
     }
 
     /**
-     * Returns the quiz exercise.
+     * Returns the cached quiz exercise object.
+     *
      * @return the actual QuizExercise object, may be null.
      */
     abstract QuizExercise getExercise();
@@ -47,20 +48,26 @@ abstract class QuizExerciseCache {
     abstract List<ScheduledTaskHandler> getQuizStart();
 
     /**
-     * The results by their id, must be a Map because Hazelcast uses serialized objects for set operations and not hashCode()/equals()
+     * The results by their id
      */
     abstract Map<Long, Result> getResults();
 
+    /**
+     * Set the cached {@link QuizExercise} object
+     */
     abstract void setExercise(QuizExercise newExercise);
 
+    /**
+     * Set the ScheduledTaskHandlers
+     */
     abstract void setQuizStart(List<ScheduledTaskHandler> quizStart);
 
     /**
-     * Releases all Hazelcast resources, this makes the {@link QuizExerciseCache}-object unusable.
+     * Releases all (Hazelcast) resources, all cached objects will be lost.
+     * <p>
+     * This should only be used for exceptional cases, such as deleting or resetting the exercise or for testing.
      */
-    abstract void destroy();
-
-    abstract boolean isDummy();
+    abstract void clear();
 
     @Override
     public final int hashCode() {

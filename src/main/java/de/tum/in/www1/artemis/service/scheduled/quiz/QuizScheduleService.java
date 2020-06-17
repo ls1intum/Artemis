@@ -45,12 +45,6 @@ public class QuizScheduleService {
 
     static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
-    static final String HAZELCAST_CACHE_PARTICIPATIONS = "-participations";
-
-    static final String HAZELCAST_CACHE_SUBMISSIONS = "-submissions";
-
-    static final String HAZELCAST_CACHE_RESULTS = "-results";
-
     private static final String HAZELCAST_QUIZ_START_TASK = "-start";
 
     private static final String HAZELCAST_PROCESS_CACHE_TASK = Constants.HAZELCAST_QUIZ_PREFIX + "process-cache";
@@ -113,7 +107,7 @@ public class QuizScheduleService {
                 .setTimeToLiveSeconds(3600) //
                 .setMaxIdleSeconds(2 * 60) //
                 .setEvictionConfig(evictionConfig) //
-                .setCacheLocalEntries(true); //
+                .setCacheLocalEntries(true);
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
     }
 
@@ -134,10 +128,6 @@ public class QuizScheduleService {
     public void setQuizStatisticService(QuizStatisticService quizStatisticService) {
         this.quizStatisticService = quizStatisticService;
     }
-
-    /*
-     * FIXME DOCUMENTATION of public methods!!!
-     */
 
     /**
      * Only for reading from QuizExerciseCache
@@ -204,8 +194,8 @@ public class QuizScheduleService {
     private void performCacheWriteIfPresent(Long quizExerciseId, UnaryOperator<QuizExerciseCache> writeOperation) {
         cachedQuizExercises.lock(quizExerciseId);
         try {
-            QuizExerciseCache cachedQuiz = getReadCacheFor(quizExerciseId);
-            if (!cachedQuiz.isDummy()) {
+            QuizExerciseCache cachedQuiz = cachedQuizExercises.get(quizExerciseId);
+            if (cachedQuiz != null) {
                 log.info("Write quiz cache {}", quizExerciseId);
                 cachedQuizExercises.set(quizExerciseId, writeOperation.apply(cachedQuiz));
             }
@@ -255,7 +245,7 @@ public class QuizScheduleService {
     }
 
     /**
-     * get a quizSubmission from the submissionHashMap by quizExerciseId and username
+     * get a cached quizSubmission by quizExerciseId and username
      *
      * @param quizExerciseId   the quizExerciseId of the quiz the submission belongs to (first Key)
      * @param username the username of the user, who submitted the submission (second Key)
@@ -276,7 +266,7 @@ public class QuizScheduleService {
     }
 
     /**
-     * get a participation from the participationHashMap by quizExerciseId and username
+     * get a cached participation by quizExerciseId and username
      *
      * @param quizExerciseId   the quizExerciseId of the quiz, the participation belongs to (first Key)
      * @param username the username of the user, the participation belongs to (second Key)
@@ -297,7 +287,8 @@ public class QuizScheduleService {
     }
 
     /**
-     * stores the quiz exercise in a HashMap for faster retrieval during the quiz
+     * cache the quiz exercise for faster retrieval during the quiz
+     *
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(QuizExercise quizExercise) {
@@ -314,7 +305,7 @@ public class QuizScheduleService {
         if (threadPoolTaskScheduler == null) {
             try {
                 threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(TaskUtils.named(HAZELCAST_PROCESS_CACHE_TASK, new QuizCacheTask()), 0, delayInMillis,
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(TaskUtils.named(HAZELCAST_PROCESS_CACHE_TASK, new QuizProcessCacheTask()), 0, delayInMillis,
                         TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
@@ -338,7 +329,7 @@ public class QuizScheduleService {
     }
 
     /**
-     * stop scheduler (interrupts if running)
+     * stop scheduler
      */
     public void stopSchedule() {
         if (threadPoolTaskScheduler != null) {
@@ -417,7 +408,10 @@ public class QuizScheduleService {
         });
     }
 
-    void executeQuizStartTask(Long quizExerciseId) {
+    /**
+     * Internal method to start and send the {@link QuizExercise} to the clients when called
+     */
+    void executeQuizStartNowTask(Long quizExerciseId) {
         performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
             quizExerciseCache.getQuizStart().clear();
             log.debug("Removed quiz {} start tasks", quizExerciseId);
@@ -428,36 +422,40 @@ public class QuizScheduleService {
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
     }
 
-    /*
-     * Clears all quiz data for all quiz exercises from the 4 hash maps for quizzes
+    /**
+     * Clears all cached quiz data for all quiz exercises for quizzes.
+     * <p>
+     * This will cause cached submissions, participations and results to be lost!
      */
     public void clearAllQuizData() {
-        cachedQuizExercises.values().forEach(QuizExerciseCache::destroy);
+        cachedQuizExercises.values().forEach(QuizExerciseCache::clear);
         cachedQuizExercises.clear();
     }
 
     /**
-     * Clears all quiz data for one specific quiz exercise from the 4 hash maps for quizzes
+     * Clears all quiz data for one specific quiz exercise for quizzes
+     * <p>
+     * This will cause cached submissions, participations and results to be lost!
      * @param quizExerciseId refers to one specific quiz exercise for which the data should be cleared
      */
     public void clearQuizData(Long quizExerciseId) {
         QuizExerciseCache quizCache = cachedQuizExercises.remove(quizExerciseId);
         if (quizCache != null) {
-            quizCache.destroy();
+            quizCache.clear();
         }
     }
 
     /**
      * // @formatter:off
-     * 1. Check SubmissionHashMap for new submissions with “isSubmitted() == true”
+     * 1. Check cached submissions for new submissions with “isSubmitted() == true”
      *      a. Process each Submission (set submissionType to “SubmissionType.MANUAL”) and create Participation and Result and save them to Database (DB WRITE)
      *      b. Remove processed Submissions from SubmissionHashMap and write Participation with Result into ParticipationHashMap and write Result into ResultHashMap
      * 2. If Quiz has ended:
-     *      a. Process all Submissions in SubmissionHashMap that belong to this quiz i. set “isSubmitted” to “true” and submissionType to “SubmissionType.TIMEOUT”
+     *      a. Process all cached Submissions that belong to this quiz i. set “isSubmitted” to “true” and submissionType to “SubmissionType.TIMEOUT”
      *          ii. Create Participation and Result and save to Database (DB WRITE)
-     *          iii. Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-     *      b. Send out Participations (including QuizExercise and Result) from ParticipationHashMap to each participant and remove them from ParticipationHashMap (WEBSOCKET SEND)
-     * 3. Update Statistics with Results from ResultHashMap (DB READ and DB WRITE) and remove from ResultHashMap
+     *          iii. Remove processed Submissions from cache and write the Participations with Result and the Results into the cache
+     *      b. Send out cached Participations (including QuizExercise and Result) from to each participant and remove them from the cache (WEBSOCKET SEND)
+     * 3. Update Statistics with Results from ResultHashMap (DB READ and DB WRITE) and remove from cache
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
@@ -472,7 +470,7 @@ public class QuizScheduleService {
                 if (quizExercise == null) {
                     log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
                     cachedQuizExercises.remove(quizExerciseId);
-                    cachedQuiz.destroy();
+                    cachedQuiz.clear();
                     continue;
                 }
 
@@ -486,8 +484,8 @@ public class QuizScheduleService {
 
                 // Skip quizzes with no cached changes
                 if (!hasNewSubmissions && !hasNewParticipations && !hasNewResults) {
-                    // Remove quiz if it is not scheduled for start
-                    if (hasEnded && cachedQuiz.getQuizStart().isEmpty()) {
+                    // Remove quiz if it has ended
+                    if (hasEnded) {
                         removeCachedQuiz(cachedQuiz);
                     }
                     continue;
@@ -568,6 +566,7 @@ public class QuizScheduleService {
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
+        cancelScheduledQuizStart(cachedQuiz.getId());
         cachedQuizExercises.remove(cachedQuiz.getId(), cachedQuiz);
     }
 
