@@ -10,6 +10,7 @@ import { Subject } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { AlertService } from 'app/core/alert/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-course',
@@ -20,7 +21,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
-    showExamButton = true;
+    showExamButton = false;
 
     courses: Course[];
     eventSubscriber: Subscription;
@@ -37,6 +38,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         private jhiAlertService: AlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
+        private sortService: SortService,
     ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
@@ -113,10 +115,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         );
     }
 
-    /**
-     * @callback empty callback
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.courses, this.predicate, this.reverse);
+    }
 
     /**
      * returns the current Date

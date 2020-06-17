@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,10 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -66,20 +63,21 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @SpyBean
     ExamAccessService examAccessService;
 
-    private List<User> users;
-
     private Course course1;
 
     private Course course2;
 
     private Exam exam1;
 
+    private Exam exam2;
+
     @BeforeEach
-    public void initTestCase() throws URISyntaxException {
-        users = database.addUsers(4, 5, 1);
+    public void initTestCase() {
+        database.addUsers(4, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
+        exam2 = database.addExamWithExerciseGroup(course1, true);
     }
 
     @AfterEach
@@ -90,7 +88,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void registerUsersInExam() throws Exception {
-
         jiraRequestMockProvider.enableMockingOfRequests();
 
         var exam = createExam();
@@ -188,82 +185,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testSaveExamToDatabase() {
-
-        // create exercise
-        TextExercise savedTextExercise1 = textExerciseRepository.save(new TextExercise());
-        TextExercise savedTextExercise2 = textExerciseRepository.save(new TextExercise());
-        TextExercise savedTextExercise3 = textExerciseRepository.save(new TextExercise());
-
-        // create ExamGroup
-        ExerciseGroup exerciseGroup = new ExerciseGroup();
-        exerciseGroup.setTitle("Exercise Group Title");
-        exerciseGroup.setIsMandatory(true);
-        exerciseGroup.addExercise(savedTextExercise1);
-        exerciseGroup.addExercise(savedTextExercise2);
-        exerciseGroup.addExercise(savedTextExercise3);
-
-        ExerciseGroup savedExerciseGroup1 = exerciseGroupRepository.save(exerciseGroup);
-        ExerciseGroup savedExerciseGroup2 = exerciseGroupRepository.save(exerciseGroup);
-        ExerciseGroup savedExerciseGroup3 = exerciseGroupRepository.save(exerciseGroup);
-
-        // assert savedExerciseGroup to equal exerciseGroup
-        assertThat(savedExerciseGroup1.getTitle()).isEqualTo(exerciseGroup.getTitle());
-        assertThat(savedExerciseGroup1.getIsMandatory()).isEqualTo(exerciseGroup.getIsMandatory());
-        assertThat(savedExerciseGroup1.getExam()).isEqualTo(exerciseGroup.getExam());
-        assertThat(savedExerciseGroup1.getExercises()).isEqualTo(exerciseGroup.getExercises());
-
-        // create exam
-        Exam exam = createExam();
-        exam.addExerciseGroup(savedExerciseGroup1);
-        exam.addExerciseGroup(savedExerciseGroup2);
-        exam.addExerciseGroup(savedExerciseGroup3);
-        Exam savedExam = examRepository.save(exam);
-
-        exerciseGroupRepository.save(savedExerciseGroup1);
-        exerciseGroupRepository.save(savedExerciseGroup2);
-        exerciseGroupRepository.save(savedExerciseGroup3);
-
-        // assert savedExam equals exam
-        assertThat(savedExam.getTitle()).isEqualTo(exam.getTitle());
-        assertThat(savedExam.getVisibleDate()).isEqualTo(exam.getVisibleDate());
-        assertThat(savedExam.getStartDate()).isEqualTo(exam.getStartDate());
-        assertThat(savedExam.getEndDate()).isEqualTo(exam.getEndDate());
-        assertThat(savedExam.getStartText()).isEqualTo(exam.getStartText());
-        assertThat(savedExam.getEndText()).isEqualTo(exam.getEndText());
-        assertThat(savedExam.getConfirmationStartText()).isEqualTo(exam.getConfirmationStartText());
-        assertThat(savedExam.getConfirmationEndText()).isEqualTo(exam.getConfirmationEndText());
-        assertThat(savedExam.getMaxPoints()).isEqualTo(exam.getMaxPoints());
-        assertThat(savedExam.getNumberOfExercisesInExam()).isEqualTo(exam.getNumberOfExercisesInExam());
-        assertThat(savedExam.getRandomizeExerciseOrder()).isEqualTo(exam.getRandomizeExerciseOrder());
-        assertThat(savedExam.getCourse()).isEqualTo(exam.getCourse());
-        assertThat(savedExam.getExerciseGroups()).isEqualTo(exam.getExerciseGroups());
-
-        assertThat(savedExam.getExerciseGroups().get(0)).isEqualTo(exam.getExerciseGroups().get(0));
-        assertThat(savedExam.getExerciseGroups().get(1)).isEqualTo(exam.getExerciseGroups().get(1));
-        assertThat(savedExam.getExerciseGroups().get(2)).isEqualTo(exam.getExerciseGroups().get(2));
-
-        ExerciseGroup updatedExerciseGroup = exerciseGroupRepository.findWithEagerExamById(savedExerciseGroup1.getId()).get();
-        assertThat(updatedExerciseGroup.getExam()).isEqualTo(savedExam);
-
-        // create studentExam
-        StudentExam studentExam = new StudentExam();
-        studentExam.setExam(savedExam);
-        studentExam.setUser(users.get(0));
-        studentExam.addExercise(savedTextExercise1);
-        studentExam.addExercise(savedTextExercise2);
-        studentExam.addExercise(savedTextExercise3);
-
-        StudentExam savedStudentExam = studentExamRepository.save(studentExam);
-
-        // assert savedStudentExam to equal studentExam
-        assertThat(savedStudentExam.getExam()).isEqualTo(studentExam.getExam());
-        assertThat(savedStudentExam.getUser()).isEqualTo(studentExam.getUser());
-        assertThat(savedStudentExam.getExercises()).isEqualTo(studentExam.getExercises());
-
-        assertThat(savedStudentExam.getExercises().get(0)).isEqualTo(studentExam.getExercises().get(0));
-        assertThat(savedStudentExam.getExercises().get(1)).isEqualTo(studentExam.getExercises().get(1));
-        assertThat(savedStudentExam.getExercises().get(2)).isEqualTo(studentExam.getExercises().get(2));
+    public void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
+        database.addCourseExamExerciseGroupWithOneTextExercise();
     }
 
     @Test
@@ -285,21 +208,32 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExam_asInstructor() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
-        exam.setId(55L);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
-        exam = ModelFactory.generateExam(course1);
-        exam.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        exam = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        exam = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        // Test for bad request when exam id is already set.
+        Exam examA = ModelFactory.generateExam(course1);
+        examA.setId(55L);
+        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
+        // Test for conflict when course is null.
+        Exam examB = ModelFactory.generateExam(course1);
+        examB.setCourse(null);
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CONFLICT);
+        // Test for conflict when course deviates from course specified in route.
+        Exam examC = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        // Test for forbidden when user tries to create an exam with exercise groups.
+        Exam examD = ModelFactory.generateExam(course1);
+        examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.FORBIDDEN);
+        // Test examAccessService.
+        Exam examE = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAccess(course1.getId());
     }
 
@@ -331,14 +265,24 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteExam_asInstructor() throws Exception {
+    public void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exam2.getExerciseGroups().get(0));
+        exerciseRepo.save(textExercise);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam2.getId());
+    }
+
+    @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void DeleteExamThatDoesNotExist() throws Exception {
+    public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/2", HttpStatus.NOT_FOUND);
     }
 }
