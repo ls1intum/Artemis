@@ -285,7 +285,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (textExercise.hasExerciseGroup()) {
-            course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
             course = textExercise.getCourse();

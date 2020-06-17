@@ -259,7 +259,7 @@ public class FileUploadExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (fileUploadExercise.hasExerciseGroup()) {
-            course = courseService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
         }
         else {
             course = fileUploadExercise.getCourse();
