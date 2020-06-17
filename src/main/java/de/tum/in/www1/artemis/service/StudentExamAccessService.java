@@ -15,6 +15,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 
+/**
+ * Service implementation to check student exam access.
+ */
 @Service
 public class StudentExamAccessService {
 
