@@ -7,6 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -392,5 +394,19 @@ public class TextExerciseResource {
         else {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * Search for all text exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/text-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, user));
     }
 }
