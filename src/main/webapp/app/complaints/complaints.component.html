@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div class="row" *ngIf="loaded; else loading">
+    <div class="row" *ngIf="loaded">
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted">
                 <span *ngIf="!exercise.teamMode">
@@ -83,9 +83,3 @@
         </div>
     </div>
 </div>
-
-<ng-template #loading>
-    <h2>
-        <span class="spinner"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.dashboard.loading">Loading..</span></span>
-    </h2>
-</ng-template>

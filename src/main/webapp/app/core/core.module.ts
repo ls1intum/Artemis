@@ -21,6 +21,7 @@ import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ng
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { CookieService } from 'ngx-cookie-service';
+import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 
 @NgModule({
     imports: [
@@ -94,6 +95,11 @@ import { CookieService } from 'ngx-cookie-service';
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
+            multi: true,
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: LoadingNotificationInterceptor,
             multi: true,
         },
     ],
