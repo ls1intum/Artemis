@@ -58,7 +58,7 @@ public class StudentExamAccessService {
             return courseAndExamAccessFailure;
         }
 
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesById(studentExamId);
+        Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
         if (studentExam.isEmpty()) {
             return Optional.of(notFound());
         }
@@ -82,7 +82,7 @@ public class StudentExamAccessService {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesById(studentExamId);
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsById(studentExamId);
         if (studentExam.isEmpty()) {
             return notFound();
         }
