@@ -25,7 +25,7 @@
                 <fa-icon class="loading-spinner ml-1" [icon]="'spinner'" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
             <div class="mt-2">
-                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)"/>
+                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
             </div>
         </div>
         <div *ngIf="studentsToImport?.length > 0" class="form-group mt-4">
