@@ -8,7 +8,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { SinonStub, stub } from 'sinon';
 import { Subject } from 'rxjs';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { DifferencePipe } from 'ngx-moment';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -36,7 +35,7 @@ describe('ProgrammingExerciseImportComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, SortByModule, FeatureToggleModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, FeatureToggleModule],
             declarations: [ProgrammingExerciseImportComponent, ButtonComponent],
             providers: [
                 DifferencePipe,

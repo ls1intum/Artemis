@@ -50,7 +50,17 @@ public class StudentExamService {
      * @return the list of all student exams
      */
     public List<StudentExam> findAllByExamId(Long examId) {
-        log.debug("REST request to get all student exams for Exam : {}", examId);
+        log.debug("Request to get all student exams for Exam : {}", examId);
         return studentExamRepository.findByExamId(examId);
+    }
+
+    /**
+     * Delete a student exam by the Id
+     *
+     * @param studentExamId the id of the student exam to be deleted
+     */
+    public void deleteStudentExam(Long studentExamId) {
+        log.debug("Request to delete the student exam with Id : {}", studentExamId);
+        studentExamRepository.deleteById(studentExamId);
     }
 }

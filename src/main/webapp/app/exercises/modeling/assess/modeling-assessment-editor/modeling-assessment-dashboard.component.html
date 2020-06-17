@@ -22,7 +22,7 @@
     </div>
     <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && { color: '#5cb85c' }">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }}% </strong>({{ assessedSubmissions }} out of
+            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
             {{ submissions.length }} submitted models assessed)
         </small>
     </h4>
@@ -95,7 +95,9 @@
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">Other submissions:</h5>
+    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">
+        Other submissions:
+    </h5>
     <p *ngIf="modelingExercise.automaticAssessmentSupported && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
@@ -104,32 +106,42 @@
     <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (!modelingExercise.automaticAssessmentSupported || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th>
                         <a class="th-link">#</a>
                     </th>
                     <th *ngIf="modelingExercise.teamMode" jhiSortBy="participation.team.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="!modelingExercise.teamMode" jhiSortBy="participation.student.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="successful" jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a></th>
+                    <th jhiSortBy="participation.submissions.length">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="duration">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="result.score">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="durationInMinutes">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="result.assessmentType">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.name">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
@@ -138,7 +150,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions | sortBy: predicate:reverse; let i = index">
+                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.participation.participantName }}</td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
@@ -147,15 +159,10 @@
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }}%</span>
+                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
-                        {{
-                            durationString(
-                                submission.submissionDate,
-                                submission.participation.initializationDate ? submission.participation.initializationDate : modelingExercise.releaseDate
-                            )
-                        }}
+                        {{ submission.durationInMinutes }}
                         minutes
                     </td>
                     <td>{{ submission.result && submission.result.assessmentType }}</td>

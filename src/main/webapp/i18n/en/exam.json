@@ -19,6 +19,10 @@
             "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "falseName": "Entered name is incorrect. Please try again!"
         },
+        "examParticipation": {
+            "connected": "Connected. Your answers will be saved every 60s.",
+            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
+        },
         "exerciseGroup": {
             "created": "New exercise group created",
             "updated": "Exercise group updated",
@@ -73,7 +77,7 @@
                 "addTextExercise": "Add text exercise"
             },
             "delete": {
-                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             }
         }

@@ -295,7 +295,7 @@ public class ModelFactory {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setTitle("Exercise group title");
         exerciseGroup.setIsMandatory(mandatory);
-        exerciseGroup.setExam(exam);
+        exam.addExerciseGroup(exerciseGroup);
         return exerciseGroup;
     }
 

@@ -20,6 +20,10 @@
             "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!"
         },
+        "examParticipation": {
+            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
+            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
+        },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
             "updated": "Aufgabengruppe bearbeitet",
@@ -74,7 +78,7 @@
                 "addTextExercise": "Textaufgabe hinzufügen"
             },
             "delete": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }
         }
