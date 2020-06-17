@@ -69,4 +69,19 @@ export class TextExerciseService {
     delete(id: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
+
+    /**
+     * Imports a text exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     *
+     * @param adaptedSourceTextExercise The exercise that should be imported, including adapted values for the
+     *                                         new exercise. E.g. with another title than the original exercise. Old
+     *                                         values that should get discarded (like the old ID) will be handled by the
+     *                                         server.
+     */
+    importExercise(adaptedSourceTextExercise: TextExercise) {
+        return this.http
+            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, adaptedSourceTextExercise, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+    }
 }

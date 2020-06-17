@@ -132,7 +132,9 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
-        if (this.textExercise.id !== undefined) {
+        if (this.isImport) {
+            this.subscribeToSaveResponse(this.textExerciseService.importExercise(this.textExercise));
+        } else if (this.textExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
