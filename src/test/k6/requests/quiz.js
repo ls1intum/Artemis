@@ -175,7 +175,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
         // Send heartbeat to server so session is kept alive
         socket.setInterval(function timeout() {
             socket.send('\n');
-        }, 20000);
+        }, 10000);
 
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
@@ -231,6 +231,6 @@ export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUs
         // Send heartbeat to server so session is kept alive
         socket.setInterval(function timeout() {
             socket.send('\n');
-        }, 20000);
+        }, 10000);
     });
 }

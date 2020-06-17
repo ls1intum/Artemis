@@ -156,7 +156,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
-            heartbeat: { outgoing: 10000, incoming: 20000 },
+            heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
