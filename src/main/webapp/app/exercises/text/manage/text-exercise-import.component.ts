@@ -1,16 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
-    PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
     COURSE_TITLE = 'COURSE_TITLE',
 }
 
@@ -25,7 +24,7 @@ export class TextExerciseImportComponent implements OnInit {
     private sort = new Subject<void>();
 
     loading = false;
-    content: SearchResult<ProgrammingExercise>;
+    content: SearchResult<TextExercise>;
     total = 0;
     state: PageableSearch = {
         page: 1,
@@ -35,8 +34,8 @@ export class TextExerciseImportComponent implements OnInit {
         sortedColumn: TableColumn.ID,
     };
 
-    // Replace with Text ExercisePagingService
-    constructor(private pagingService: ProgrammingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
+    // Replace with TextExercisePagingService
+    constructor(private pagingService: TextExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
@@ -79,7 +78,7 @@ export class TextExerciseImportComponent implements OnInit {
      * @param item The exercise itself
      * @returns The ID of the programming exercise
      */
-    trackId(index: number, item: ProgrammingExercise): number {
+    trackId(index: number, item: TextExercise): number {
         return item.id;
     }
 
@@ -119,7 +118,7 @@ export class TextExerciseImportComponent implements OnInit {
      *
      * @param exercise The exercise which was selected by the user for the import.
      */
-    openImport(exercise: ProgrammingExercise) {
+    openImport(exercise: TextExercise) {
         this.activeModal.close(exercise);
     }
 

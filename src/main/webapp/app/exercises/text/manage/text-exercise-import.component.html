@@ -19,10 +19,6 @@
                         <span jhiTranslate="artemisApp.programmingExercise.import.table.title">Title</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.language">Programming Language</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}">
                         <span jhiTranslate="artemisApp.programmingExercise.import.table.course">Course</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -37,9 +33,6 @@
                     </td>
                     <td>
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
-                    </td>
-                    <td>
-                        <span>{{ exercise.programmingLanguage }}</span>
                     </td>
                     <td>
                         <ngb-highlight [result]="exercise.course.title" [term]="searchTerm"></ngb-highlight>
