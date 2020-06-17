@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
 import { JhiEventWithContent } from 'ng-jhipster/service/event-with-content.model';
@@ -13,6 +13,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -24,6 +25,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     exams: Exam[];
     isAtLeastInstructor = false;
     predicate: string;
+    ascending: boolean;
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -41,8 +43,10 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
+        private sortService: SortService,
     ) {
         this.predicate = 'id';
+        this.ascending = true;
     }
 
     /**
@@ -115,5 +119,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      */
     trackId(index: number, item: Exam) {
         return item.id;
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
     }
 }

@@ -10,6 +10,7 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -23,6 +24,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
+        private sortService: SortService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -78,8 +80,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         return 'modelingExerciseListModification';
     }
 
-    /**
-     * Used in the template for jhiSort
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+    }
 }
