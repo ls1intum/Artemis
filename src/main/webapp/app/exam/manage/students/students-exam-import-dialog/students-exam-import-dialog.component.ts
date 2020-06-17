@@ -16,6 +16,8 @@ const csvColumns = Object.freeze({
     lastName: 'FAMILY_NAME_OF_STUDENT',
 });
 
+type CsvStudent = object;
+
 @Component({
     selector: 'jhi-students-exam-import-dialog',
     templateUrl: './students-exam-import-dialog.component.html',
@@ -34,6 +36,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     notFoundStudents: StudentDTO[] = [];
 
     isParsing = false;
+    validationError: string | null = null;
     isImporting = false;
     hasImported = false;
 
@@ -55,40 +58,85 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     async onCSVFileSelect($event: any) {
         if ($event.target.files.length > 0) {
             this.resetDialog();
-            this.studentsToImport = await this.readStudentsFromCSVFile($event.target.files[0]);
+            this.studentsToImport = await this.readStudentsFromCSVFile($event, $event.target.files[0]);
         }
     }
 
     /**
      * Reads students from a csv file into a list of StudentDTOs
      * The column "registrationNumber" is mandatory since the import requires it as an identifier
+     * @param $event File change event from the HTML input of type file
      * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
      */
-    private async readStudentsFromCSVFile(csvFile: File): Promise<StudentDTO[]> {
+    private async readStudentsFromCSVFile($event: any, csvFile: File): Promise<StudentDTO[]> {
+        let csvStudents: CsvStudent[] = [];
         try {
             this.isParsing = true;
-            return (await this.parseCSVFile(csvFile))
-                .filter((csvStudent) => Boolean(csvStudent[csvColumns.registrationNumber]))
-                .map(
-                    (student) =>
-                        ({
-                            registrationNumber: student[csvColumns.registrationNumber],
-                            firstName: student[csvColumns.firstName],
-                            lastName: student[csvColumns.lastName],
-                        } as StudentDTO),
-                );
+            this.validationError = null;
+            csvStudents = await this.parseCSVFile(csvFile);
+        } catch (error) {
+            this.validationError = error.message;
         } finally {
             this.isParsing = false;
         }
+        if (csvStudents.length > 0) {
+            this.performExtraValidations(csvStudents);
+        }
+        if (this.validationError) {
+            $event.target.value = ''; // remove selected file so user can fix the file and select it again
+            return [];
+        }
+        return csvStudents.map(
+            (student) =>
+                ({
+                    registrationNumber: student[csvColumns.registrationNumber],
+                    firstName: student[csvColumns.firstName] || '',
+                    lastName: student[csvColumns.lastName] || '',
+                } as StudentDTO),
+        );
+    }
+
+    /**
+     * Performs validations on the parsed students
+     * - checks if values for the required column {csvColumns.registrationNumber} are present
+     * @param csvStudents Parsed list of students
+     */
+    performExtraValidations(csvStudents: CsvStudent[]) {
+        const invalidStudentEntries = this.computeInvalidStudentEntries(csvStudents);
+        if (invalidStudentEntries) {
+            const msg = 'Error: Rows without value in required column';
+            const maxLength = 30;
+            const entriesFormatted = invalidStudentEntries.length <= maxLength ? invalidStudentEntries : invalidStudentEntries.slice(0, maxLength) + '...';
+            this.validationError = `${msg} "${csvColumns.registrationNumber}": ${entriesFormatted}`;
+        }
+    }
+
+    /**
+     * Returns a comma separated list of row numbers that contains invalid student entries
+     * @param csvStudents Parsed list of students
+     */
+    computeInvalidStudentEntries(csvStudents: CsvStudent[]): string | null {
+        const invalidList = [];
+        for (const [i, student] of csvStudents.entries()) {
+            if (!student[csvColumns.registrationNumber]) {
+                invalidList.push(i + 2); // +2 instead of +1 due to header column in csv file
+            }
+        }
+        return invalidList.length === 0 ? null : invalidList.join(', ');
     }
 
     /**
      * Parses a csv file and returns a promise with a list of rows
      * @param csvFile File that should be parsed
      */
-    private parseCSVFile(csvFile: File): Promise<any[]> {
-        return new Promise((resolve) => {
-            Papa.parse(csvFile, { header: true, complete: (results) => resolve(results.data) });
+    private parseCSVFile(csvFile: File): Promise<CsvStudent[]> {
+        return new Promise((resolve, reject) => {
+            Papa.parse(csvFile, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => resolve(results.data as CsvStudent[]),
+                error: (error) => reject(error),
+            });
         });
     }
 

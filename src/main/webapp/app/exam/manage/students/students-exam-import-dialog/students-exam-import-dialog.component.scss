@@ -90,6 +90,10 @@ $error-bg-color: #f8d7da;
         float: left;
     }
 
+    tr {
+        display: flex !important;
+    }
+
     td,
     th {
         white-space: nowrap;
