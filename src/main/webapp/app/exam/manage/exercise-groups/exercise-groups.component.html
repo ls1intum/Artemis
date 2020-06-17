@@ -92,14 +92,14 @@
                             {{ exercise.maxScore }}
                         </td>
                         <td class="d-flex justify-content-end">
-                            <jhi-text-exercise-row-buttons
+                            <jhi-exercise-row-buttons
                                 [courseId]="courseId"
-                                [textExercise]="exercise"
+                                [exercise]="exercise"
                                 [examMode]="true"
                                 [examId]="examId"
                                 [exerciseGroupId]="exerciseGroup.id"
                                 (onDeleteExercise)="loadExerciseGroups()"
-                            ></jhi-text-exercise-row-buttons>
+                            ></jhi-exercise-row-buttons>
                         </td>
                     </tr>
                 </tbody>
