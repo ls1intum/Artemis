@@ -41,6 +41,7 @@
 .right {
     display: flex;
     height: 100%;
+    touch-action: none;
 }
 
 .expanded {
