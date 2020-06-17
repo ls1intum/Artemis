@@ -524,6 +524,15 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addActiveExamWithRegisteredUser(Course course, User user) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.addUser(user);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExamRepository.save(studentExam);

@@ -110,12 +110,12 @@ public class StudentExamAccessService {
         }
 
         // Check that the exam is live
-        if (exam.get().getStartDate().isBefore(ZonedDateTime.now()) && exam.get().getEndDate().isAfter(ZonedDateTime.now())) {
+        if (exam.get().getStartDate().isAfter(ZonedDateTime.now()) || exam.get().getEndDate().isBefore(ZonedDateTime.now())) {
             return Optional.of(forbidden());
         }
 
         // Check that the current user is registered for the exam
-        if (examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+        if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
             return Optional.of(forbidden());
         }
 
