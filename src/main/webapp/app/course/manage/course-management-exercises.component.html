@@ -1,4 +1,4 @@
-<ng-container *ngIf="course; else loading">
+<ng-container *ngIf="course">
     <h3>
         <span
             >{{ course.title }} - {{ quizExercisesCount + programmingExercisesCount + modelingExercisesCount + fileUploadExercisesCount + textExercisesCount }}
@@ -27,9 +27,3 @@
         <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
 </ng-container>
-
-<ng-template #loading>
-    <h2>
-        <span style="color: grey;"><fa-icon [icon]="'spinner'"></fa-icon>&nbsp;<span>Please wait while Artemis is finding the course.</span></span>
-    </h2>
-</ng-template>

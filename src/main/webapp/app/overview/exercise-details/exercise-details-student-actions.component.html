@@ -229,16 +229,27 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-        <ng-template #popContent>
+        <ng-template #popContent style="max-width: 660px;">
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <pre
-                style="max-width: 100%;"
-                ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
-                >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
-            >
+            <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+            <div class="row" style="margin: 0; max-width: 100%;">
+                <pre
+                    style="flex: 1;"
+                    [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
+                    ngxClipboard
+                    [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
+                    (cbOnSuccess)="onCopySuccess()"
+                    (cbOnError)="onCopyFailure()"
+                    >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
+                >
+                <pre
+                    *ngIf="sshEnabled"
+                    class="btn btn-primary d-inline-flex align-items-center ml-0"
+                    style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
+                    (click)="useSsh = !useSsh"
+                    >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
+                >
+            </div>
             <p *ngIf="repositoryPassword">
                 {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
                 {{ 'artemisApp.exerciseActions.hoverToShow' | translate }}

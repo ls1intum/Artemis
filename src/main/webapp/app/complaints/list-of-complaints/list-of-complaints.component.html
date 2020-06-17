@@ -35,15 +35,18 @@
 
         <table class="table" [hidden]="complaintsToShow.length === 0">
             <thead>
-                <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" [callback]="callback">
-                    <th jhiSortBy="id"><a class="th-link">#</a><fa-icon [icon]="'sort'"></fa-icon></th>
+                <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" [callback]="sortRows.bind(this)">
+                    <th jhiSortBy="id">
+                        <a class="th-link">#</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="result.participation.exercise.title">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="result.submission.id">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.login">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</a
@@ -70,10 +73,7 @@
             </thead>
 
             <tbody>
-                <tr
-                    *ngFor="let complaint of complaintsToShow | sortBy: complaintsSortingPredicate:complaintsReverseOrder"
-                    [ngClass]="{ 'table-warning': shouldHighlightComplaint(complaint) }"
-                >
+                <tr *ngFor="let complaint of complaintsToShow" [ngClass]="{ 'table-warning': shouldHighlightComplaint(complaint) }">
                     <td>
                         {{ complaint.id }}
                     </td>

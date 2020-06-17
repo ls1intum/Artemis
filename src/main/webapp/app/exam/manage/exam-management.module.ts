@@ -19,7 +19,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MomentModule } from 'ngx-moment';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 
 const ENTITY_STATES = [...examManagementState];
@@ -36,7 +35,6 @@ const ENTITY_STATES = [...examManagementState];
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisTextExerciseModule,
-        SortByModule,
         MomentModule,
     ],
     declarations: [

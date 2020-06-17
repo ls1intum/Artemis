@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -12,6 +11,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { Submission } from 'app/entities/submission.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -33,8 +33,8 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
-        private momentDiff: DifferencePipe,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -80,7 +80,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                                 submission.result.participation = submission.participation;
                                 submission.participation.results = [submission.result];
                             }
-
                             return submission;
                         }),
                     ),
@@ -147,7 +146,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
     }
 
-    public durationString(completionDate: Date, initializationDate: Date) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
+    public sortRows() {
+        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
 }
