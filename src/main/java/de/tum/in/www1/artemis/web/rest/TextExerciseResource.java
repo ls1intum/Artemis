@@ -238,7 +238,7 @@ public class TextExerciseResource {
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         TextExercise textExercise = optionalTextExercise.get();
 

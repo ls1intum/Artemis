@@ -214,7 +214,7 @@ public class FileUploadExerciseResource {
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
         if (optionalFileUploadExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         FileUploadExercise fileUploadExercise = optionalFileUploadExercise.get();
 
