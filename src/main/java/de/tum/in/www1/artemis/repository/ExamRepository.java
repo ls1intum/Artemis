@@ -38,6 +38,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param userId the id of the user
      * @return true if the user is registered for the exam
      */
-    @Query("SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END FROM Exam exam LEFT JOIN FETCH exam.registeredUsers registeredUsers WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}")
+    @Query("SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END FROM Exam exam LEFT JOIN exam.registeredUsers registeredUsers WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}")
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 }
