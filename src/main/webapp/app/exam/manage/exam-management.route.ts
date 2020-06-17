@@ -215,6 +215,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Create Text Exercise
     {
         path: ':examId/exercise-groups/:groupId/text-exercises/new',
         component: TextExerciseUpdateComponent,
@@ -227,6 +228,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Edit Text Exercise
     {
         path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
@@ -239,6 +241,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Create File Upload Exercise
     {
         path: ':examId/exercise-groups/:groupId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
@@ -251,6 +254,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Edit File Upload Exercise
     {
         path: ':examId/exercise-groups/:groupId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,

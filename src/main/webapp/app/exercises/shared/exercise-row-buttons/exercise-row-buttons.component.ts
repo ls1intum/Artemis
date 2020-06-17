@@ -39,7 +39,7 @@ export class ExerciseRowButtonsComponent {
     private deleteTextExercise() {
         this.textExerciseService.delete(this.exercise.id).subscribe(
             () => {
-                // TODO: Should we choose another name for exam exercises?
+                // TODO: Should we choose another event name for exam exercises?
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted a textExercise',
