@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.web.rest.dto.StudentExamDTO;
 
 @Service
 public class StudentExamAccessService {
@@ -72,10 +71,10 @@ public class StudentExamAccessService {
      * @param studentExamId the id of the student exam
      * @return the student exam wrapper in a ResponseEntity or an error response
      */
-    public ResponseEntity<StudentExamDTO> checkAndGetStudentExamAccessWithExercises(Long courseId, Long examId, Long studentExamId) {
+    public ResponseEntity<StudentExam> checkAndGetStudentExamAccessWithExercises(Long courseId, Long examId, Long studentExamId) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
 
-        Optional<ResponseEntity<StudentExamDTO>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -85,8 +84,8 @@ public class StudentExamAccessService {
             return notFound();
         }
 
-        Optional<ResponseEntity<StudentExamDTO>> studentExamAccessFailure = checkStudentExamAccess(examId, currentUser, studentExam.get());
-        return studentExamAccessFailure.orElseGet(() -> ResponseEntity.ok(StudentExamDTO.createFromEntity(studentExam.get())));
+        Optional<ResponseEntity<StudentExam>> studentExamAccessFailure = checkStudentExamAccess(examId, currentUser, studentExam.get());
+        return studentExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExam.get()));
     }
 
     private <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser) {

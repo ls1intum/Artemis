@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.dto.StudentExamDTO;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -81,8 +80,9 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExamDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
+        // TODO: Use a DTO here as we do not want to send the user and the exam (at least not all of it)
         return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
     }
 }
