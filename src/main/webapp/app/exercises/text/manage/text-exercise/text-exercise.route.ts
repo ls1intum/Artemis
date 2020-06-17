@@ -85,8 +85,8 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/text-exercises/import/:id',
-        component: TextExerciseImportComponent,
+        path: ':courseId/text-exercises/import/:exerciseId',
+        component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
         },
