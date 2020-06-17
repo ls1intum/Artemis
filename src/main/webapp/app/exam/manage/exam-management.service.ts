@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -86,13 +87,24 @@ export class ExamManagementService {
     }
 
     /**
-     * Addsa student to the registered users for an exam
+     * Add a student to the registered users for an exam
      * @param courseId The course id.
      * @param examId The id of the exam to which to add the student
      * @param studentLogin Login of the student
      */
     addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    }
+
+    /**
+     * Add students to the registered users for an exam
+     * @param courseId The course id.
+     * @param examId The id of the exam to which to add the student
+     * @param studentDtos Student DTOs of student to add to the exam
+     * @return studentDtos of students that were not found in the system
+     */
+    addStudentsToExam(courseId: number, examId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, { studentDtos }, { observe: 'response' });
     }
 
     /**

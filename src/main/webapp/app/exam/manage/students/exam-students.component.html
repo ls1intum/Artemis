@@ -5,19 +5,16 @@
             <span class="text-muted">({{ exam.title }})</span>
         </h3>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">
-                Registered students </span
-            ><span>: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span><span>: {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
-            <jhi-button
+            <jhi-students-exam-import-button
                 class="ml-4"
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [icon]="'plus'"
-                [title]="'artemisApp.examManagement.examStudents.importStudents'"
-            ></jhi-button>
+                [courseId]="courseId"
+                [exam]="exam"
+                [buttonSize]="ButtonSize.MEDIUM"
+            ></jhi-students-exam-import-button>
         </div>
     </div>
     <jhi-alert></jhi-alert>
@@ -112,7 +109,7 @@
                 <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.visibleRegistrationNumber">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber">
                                 Email
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>

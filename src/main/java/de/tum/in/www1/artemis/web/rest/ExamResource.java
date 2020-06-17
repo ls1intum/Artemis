@@ -155,10 +155,15 @@ public class ExamResource {
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> {
-            Exam exam = withStudents ? examService.findOneWithRegisteredUsers(examId) : examService.findOne(examId);
-            return ResponseEntity.ok(exam);
-        });
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        if (!withStudents) {
+            return ResponseEntity.ok(examService.findOne(examId));
+        }
+        Exam exam = examService.findOneWithRegisteredUsers(examId);
+        exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -253,10 +258,10 @@ public class ExamResource {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentDtos     the list of students (with at least registration number) who should get access to the exam
-     * @return             the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
+     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")

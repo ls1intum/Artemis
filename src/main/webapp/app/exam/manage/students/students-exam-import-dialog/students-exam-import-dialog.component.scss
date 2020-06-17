@@ -1,0 +1,61 @@
+:host {
+    display: block;
+}
+
+.loading-spinner {
+    position: relative;
+    top: -2px;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
+.header-fixed {
+    width: 100%;
+
+    thead,
+    tbody,
+    thead > tr,
+    tbody > tr,
+    thead > tr > th,
+    tbody > tr > td, th {
+        display: block;
+    }
+
+    tbody > tr:after,
+    thead > tr:after {
+        content: ' ';
+        display: block;
+        visibility: hidden;
+        clear: both;
+    }
+
+    thead {
+        overflow-y: scroll;
+    }
+
+    tbody {
+        overflow-y: scroll;
+        height: max(300px, 100vh - 500px);
+    }
+
+    tbody > tr > td,
+    tbody > tr > td, th {
+        width: calc(100% / 4); // divide by the number of table columns
+        float: left;
+    }
+
+    td, th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.modal-footer {
+    button[disabled] {
+        cursor: not-allowed;
+    }
+}
