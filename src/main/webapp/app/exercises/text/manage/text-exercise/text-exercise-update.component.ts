@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { TextExercise } from '../../../../entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -15,6 +15,8 @@ import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
+import { switchMap, tap } from 'rxjs/operators';
+import { activateRoute } from 'app/account/activate/activate.route';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -22,8 +24,10 @@ import { AlertService } from 'app/core/alert/alert.service';
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
+    submitButtonTitle: string;
     checkedFlag: boolean;
     isExamMode: boolean;
+    isImport: boolean = false;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
 
@@ -60,6 +64,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         this.$window.nativeWindow.scroll(0, 0);
 
+        console.log(this.activatedRoute.url.findIndex[3]);
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
             this.isExamMode = !!this.textExercise.exerciseGroup;
@@ -74,8 +79,32 @@ export class TextExerciseUpdateComponent implements OnInit {
             }
         });
 
+        this.activatedRoute.url
+            .pipe(
+                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
+                switchMap(() => this.activatedRoute.params),
+                tap((params) => {
+                    if (this.isImport) {
+                        const targetCourseId = params['courseId'];
+                        this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                        this.textExercise.dueDate = null;
+                        this.textExercise.releaseDate = null;
+                        this.textExercise.assessmentDueDate = null;
+                    }
+                }),
+            )
+            .subscribe();
         this.isSaving = false;
         this.notificationText = null;
+
+        // Set submit button text depending on component state
+        if (this.isImport) {
+            this.submitButtonTitle = 'entity.action.import';
+        } else if (this.textExercise.id) {
+            this.submitButtonTitle = 'entity.action.save';
+        } else {
+            this.submitButtonTitle = 'entity.action.generate';
+        }
     }
 
     /**

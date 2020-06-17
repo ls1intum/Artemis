@@ -18,6 +18,7 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -35,6 +36,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent, TextExerciseRowButtonsComponent],
