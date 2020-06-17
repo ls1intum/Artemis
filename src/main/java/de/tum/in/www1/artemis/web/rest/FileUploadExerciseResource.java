@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -49,9 +50,11 @@ public class FileUploadExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExerciseGroupService exerciseGroupService;
+
     public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService,
             AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            GradingCriterionService gradingCriterionService) {
+            GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService) {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
@@ -60,6 +63,7 @@ public class FileUploadExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -205,6 +209,7 @@ public class FileUploadExerciseResource {
     @GetMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
@@ -215,10 +220,15 @@ public class FileUploadExerciseResource {
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (fileUploadExercise.hasExerciseGroup()) {
-            Course course = courseService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(fileUploadExercise.getExerciseGroup().getId());
+            Course course = exerciseGroup.getExam().getCourse();
+
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            // Set the exerciseGroup, exam and course so that the client can work with those ids
+            fileUploadExercise.setExerciseGroup(exerciseGroup);
         }
         else if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             return forbidden();

@@ -64,6 +64,9 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Returns the route for editing the exercise. Exam and course exercises have different routes.
+     */
     getEditRoute() {
         if (this.isExamExercise) {
             return [
