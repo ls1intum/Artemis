@@ -343,7 +343,7 @@ public class QuizScheduleService {
             }
             for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
                 if (cachedQuiz.getQuizStart() != null)
-                    cancelScheduledQuizStart(cachedQuiz.getId());
+                    cancelScheduledQuizStart(cachedQuiz.getExerciseId());
             }
             threadPoolTaskScheduler.shutdown();
             threadPoolTaskScheduler.destroy();
@@ -463,7 +463,7 @@ public class QuizScheduleService {
         // global try-catch for error logging
         try {
             for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
-                Long quizExerciseId = cachedQuiz.getId();
+                Long quizExerciseId = cachedQuiz.getExerciseId();
                 // Get fresh QuizExercise from DB
                 QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
@@ -566,8 +566,8 @@ public class QuizScheduleService {
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
-        cancelScheduledQuizStart(cachedQuiz.getId());
-        cachedQuizExercises.remove(cachedQuiz.getId(), cachedQuiz);
+        cancelScheduledQuizStart(cachedQuiz.getExerciseId());
+        cachedQuizExercises.remove(cachedQuiz.getExerciseId(), cachedQuiz);
     }
 
     private static String printDuration(long timeNanoStart) {

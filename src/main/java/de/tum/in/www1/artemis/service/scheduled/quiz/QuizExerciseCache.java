@@ -12,17 +12,17 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
 abstract class QuizExerciseCache {
 
-    private Long id;
+    private Long exerciseId;
 
-    QuizExerciseCache(Long id) {
-        this.id = Objects.requireNonNull(id, "exercise id must not be null");
+    QuizExerciseCache(Long exerciseId) {
+        this.exerciseId = Objects.requireNonNull(exerciseId, "exerciseId must not be null");
     }
 
     /**
      * The id of the QuizExercise
      */
-    final Long getId() {
-        return id;
+    final Long getExerciseId() {
+        return exerciseId;
     }
 
     /**
@@ -71,7 +71,7 @@ abstract class QuizExerciseCache {
 
     @Override
     public final int hashCode() {
-        return id.hashCode();
+        return exerciseId.hashCode();
     }
 
     @Override
@@ -80,12 +80,12 @@ abstract class QuizExerciseCache {
             return true;
         if (!(obj instanceof QuizExerciseCache))
             return false;
-        return id.equals(((QuizExerciseCache) obj).id);
+        return exerciseId.equals(((QuizExerciseCache) obj).exerciseId);
     }
 
     @Override
     public String toString() {
-        return "QuizExerciseCache[" + id + "]";
+        return "QuizExerciseCache[" + exerciseId + "]";
     }
 
     static QuizExerciseCache empty() {
