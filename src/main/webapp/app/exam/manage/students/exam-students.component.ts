@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -65,6 +66,15 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
             this.allRegisteredUsers = exam.registeredUsers! || [];
+            this.isLoading = false;
+        });
+    }
+
+    reloadExamWithRegisterdUsers() {
+        this.isLoading = true;
+        this.examManagementService.find(this.courseId, this.exam.id, true).subscribe((examResponse: HttpResponse<Exam>) => {
+            this.exam = examResponse.body!;
+            this.allRegisteredUsers = this.exam.registeredUsers! || [];
             this.isLoading = false;
         });
     }

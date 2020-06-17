@@ -88,6 +88,8 @@
                         "tooltip": "Diese Studenten werden importiert beim Klicken auf \"Importieren\"."
                     },
                     "numberOfStudents": "Anzahl an Studenten:",
+                    "numberOfStudentsImported": "Importiert:",
+                    "numberOfStudentsNotImported": "Nicht gefunden:",
                     "genericErrorMessage": "Der Import von Studenten in die Klausur ist gescheitert!"
                 }
             },

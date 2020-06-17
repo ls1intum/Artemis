@@ -87,6 +87,8 @@
                         "tooltip": "These students will be imported when clicking on the \"Import\" button."
                     },
                     "numberOfStudents": "Number of students:",
+                    "numberOfStudentsImported": "Imported:",
+                    "numberOfStudentsNotImported": "Not found:",
                     "genericErrorMessage": "Import of students into exam failed!"
                 }
             },

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
@@ -24,6 +24,8 @@ export class StudentsExamImportButtonComponent {
     @Input() exam: Exam;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
+    @Output() finish: EventEmitter<void> = new EventEmitter();
+
     constructor(private modalService: NgbModal) {}
 
     /**
@@ -35,5 +37,10 @@ export class StudentsExamImportButtonComponent {
         const modalRef: NgbModalRef = this.modalService.open(StudentsExamImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.exam = this.exam;
+
+        modalRef.result.then(
+            () => this.finish.emit(),
+            () => {},
+        );
     }
 }

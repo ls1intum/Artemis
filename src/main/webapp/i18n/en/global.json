@@ -194,6 +194,7 @@
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
+            "finish": "Finish",
             "import": "Import",
             "to-import": "Import",
             "export": "Export",

@@ -30,7 +30,9 @@
         </div>
         <div *ngIf="studentsToImport?.length > 0" class="form-group mt-4">
             <div>
-                <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.studentsForImport.label">Students for import</label>
+                <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.studentsForImport.label">
+                    Students for import
+                </label>
                 <jhi-help-icon placement="right" text="artemisApp.examManagement.examStudents.importStudents.studentsForImport.tooltip" class="mr-1"></jhi-help-icon>
             </div>
             <table class="table table-striped table-sm header-fixed mt-2">
@@ -43,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody class="table-body--students">
-                    <tr *ngFor="let student of studentsToImport; let i = index">
+                    <tr *ngFor="let student of studentsToImport; let i = index" [class.import-success]="wasImported(student)" [class.import-fail]="wasNotImported(student)">
                         <th scope="row">{{ i + 1 }}</th>
                         <td>{{ student.registrationNumber }}</td>
                         <td>{{ student.firstName }}</td>
@@ -55,18 +57,36 @@
     </div>
     <div class="modal-footer justify-content-between">
         <div *ngIf="studentsToImport?.length > 0" class="flex-shrink-0 mr-2 d-flex">
-            <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | translate }}</strong>
-            <span>&nbsp;{{ studentsToImport.length }}</span>
+            <div *ngIf="!hasImported; else numbersAfterImport">
+                <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | translate }}</strong>
+                <span>&nbsp;{{ studentsToImport.length }}</span>
+            </div>
+            <ng-template #numbersAfterImport>
+                <div>
+                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsImported' | translate }}</strong>
+                    <span>{{ numberOfStudentsImported }}</span>
+                </div>
+                <div class="ml-2">
+                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsNotImported' | translate }}</strong>
+                    <span>{{ numberOfStudentsNotImported }}</span>
+                </div>
+            </ng-template>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="isSubmitDisabled">
+            <button *ngIf="!hasImported; else buttonAfterImport" type="submit" class="btn btn-primary" [disabled]="isSubmitDisabled">
                 <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
             </button>
+            <ng-template #buttonAfterImport>
+                <button class="btn btn-success" (click)="onFinish()">
+                    <fa-icon [icon]="'check'" class="mr-2"></fa-icon>
+                    <span jhiTranslate="entity.action.finish">Finish</span>
+                </button>
+            </ng-template>
         </div>
     </div>
 </form>

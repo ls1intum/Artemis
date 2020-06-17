@@ -31,9 +31,11 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     @Input() exam: Exam;
 
     studentsToImport: StudentDTO[] = [];
+    notFoundStudents: StudentDTO[] = [];
 
     isParsing = false;
     isImporting = false;
+    hasImported = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -44,23 +46,24 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.studentsToImport?.length;
-    }
-
-    /**
-     * Cancel the import dialog
-     */
-    clear() {
-        this.activeModal.dismiss('cancel');
+    private resetDialog() {
+        this.studentsToImport = [];
+        this.notFoundStudents = [];
+        this.hasImported = false;
     }
 
     async onCSVFileSelect($event: any) {
         if ($event.target.files.length > 0) {
+            this.resetDialog();
             this.studentsToImport = await this.readStudentsFromCSVFile($event.target.files[0]);
         }
     }
 
+    /**
+     * Reads students from a csv file into a list of StudentDTOs
+     * The column "registrationNumber" is mandatory since the import requires it as an identifier
+     * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
+     */
     private async readStudentsFromCSVFile(csvFile: File): Promise<StudentDTO[]> {
         try {
             this.isParsing = true;
@@ -79,16 +82,20 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         }
     }
 
+    /**
+     * Parses a csv file and returns a promise with a list of rows
+     * @param csvFile File that should be parsed
+     */
     private parseCSVFile(csvFile: File): Promise<any[]> {
         return new Promise((resolve) => {
             Papa.parse(csvFile, { header: true, complete: (results) => resolve(results.data) });
         });
     }
 
+    /**
+     * Sends the import request to the server with the list of students to be imported
+     */
     importStudents() {
-        if (this.isSubmitDisabled) {
-            return;
-        }
         this.isImporting = true;
         this.examManagementService.addStudentsToExam(this.courseId, this.exam.id, this.studentsToImport).subscribe(
             (res) => this.onSaveSuccess(res),
@@ -97,19 +104,62 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     }
 
     /**
-     * Callback method that is called when the import request was successful
-     * @param {HttpResponse<StudentDTO[]>} students - List of students that could NOT be imported since they were not found
+     * True if this student was successfully imported, false otherwise
+     * @param student The student to be checked
      */
-    onSaveSuccess(students: HttpResponse<StudentDTO[]>) {
-        this.activeModal.close(students.body);
-        this.isImporting = false;
+    wasImported(student: StudentDTO): boolean {
+        return this.hasImported && !this.wasNotImported(student);
     }
 
     /**
-     * Hook to indicate an error on save
+     * True if this student could not be imported, false otherwise
+     * @param student The student to be checked
+     */
+    wasNotImported(student: StudentDTO): boolean {
+        return this.hasImported && this.notFoundStudents.map((s) => s.registrationNumber).includes(student.registrationNumber);
+    }
+
+    /**
+     * Number of students that were successfully imported
+     */
+    get numberOfStudentsImported(): number {
+        return !this.hasImported ? 0 : this.studentsToImport.length - this.numberOfStudentsNotImported;
+    }
+
+    /**
+     * Number of students which could not be imported
+     */
+    get numberOfStudentsNotImported(): number {
+        return !this.hasImported ? 0 : this.notFoundStudents.length;
+    }
+
+    get isSubmitDisabled(): boolean {
+        return this.isImporting || !this.studentsToImport?.length;
+    }
+
+    /**
+     * Callback method that is called when the import request was successful
+     * @param {HttpResponse<StudentDTO[]>} notFoundStudents - List of students that could NOT be imported since they were not found
+     */
+    onSaveSuccess(notFoundStudents: HttpResponse<StudentDTO[]>) {
+        this.isImporting = false;
+        this.hasImported = true;
+        this.notFoundStudents = notFoundStudents.body! || [];
+    }
+
+    /**
+     * Callback method that is called when the import request failed
      */
     onSaveError() {
         this.jhiAlertService.error('artemisApp.examManagement.examStudents.importStudents.genericErrorMessage');
         this.isImporting = false;
+    }
+
+    clear() {
+        this.activeModal.dismiss('cancel');
+    }
+
+    onFinish() {
+        this.activeModal.close();
     }
 }
