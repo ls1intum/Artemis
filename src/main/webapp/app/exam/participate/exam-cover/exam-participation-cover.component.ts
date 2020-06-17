@@ -3,10 +3,13 @@ import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { ExamSessionService } from 'app/exam/manage/exam-session/exam-session.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -21,7 +24,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     course: Course | null;
-    courseId = 0;
+    courseId: number;
     title: string;
     startEnabled: boolean;
     confirmed: boolean;
@@ -35,7 +38,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     fullname?: string;
     falseName = false;
 
-    constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private accountService: AccountService,
+        private sessionStorage: SessionStorageService,
+        private examSessionService: ExamSessionService,
+        private route: ActivatedRoute,
+    ) {}
 
     /**
      * on init use the correct information to display in either start or final view
@@ -51,6 +60,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
+        this.route.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            this.examId = +params['examId'];
+        });
     }
 
     ngOnDestroy() {
@@ -99,7 +112,29 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * TODO: add session management, this function is bound to the start exam button
+     * TODO: generate session token and start exam
      */
-    startExam() {}
+    startExam() {
+        // this.authenticationService.login({ username: this.username, password: this.password, rememberMe: false }).subscribe();
+    }
+
+    /**
+     * Submits the exam if user has valid token
+     */
+    submit() {
+        // TODO retrieve correct local token
+        const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+        let validSessionToken = '';
+        this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
+            validSessionToken = response.body?.sessionToken ?? '';
+        });
+
+        console.log(validSessionToken);
+
+        if (validSessionToken && localSessionToken === validSessionToken) {
+            // TODO: submit exam
+        } else {
+            // error message
+        }
+    }
 }

@@ -41,7 +41,7 @@
         </button>
     </div>
     <div *ngIf="!startView" style="text-align: center;">
-        <button [disabled]="!confirmed" type="submit" class="btn btn-primary" id="summaryBtn">
+        <button [disabled]="!confirmed" type="submit" (click)="submit()" class="btn btn-primary" id="summaryBtn">
             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
         </button>
     </div>
