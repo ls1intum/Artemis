@@ -1,6 +1,6 @@
 import { PARTICIPATION, QUIZ_EXERCISES } from './endpoints.js';
 import { fail, sleep } from 'k6';
-import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue } from '../util/utils.js';
+import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue, extractDestination, extractMessageContent } from '../util/utils.js';
 import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE } from './endpoints.js';
 
 export function createQuizExercise(artemis, course) {
@@ -165,7 +165,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/user/topic/exercise/' + exerciseId + '/participation')) {
+            if (message.startsWith('MESSAGE\n') && extractDestination(message) === '/user/topic/exercise/' + exerciseId + '/participation') {
                 console.log(`RECEIVED callback from server for ${currentUsername}`);
                 sleep(5);
                 socket.close();
@@ -209,12 +209,10 @@ export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUs
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/topic/courses/' + courseId + '/quizExercises')) {
+            if (message.startsWith('MESSAGE\n') && extractDestination(message) === '/topic/courses/' + courseId + '/quizExercises') {
                 // console.log(`RECEIVED quiz start for user ${currentUsername}: ${message}`);
                 //console.log(message.match('MESSAGE\ndestination:\/topic\/courses\/(?:\d)*\/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\w|\d|-)*\ncontent-length:(?:\d)*\n\n(.*)'));
-                let receivedPayload = message.match(
-                    'MESSAGE\ndestination:/topic/courses/(?:\\d*)/quizExercises\nsubscription:(?:\\w|-)*\nmessage-id:(?:\\w|\\d|-)*\ncontent-length:(?:\\d)*\n\n(.*)\u0000',
-                )[1];
+                let receivedPayload = extractMessageContent(message);
                 let parsedQuiz = JSON.parse(receivedPayload);
 
                 if (parsedQuiz.started) {
