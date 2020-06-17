@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -13,8 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.service.ExamAccessService;
-import de.tum.in.www1.artemis.service.StudentExamService;
+import de.tum.in.www1.artemis.service.*;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -29,9 +30,12 @@ public class StudentExamResource {
 
     private final StudentExamService studentExamService;
 
-    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService) {
+    private final StudentExamAccessService studentExamAccessService;
+
+    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
+        this.studentExamAccessService = studentExamAccessService;
     }
 
     /**
@@ -66,8 +70,8 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id. This
-     * will be used for the actual conduction of the exam.
+     * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id.
+     * This will be used for the actual conduction of the exam.
      *
      * @param courseId      the course to which the student exam belongs to
      * @param examId        the exam to which the student exam belongs to
@@ -78,20 +82,7 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
-
-        // TODO: is student of course
-
-        // TODO: exam belongs to course
-
-        // TODO: student of student exam is registered for exam
-
-        // TODO: exam is live
-
-        // TODO: performance is relevant here --> maybe own StudentExamAccessService
-
-        // TODO: use a DTO here
-
-        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithExercises(studentExamId)));
+        // TODO: Use a DTO here as we do not want to send the user and the exam (at least not all of it)
+        return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
     }
 }
