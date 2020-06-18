@@ -9,6 +9,8 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -17,6 +19,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -28,13 +31,19 @@ public class ExamService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
+    private final CourseService courseService;
+
+    private final UserService userService;
+
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository) {
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, CourseService courseService, UserService userService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
+        this.courseService = courseService;
+        this.userService = userService;
     }
 
     /**
@@ -192,5 +201,59 @@ public class ExamService {
         int randomIndex = random.nextInt(exercises.size());
         Exercise randomExercise = exercises.get(randomIndex);
         return randomExercise;
+    }
+
+    /**
+     * Add multiple users to the students of the exam so that they can access the exam
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     *
+     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
+     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    public List<StudentDTO> registerStudentsForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
+        var course = courseService.findOne(courseId);
+        var exam = findOneWithRegisteredUsers(examId);
+        List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
+        for (var studentDto : studentDtos) {
+            var registrationNumber = studentDto.getRegistrationNumber();
+            try {
+                // 1) we use the registration number and try to find the student in the Artemis user database
+                Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
+                    if (!student.getGroups().contains(course.getStudentGroupName())) {
+                        userService.addUserToGroup(student, course.getStudentGroupName());
+                    }
+                    exam.addUser(student);
+                    continue;
+                }
+                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
+                // external user management system
+                optionalStudent = userService.createUserFromLdap(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    exam.addUser(student);
+                    continue;
+                }
+                // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
+                log.warn("User with registration number " + registrationNumber + " not found in Artemis user database and not found in (TUM) LDAP");
+            }
+            catch (Exception ex) {
+                log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
+            }
+
+            notFoundStudentsDtos.add(studentDto);
+        }
+        examRepository.save(exam);
+        return notFoundStudentsDtos;
     }
 }
