@@ -436,7 +436,7 @@ public class TextExerciseResource {
         final var user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourse(), user)) {
-            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), importedExercise.getCourse().getId());
+            log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourse().getId());
             return forbidden();
         }
 
@@ -446,6 +446,12 @@ public class TextExerciseResource {
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourse(), user)) {
+            log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourse().getId());
+            return forbidden();
+        }
+
         final var newExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
