@@ -90,6 +90,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private logTimers: Subscription[] = [];
 
     private socket: any = undefined;
+    private subscriptionCounter = 0;
 
     constructor(private router: Router, private authServerProvider: AuthServerProvider, private $window: WindowRef, private csrfService: CSRFService) {
         this.connection = this.createConnection();
@@ -191,7 +192,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                                         }
                                     },
                                     {
-                                        id: this.getSessionId() + '-' + channel,
+                                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
                                     },
                                 ),
                             );
@@ -301,7 +302,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                         }
                     },
                     {
-                        id: this.getSessionId() + '-' + channel,
+                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
                     },
                 ),
             );
