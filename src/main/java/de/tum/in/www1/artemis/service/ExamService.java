@@ -169,18 +169,6 @@ public class ExamService {
             throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
         }
 
-        // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
-        List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
-        List<Integer> indicesOfOptionalExerciseGroups = new ArrayList<>();
-        for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
-            if (Boolean.TRUE.equals(exam.getExerciseGroups().get(i).getIsMandatory())) {
-                indicesOfMandatoryExerciseGroups.add(i);
-            }
-            else {
-                indicesOfOptionalExerciseGroups.add(i);
-            }
-        }
-
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
 
         // Check that there are enough exercise groups
@@ -195,19 +183,29 @@ public class ExamService {
             throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
         }
 
+        // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
+        List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
+        List<Integer> indicesOfOptionalExerciseGroups = new ArrayList<>();
+        for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
+            if (Boolean.TRUE.equals(exam.getExerciseGroups().get(i).getIsMandatory())) {
+                indicesOfMandatoryExerciseGroups.add(i);
+            }
+            else {
+                indicesOfOptionalExerciseGroups.add(i);
+            }
+        }
+
         for (User registeredUser : exam.getRegisteredUsers()) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
             studentExam.setExam(exam);
             studentExam.setUser(registeredUser);
 
-            // Select exercises from exercise groups randomly
+            // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
-            for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
-                if (assembledIndices.contains(i)) {
-                    // we get one random exercise from all preselected exercise groups
-                    studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(i)));
-                }
+            for (Integer index : assembledIndices) {
+                // we get one random exercise from all preselected exercise groups
+                studentExam.addExercise(selectRandomExercise(random, exerciseGroups.get(index)));
             }
 
             // Apply random exercise order
@@ -281,7 +279,7 @@ public class ExamService {
 
     private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
         // Add all mandatory indices
-        List<Integer> indices = mandatoryIndices;
+        List<Integer> indices = new ArrayList<>(mandatoryIndices);
 
         // Add as many optional indices as numberOfOptionalExercises
         if (numberOfOptionalExercises > 0) {
