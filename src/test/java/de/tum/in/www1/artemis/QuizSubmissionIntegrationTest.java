@@ -80,8 +80,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(1));
-        quizExercise.setDuration(1);
+        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(5));
+        quizExercise.setDuration(5);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExerciseService.save(quizExercise);
@@ -113,7 +113,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
         // wait some time so that the quiz results are also sent to subscribed users
-        Thread.sleep(5000);
+        Thread.sleep(10_000);
 
         quizScheduleService.processCachedQuizSubmissions();
 
