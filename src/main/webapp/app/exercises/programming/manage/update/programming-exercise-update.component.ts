@@ -18,6 +18,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -34,6 +35,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     submitButtonTitle: string;
     isImport: boolean;
+    isExamMode: boolean;
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
@@ -69,6 +71,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
+        private exerciseGroupService: ExerciseGroupService,
     ) {}
 
     /**
@@ -107,6 +110,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
+                        // TODO: Case distinction for exam mode?
                         const targetCourseId = params['courseId'];
                         this.isImport = true;
                         this.courseService.find(targetCourseId).subscribe((res) => (this.programmingExercise.course = res.body!));
@@ -119,11 +123,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.programmingExercise.shortName = '';
                         this.programmingExercise.title = '';
                     } else {
-                        if (params['courseId']) {
+                        if (params['courseId'] && params['examId'] && params['groupId']) {
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                                this.isExamMode = true;
+                                this.programmingExercise.exerciseGroup = res.body!;
+                            });
+                        } else if (params['courseId']) {
                             const courseId = params['courseId'];
                             this.courseService.find(courseId).subscribe((res) => {
-                                const course = res.body!;
-                                this.programmingExercise.course = course;
+                                this.isExamMode = false;
+                                this.programmingExercise.course = res.body!;
                                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
                                     (categoryRes: HttpResponse<string[]>) => {
