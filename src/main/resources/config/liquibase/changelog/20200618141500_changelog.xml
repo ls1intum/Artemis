@@ -14,6 +14,5 @@
             set p.allow_online_editor = e.allow_online_editor
             where p.id = e.id
         </sql>
-        <dropColumn columnName="allow_online_editor" tableName="exercise"/>
     </changeSet>
 </databaseChangeLog>
