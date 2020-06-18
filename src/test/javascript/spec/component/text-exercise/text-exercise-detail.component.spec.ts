@@ -6,19 +6,20 @@ import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { Course } from 'app/entities/course.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
     let service: TextExerciseService;
-    const course: Course = { id: 123 } as Course;
-    const route = ({ params: of({ courseId: course.id }) } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [TextExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         })
             .overrideTemplate(TextExerciseDetailComponent, '')
             .compileComponents();
@@ -27,14 +28,23 @@ describe('TextExercise Management Detail Component', () => {
         service = fixture.debugElement.injector.get(TextExerciseService);
     });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
+    describe('OnInit with course exercise', () => {
+        const course: Course = { id: 123 } as Course;
+        const textExerciseWithCourse: TextExercise = new TextExercise(course, null);
+        textExerciseWithCourse.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.params = of({ exerciseId: textExerciseWithCourse.id });
+        });
+
+        it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             spyOn(service, 'find').and.returnValue(
                 of(
                     new HttpResponse({
-                        body: course,
+                        body: textExerciseWithCourse,
                         headers,
                     }),
                 ),
@@ -45,7 +55,40 @@ describe('TextExercise Management Detail Component', () => {
 
             // THEN
             expect(service.find).toHaveBeenCalled();
-            expect(comp.textExercise).toEqual(jasmine.objectContaining({ id: course.id }));
+            expect(comp.isExamExercise).toBeFalsy();
+            expect(comp.textExercise).toEqual(textExerciseWithCourse);
+        });
+    });
+
+    describe('OnInit with exam exercise', () => {
+        const exerciseGroup: ExerciseGroup = new ExerciseGroup();
+        const textExerciseWithExerciseGroup: TextExercise = new TextExercise(null, exerciseGroup);
+        textExerciseWithExerciseGroup.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.params = of({ exerciseId: textExerciseWithExerciseGroup.id });
+        });
+
+        it('Should call load on init and be in exam mode', () => {
+            // GIVEN
+            const headers = new HttpHeaders().append('link', 'link;link');
+            spyOn(service, 'find').and.returnValue(
+                of(
+                    new HttpResponse({
+                        body: textExerciseWithExerciseGroup,
+                        headers,
+                    }),
+                ),
+            );
+            // WHEN
+            fixture.detectChanges();
+            comp.ngOnInit();
+
+            // THEN
+            expect(service.find).toHaveBeenCalled();
+            expect(comp.isExamExercise).toBeTruthy();
+            expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });
     });
 });

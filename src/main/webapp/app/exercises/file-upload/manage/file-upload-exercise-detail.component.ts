@@ -15,6 +15,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;
+    isExamExercise: boolean;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
@@ -29,6 +30,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * Initializes subscription for file upload exercise
      */
     ngOnInit() {
+        // TODO: route determines whether the component is in exam mode
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -40,18 +42,41 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exerciseId the id of the file upload exercise
      */
     load(exerciseId: number) {
+        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise id
         this.fileUploadExerciseService
             .find(exerciseId)
             .pipe(filter((res) => !!res.body))
             .subscribe(
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
+                    this.isExamExercise = !!this.fileUploadExercise.exerciseGroup;
                     if (this.fileUploadExercise.categories) {
                         this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
                     }
                 },
                 (res: HttpErrorResponse) => this.onError(res),
             );
+    }
+
+    /**
+     * Returns the route for editing the exercise. Exam and course exercises have different routes.
+     */
+    getEditRoute() {
+        if (this.isExamExercise) {
+            return [
+                '/course-management',
+                this.fileUploadExercise.exerciseGroup?.exam?.course?.id,
+                'exams',
+                this.fileUploadExercise.exerciseGroup?.exam?.id,
+                'exercise-groups',
+                this.fileUploadExercise.exerciseGroup?.id,
+                'file-upload-exercises',
+                this.fileUploadExercise.id,
+                'edit',
+            ];
+        } else {
+            return ['/course-management', this.fileUploadExercise.course?.id, 'file-upload-exercises', this.fileUploadExercise.id, 'edit'];
+        }
     }
 
     /**
