@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -34,14 +33,14 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 
-    //LeftJoin to exercise categories + + example submission + feedback
-    @Query("select te from TextExercise te where te.course.instructorGroupName in :groups and (te.title like %:partialTitle% or te.course.title like %:partialCourseTitle%)")
-    Page<TextExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
-                                                                             @Param("partialCourseTitle") String partialCourseTitle,
-                                                                             @Param("groups") Set<String> groups, Pageable pageable);
+    // LeftJoin to exercise categories + + example submission + feedback
+    @Query("select textExercise from TextExercise textExercise where textExercise.course.instructorGroupName in :groups and (textExercise.title like %:partialTitle% or textExercise.course.title like %:partialCourseTitle%)")
+    Page<TextExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
 
-    //LeftJoin to exercise categories + + example submission + feedback
     Page<TextExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
-    //Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle, String partialCourseTitle, Pageable pageable);
+    // LeftJoin to exercise categories + + example submission + feedback
+    @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.result result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
+    Optional<TextExercise> findByIdWithEagerExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 }
