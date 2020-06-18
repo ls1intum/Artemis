@@ -387,6 +387,8 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Returns the project name by concatenating the course short name with the exercise title.
+     *
+     * @return project name of the programming exercise
      */
     @JsonIgnore
     public String getProjectName() {
