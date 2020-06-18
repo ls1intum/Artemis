@@ -62,7 +62,7 @@ export class StudentExamsComponent implements OnInit {
      */
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
-            (res) => this.setStudentExams(res.body),
+            (res) => this.setStudentExams(res),
             (err) => this.handleStudentExamGenerationError(err.error),
         );
     }
@@ -100,7 +100,7 @@ export class StudentExamsComponent implements OnInit {
         return studentExam.student?.login || '';
     };
 
-    private setStudentExams(studentExams: StudentExam[] | null): void {
+    private setStudentExams(studentExams: any): void {
         if (studentExams) {
             this.studentExams = studentExams;
         }
