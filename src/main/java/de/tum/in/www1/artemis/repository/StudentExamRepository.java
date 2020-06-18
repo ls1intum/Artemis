@@ -14,4 +14,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     List<StudentExam> findByExamId(Long examId);
+
+    StudentExam findByExamIdAndUserId(Long examId, Long userId);
+
 }

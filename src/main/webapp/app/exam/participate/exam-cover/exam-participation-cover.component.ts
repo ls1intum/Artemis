@@ -81,7 +81,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             if (this.confirmed) {
                 this.interval = setInterval(() => {
                     this.enableStartButton().then((enable) => (this.startEnabled = enable));
-                    console.log(this.startEnabled);
                 }, 100);
             } else {
                 this.startEnabled = false;
@@ -112,10 +111,16 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * TODO: generate session token and start exam
+     * Starts the exam and creates an exam session and stores the token in the browser
      */
     startExam() {
-        // this.authenticationService.login({ username: this.username, password: this.password, rememberMe: false }).subscribe();
+        this.examSessionService.createExamSession(this.courseId, this.examId).subscribe((response) => {
+            const sessionToken = response.body?.sessionToken ?? '';
+            this.sessionStorage.store('ExamSessionToken', sessionToken);
+            console.log('Session Storage', this.sessionStorage);
+        });
+
+        // TODO start exam
     }
 
     /**

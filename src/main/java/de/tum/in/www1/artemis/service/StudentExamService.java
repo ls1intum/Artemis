@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,6 +51,18 @@ public class StudentExamService {
     public List<StudentExam> findAllByExamId(Long examId) {
         log.debug("Request to get all student exams for Exam : {}", examId);
         return studentExamRepository.findByExamId(examId);
+    }
+
+    /**
+     * Get student exam for the given exam and user.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the user
+     * @return the list of all student exams
+     */
+    public StudentExam findOneByExamIdAndUserId(Long examId, Long userId) {
+        log.debug("Request to get student exams for Exam : {} and User : {}", examId, userId);
+        return studentExamRepository.findByExamIdAndUserId(examId, userId);
     }
 
     /**

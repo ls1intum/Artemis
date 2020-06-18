@@ -21,7 +21,7 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "student_exam")
+    @JoinColumn(name = "student_exam_id")
     private StudentExam studentExam;
 
     @JoinColumn(name = "session_token")

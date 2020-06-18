@@ -11,11 +11,20 @@ export class ExamSessionService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Get current session token for user and given exam
+     * Get current exam session
      * @param courseId The course id.
      * @param examId The exam id.
      */
     getCurrentExamSession(courseId: number, examId: number): Observable<HttpResponse<ExamSession>> {
-        return this.http.get<ExamSession>(`${this.resourceUrl}/${courseId}/exams/${examId}/session`, { observe: 'response' });
+        return this.http.get<ExamSession>(`${this.resourceUrl}/${courseId}/exams/${examId}/currentSession`, { observe: 'response' });
+    }
+
+    /**
+     * Create new exam session
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
+    createExamSession(courseId: number, examId: number): Observable<HttpResponse<ExamSession>> {
+        return this.http.get<ExamSession>(`${this.resourceUrl}/${courseId}/exams/${examId}/newSession`, { observe: 'response' });
     }
 }
