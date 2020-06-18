@@ -410,6 +410,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
     }
 
+    // https://stackoverflow.com/a/35651029/3802758
     private getSessionId(): string {
         if (this.socket && this.socket._transport && this.socket._transport.url) {
             return this.socket._transport.url.match('.*\\/websocket\\/tracker\\/\\d*\\/(.*)\\/websocket.*')[1];

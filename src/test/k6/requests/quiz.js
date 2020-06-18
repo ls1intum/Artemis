@@ -184,6 +184,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                     console.log('Submitting via REST for ' + currentUsername);
                     submitRandomAnswerREST(10);
                 } else {
+                    console.log('Submitting via WS for ' + currentUsername);
                     submitRandomAnswer(10);
                 }
             }, (questionCount - 1) * 500 + 1000);
@@ -191,7 +192,7 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         // Stop after timeout
         socket.setTimeout(function () {
-            console.log('Connection timed out');
+            console.log('Connection timed out for user ' + currentUsername);
             socket.close();
         }, timeout * 1000);
     });
