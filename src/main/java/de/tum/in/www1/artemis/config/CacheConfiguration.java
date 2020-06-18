@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.Collections;
+
 import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
@@ -18,13 +20,11 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
-import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -48,6 +48,15 @@ public class CacheConfiguration {
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
+
+    @Value("${spring.hazelcast.interface}")
+    private String hazelcastInterface;
+
+    @Value("${spring.hazelcast.port}")
+    private int hazelcastPort;
+
+    @Value("${spring.hazelcast.localInstances}")
+    private boolean hazelcastLocalInstances;
 
     public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
         this.env = env;
@@ -96,28 +105,33 @@ public class CacheConfiguration {
             // see the "spring.application.name" standard Spring property
             String serviceId = registration.getServiceId();
             log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
-            // In development, everything goes through 127.0.0.1, with a different port
-            // TODO: Simon Leiß: Remove' || true' once deployment is distributed over multiple VMs.
-            if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) || true) {
-                log.info("Application is running with the \"dev\" profile, Hazelcast " + "cluster will only work with localhost instances");
+            // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
+            if (hazelcastLocalInstances) {
+                log.info("Application is running with the \"localInstances\" setting, Hazelcast " + "cluster will only work with localhost instances");
 
                 System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
-                config.getNetworkConfig().setPort(serverProperties.getPort() + 5701);
+                // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
+                config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = "127.0.0.1:" + (instance.getPort() + 5701);
+                    String clusterMember = "127.0.0.1:" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
                     log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
             }
-            else { // Production configuration, one host per instance all using port 5701
-                config.getNetworkConfig().setPort(5701);
+            else { // Production configuration, one host per instance all using the configured port
+                config.getNetworkConfig().setPort(hazelcastPort); // Own port
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = instance.getHost() + ":5701";
+                    String clusterMember = instance.getHost() + ":" + hazelcastPort; // Address where the other instance is expected
                     log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
+            }
+
+            // Bind to the interface specified in the config if the value is set
+            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
+                config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
             }
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
