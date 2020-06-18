@@ -53,7 +53,7 @@ export class QuizExamParticipationComponent implements OnInit {
 
     ngOnInit(): void {
         this.quizExercise = this.studentParticipation.exercise as QuizExercise;
-        this.updateParticipationFromServer(this.studentParticipation);
+        this.updateParticipation(this.studentParticipation);
     }
 
     /**
@@ -221,7 +221,7 @@ export class QuizExamParticipationComponent implements OnInit {
     /**
      * Apply the data of the participation, replacing all old data
      */
-    updateParticipationFromServer(participation: StudentParticipation) {
+    updateParticipation(participation: StudentParticipation) {
         this.quizExercise = participation.exercise as QuizExercise;
         this.initQuiz();
         // apply submission if it exists
