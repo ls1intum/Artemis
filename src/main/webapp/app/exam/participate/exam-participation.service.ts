@@ -19,8 +19,6 @@ export class ExamParticipationService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
     private studentExam: StudentExam;
     private submissionSaveList: Submission[] = [];
-    // TODO: add course id and exam id
-    private localStorageExamKey = 'artemis_student_exam';
 
     // autoTimerInterval in seconds
     autoSaveTime = 60;
@@ -37,7 +35,7 @@ export class ExamParticipationService {
 
     public getStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         // TODO: check local storage
-        const localStoredExam: StudentExam = this.localStorageService.retrieve(this.localStorageExamKey);
+        const localStoredExam: StudentExam = this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId));
 
         if (localStoredExam) {
             this.studentExam = localStoredExam;
@@ -50,6 +48,11 @@ export class ExamParticipationService {
                 }),
             );
         }
+    }
+
+    private getLocalStorageKeyForStudentExam(courseId: number, examId: number) {
+        const prefix = 'artemis_student_exam';
+        return `${prefix}_${courseId}_${examId}`;
     }
 
     /**
@@ -112,11 +115,11 @@ export class ExamParticipationService {
      * Updates StudentExam on server
      * @param studentExam
      */
-    createSubmission(submission: Submission, exerciseId: number) {
+    createSubmission(submission: Submission, courseId: number, examId: number, exerciseId: number) {
         // TODO: Add to updates
 
-        // Store locally
-        this.localStorageService.store(this.localStorageExamKey, '');
+        // update immediately in localStorage and online every 60seconds
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(this.studentExam));
     }
 
     getLatestSubmissionForParticipation(participationId: number): Observable<Submission | undefined> {
