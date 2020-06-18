@@ -166,16 +166,21 @@ public class ExamService {
                     boolean shouldSelectOptionalExercise = random.nextBoolean();
                     if (numberOfOptionalExercises > 0 && shouldSelectOptionalExercise) {
                         studentExam.addExercise(selectRandomExercise(random, exerciseGroup));
+                        numberOfOptionalExercises--;
                     }
                 }
             }
 
+            // TODO: it can happen that all optional exercises are randomly NOT chosen. We have to make sure that exactly numberOfOptionalExercises is chosen
+
             if (Boolean.TRUE.equals(exam.getRandomizeExerciseOrder())) {
                 Collections.shuffle(studentExam.getExercises());
             }
+
+            studentExams.add(studentExam);
         }
 
-        studentExamRepository.saveAll(studentExams);
+        studentExams = studentExamRepository.saveAll(studentExams);
 
         // TODO: make sure the student exams still contain non proxy users
 
