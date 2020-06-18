@@ -17,6 +17,7 @@
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "validation": {
+                "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
                 "numberOfExercisesInExamNotSet": "The Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."

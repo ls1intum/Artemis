@@ -156,6 +156,13 @@ public class ExamService {
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
 
+        // Ensure that all exercise groups have at least one exercise
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup.getExercises().isEmpty()) {
+                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
+            }
+        }
+
         if (exam.getNumberOfExercisesInExam() == null) {
             throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
         }
