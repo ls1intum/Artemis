@@ -34,7 +34,6 @@ export class TextExerciseImportComponent implements OnInit {
         sortedColumn: TableColumn.ID,
     };
 
-    // Replace with TextExercisePagingService
     constructor(private pagingService: TextExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {

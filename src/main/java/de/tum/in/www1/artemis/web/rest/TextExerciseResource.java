@@ -413,16 +413,12 @@ public class TextExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
+     * POST /text-exercises/import: Imports an existing text exercise into an existing course
      *
-     * This will import the whole exercise, including all base build plans (template, solution) and repositories
-     * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
-     * a new id. For a concrete list of what gets copied and what not have a look
-     * at {@link ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
+     * This will import the whole exercise except for the participations and Dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * See{@link TextExerciseImportService#importTextExercise(TextExercise, TextExercise)}
      *
-     * @see ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseImportService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
