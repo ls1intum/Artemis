@@ -517,6 +517,15 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, User user, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.addUser(user);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
