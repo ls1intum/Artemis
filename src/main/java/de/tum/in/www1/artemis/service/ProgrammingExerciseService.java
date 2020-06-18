@@ -72,12 +72,14 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final CourseService courseService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService) {
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService, CourseService courseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -92,6 +94,7 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.groupNotificationService = groupNotificationService;
+        this.courseService = courseService;
     }
 
     /**
@@ -545,8 +548,10 @@ public class ProgrammingExerciseService {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
