@@ -150,7 +150,11 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+
+        // Notify tutors only if this a course exercise
+        if (programmingExercise.hasCourse()) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        }
 
         return programmingExercise;
     }
@@ -725,8 +729,18 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        final var instructorGroup = exercise.getCourse().getInstructorGroupName();
-        final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
+        // TODO: Move course selection to Exercise, as we need this often
+        // Get course over exerciseGroup in exam mode
+        Course course;
+        if (exercise.hasExerciseGroup()) {
+            course = exercise.getExerciseGroup().getExam().getCourse();
+        }
+        else {
+            course = exercise.getCourse();
+        }
+
+        final var instructorGroup = course.getInstructorGroupName();
+        final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));

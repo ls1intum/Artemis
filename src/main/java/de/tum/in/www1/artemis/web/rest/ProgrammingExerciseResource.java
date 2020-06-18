@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -87,6 +88,8 @@ public class ProgrammingExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExerciseGroupService exerciseGroupService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -98,7 +101,8 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService) {
+            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
+            ExerciseGroupService exerciseGroupService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -110,6 +114,7 @@ public class ProgrammingExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -155,19 +160,27 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
 
-        if (programmingExercise.getCourse() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The course is not set", "courseNotSet")).body(null);
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(programmingExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        // Security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
+        Course course;
+        if (programmingExercise.hasExerciseGroup()) {
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
+            course = exerciseGroup.getExam().getCourse();
+            programmingExercise.setExerciseGroup(exerciseGroup);
+        }
+        else {
+            course = courseService.findOne(programmingExercise.getCourse().getId());
+            programmingExercise.setCourse(course);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        // Check authorization
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
-
-        // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
-        programmingExercise.setCourse(course);
 
         // Check if exercise title is set
         if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {

@@ -252,7 +252,15 @@ public class ProgrammingExercise extends Exercise {
         if (this.projectKey != null) {
             return;
         }
-        this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        // Get course over exerciseGroup for exam programming exercises
+        Course course;
+        if (hasExerciseGroup()) {
+            course = this.getExerciseGroup().getExam().getCourse();
+        }
+        else {
+            course = this.getCourse();
+        }
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
     /**
