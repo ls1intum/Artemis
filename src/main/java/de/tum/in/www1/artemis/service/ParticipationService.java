@@ -204,7 +204,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
@@ -274,7 +274,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
             programmingParticipation = copyRepository(programmingParticipation);
-            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
@@ -482,9 +482,9 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudents());
+            versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }

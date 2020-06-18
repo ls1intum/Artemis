@@ -52,7 +52,7 @@ public class ProgrammingExercise extends Exercise {
     private Boolean allowOnlineEditor;
 
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
-    private Boolean allowOfflineIDE;
+    private Boolean allowOfflineIde;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
@@ -235,6 +235,19 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
+    }
+
+    public Boolean isAllowOfflineIde() {
+        return allowOfflineIde;
+    }
+
+    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+        return this;
+    }
+
+    public void setAllowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
     }
 
     public String getProjectKey() {

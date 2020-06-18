@@ -32,7 +32,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
-    @Input() exercise: Exercise;
+    @Input() exercise: ProgrammingExercise;
     @Input() courseId: number;
 
     @Input() smallButtons: boolean;
