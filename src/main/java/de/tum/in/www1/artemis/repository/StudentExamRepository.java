@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +18,12 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
  */
 @Repository
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
+    Optional<StudentExam> findWithExercisesById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.studentParticipations", "exercises.studentParticipations.submissions" })
+    Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsById(Long id);
 
     List<StudentExam> findByExamId(Long examId);
 
