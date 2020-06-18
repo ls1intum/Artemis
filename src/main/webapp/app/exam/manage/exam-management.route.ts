@@ -36,8 +36,9 @@ export class ExamResolve implements Resolve<Exam> {
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : null;
         const examId = route.params['examId'] ? route.params['examId'] : null;
+        const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId).pipe(
+            return this.examManagementService.find(courseId, examId, withStudents).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
                 map((exam: HttpResponse<Exam>) => exam.body!),
             );
@@ -188,9 +189,15 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/students',
         component: ExamStudentsComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
+            requestOptions: {
+                withStudents: true,
+            },
         },
         canActivate: [UserRouteAccessService],
     },

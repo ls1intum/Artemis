@@ -1,1 +1,144 @@
-TODO
+<div>
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <h3 class="mb-0">
+            <span jhiTranslate="artemisApp.examManagement.students">Students</span>
+            <span class="text-muted">({{ exam.title }})</span>
+        </h3>
+        <div>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span><span>: {{ allRegisteredUsers.length }}</span>
+            <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
+                (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
+            </span>
+            <jhi-students-exam-import-button
+                class="ml-4"
+                [courseId]="courseId"
+                [exam]="exam"
+                [buttonSize]="ButtonSize.MEDIUM"
+                (finish)="reloadExamWithRegisterdUsers()"
+            ></jhi-students-exam-import-button>
+        </div>
+    </div>
+    <jhi-alert></jhi-alert>
+    <jhi-data-table
+        [isLoading]="isLoading"
+        [isSearching]="isSearching"
+        [searchFailed]="searchFailed"
+        [searchNoResults]="searchNoResults"
+        [isTransitioning]="isTransitioning"
+        entityType="user"
+        [allEntities]="allRegisteredUsers"
+        entitiesPerPageTranslation="artemisApp.examManagement.examStudents.usersPerPage"
+        showAllEntitiesTranslation="artemisApp.examManagement.examStudents.showAllUsers"
+        searchNoResultsTranslation="artemisApp.examManagement.examStudents.searchNoResults"
+        searchPlaceholderTranslation="artemisApp.examManagement.examStudents.searchForUsers"
+        [searchFields]="['login', 'name']"
+        [searchTextFromEntity]="searchTextFromUser"
+        [searchResultFormatter]="searchResultFormatter"
+        [onSearchWrapper]="searchAllUsers"
+        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
+        (entitiesSizeChange)="handleUsersSizeChange($event)"
+    >
+        <ng-template let-settings="settings" let-controls="controls">
+            <ngx-datatable
+                class="bootstrap"
+                [limit]="settings.limit"
+                [sortType]="settings.sortType"
+                [columnMode]="settings.columnMode"
+                [headerHeight]="settings.headerHeight"
+                [footerHeight]="settings.footerHeight"
+                [rowHeight]="settings.rowHeight"
+                [rows]="settings.rows"
+                [rowClass]="dataTableRowClass"
+                [scrollbarH]="settings.scrollbarH"
+            >
+                <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                                ID
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value.id }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.login">
+                                Login
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value.login }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.name">
+                                Name
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="email" [minWidth]="150" [width]="250" [maxWidth]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.email">
+                                Email
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="250">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber">
+                                Email
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
+                    <ng-template ngx-datatable-header-template></ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="w-100 text-right">
+                            <button
+                                jhiDeleteButton
+                                [actionType]="ActionType.Remove"
+                                [entityTitle]="value.login"
+                                deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+                                (delete)="removeFromExam(value)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="'user-slash'" class="mr-1"></fa-icon>
+                            </button>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+        </ng-template>
+    </jhi-data-table>
+</div>
