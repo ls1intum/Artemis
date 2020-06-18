@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ProgrammingExercise. */
 @RestController
@@ -295,8 +294,9 @@ public class ProgrammingExerciseResource {
         }
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
             return forbidden();
         }
@@ -441,16 +441,31 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        if (programmingExercise.hasExerciseGroup()) {
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
+            Course course = exerciseGroup.getExam().getCourse();
+
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            // Set the exerciseGroup, exam and course so that the client can work with those ids
+            programmingExercise.setExerciseGroup(exerciseGroup);
         }
-        return ResponseUtil.wrapOrNotFound(programmingExercise);
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(programmingExercise);
     }
 
     /**
