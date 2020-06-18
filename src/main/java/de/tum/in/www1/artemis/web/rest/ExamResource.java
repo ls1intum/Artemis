@@ -270,6 +270,13 @@ public class ExamResource {
 
         List<StudentExam> studentExams = examService.generateStudentExams(examId);
 
+        // we need to break a cycle for the serialization
+        for (StudentExam studentExam : studentExams) {
+            studentExam.getExam().setRegisteredUsers(null);
+            studentExam.getExam().setExerciseGroups(null);
+            studentExam.getExam().setStudentExams(null);
+        }
+
         log.info("Generated {} student exams for exam {}", studentExams.size(), examId);
         return ResponseEntity.ok().body(studentExams);
     }

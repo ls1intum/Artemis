@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +32,7 @@ public class ExamService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
-    private final CourseService courseService;
+    private CourseService courseService;
 
     private final UserService userService;
 
@@ -39,11 +40,16 @@ public class ExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, CourseService courseService, UserService userService) {
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
-        this.courseService = courseService;
         this.userService = userService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setCourseService(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     /**
