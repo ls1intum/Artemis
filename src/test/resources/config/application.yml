@@ -82,6 +82,11 @@ spring:
             discovery:
                 enabled: false
             enabled: false
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: ""
 
 server:
     port: 8080
