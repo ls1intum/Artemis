@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -248,6 +249,29 @@ public class ExamResource {
         }
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
+    }
+
+    /**
+     * POST /courses/:courseId/exams/:examId/generate-student-exams : Generates the student exams randomly based on the exam configuration and the exercise groups
+     *
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentExam>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to generate student exams for exam {}", examId);
+
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        List<StudentExam> studentExams = examService.generateStudentExams(examId);
+
+        log.info("Generated {} student exams for exam {}", studentExams.size(), examId);
+        return ResponseEntity.ok().body(studentExams);
     }
 
     /**

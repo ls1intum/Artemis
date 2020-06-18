@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -114,5 +116,17 @@ public class ExamService {
      */
     public Set<Exam> filterVisibleExams(Set<Exam> exams) {
         return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
+    }
+
+    /**
+     * Generates the student exams randomly based on the exam configuration and the exercise groups
+     *
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    public List<StudentExam> generateStudentExams(Long examId) {
+        List<StudentExam> studentExams = new ArrayList<>();
+
+        return studentExams;
     }
 }
