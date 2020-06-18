@@ -145,16 +145,25 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param examId    the exam to find
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to find
+     * @param withStudents  boolean flag whether to include all students registered for the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findOne(examId)));
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        if (!withStudents) {
+            return ResponseEntity.ok(examService.findOne(examId));
+        }
+        Exam exam = examService.findOneWithRegisteredUsers(examId);
+        exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -249,10 +258,10 @@ public class ExamResource {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentDtos     the list of students (with at least registration number) who should get access to the exam
-     * @return             the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
+     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -274,11 +283,11 @@ public class ExamResource {
                 Optional<User> optionalStudent = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
-                    exam.addUser(student);
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
                     if (!student.getGroups().contains(course.getStudentGroupName())) {
                         userService.addUserToGroup(student, course.getStudentGroupName());
                     }
+                    exam.addUser(student);
                     continue;
                 }
                 // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential
@@ -286,9 +295,9 @@ public class ExamResource {
                 optionalStudent = userService.createUserFromLdap(registrationNumber);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
-                    exam.addUser(student);
                     // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
                     userService.addUserToGroup(student, course.getStudentGroupName());
+                    exam.addUser(student);
                     continue;
                 }
                 // 3) if we cannot find the user in the (TUM) LDAP, we report this to the client
