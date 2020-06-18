@@ -61,7 +61,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
-        //this.$window.nativeWindow.scroll(0, 0);
+        this.$window.nativeWindow.scroll(0, 0);
 
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
