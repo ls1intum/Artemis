@@ -260,7 +260,7 @@ public class ExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentExam>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate student exams for exam {}", examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);

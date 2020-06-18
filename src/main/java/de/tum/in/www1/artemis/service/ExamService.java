@@ -150,8 +150,11 @@ public class ExamService {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
 
+        // Delete all existing student exams via orphan removal
+        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
+        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
+
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
-        // TODO: double check that all previously generated student exams are automatically deleted (based on orphan removal)
 
         if (exam.getNumberOfExercisesInExam() == null) {
             throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
