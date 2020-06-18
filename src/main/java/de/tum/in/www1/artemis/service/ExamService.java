@@ -287,7 +287,7 @@ public class ExamService {
             indices = Stream.concat(indices.stream(), optionalIndices.stream().limit(numberOfOptionalExercises)).collect(Collectors.toList());
         }
 
-        // Sort the indices
+        // Sort the indices to preserve the original order
         Collections.sort(indices);
         return indices;
     }
