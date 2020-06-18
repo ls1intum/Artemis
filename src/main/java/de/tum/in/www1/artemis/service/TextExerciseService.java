@@ -53,7 +53,7 @@ public class TextExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all text exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
@@ -68,8 +68,8 @@ public class TextExerciseService {
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin()
-                ? textExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
-                : textExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+                ? textExerciseRepository.findByExerciseGroupIsNullAndTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
+                : textExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourseAndExerciseGroupIsNull(searchTerm, searchTerm, user.getGroups(), sorted);
 
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
