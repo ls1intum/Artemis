@@ -67,6 +67,21 @@
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             }
+        },
+        "studentExamDetail": {
+            "studentExam": "Student exam ({{ courseTitle }})",
+            "exercises": "Exercises",
+            "downloadPDF": "Download PDF",
+            "student": "Student",
+            "name": "Name: ",
+            "login": "Login: ",
+            "email": "Email: ",
+            "matricleNumber": "Matricle number: ",
+            "id": "ID",
+            "type": "Type",
+            "title": "Title",
+            "result": "Result",
+            "reviewer": "Reviewer"
         }
     }
 }
