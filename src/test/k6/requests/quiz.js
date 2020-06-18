@@ -169,6 +169,8 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                 console.log(`RECEIVED callback from server for ${currentUsername}`);
                 sleep(5);
                 socket.close();
+            } else if (message !== '\n') {
+                console.log(`Unexpected message ${message} for user ${currentUsername}`);
             }
         });
 
