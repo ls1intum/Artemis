@@ -9,7 +9,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { tap } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -146,7 +146,20 @@ export class ExamParticipationService {
     getLatestSubmissionForParticipation(participationId: number): Observable<Submission | undefined> {
         const latestSubmission: Submission | undefined = this.submissionSaveList.find((submission) => submission.participation.id === participationId);
         if (!latestSubmission) {
-            // TODO: call server for latest submission if nothing
+            const exercise: Exercise | undefined = this.studentExam.participations.find((participation) => participation.id === participationId)?.exercise;
+            switch (exercise?.type) {
+                case ExerciseType.TEXT:
+                    return this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exercise?.id);
+                case ExerciseType.FILE_UPLOAD:
+                    return this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exercise?.id);
+                case ExerciseType.MODELING:
+                    return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId);
+                case ExerciseType.PROGRAMMING:
+                    return this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(exercise?.id);
+                // case ExerciseType.QUIZ:
+                // TODO find submissionService
+                // return null;
+            }
         }
         return Observable.of(latestSubmission);
     }

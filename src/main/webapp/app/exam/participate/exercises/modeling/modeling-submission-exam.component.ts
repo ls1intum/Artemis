@@ -33,7 +33,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     autoSaveInterval: number;
 
     @Input()
-    private participationId: number;
+    participationId: number;
 
     constructor(private examParticipationService: ExamParticipationService, private jhiAlertService: AlertService) {
         this.isSaving = false;
