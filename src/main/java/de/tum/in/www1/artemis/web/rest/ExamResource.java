@@ -135,9 +135,12 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        // Make sure that the original exercise groups are preserved.
-        Exam originalExam = examService.findOneWithExerciseGroups(updatedExam.getId());
+        // Make sure that the original references are preserved.
+        Exam originalExam = examService.findOne(updatedExam.getId());
+        // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
+        updatedExam.setStudentExams(originalExam.getStudentExams());
+        updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
         Exam result = examService.save(updatedExam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
