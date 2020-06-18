@@ -546,6 +546,12 @@ public class ProgrammingExerciseService {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         User user = userService.getUserWithGroupsAndAuthorities();
+
+        // TODO: Deactivate for now as the method needs a refactoring to support exam exercises, otherwise it forms cyclic dependencies
+        if (programmingExercise.hasExerciseGroup()) {
+            throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
+        }
+
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
