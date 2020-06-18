@@ -347,10 +347,15 @@ public class ProgrammingExerciseResource {
         if (updatedProgrammingExercise.getId() == null) {
             return badRequest();
         }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(updatedProgrammingExercise, ENTITY_NAME);
+
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(updatedProgrammingExercise.getCourse().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
+
+        // Check authorization
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
@@ -366,6 +371,9 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
+
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise.get(), ENTITY_NAME);
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);

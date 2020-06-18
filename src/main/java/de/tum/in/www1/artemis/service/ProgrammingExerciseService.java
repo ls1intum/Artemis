@@ -255,7 +255,9 @@ public class ProgrammingExerciseService {
 
         // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
         programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
-        if (notificationText != null) {
+
+        // Only send notification for course exercises
+        if (notificationText != null && programmingExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
 
