@@ -89,7 +89,11 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus(this.exercise);
                     }
-                    this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                    if (this.exercise.allowOfflineIde) {
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepositoryClone');
+                    } else {
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepositoryOnline');
+                    }
                 },
                 (error) => {
                     console.log('Error: ' + error);
