@@ -48,8 +48,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
 
-    @Column(name = "allow_online_editor")
+    @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
+
+    @Column(name = "allow_offline_ide", table = "programming_exercise_details")
+    private Boolean allowOfflineIDE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
