@@ -72,9 +72,9 @@ public class BitbucketRequestMockProvider {
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
 
         mockGrantGroupPermissionToProject(exercise, ADMIN_GROUP_NAME, "PROJECT_ADMIN");
-        mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN");
-        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
-            mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+        mockGrantGroupPermissionToProject(exercise, exercise.getCourseOverExerciseGroupOrCourseMember().getInstructorGroupName(), "PROJECT_ADMIN");
+        if (exercise.getCourseOverExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
+            mockGrantGroupPermissionToProject(exercise, exercise.getCourseOverExerciseGroupOrCourseMember().getTeachingAssistantGroupName(), "PROJECT_WRITE");
         }
     }
 
