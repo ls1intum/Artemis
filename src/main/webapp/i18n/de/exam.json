@@ -1,14 +1,26 @@
 {
     "artemisApp": {
         "exam": {
+            "overview": {
+                "start": "Beginn: {{start}}",
+                "duration": "Dauer: {{duration}} min",
+                "maxPoints": "max. Punkte: {{points}}"
+            },
             "title": "Klausur",
+            "startExam": "Klausur starten",
+            "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
+
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet"
+        },
+        "examParticipation": {
+            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
+            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -64,7 +76,7 @@
                 "addTextExercise": "Textaufgabe hinzufügen"
             },
             "delete": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }
         },

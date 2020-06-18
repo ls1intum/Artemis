@@ -38,7 +38,7 @@
     <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
@@ -65,7 +65,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate:reverse; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
                     </td>

@@ -33,6 +33,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -79,7 +80,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 profileService = debugElement.injector.get(ProfileService);
 
                 getProfileInfoSub = stub(profileService, 'getProfileInfo');
-                getProfileInfoSub.returns(of({ inProduction: false } as ProfileInfo));
+                getProfileInfoSub.returns(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
             });
     });
@@ -134,6 +135,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
         expect(startExerciseButton).to.exist;
+    }));
+
+    it('should generate the correct clone urls for https and ssh', fakeAsync(() => {
+        comp.ngOnInit();
+
+        const participation = ({
+            repositoryUrl: 'https://testserver.com/scm/exercise/repository.git',
+        } as unknown) as ProgrammingExerciseStudentParticipation;
+
+        comp.useSsh = true;
+        expect(comp.repositoryUrl(participation)).to.be.equal('ssh://git@testserver.com:1234/exercise/repository.git');
+
+        comp.useSsh = false;
+        expect(comp.repositoryUrl(participation)).to.be.equal(participation.repositoryUrl);
     }));
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
