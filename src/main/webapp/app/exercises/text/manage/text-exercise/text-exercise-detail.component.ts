@@ -18,6 +18,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     AssessmentType = AssessmentType;
 
     textExercise: TextExercise;
+    isExamExercise: boolean;
 
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
@@ -37,6 +38,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Loads the text exercise and subscribes to changes of it on component initialization.
      */
     ngOnInit() {
+        // TODO: route determines whether the component is in exam mode
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -48,8 +50,10 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * @param id of the text exercise of type {number}
      */
     load(id: number) {
+        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise id
         this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
             this.textExercise = textExerciseResponse.body!;
+            this.isExamExercise = !!this.textExercise.exerciseGroup;
 
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
@@ -58,6 +62,27 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 this.textExercise.categories = this.textExercise.categories.map((category) => JSON.parse(category));
             }
         });
+    }
+
+    /**
+     * Returns the route for editing the exercise. Exam and course exercises have different routes.
+     */
+    getEditRoute() {
+        if (this.isExamExercise) {
+            return [
+                '/course-management',
+                this.textExercise.exerciseGroup?.exam?.course?.id,
+                'exams',
+                this.textExercise.exerciseGroup?.exam?.id,
+                'exercise-groups',
+                this.textExercise.exerciseGroup?.id,
+                'text-exercises',
+                this.textExercise.id,
+                'edit',
+            ];
+        } else {
+            return ['/course-management', this.textExercise.course?.id, 'text-exercises', this.textExercise.id, 'edit'];
+        }
     }
 
     /**

@@ -96,6 +96,13 @@ public class ModelFactory {
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
+    public static FileUploadExercise generateFileUploadExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
+            ExerciseGroup exerciseGroup) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setFilePattern(filePattern);
+        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+    }
+
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));

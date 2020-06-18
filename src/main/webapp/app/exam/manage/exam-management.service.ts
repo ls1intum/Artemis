@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -45,10 +46,12 @@ export class ExamManagementService {
      * Find an exam on the server using a GET request.
      * @param courseId The course id.
      * @param examId The id of the exam to get.
+     * @param withStudents Boolean flag whether to fetch all students registered for the exam
      */
-    find(courseId: number, examId: number): Observable<EntityResponseType> {
+    find(courseId: number, examId: number, withStudents = false): Observable<EntityResponseType> {
+        const options = createRequestOption({ withStudents });
         return this.http
-            .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' })
+            .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
@@ -81,6 +84,37 @@ export class ExamManagementService {
      */
     delete(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
+    }
+
+    /**
+     * Add a student to the registered users for an exam
+     * @param courseId The course id.
+     * @param examId The id of the exam to which to add the student
+     * @param studentLogin Login of the student
+     */
+    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    }
+
+    /**
+     * Add students to the registered users for an exam
+     * @param courseId The course id.
+     * @param examId The id of the exam to which to add the student
+     * @param studentDtos Student DTOs of student to add to the exam
+     * @return studentDtos of students that were not found in the system
+     */
+    addStudentsToExam(courseId: number, examId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+    }
+
+    /**
+     * Remove a student to the registered users for an exam
+     * @param courseId The course id.
+     * @param examId The id of the exam from which to remove the student
+     * @param studentLogin Login of the student
+     */
+    removeStudentFromExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {
