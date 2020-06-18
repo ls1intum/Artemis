@@ -6,6 +6,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -27,6 +28,7 @@ export class StudentExamsComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
+        private jhiAlertService: AlertService,
     ) {}
 
     /**
@@ -61,7 +63,7 @@ export class StudentExamsComponent implements OnInit {
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => this.setStudentExams(res.body),
-            (err) => this.handleStudentExamGenerationError(err),
+            (err) => this.handleStudentExamGenerationError(err.error),
         );
     }
 
@@ -99,13 +101,12 @@ export class StudentExamsComponent implements OnInit {
     };
 
     private setStudentExams(studentExams: StudentExam[] | null): void {
-        console.log(studentExams);
         if (studentExams) {
             this.studentExams = studentExams;
         }
     }
 
-    private handleStudentExamGenerationError(err: any): void {
-        // TODO
+    private handleStudentExamGenerationError(error: any): void {
+        this.jhiAlertService.error(error.errorKey);
     }
 }

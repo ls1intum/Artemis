@@ -14,9 +14,13 @@
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
-
             "created": "Neue Klausur erstellt",
-            "updated": "Klausur bearbeitet"
+            "updated": "Klausur bearbeitet",
+            "validation": {
+                "numberOfExercisesInExamNotSet": "The Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
+                "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+            }
         },
         "examParticipation": {
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
@@ -50,7 +54,7 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "maxPoints": "Anzahl an erreichbaren Punkten",
-            "numberOfExercisesInExam": "Anzahl an Aufgabengruppen",
+            "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",

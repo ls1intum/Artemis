@@ -153,6 +153,10 @@ public class ExamService {
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
         // TODO: double check that all previously generated student exams are automatically deleted (based on orphan removal)
 
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
+        }
+
         for (User registeredUser : exam.getRegisteredUsers()) {
             // create one student exam per user
             StudentExam studentExam = new StudentExam();
@@ -162,13 +166,13 @@ public class ExamService {
             List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
 
             if (exerciseGroups.size() < exam.getNumberOfExercisesInExam()) {
-                throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "exam.validation.tooFewExerciseGroups");
+                throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
             }
 
             long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
             if (numberOfOptionalExercises < 0) {
-                throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "exam.validation.tooManyMandatoryExerciseGroups");
+                throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
             }
 
             for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
