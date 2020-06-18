@@ -10,6 +10,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -66,6 +67,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private courseService: CourseManagementService,
         private languageHelper: JhiLanguageHelper,
         private languageService: JhiLanguageService,
+        private sortService: SortService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -436,10 +438,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return emptyLine;
     }
 
-    /**
-     * Empty callback function.
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.students, this.predicate, this.reverse);
+    }
 
     /**
      * On destroy unsubscribe.
