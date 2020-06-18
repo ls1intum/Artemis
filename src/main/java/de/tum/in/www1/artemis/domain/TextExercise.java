@@ -9,7 +9,6 @@ import javax.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
