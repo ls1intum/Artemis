@@ -71,7 +71,8 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id.
-     * This will be used for the actual conduction of the exam.
+     * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
+     * and with the student participation and with the submissions.
      *
      * @param courseId      the course to which the student exam belongs to
      * @param examId        the exam to which the student exam belongs to
@@ -82,7 +83,6 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
-        // TODO: Use a DTO here as we do not want to send the user and the exam (at least not all of it)
         return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
     }
 }

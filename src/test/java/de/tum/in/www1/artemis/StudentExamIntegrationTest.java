@@ -15,11 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.StudentExamAccessService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -44,6 +45,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     StudentExamRepository studentExamRepository;
+
+    @Autowired
+    ExerciseRepository exerciseRepository;
 
     private List<User> users;
 
@@ -106,7 +110,19 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForConduction() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
-        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExam1.getId());
+        StudentExam studentExam = database.addStudentExamWithExercisesAndParticipationAndSubmission(exam1, users.get(0));
+
+        var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExam.getId());
+        assertThat(response.getExercises().size()).isEqualTo(1);
+        assertThat(response.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
+        Exercise exercise = response.getExercises().get(0);
+        for (StudentParticipation s : response.getExercises().get(0).getStudentParticipations()) {
+            assertThat(s.getSubmissions().size()).isEqualTo(1);
+            exercise.removeParticipation(s);
+        }
+        exerciseRepository.save(exercise);
     }
+
 }

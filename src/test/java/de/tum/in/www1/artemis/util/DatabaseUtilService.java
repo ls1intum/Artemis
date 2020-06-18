@@ -548,6 +548,22 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
+    public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
+                null);
+        textExercise = exerciseRepo.save(textExercise);
+
+        Submission submission = ModelFactory.generateTextSubmission("", Language.ENGLISH, true);
+        addSubmission(textExercise, submission, user.getLogin());
+
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.addExercise(textExercise);
+        studentExam.setUser(user);
+        studentExamRepository.save(studentExam);
+
+        return studentExam;
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
