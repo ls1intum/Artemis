@@ -4,7 +4,7 @@
     </div>
     <div class="ml-auto d-flex">
         <button class="btn btn-primary" style="height: 35px;" (click)="downloadPdf()" *ngIf="course?.isAtLeastInstructor">
-            <span jhiTranslate="artemisApp.studentExamDetail.downloadPDF">Download PDF</span>
+            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.studentExamDetail.downloadPDF">&nbsp;Download PDF</span>
         </button>
     </div>
 </div>
@@ -12,7 +12,7 @@
 <br />
 <div>
     <div class="mb-3">
-        <h3><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h3>
+        <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
         <ol style="list-style-type: none;">
             <li>
                 <span
@@ -38,8 +38,8 @@
     </div>
 
     <div class="mb-3">
-        <h3><span jhiTranslate="artemisApp.studentExamDetail.exercises">Exercises</span></h3>
-        <div *ngIf="studentExam.exercises">
+        <h5><span jhiTranslate="artemisApp.studentExamDetail.exercises">Exercises</span></h5>
+        <div>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -64,13 +64,13 @@
                 <tbody>
                     <tr *ngFor="let exercise of studentExam.exercises">
                         <td class="align-middle">
-                            {{ exercise.id }}
+                            {{ exercise?.id }}
                         </td>
                         <td class="align-middle" style="font-size: 1.35rem;">
-                            <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
+                            <fa-icon *ngIf="exercise" [icon]="exerciseIcon(exercise)"></fa-icon>
                         </td>
                         <td class="align-middle">
-                            {{ exercise.title }}
+                            {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
                             <!-- TODO show result string -->
@@ -80,13 +80,18 @@
                         </td>
                         <td class="d-flex justify-content-end">
                             <div class="btn-group">
-                                <button>
+                                <button class="btn btn-primary btn-sm mr-1 mb-1" style="border: 4px">
+                                    <span jhiTranslate="artemisApp.studentExamDetail.openSubmission">Open Submission</span>
                                     <!-- TODO Open Submission -->
                                 </button>
-                                <button>
+                                <button class="btn btn-warning btn-sm mr-1 mb-1" style="border: 4px">
+                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.studentExamDetail.openAssessment">&nbsp;Open Assessment</span>
                                     <!-- TODO Open Assessment -->
                                 </button>
-                                <button>
+                                <button class="btn btn-danger btn-sm mr-1 mb-1" >
+                                    <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.studentExamDetail.cancelAssessment">&nbsp;Cancel Assessment</span>
                                     <!-- TODO Cancel Assessment -->
                                 </button>
                             </div>

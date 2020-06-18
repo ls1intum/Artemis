@@ -82,17 +82,20 @@
         "studentExamDetail": {
             "studentExam": "Student exam ({{ courseTitle }})",
             "exercises": "Exercises",
-            "downloadPDF": "Download PDF",
+            "downloadPDF": " Download PDF",
             "student": "Student",
             "name": "Name: ",
             "login": "Login: ",
             "email": "Email: ",
-            "matriculationNumber": "Matricle number: ",
+            "matriculationNumber": "Matriculation number: ",
             "id": "ID",
             "type": "Type",
             "title": "Title",
             "result": "Result",
-            "reviewer": "Reviewer"
+            "reviewer": "Reviewer",
+            "openSubmission": "Open Submission",
+            "openAssessment": " Open Assessment",
+            "cancelAssessment": " Cancel Assessment"
         }
     }
 }

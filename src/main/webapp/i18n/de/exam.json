@@ -83,7 +83,7 @@
         "studentExamDetail": {
             "studentExam": "Klausur ({{ courseTitle }})",
             "exercises": "Aufgaben",
-            "downloadPDF": "PDF herunterladen",
+            "downloadPDF": " PDF herunterladen",
             "student": "Student",
             "name": "Name: ",
             "login": "Login: ",
@@ -93,7 +93,10 @@
             "type": "Typ",
             "title": "Titel",
             "result": "Ergebnis",
-            "reviewer": "Reviewer"
+            "reviewer": "Reviewer",
+            "openSubmission": "Einreichung öffnen",
+            "openAssessment": " Bewertung öffnen",
+            "cancelAssessment": " Bewertung abbrechen"
         }
     }
 }
