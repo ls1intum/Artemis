@@ -488,6 +488,7 @@ public abstract class Exercise implements Serializable {
      *
      * @return Course of the exercise
      */
+    @JsonIgnore
     public Course getCourseOverExerciseGroupOrCourseMember() {
         if (hasExerciseGroup()) {
             return this.getExerciseGroup().getExam().getCourse();
