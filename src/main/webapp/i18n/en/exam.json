@@ -87,7 +87,7 @@
             "name": "Name: ",
             "login": "Login: ",
             "email": "Email: ",
-            "matricleNumber": "Matricle number: ",
+            "matriculationNumber": "Matricle number: ",
             "id": "ID",
             "type": "Type",
             "title": "Title",
