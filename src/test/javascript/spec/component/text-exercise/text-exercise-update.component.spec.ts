@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
+import { Observable, of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
@@ -12,6 +12,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
+import moment = require('moment');
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -65,6 +66,20 @@ describe('TextExercise Management Update Component', () => {
             expect(service.create).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+        it('Should call import service on save for new entity', fakeAsync(() => {
+            // GIVEN
+            const entity = new TextExercise();
+            spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.textExercise = entity;
+            comp.isImport = true;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(service.import).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving).toEqual(false);
+        }));
     });
 
     describe('ngOnInit with given exerciseGroup', () => {
@@ -72,6 +87,7 @@ describe('TextExercise Management Update Component', () => {
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
+            route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ textExercise });
         });
 
@@ -90,6 +106,7 @@ describe('TextExercise Management Update Component', () => {
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
+            route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ textExercise });
         });
 
@@ -100,6 +117,33 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isExamMode).toEqual(false);
             expect(comp.textExercise).toEqual(textExercise);
+        }));
+    });
+
+    describe('ngOnInit in import mode', () => {
+        const textExercise = new TextExercise(new Course());
+        textExercise.id = 1;
+        textExercise.releaseDate = moment(moment.now());
+        textExercise.dueDate = moment(moment.now());
+        textExercise.assessmentDueDate = moment(moment.now());
+        const courseId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+            route.data = of({ textExercise });
+        });
+
+        it('Should set isImport and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toEqual(true);
+            expect(comp.textExercise.assessmentDueDate).toEqual(null);
+            expect(comp.textExercise.releaseDate).toEqual(null);
+            expect(comp.textExercise.dueDate).toEqual(null);
         }));
     });
 });

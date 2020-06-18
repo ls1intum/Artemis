@@ -43,6 +43,11 @@ export class TextExerciseImportComponent implements OnInit {
         this.performSearch(this.search, 300);
     }
 
+    /** Method to perform the search based on a search subject
+     *
+     * @param searchSubject The search subject which we use to search.
+     * @param debounce The delay we apply to deley the feedback / wait for input
+     */
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
@@ -81,6 +86,10 @@ export class TextExerciseImportComponent implements OnInit {
         return item.id;
     }
 
+    /** Set the list sorting direction
+     *
+     * @param ascending {boolean} Ascending order set
+     */
     set listSorting(ascending: boolean) {
         const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
         this.setSearchParam({ sortingOrder });
