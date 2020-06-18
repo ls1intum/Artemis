@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 
 /**
- * Service Implementation to check Exam access.
+ * Service implementation to check exam access.
  */
 @Service
 public class ExamAccessService {
