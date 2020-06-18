@@ -108,8 +108,6 @@ public class TextExerciseImportService {
     private Result copyResult(Result originalResult, Submission newSubmission) {
         log.debug("Copying the result to new submission: {}", newSubmission);
         Result newResult = new Result();
-        // Save empty Result to get Id
-        resultRepository.save(newResult);
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
         newResult.setCompletionDate(originalResult.getCompletionDate());
@@ -137,8 +135,6 @@ public class TextExerciseImportService {
         List<Feedback> newFeedbacks = new ArrayList<>();
         for (final var originalFeedback : originalFeedbacks) {
             Feedback newFeedback = new Feedback();
-            // save empty Feedback to get Id
-            feedbackRepository.save(newFeedback);
             newFeedback.setCredits(originalFeedback.getCredits());
             newFeedback.setDetailText(originalFeedback.getDetailText());
             newFeedback.setPositive(originalFeedback.isPositive());
@@ -178,7 +174,7 @@ public class TextExerciseImportService {
     }
 
     /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
-     * To copy the corresponding Submission entity this function calls {@link #copySubmission(TextSubmission, TextSubmission)}
+     * To copy the corresponding Submission entity this function calls {@link #copySubmission(TextSubmission)}
      *
      * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
      * @param newExercise The new exercise in which we will insert the example submissions
@@ -189,10 +185,7 @@ public class TextExerciseImportService {
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
             TextSubmission originalSubmission = (TextSubmission) originalExampleSubmission.getSubmission();
-            TextSubmission newSubmission = new TextSubmission();
-            // save empty submission to get id
-            submissionRepository.save(newSubmission);
-            newSubmission = copySubmission(originalSubmission, newSubmission);
+            TextSubmission newSubmission = copySubmission(originalSubmission);
 
             ExampleSubmission newExampleSubmission = new ExampleSubmission();
             newExampleSubmission.setExercise(newExercise);
@@ -209,10 +202,10 @@ public class TextExerciseImportService {
      * {@link #copyResult(Result, Submission)} respectively.
      *
      * @param originalSubmission The original submission to be copied.
-     * @param newSubmission The submission in which we enter the values of {@code originalSubmission}
      * @return The cloned submission
      */
-    private TextSubmission copySubmission(TextSubmission originalSubmission, TextSubmission newSubmission) {
+    private TextSubmission copySubmission(TextSubmission originalSubmission) {
+        TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
             newSubmission.setExampleSubmission(true);
