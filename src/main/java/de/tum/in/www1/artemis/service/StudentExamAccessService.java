@@ -87,6 +87,8 @@ public class StudentExamAccessService {
             return notFound();
         }
 
+        // TODO: filter attributes of exercises that should not be visible to the student.
+
         Optional<ResponseEntity<StudentExam>> studentExamAccessFailure = checkStudentExamAccess(examId, currentUser, studentExam.get());
         return studentExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExam.get()));
     }
