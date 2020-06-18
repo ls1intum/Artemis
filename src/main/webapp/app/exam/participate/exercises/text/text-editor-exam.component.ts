@@ -17,6 +17,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -43,6 +44,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
+        private examParticipationService: ExamParticipationService,
     ) {
         this.isSaving = false;
     }
@@ -99,12 +101,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
             }
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                // TODO replace with new submissionExamService
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
-                    this.submission = response.body!;
-                    // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation.submissions = [this.submission];
-                });
+                this.examParticipationService.createSubmission(newSubmission, this.textExercise.id);
             }
         }
     }

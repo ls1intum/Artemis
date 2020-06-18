@@ -12,9 +12,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { tap } from 'rxjs/operators';
-import * as moment from 'moment';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -58,31 +56,7 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server
      */
     private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
-        // TODO: exchange with real call
-        const mockedStudentExam: Partial<StudentExam> = {
-            exam: {
-                id: 1,
-                title: 'Test Exam',
-                visibleDate: moment('2020-06-15T18:36:48+02:00'),
-                startDate: moment('2020-06-16T16:52:36+02:00'),
-                endDate: moment('2020-06-17T15:52:43+02:00'),
-                startText: 'Start Text',
-                endText: 'End Text',
-                confirmationStartText: 'Are you sure you want to start?',
-                confirmationEndText: 'Are you sure you want to end?',
-                maxPoints: 50,
-                randomizeExerciseOrder: false,
-                numberOfExercisesInExam: 3,
-                registeredUsers: null,
-                exerciseGroups: null,
-                studentExams: null,
-                course: new Course(),
-            },
-            exercises: [new ModelingExercise(UMLDiagramType.ClassDiagram)],
-            id: 0,
-            student: undefined,
-        };
-        return Observable.of(mockedStudentExam as StudentExam);
+        return this.httpClient.get<StudentExam>(this.resourceUrl);
     }
 
     /**
@@ -99,10 +73,12 @@ export class ExamParticipationService {
      * creates submissions for all submissions in SubmissionSaveList
      */
     private synchronizeSubmissionsWithServer() {
+        // TODO: handle synchronization properly
         this.submissionSaveList.forEach((submission) => {
             switch (submission.participation.exercise?.type) {
                 case ExerciseType.TEXT:
-                    return this.textSubmissionService;
+                    this.textSubmissionService.create(submission as TextSubmission, submission.participation.exercise?.id);
+                    break;
                 case ExerciseType.FILE_UPLOAD:
                     return this.fileUploadSubmissionService;
                 case ExerciseType.MODELING:
@@ -137,7 +113,7 @@ export class ExamParticipationService {
      * @param studentExam
      */
     createSubmission(submission: Submission, exerciseId: number) {
-        // Add to updates
+        // TODO: Add to updates
 
         // Store locally
         this.localStorageService.store(this.localStorageExamKey, '');
