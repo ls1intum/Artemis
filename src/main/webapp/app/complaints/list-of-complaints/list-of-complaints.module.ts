@@ -5,13 +5,12 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { RouterModule } from '@angular/router';
 import { listOfComplaintsRoute } from 'app/complaints/list-of-complaints/list-of-complaints.route';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const ENTITY_STATES = [...listOfComplaintsRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
     providers: [ComplaintService],

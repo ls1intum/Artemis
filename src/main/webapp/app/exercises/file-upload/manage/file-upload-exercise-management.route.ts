@@ -11,10 +11,12 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
-    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseManagementService) {}
+    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
 
     /**
      * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or
@@ -28,14 +30,25 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );
         } else if (route.params['courseId']) {
-            return this.courseService.find(route.params['courseId']).pipe(
-                filter((res) => !!res.body),
-                map((course: HttpResponse<Course>) => {
-                    const fileUploadExercise = new FileUploadExercise(course.body!);
-                    fileUploadExercise.filePattern = 'pdf, png';
-                    return fileUploadExercise;
-                }),
-            );
+            if (route.params['examId'] && route.params['groupId']) {
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
+                    filter((res) => !!res.body),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
+                        const fileUploadExercise = new FileUploadExercise(null, exerciseGroup.body!);
+                        fileUploadExercise.filePattern = 'pdf, png';
+                        return fileUploadExercise;
+                    }),
+                );
+            } else {
+                return this.courseService.find(route.params['courseId']).pipe(
+                    filter((res) => !!res.body),
+                    map((course: HttpResponse<Course>) => {
+                        const fileUploadExercise = new FileUploadExercise(course.body!, null);
+                        fileUploadExercise.filePattern = 'pdf, png';
+                        return fileUploadExercise;
+                    }),
+                );
+            }
         }
         return Observable.of(new FileUploadExercise());
     }

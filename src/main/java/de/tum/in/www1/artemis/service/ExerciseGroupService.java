@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -95,5 +96,16 @@ public class ExerciseGroupService {
     public void delete(Long exerciseGroupId) {
         log.debug("Request to delete exercise group : {}", exerciseGroupId);
         exerciseGroupRepository.deleteById(exerciseGroupId);
+    }
+
+    /**
+     * Retrieve the course through ExerciseGroup -> Exam -> Course
+     *
+     * @param exerciseGroupId the id of the exerciseGroup for which the course is retrieved
+     * @return the Course of the Exercise
+     */
+    public Course retrieveCourseOverExerciseGroup(Long exerciseGroupId) {
+        ExerciseGroup exerciseGroup = findOneWithExam(exerciseGroupId);
+        return exerciseGroup.getExam().getCourse();
     }
 }

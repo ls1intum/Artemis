@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
@@ -11,6 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -31,8 +31,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
         private assessmentsService: TextAssessmentsService,
-        private momentDiff: DifferencePipe,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -56,6 +56,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
                 this.exercise = exercise;
                 this.getSubmissions();
             });
+    }
+
+    public sortRows() {
+        this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
 
     private getSubmissions(): void {
@@ -86,15 +90,6 @@ export class TextAssessmentDashboardComponent implements OnInit {
      */
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
         this.filteredSubmissions = filteredSubmissions as TextSubmission[];
-    }
-
-    /**
-     * Form a duration string for an assessment
-     * @param {Date} completionDate - Completion date of the assessment
-     * @param {Date} initializationDate - Initialization date of the assessment
-     */
-    public durationString(completionDate: Date, initializationDate: Date) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
     /**
