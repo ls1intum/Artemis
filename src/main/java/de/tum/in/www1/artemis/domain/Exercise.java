@@ -484,7 +484,7 @@ public abstract class Exercise implements Serializable {
     /**
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return the course class member.
      * This method should only be used if the caller can ensure, that exerciseGroup contains an exam and exam contains a course.
-     * If this is not the case a NullPointerEx will be thrown.
+     * If this is not the case a LazyInitializationException will be thrown.
      *
      * @return Course of the exercise
      */
