@@ -43,7 +43,14 @@ public class StudentExamService {
         return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
     }
 
-    public StudentExam findOneWithExercises(Long studentExamId) {
+    /**
+     * Get one student exam by id with exercises.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithEagerExercises(Long studentExamId) {
         log.debug("Request to get student exam with exercises : {}", studentExamId);
         return studentExamRepository.findWithEagerExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
     }
