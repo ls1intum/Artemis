@@ -6,6 +6,8 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -17,6 +19,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     courseId: number;
     private paramSubscription: Subscription;
     exam: Exam;
+    studentExam: StudentExam;
     examId: number;
     unsavedChanges = false;
     disconnected = false;
@@ -27,7 +30,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     onConnected: () => void;
     onDisconnected: () => void;
 
-    constructor(private courseCalculationService: CourseScoreCalculationService, private jhiWebsocketService: JhiWebsocketService, private route: ActivatedRoute) {}
+    constructor(
+        private courseCalculationService: CourseScoreCalculationService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private route: ActivatedRoute,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * initializes courseId and course
@@ -41,6 +49,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // load exam like this until service is ready
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
+        this.examParticipationService.getStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
+            this.studentExam = studentExam;
+        });
         this.initLiveMode();
     }
 
