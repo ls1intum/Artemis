@@ -22,7 +22,7 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-editor-exam.component.html',
     providers: [ParticipationService],
-    styleUrls: ['app/exercises/text/participate/text-editor.component.scss'],
+    styleUrls: ['./text-editor.component.scss'],
 })
 export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     textExercise: TextExercise;
@@ -33,7 +33,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     answer: string;
 
     @Input()
-    participationId: number
+    participationId: number;
 
     constructor(
         private textSubmissionService: TextSubmissionService,

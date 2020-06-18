@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable, pipe } from 'rxjs';
+import { Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -12,6 +12,9 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { tap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -57,8 +60,25 @@ export class ExamParticipationService {
     private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
         // TODO: exchange with real call
         const mockedStudentExam: Partial<StudentExam> = {
-            exam: undefined,
-            exercises: [],
+            exam: {
+                id: 1,
+                title: 'Test Exam',
+                visibleDate: moment('2020-06-15T18:36:48+02:00'),
+                startDate: moment('2020-06-16T16:52:36+02:00'),
+                endDate: moment('2020-06-17T15:52:43+02:00'),
+                startText: 'Start Text',
+                endText: 'End Text',
+                confirmationStartText: 'Are you sure you want to start?',
+                confirmationEndText: 'Are you sure you want to end?',
+                maxPoints: 50,
+                randomizeExerciseOrder: false,
+                numberOfExercisesInExam: 3,
+                registeredUsers: null,
+                exerciseGroups: null,
+                studentExams: null,
+                course: new Course(),
+            },
+            exercises: [new ModelingExercise(UMLDiagramType.ClassDiagram)],
             id: 0,
             student: undefined,
         };
