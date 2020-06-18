@@ -63,7 +63,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         this.$window.nativeWindow.scroll(0, 0);
 
-        console.log(this.activatedRoute.url.findIndex[3]);
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
             this.isExamMode = !!this.textExercise.exerciseGroup;
