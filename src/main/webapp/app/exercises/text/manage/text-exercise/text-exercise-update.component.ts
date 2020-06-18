@@ -16,7 +16,6 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { activateRoute } from 'app/account/activate/activate.route';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -27,7 +26,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
     checkedFlag: boolean;
     isExamMode: boolean;
-    isImport: boolean = false;
+    isImport = false;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
 

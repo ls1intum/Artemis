@@ -448,7 +448,7 @@ public class TextExerciseResource {
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
-        final var newExercise = textExerciseImportService.importTextExerciseBasis(originalTextExercise, importedExercise);
+        final var newExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body(newExercise);

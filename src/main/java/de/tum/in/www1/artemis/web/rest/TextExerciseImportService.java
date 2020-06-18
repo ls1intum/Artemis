@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -10,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
 
 @Repository
 public class TextExerciseImportService {
@@ -41,16 +41,34 @@ public class TextExerciseImportService {
 
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations and student questions . <br>
-     * There are however, a couple of things that will never get copied:
+     * All basic include everything except Student-, Tutor participations, student questions and dates. <br>
+     * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
+     * {@link #copyExampleSubmission(TextExercise, TextExercise)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
     @Transactional
-    public TextExercise importTextExerciseBasis(final TextExercise templateExercise, TextExercise importedExercise) {
-        log.debug("Creating a new Exercise based on exercise", templateExercise);
+    public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
+        log.debug("Creating a new Exercise based on exercise {}", templateExercise);
+        TextExercise newExercise = copyTextExerciseBasis(importedExercise);
+        textExerciseRepository.save(newExercise);
+        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
+        return newExercise;
+    }
+
+    /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
+     * Here we ignore all external entities as well as the start-, end-, and assemessment due date.
+     * If the exercise is a team exercise, this method calls {@link #copyTeamAssignmentConfig(TeamAssignmentConfig)}
+     * to copy the Team assignment configuration
+     *
+     * @param importedExercise The exercise from which to copy the basis
+     * @return the cloned TextExercise basis
+     */
+    @NotNull
+    private TextExercise copyTextExerciseBasis(TextExercise importedExercise) {
+        log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
         newExercise.setCourse(importedExercise.getCourse());
         newExercise.setSampleSolution(importedExercise.getSampleSolution());
@@ -64,13 +82,14 @@ public class TextExerciseImportService {
         if (newExercise.getMode() == ExerciseMode.TEAM) {
             newExercise.setTeamAssignmentConfig(copyTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig()));
         }
-        textExerciseRepository.save(newExercise);
-
-        // Create new submission
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
     }
 
+    /** Helper method which does a hard copy of the Team Assignment Configurations.
+     *
+     * @param originalConfig the original team assignment configuration to be copied.
+     * @return The cloned configuration
+     */
     private TeamAssignmentConfig copyTeamAssignmentConfig(TeamAssignmentConfig originalConfig) {
         log.debug("Copying TeamAssignmentConfig");
         TeamAssignmentConfig newConfig = new TeamAssignmentConfig();
@@ -79,6 +98,13 @@ public class TextExerciseImportService {
         return newConfig;
     }
 
+    /** This helper method does a hard copy of the result of a submission.
+     * To copy the feedback, it calls {@link #copyFeedback(List, Result)}
+     *
+     * @param originalResult The original result to be copied
+     * @param newSubmission The submission in which we link the result clone
+     * @return The cloned result
+     */
     private Result copyResult(Result originalResult, Submission newSubmission) {
         log.debug("Copying the result to new submission: {}", newSubmission);
         Result newResult = new Result();
@@ -100,6 +126,12 @@ public class TextExerciseImportService {
         return newResult;
     }
 
+    /** This helper functions does a hard copy of the feedbacks.
+     *
+     * @param originalFeedbacks The original list of feedbacks to be copied
+     * @param newResult The result in which we link the new feedback
+     * @return The cloned list of feedback
+     */
     private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult) {
         log.debug("Copying the feedbacks to new result: {}", newResult);
         List<Feedback> newFeedbacks = new ArrayList<>();
@@ -121,6 +153,12 @@ public class TextExerciseImportService {
         return newFeedbacks;
     }
 
+    /** This helper functions does a hard copy of the text blocks and inserts them into {@code newSubmission}
+     *
+     * @param originalTextBlocks The original text blocks to be copied
+     * @param newSubmission The submission in which we enter the new text blocks
+     * @return the cloned list of text blocks
+     */
     private List<TextBlock> copyTextBlocks(List<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
         log.debug("Copying the TextBlocks to new TextSubmission: {}", newSubmission);
         List<TextBlock> newTextBlocks = new ArrayList<>();
@@ -139,6 +177,13 @@ public class TextExerciseImportService {
         return newTextBlocks;
     }
 
+    /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+     * To copy the corresponding Submission entity this function calls {@link #copySubmission(TextSubmission, TextSubmission)}
+     *
+     * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
+     * @param newExercise The new exercise in which we will insert the example submissions
+     * @return The cloned set of example submissions
+     */
     private Set<ExampleSubmission> copyExampleSubmission(TextExercise templateExercise, TextExercise newExercise) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
@@ -147,19 +192,7 @@ public class TextExerciseImportService {
             TextSubmission newSubmission = new TextSubmission();
             // save empty submission to get id
             submissionRepository.save(newSubmission);
-            if (originalSubmission != null) {
-                log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
-                newSubmission.setExampleSubmission(true);
-                newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
-                newSubmission.setLanguage(originalSubmission.getLanguage());
-                newSubmission.setType(originalSubmission.getType());
-                newSubmission.setParticipation(originalSubmission.getParticipation());
-                newSubmission.setText(originalSubmission.getText());
-                newSubmission.setBlocks(copyTextBlocks(originalSubmission.getBlocks(), newSubmission));
-                newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
-
-                submissionRepository.save(newSubmission);
-            }
+            newSubmission = copySubmission(originalSubmission, newSubmission);
 
             ExampleSubmission newExampleSubmission = new ExampleSubmission();
             newExampleSubmission.setExercise(newExercise);
@@ -169,5 +202,29 @@ public class TextExerciseImportService {
             newExampleSubmissions.add(newExampleSubmission);
         }
         return newExampleSubmissions;
+    }
+
+    /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
+     * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(List, TextSubmission)} and
+     * {@link #copyResult(Result, Submission)} respectively.
+     *
+     * @param originalSubmission The original submission to be copied.
+     * @param newSubmission The submission in which we enter the values of {@code originalSubmission}
+     * @return The cloned submission
+     */
+    private TextSubmission copySubmission(TextSubmission originalSubmission, TextSubmission newSubmission) {
+        if (originalSubmission != null) {
+            log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
+            newSubmission.setExampleSubmission(true);
+            newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
+            newSubmission.setLanguage(originalSubmission.getLanguage());
+            newSubmission.setType(originalSubmission.getType());
+            newSubmission.setParticipation(originalSubmission.getParticipation());
+            newSubmission.setText(originalSubmission.getText());
+            newSubmission.setBlocks(copyTextBlocks(originalSubmission.getBlocks(), newSubmission));
+            newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
+            submissionRepository.save(newSubmission);
+        }
+        return newSubmission;
     }
 }

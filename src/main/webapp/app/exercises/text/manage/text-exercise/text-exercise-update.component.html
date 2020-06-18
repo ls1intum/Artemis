@@ -124,7 +124,7 @@
         <div class="form-group">
             <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
 
-            <ul *ngIf="textExercise.id">
+            <ul *ngIf="textExercise.id && !isImport">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
                     <button
                         [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
@@ -151,7 +151,7 @@
             </ul>
 
             <button
-                *ngIf="textExercise.id"
+                *ngIf="textExercise.id && !isImport"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
@@ -161,6 +161,9 @@
 
             <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.
+            </div>
+            <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.textExercise.import.exampleSubmissionsRequireExercise">
+                To edit the example submissions, you first need to finish importing the text exercise.
             </div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">

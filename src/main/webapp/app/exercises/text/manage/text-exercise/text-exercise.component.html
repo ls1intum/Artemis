@@ -5,7 +5,7 @@
         <button
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-import-entity"
-            class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -15,7 +15,8 @@
         </button>
         <button
             *ngIf="course && course.isAtLeastInstructor"
-            class="btn btn-primary float-right jh-create-entity create-text-exercise"
+            id="jh-create-entity"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
