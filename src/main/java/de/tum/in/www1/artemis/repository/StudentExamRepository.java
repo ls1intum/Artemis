@@ -11,8 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 /**
  * Spring Data JPA repository for the StudentExam entity.
  */
