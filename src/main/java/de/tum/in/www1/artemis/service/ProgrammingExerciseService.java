@@ -729,15 +729,8 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        // TODO: Move course selection to Exercise, as we need this often
         // Get course over exerciseGroup in exam mode
-        Course course;
-        if (exercise.hasExerciseGroup()) {
-            course = exercise.getExerciseGroup().getExam().getCourse();
-        }
-        else {
-            course = exercise.getCourse();
-        }
+        Course course = exercise.getCourseOverExerciseGroupOrCourseMember();
 
         final var instructorGroup = course.getInstructorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();

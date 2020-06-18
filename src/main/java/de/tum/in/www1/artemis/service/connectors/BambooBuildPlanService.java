@@ -108,13 +108,7 @@ public class BambooBuildPlanService {
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
         // Get course over exerciseGroup in exam mode
-        Course course;
-        if (programmingExercise.hasExerciseGroup()) {
-            course = programmingExercise.getExerciseGroup().getExam().getCourse();
-        }
-        else {
-            course = programmingExercise.getCourse();
-        }
+        Course course = programmingExercise.getCourseOverExerciseGroupOrCourseMember();
 
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
