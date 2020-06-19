@@ -10,5 +10,6 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 @NgModule({
     imports: [MomentModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModelingEditorModule, ArtemisFullscreenModule],
     declarations: [TextEditorExamComponent, ModelingSubmissionExamComponent],
+    exports: [TextEditorExamComponent, ModelingSubmissionExamComponent],
 })
 export class ArtemisExamExercisesParticipationModule {}

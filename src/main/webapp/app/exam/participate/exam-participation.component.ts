@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -15,6 +16,10 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy {
+    readonly TEXT = ExerciseType.TEXT;
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly MODELING = ExerciseType.MODELING;
+
     course: Course | null;
     courseId: number;
     private paramSubscription: Subscription;
@@ -23,6 +28,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     examId: number;
     unsavedChanges = false;
     disconnected = false;
+    activeExercise = 0;
 
     /**
      * Websocket channels
@@ -67,6 +73,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         }
         return this.exam.endDate ? moment(this.exam.endDate).isBefore(moment()) : false;
     }
+
     /**
      * check if exam is visible
      */
@@ -75,6 +82,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             return false;
         }
         return this.exam.visibleDate ? moment(this.exam.visibleDate).isBefore(moment()) : false;
+    }
+
+    /**
+     * check if exam has started
+     */
+    isActive(): boolean {
+        if (!this.exam) {
+            return false;
+        }
+        return this.exam.startDate ? moment(this.exam.startDate).isBefore(moment()) : false;
     }
 
     ngOnDestroy(): void {

@@ -1,5 +1,29 @@
 <jhi-exam-participation-cover [startView]="true" [exam]="exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
 <jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
+
+<!-- exam participation -->
+<ng-container *ngIf="isVisible() && isActive() && !isOver()">
+    <!-- exam nav -->
+    <div class="row">
+        <div class="col" (click)="activeExercise = activeExercise - 1">
+            previous
+        </div>
+        <div class="col">
+            {{ activeExercise }}
+        </div>
+        <div class="col" (click)="activeExercise = activeExercise + 1">
+            next
+        </div>
+    </div>
+    <!-- exercises -->
+    <ng-container *ngSwitch="studentExam.exercises[activeExercise].type">
+        <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="studentExam.exercises[activeExercise].studentParticipations[0]"></jhi-exam-quiz>
+        <jhi-text-editor-exam *ngSwitchCase="TEXT"></jhi-text-editor-exam>
+        <jhi-modeling-submission-exam *ngSwitchCase="MODELING"></jhi-modeling-submission-exam>
+    </ng-container>
+</ng-container>
+
+<!-- exam connection status footer bar -->
 <div *ngIf="!disconnected" class="exam-footer connected">
     <div class="container">
         <div class="exam-footer-content">
