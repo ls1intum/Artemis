@@ -110,11 +110,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForConduction() throws Exception {
-        StudentExam studentExam = database.addStudentExamWithExercisesAndParticipationAndSubmission(exam1, users.get(0));
-
-        var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
-                StudentExam.class);
-        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId());
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addActiveExamWithRegisteredUser(course, users.get(0));
+        StudentExam studentExam = database.addStudentExamWithExercisesAndParticipationAndSubmission(exam, users.get(0));
+        var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course.getId(), exam.getId());
+        assertThat(response).isEqualTo(studentExam);
         assertThat(response.getExercises().size()).isEqualTo(1);
         assertThat(response.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
         Exercise exercise = response.getExercises().get(0);
