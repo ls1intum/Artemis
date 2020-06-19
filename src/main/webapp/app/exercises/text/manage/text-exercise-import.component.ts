@@ -27,7 +27,7 @@ export class TextExerciseImportComponent implements OnInit {
     content: SearchResult<TextExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 1,
+        page: 0,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
@@ -63,12 +63,11 @@ export class TextExerciseImportComponent implements OnInit {
     }
 
     set page(page: number) {
-        page = page - 1;
         this.setSearchParam({ page });
     }
 
     get page(): number {
-        return this.state.page + 1;
+        return this.state.page;
     }
 
     sortRows() {
@@ -135,5 +134,13 @@ export class TextExerciseImportComponent implements OnInit {
      */
     clear() {
         this.activeModal.dismiss('cancel');
+    }
+
+    /** Callback function when the user navigates through the page results
+     *
+     * @param pagenumber The current page number
+     */
+    onPageChange(pagenumber: number) {
+        if (pagenumber) this.page = pagenumber;
     }
 }

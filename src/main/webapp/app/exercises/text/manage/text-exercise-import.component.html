@@ -45,7 +45,8 @@
         </table>
 
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination [collectionSize]="total" [(page)]="page" [pageSize]="state.pageSize"> </ngb-pagination>
+            <ngb-pagination maxSize="10" rotate="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
         </div>
     </div>
 </form>
