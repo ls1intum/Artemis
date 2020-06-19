@@ -9,43 +9,41 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
     templateUrl: './modeling-submission-exam.component.html',
-    styleUrls: ['app/exercise/modeling/participate/modeling-submission.component.scss'],
+    styleUrls: ['./modeling-submission-exam.component.scss'],
 })
 export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
-    participation: StudentParticipation;
-    modelingExercise: ModelingExercise;
+    @Input()
+    participationId: number;
 
+    modelingExercise: ModelingExercise;
+    umlModel: UMLModel; // input model for Apollon
+
+    participation: StudentParticipation;
     submission: ModelingSubmission;
 
-    umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
     isSaving: boolean;
     autoSaveInterval: number;
-    autoSaveTimer: number;
 
-    @Input()
-    private participationId: number;
-
-    constructor(private modelingSubmissionService: ModelingSubmissionService, private jhiAlertService: AlertService) {
+    constructor(private examParticipationService: ExamParticipationService, private jhiAlertService: AlertService) {
         this.isSaving = false;
-        this.autoSaveTimer = 0;
     }
 
     ngOnInit(): void {
-        // TODO: replace with exam-participation-service
-        this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.participationId).subscribe(
+        // add
+        this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
             (modelingSubmission) => {
-                this.updateModelingSubmission(modelingSubmission);
+                this.updateModelingSubmission(modelingSubmission as ModelingSubmission);
                 this.setAutoSaveTimer();
             },
             (error) => {
@@ -84,14 +82,15 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
      * to the model after at most 60 seconds.
      */
     private setAutoSaveTimer(): void {
-        this.autoSaveTimer = 0;
         // auto save of submission if there are changes
-        this.autoSaveInterval = window.setInterval(() => {
-            this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                this.saveDiagram();
-            }
-        }, 1000);
+        this.autoSaveInterval = window.setInterval(
+            () => {
+                if (!this.canDeactivate()) {
+                    this.saveDiagram();
+                }
+            }, // 60seconds
+            1000 * 60,
+        );
     }
 
     saveDiagram(): void {
@@ -101,26 +100,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         }
         this.updateSubmissionModel();
         this.isSaving = true;
-        this.autoSaveTimer = 0;
-
-        // TODO: relplace with exam-participation-service
-        this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
-            (submission) => {
-                this.submission = submission.body!;
-                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
-                this.onSaveSuccess();
-            },
-            () => this.onSaveError(),
-        );
-    }
-
-    private onSaveSuccess() {
-        this.isSaving = false;
-    }
-
-    private onSaveError() {
-        this.jhiAlertService.error('artemisApp.modelingEditor.error');
-        this.isSaving = false;
+        this.examParticipationService.updateSubmission(this.submission, this.modelingExercise.id);
     }
 
     ngOnDestroy(): void {
