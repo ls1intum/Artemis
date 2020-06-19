@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -23,6 +23,9 @@ export class ExamParticipationService {
     set courseId(value: number) {
         this._courseId = value;
     }
+
+    public studentExam$: Subject<StudentExam> = new Subject<StudentExam>();
+
     private studentExam: StudentExam;
     private submissionSyncList: Submission[] = [];
 
@@ -40,7 +43,12 @@ export class ExamParticipationService {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private textSubmissionService: TextSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
-    ) {}
+    ) {
+        this.studentExam$.subscribe((studentExam) => {
+            this.studentExam = studentExam;
+            this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
+        });
+    }
 
     private getLocalStorageKeyForStudentExam(): string {
         const prefix = 'artemis_student_exam';
@@ -60,21 +68,21 @@ export class ExamParticipationService {
         return exercise ? exercise.studentParticipations.find((studentParticipation) => studentParticipation.id === participationId) : undefined;
     }
 
-    public getStudentExam(): Observable<StudentExam> {
-        // TODO: check local storage
-        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam()));
-
-        if (localStoredExam) {
-            this.studentExam = localStoredExam;
-            return Observable.of(this.studentExam);
+    public initStudentExam() {
+        // return studentExamObject in memory
+        if (this.studentExam) {
+            this.studentExam$.next(this.studentExam);
         } else {
-            // download student exam from server on service init
-            return this.getStudentExamFromServer().pipe(
-                tap((studentExam: StudentExam) => {
-                    this.studentExam = studentExam;
-                    this.storeStudentExamInLocalStorage();
-                }),
-            );
+            // check for localStorage
+            const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam()));
+            if (localStoredExam) {
+                this.studentExam$.next(localStoredExam);
+            } else {
+                // download student exam from server on service init
+                return this.getStudentExamFromServer().subscribe((studentExam: StudentExam) => {
+                    this.studentExam$.next(studentExam);
+                });
+            }
         }
     }
 
@@ -82,14 +90,9 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server
      */
     private getStudentExamFromServer(): Observable<StudentExam> {
-        // TODO: change this as soon as the server route changes
         const url = this.getResourceUrl() + '/studentExams/conduction';
         // this._courseId, this._examId
         return this.httpClient.get<StudentExam>(url);
-    }
-
-    private storeStudentExamInLocalStorage() {
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
     }
 
     /**
@@ -153,30 +156,9 @@ export class ExamParticipationService {
         if (examExerciseParticipation) {
             examExerciseParticipation.submissions = [submission];
             // update immediately in localStorage and online every 60seconds
-            this.storeStudentExamInLocalStorage();
+            this.studentExam$.next(this.studentExam);
             // filter older submissions of this exercise and push the newest version to be updated
             this.submissionSyncList.filter((examSubmission) => examSubmission.id !== submission.id).push(submission);
         }
-    }
-
-    getLatestSubmissionForParticipation(participationId: number): Observable<Submission | undefined> {
-        const latestSubmission: Submission | undefined = this.getExamExerciseParticiaption(participationId)?.submissions[0];
-        if (!latestSubmission) {
-            const exercise: Exercise | undefined = this.getExamExerciseByParticipationId(participationId);
-            switch (exercise?.type) {
-                case ExerciseType.TEXT:
-                    return this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exercise?.id);
-                case ExerciseType.FILE_UPLOAD:
-                    return this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exercise?.id);
-                case ExerciseType.MODELING:
-                    return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId);
-                case ExerciseType.PROGRAMMING:
-                    return this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(exercise?.id);
-                // case ExerciseType.QUIZ:
-                // TODO find submissionService
-                // return null;
-            }
-        }
-        return Observable.of(latestSubmission);
     }
 }

@@ -1,9 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -20,10 +18,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
 
-    course: Course | null;
     courseId: number;
     private paramSubscription: Subscription;
-    exam: Exam;
+    private studentExamSubscription: Subscription;
     studentExam: StudentExam;
     examId: number;
     unsavedChanges = false;
@@ -47,6 +44,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * initializes courseId and course
      */
     ngOnInit(): void {
+        this.studentExamSubscription = this.examParticipationService.studentExam$.subscribe((studentExam) => (this.studentExam = studentExam));
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
@@ -55,12 +53,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.examParticipationService.examId = this.examId;
         });
 
-        // load exam like this until service is ready
-        this.course = this.courseCalculationService.getCourse(this.courseId);
-        this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
-        this.examParticipationService.getStudentExam().subscribe((studentExam) => {
-            this.studentExam = studentExam;
-        });
+        // initializes student exam (gets student exam from server/localStorage)
+        this.examParticipationService.initStudentExam();
         this.initLiveMode();
     }
 
@@ -68,34 +62,35 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
-        return this.exam.endDate ? moment(this.exam.endDate).isBefore(moment()) : false;
+        return this.studentExam.exam.endDate ? moment(this.studentExam.exam.endDate).isBefore(moment()) : false;
     }
 
     /**
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!this.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
-        return this.exam.visibleDate ? moment(this.exam.visibleDate).isBefore(moment()) : false;
+        return this.studentExam.exam.visibleDate ? moment(this.studentExam.exam.visibleDate).isBefore(moment()) : false;
     }
 
     /**
      * check if exam has started
      */
     isActive(): boolean {
-        if (!this.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
-        return this.exam.startDate ? moment(this.exam.startDate).isBefore(moment()) : false;
+        return this.studentExam.exam.startDate ? moment(this.studentExam.exam.startDate).isBefore(moment()) : false;
     }
 
     ngOnDestroy(): void {
         this.paramSubscription.unsubscribe();
+        this.studentExamSubscription.unsubscribe();
     }
     initLiveMode() {
         // listen to connect / disconnect events
