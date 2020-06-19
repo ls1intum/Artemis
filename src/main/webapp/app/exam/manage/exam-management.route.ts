@@ -23,6 +23,7 @@ import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exer
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
+import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -271,6 +272,32 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        component: QuizExerciseComponent,
+        resolve: {
+            quizExercise: FileUploadExerciseResolve, // TODO: figure out resolver
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        component: QuizExerciseComponent,
+        resolve: {
+            quizExercise: FileUploadExerciseResolve, // TODO: figure out resolver
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
