@@ -16,10 +16,9 @@
 
 <jhi-alert></jhi-alert>
 
-<jhi-resizeable-container class="col-12" *ngIf="modelingExercise">
+<jhi-resizeable-container *ngIf="modelingExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
-    <span left-header *ngIf="modelingExercise.title">{{ modelingExercise.title }}</span>
-    <div left-body class="submission-container d-flex flex-column pl-2 mt-3 w-100">
+    <div left-body class="submission-container d-flex flex-column w-100">
         <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
             <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ml-md-2 ml-lg-3">
                 <jhi-team-participate-info-box
