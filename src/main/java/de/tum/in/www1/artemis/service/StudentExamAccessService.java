@@ -67,33 +67,16 @@ public class StudentExamAccessService {
     }
 
     /**
-     * Checks if the current user is allowed to see the requested student exam and returns it if he is allowed.
+     * Checks if the current user is allowed to access the requested exam.
      *
      * @param courseId      the if of the course
      * @param examId        the id of the exam
-     * @param studentExamId the id of the student exam
-     * @return the student exam wrapper in a ResponseEntity or an error response
+     * @param currentUser   the user
+     * @param <T>           The type of the return type of the requesting route so that the
+     *                      response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public ResponseEntity<StudentExam> checkAndGetStudentExamAccessWithExercises(Long courseId, Long examId, Long studentExamId) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
-
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsById(studentExamId);
-        if (studentExam.isEmpty()) {
-            return notFound();
-        }
-
-        // TODO: filter attributes of exercises that should not be visible to the student.
-
-        Optional<ResponseEntity<StudentExam>> studentExamAccessFailure = checkStudentExamAccess(examId, currentUser, studentExam.get());
-        return studentExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExam.get()));
-    }
-
-    private <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser) {
+    public <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser) {
         // Check that the current user is at least student in the course.
         Course course = courseService.findOne(courseId);
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
@@ -112,7 +95,8 @@ public class StudentExamAccessService {
         }
 
         // Check that the exam is live
-        if (exam.get().getStartDate().isAfter(ZonedDateTime.now()) || exam.get().getEndDate().isBefore(ZonedDateTime.now())) {
+        if (exam.get().getStartDate() != null && exam.get().getEndDate() != null
+                && (exam.get().getStartDate().isAfter(ZonedDateTime.now()) || exam.get().getEndDate().isBefore(ZonedDateTime.now()))) {
             return Optional.of(forbidden());
         }
 
