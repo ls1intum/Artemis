@@ -27,8 +27,8 @@
         ></jhi-short-answer-question>
     </div>
 </div>
-<div class="quiz-footer" *ngIf="quizExercise">
-    <div class="quiz-footer-content">
+<div class="quiz-navigation" *ngIf="quizExercise">
+    <div class="quiz-navigation-content">
         <div class="stepwizardquiz">
             <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
                 <div
