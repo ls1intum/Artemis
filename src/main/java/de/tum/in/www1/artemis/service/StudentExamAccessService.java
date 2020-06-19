@@ -69,12 +69,11 @@ public class StudentExamAccessService {
     /**
      * Checks if the current user is allowed to see the requested student exam and returns it if he is allowed.
      *
-     * @param courseId      the if of the course
-     * @param examId        the id of the exam
-     * @param studentExamId the id of the student exam
+     * @param courseId  the if of the course
+     * @param examId    the id of the exam
      * @return the student exam wrapper in a ResponseEntity or an error response
      */
-    public ResponseEntity<StudentExam> checkAndGetStudentExamAccessWithExercises(Long courseId, Long examId, Long studentExamId) {
+    public ResponseEntity<StudentExam> checkAndGetStudentExamAccessWithExercises(Long courseId, Long examId) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
 
         Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
@@ -82,7 +81,7 @@ public class StudentExamAccessService {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsById(studentExamId);
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUser(currentUser);
         if (studentExam.isEmpty()) {
             return notFound();
         }

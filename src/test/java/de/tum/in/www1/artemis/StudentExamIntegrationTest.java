@@ -114,7 +114,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
-        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExam.getId());
+        verify(studentExamAccessService, times(1)).checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId());
         assertThat(response.getExercises().size()).isEqualTo(1);
         assertThat(response.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
         Exercise exercise = response.getExercises().get(0);

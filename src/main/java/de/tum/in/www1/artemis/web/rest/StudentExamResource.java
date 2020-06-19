@@ -70,19 +70,18 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id.
+     * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
-     * @param courseId      the course to which the student exam belongs to
-     * @param examId        the exam to which the student exam belongs to
-     * @param studentExamId the id of the student exam to find
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction")
+    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        log.debug("REST request to get student exam : {}", studentExamId);
-        return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get a user's student exam for conduction of exam : {}", examId);
+        return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId);
     }
 }
