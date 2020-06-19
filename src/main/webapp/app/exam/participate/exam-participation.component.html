@@ -1,3 +1,5 @@
+<!-- TODO: bind exercises to studentExams-->
+<jhi-exam-navigation-bar [exercises]="course?.exercises"></jhi-exam-navigation-bar>
 <jhi-exam-participation-cover [startView]="true" [exam]="exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
 <jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
 <div *ngIf="!disconnected" class="exam-footer connected">
