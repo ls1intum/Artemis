@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -103,7 +104,12 @@ public class StudentExamResource {
             return notFound();
         }
 
-        // TODO: filter attributes of exercises that should not be visible to the student.
+        // Filter attributes of exercises that should not be visible to the student
+        if (studentExam.get().getExercises() != null) {
+            for (Exercise exercise : studentExam.get().getExercises()) {
+                exercise.filterSensitiveInformation();
+            }
+        }
 
         return ResponseEntity.ok(studentExam.get());
     }
