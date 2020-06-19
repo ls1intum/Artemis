@@ -29,14 +29,21 @@ public class TextExerciseImportService {
 
     private final TextBlockRepository textBlockRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final GradingInstructionRepository gradingInstructionRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository,
+                                     GradingCriterionRepository gradingCriterionRepository, GradingInstructionRepository gradingInstructionRepository) {
         this.textExerciseRepository = textExerciseRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
         this.textBlockRepository = textBlockRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.gradingInstructionRepository = gradingInstructionRepository;
     }
 
     /**
@@ -78,11 +85,57 @@ public class TextExerciseImportService {
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
         newExercise.setCategories(importedExercise.getCategories());
         newExercise.setDifficulty(importedExercise.getDifficulty());
+        newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
+        newExercise.setGradingCriteria(copyGradingCriteria(importedExercise));
         newExercise.setMode(importedExercise.getMode());
         if (newExercise.getMode() == ExerciseMode.TEAM) {
             newExercise.setTeamAssignmentConfig(copyTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig()));
         }
         return newExercise;
+    }
+
+    /** Helper method which does a hard copy of the Grading Criteria
+     *
+     * @param originalTextExercise The original exercise which contains the grading criteria to be imported
+     * @return A clone of the grading criteria list
+     */
+    private List<GradingCriterion> copyGradingCriteria(TextExercise originalTextExercise) {
+        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
+        for (GradingCriterion originalGradingCriterion: originalTextExercise.getGradingCriteria()) {
+            GradingCriterion newGradingCriterion = new GradingCriterion();
+
+            newGradingCriterion.setExercise(originalTextExercise);
+            newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
+            // Save to get ID for reference in grading instructions
+            gradingCriterionRepository.save(newGradingCriterion);
+            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
+
+            newGradingCriteria.add(newGradingCriterion);
+        }
+        return newGradingCriteria;
+    }
+
+    /** Helper method which does a hard copy of the Grading Instructions
+     *
+     * @param originalGradingCriterion The original grading criterion which contains the grading instructions
+     * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @return A clone of the grading instruction list of the grading criterion
+     */
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
+        for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
+            GradingInstruction newGradingInstruction = new GradingInstruction();
+            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+            newGradingInstruction.setGradingCriterion(newGradingCriterion);
+
+            gradingInstructionRepository.save(newGradingInstruction);
+            newGradingInstructions.add(newGradingInstruction);
+        }
+        return newGradingInstructions;
     }
 
     /** Helper method which does a hard copy of the Team Assignment Configurations.
