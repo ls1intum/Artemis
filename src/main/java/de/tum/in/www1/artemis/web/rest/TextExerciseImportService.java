@@ -25,25 +25,15 @@ public class TextExerciseImportService {
 
     private final ResultRepository resultRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final TextBlockRepository textBlockRepository;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
-
-    private final GradingInstructionRepository gradingInstructionRepository;
-
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository,
-                                     GradingCriterionRepository gradingCriterionRepository, GradingInstructionRepository gradingInstructionRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
         this.textExerciseRepository = textExerciseRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
-        this.feedbackRepository = feedbackRepository;
         this.textBlockRepository = textBlockRepository;
-        this.gradingCriterionRepository = gradingCriterionRepository;
-        this.gradingInstructionRepository = gradingInstructionRepository;
     }
 
     /**
@@ -101,13 +91,12 @@ public class TextExerciseImportService {
      */
     private List<GradingCriterion> copyGradingCriteria(TextExercise originalTextExercise) {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
-        for (GradingCriterion originalGradingCriterion: originalTextExercise.getGradingCriteria()) {
+        for (GradingCriterion originalGradingCriterion : originalTextExercise.getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
 
             newGradingCriterion.setExercise(originalTextExercise);
             newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-            // Save to get ID for reference in grading instructions
-            gradingCriterionRepository.save(newGradingCriterion);
+
             newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
 
             newGradingCriteria.add(newGradingCriterion);
@@ -132,7 +121,6 @@ public class TextExerciseImportService {
             newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
             newGradingInstruction.setGradingCriterion(newGradingCriterion);
 
-            gradingInstructionRepository.save(newGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
         }
         return newGradingInstructions;
@@ -196,7 +184,6 @@ public class TextExerciseImportService {
             newFeedback.setText(originalFeedback.getText());
             newFeedback.setResult(newResult);
 
-            feedbackRepository.save(newFeedback);
             newFeedbacks.add(newFeedback);
         }
         return newFeedbacks;
@@ -244,6 +231,7 @@ public class TextExerciseImportService {
             newExampleSubmission.setExercise(newExercise);
             newExampleSubmission.setSubmission(newSubmission);
             newExampleSubmission.setAssessmentExplanation(originalExampleSubmission.getAssessmentExplanation());
+
             exampleSubmissionRepository.save(newExampleSubmission);
             newExampleSubmissions.add(newExampleSubmission);
         }
