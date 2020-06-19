@@ -9,12 +9,29 @@ import { QuizExamParticipationComponent } from 'app/exam/participate/exercises/q
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisExamExercisesParticipationModule } from 'app/exam/participate/exercises/exam-exercises-participation.module';
+import { TextEditorExamComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
+import { ModelingSubmissionExamComponent } from 'app/exam/participate/exercises/modeling/modeling-submission-exam.component';
+import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisExamExercisesParticipationModule, ArtemisQuizQuestionTypesModule],
-    declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamParticipationSummaryComponent, QuizExamParticipationComponent],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedCommonModule,
+        ArtemisSharedModule,
+        ArtemisQuizQuestionTypesModule,
+        ArtemisModelingEditorModule,
+        ArtemisFullscreenModule,
+    ],
+    declarations: [
+        ExamParticipationComponent,
+        ExamParticipationCoverComponent,
+        ExamParticipationSummaryComponent,
+        QuizExamParticipationComponent,
+        TextEditorExamComponent,
+        ModelingSubmissionExamComponent,
+    ],
 })
 export class ArtemisExamParticipationModule {}

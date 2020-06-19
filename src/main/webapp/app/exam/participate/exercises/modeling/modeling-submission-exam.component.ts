@@ -16,7 +16,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 @Component({
     selector: 'jhi-modeling-submission-exam',
     templateUrl: './modeling-submission-exam.component.html',
-    styleUrls: ['./modeling-submission.component.scss'],
+    styleUrls: ['./modeling-submission-exam.component.scss'],
 })
 export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -99,8 +99,6 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         }
         this.updateSubmissionModel();
         this.isSaving = true;
-
-        // TODO: relplace with exam-participation-service
         this.examParticipationService.updateSubmission(this.submission, this.modelingExercise.id);
     }
 

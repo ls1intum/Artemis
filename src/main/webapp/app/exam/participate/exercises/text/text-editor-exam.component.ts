@@ -23,7 +23,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-editor-exam.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./text-editor.component.scss'],
+    styleUrls: ['./text-editor-exam.component.scss'],
 })
 export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     textExercise: TextExercise;
@@ -55,8 +55,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         if (Number.isNaN(this.participationId)) {
             return this.jhiAlertService.error('artemisApp.textExercise.error', null, undefined);
         }
-
-        // TODO: replace with new participationExamService
+        // maybe replace with ExamParticipationService?
         this.textService.get(this.participationId).subscribe(
             (data: StudentParticipation) => this.updateParticipation(data),
             (error: HttpErrorResponse) => this.onError(error),
