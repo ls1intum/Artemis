@@ -9,5 +9,4 @@ export class StudentExam implements BaseEntity {
     public student: User;
     public exam: Exam;
     public exercises: Exercise[];
-    public participations: Participation[];
 }

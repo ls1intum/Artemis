@@ -13,6 +13,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -50,9 +51,18 @@ export class ExamParticipationService {
         return `${SERVER_API_URL}api/courses/${this._courseId}/exams/${this._examId}`;
     }
 
+    private getExamExerciseByParticipationId(participationId: number): Exercise | undefined {
+        return this.studentExam.exercises.find((examExercise) => examExercise.studentParticipations.some((studentParticipation) => studentParticipation.id === participationId));
+    }
+
+    private getExamExerciseParticiaption(participationId: number): Participation | undefined {
+        const exercise: Exercise | undefined = this.getExamExerciseByParticipationId(participationId);
+        return exercise ? exercise.studentParticipations.find((studentParticipation) => studentParticipation.id === participationId) : undefined;
+    }
+
     public getStudentExam(): Observable<StudentExam> {
         // TODO: check local storage
-        const localStoredExam: StudentExam = this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam());
+        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam()));
 
         if (localStoredExam) {
             this.studentExam = localStoredExam;
@@ -62,6 +72,7 @@ export class ExamParticipationService {
             return this.getStudentExamFromServer().pipe(
                 tap((studentExam: StudentExam) => {
                     this.studentExam = studentExam;
+                    this.storeStudentExamInLocalStorage();
                 }),
             );
         }
@@ -72,9 +83,13 @@ export class ExamParticipationService {
      */
     private getStudentExamFromServer(): Observable<StudentExam> {
         // TODO: change this as soon as the server route changes
-        const url = this.getResourceUrl() + '/studentExams/19/conduction';
+        const url = this.getResourceUrl() + '/studentExams/conduction';
         // this._courseId, this._examId
         return this.httpClient.get<StudentExam>(url);
+    }
+
+    private storeStudentExamInLocalStorage() {
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
     }
 
     /**
@@ -96,12 +111,12 @@ export class ExamParticipationService {
         this.submissionSyncList.forEach((submission) => {
             switch (submission.participation.exercise?.type) {
                 case ExerciseType.TEXT:
-                    this.textSubmissionService.create(submission as TextSubmission, submission.participation.exercise?.id);
+                    this.textSubmissionService.update(submission as TextSubmission, submission.participation.exercise?.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
                     return this.fileUploadSubmissionService;
                 case ExerciseType.MODELING:
-                    this.modelingSubmissionService.create(submission as ModelingSubmission, submission.participation.exercise.id).subscribe(
+                    this.modelingSubmissionService.update(submission as ModelingSubmission, submission.participation.exercise.id).subscribe(
                         (response) => {
                             submission = response.body!;
                             submission.participation.submissions = [submission];
@@ -130,20 +145,24 @@ export class ExamParticipationService {
     }
 
     /**
-     * Updates StudentExam on server
+     * Updates StudentExam locally, will get synchronized later to the server
      * @param studentExam
      */
-    createSubmission(submission: Submission, exerciseId: number) {
-        // update immediately in localStorage and online every 60seconds
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
-        // TODO: Add to updates
-        this.submissionSyncList.push(submission);
+    updateSubmission(submission: Submission, participationId: number) {
+        const examExerciseParticipation = this.getExamExerciseParticiaption(participationId);
+        if (examExerciseParticipation) {
+            examExerciseParticipation.submissions = [submission];
+            // update immediately in localStorage and online every 60seconds
+            this.storeStudentExamInLocalStorage();
+            // filter older submissions of this exercise and push the newest version to be updated
+            this.submissionSyncList.filter((examSubmission) => examSubmission.id !== submission.id).push(submission);
+        }
     }
 
     getLatestSubmissionForParticipation(participationId: number): Observable<Submission | undefined> {
-        const latestSubmission: Submission | undefined = this.submissionSyncList.find((submission) => submission.participation.id === participationId);
+        const latestSubmission: Submission | undefined = this.getExamExerciseParticiaption(participationId)?.submissions[0];
         if (!latestSubmission) {
-            const exercise: Exercise | undefined = this.studentExam.participations.find((participation) => participation.id === participationId)?.exercise;
+            const exercise: Exercise | undefined = this.getExamExerciseByParticipationId(participationId);
             switch (exercise?.type) {
                 case ExerciseType.TEXT:
                     return this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exercise?.id);

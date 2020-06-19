@@ -64,7 +64,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
 
         this.textEditorStream$ = this.buildSubmissionStream$();
         this.textEditorStream$.subscribe((textSubmission) => {
-            this.examParticipationService.createSubmission(textSubmission, this.participation.exercise.id);
+            this.examParticipationService.updateSubmission(textSubmission, this.participation.exercise.id);
         });
     }
 
@@ -107,7 +107,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
             }
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.examParticipationService.createSubmission(newSubmission, this.textExercise.id);
+                this.examParticipationService.updateSubmission(newSubmission, this.textExercise.id);
             }
         }
     }

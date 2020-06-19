@@ -101,7 +101,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         this.isSaving = true;
 
         // TODO: relplace with exam-participation-service
-        this.examParticipationService.createSubmission(this.submission, this.modelingExercise.id);
+        this.examParticipationService.updateSubmission(this.submission, this.modelingExercise.id);
     }
 
     ngOnDestroy(): void {
