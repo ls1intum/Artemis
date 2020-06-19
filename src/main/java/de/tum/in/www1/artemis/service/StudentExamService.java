@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -8,12 +7,8 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -27,12 +22,8 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ParticipationService participationService;
-
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamAccessService examAccessService, ExerciseRepository exerciseRepository,
-            ParticipationService participationService) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
         this.studentExamRepository = studentExamRepository;
-        this.participationService = participationService;
     }
 
     /**
@@ -79,20 +70,6 @@ public class StudentExamService {
     public void deleteStudentExam(Long studentExamId) {
         log.debug("Request to delete the student exam with Id : {}", studentExamId);
         studentExamRepository.deleteById(studentExamId);
-    }
-
-    @Transactional
-    public List<Participation> generateParticipations(Long examId) {
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
-        List<Participation> generatedParticipations = new ArrayList<>();
-
-        for (StudentExam studentExam : studentExams) {
-            User student = studentExam.getUser();
-            studentExam.getExercises().stream().filter(exercise -> !exercise.getStudentParticipations().isEmpty())
-                    .forEach(exercise -> generatedParticipations.add(participationService.startExercise(exercise, student)));
-        }
-
-        return generatedParticipations;
     }
 
 }
