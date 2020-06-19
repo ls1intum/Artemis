@@ -77,4 +77,24 @@ export class ExerciseGroupsComponent implements OnInit {
                 return 'font';
         }
     }
+
+    /**
+     * Move the exercise group up one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveUp(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
+        }
+    }
+
+    /**
+     * Move the exercise group down one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveDown(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
+        }
+    }
 }
