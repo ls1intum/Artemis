@@ -84,6 +84,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     ProgrammingExercise programmingExercise;
 
+    ProgrammingExercise programmingExerciseInExam;
+
     File downloadedFile;
 
     File localRepoFile;
@@ -99,6 +101,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+
+        // TODO: create one exam with one exercise group with one programming exercise and assign it to programmingExerciseInExam
+
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
@@ -493,9 +498,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_sameShortName_badRequest() throws Exception {
+    public void setupProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_sameShortNameInExamInCourse_badRequest() throws Exception {
+        programmingExerciseInExam.setId(null);
+        // TODO: we need to use programmingExercise2 which should have been created within an exam
+        request.post(ROOT + SETUP, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     @Test

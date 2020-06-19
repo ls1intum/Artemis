@@ -67,11 +67,6 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
-        // TODO: How to deal with this?
-        if (programmingExercise.hasExerciseGroup()) {
-            return forbidden();
-        }
-
         Course course = programmingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 

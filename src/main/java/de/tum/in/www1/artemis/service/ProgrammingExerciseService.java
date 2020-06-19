@@ -547,11 +547,6 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // TODO: Deactivate for now as the method needs a refactoring to support exam exercises, otherwise it forms cyclic dependencies
-        if (programmingExercise.hasExerciseGroup()) {
-            throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
-        }
-
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
@@ -737,8 +732,7 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        // Get course over exerciseGroup in exam mode
-        Course course = exercise.getCourseOverExerciseGroupOrCourseMember();
+        Course course = exercise.getCourse();
 
         final var instructorGroup = course.getInstructorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();

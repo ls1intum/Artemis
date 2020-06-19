@@ -185,10 +185,6 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        // TODO: What to do with exam exercises?
-        if (participation.getExercise().hasExerciseGroup()) {
-            return false;
-        }
         return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
@@ -199,10 +195,6 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation = findSolutionParticipation(participation.getId()).get();
         }
-        // TODO: What to do with exam exercises?
-        if (participation.getExercise().hasExerciseGroup()) {
-            return false;
-        }
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
@@ -212,10 +204,6 @@ public class ProgrammingExerciseParticipationService {
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation = findTemplateParticipation(participation.getId()).get();
-        }
-        // TODO: What to do with exam exercises?
-        if (participation.getExercise().hasExerciseGroup()) {
-            return false;
         }
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }

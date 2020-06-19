@@ -208,7 +208,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseForExam_validExercise_created() throws Exception {
-        // TODO: Override RepoMocks for exam exercises. It seems like two different mock setups can't exist in parallel without overriding each other but I don't know why
         setupRepositoryMocks(examExercise, examExerciseRepo, examTestRepo, examSolutionRepo, examStudentRepo, examStudentTeamRepo);
         mockConnectorRequestsForSetup(examExercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);

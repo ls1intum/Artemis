@@ -212,8 +212,11 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
 
-        List<ProgrammingExercise> programmingExercisesWithSameShortName = programmingExerciseRepository.findAllByShortNameAndCourse(programmingExercise.getShortName(), course);
-        if (programmingExercisesWithSameShortName.size() > 0) {
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
+                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
         }
@@ -394,7 +397,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping(value = Endpoints.PROBLEM)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
