@@ -141,6 +141,8 @@ export class TextExerciseImportComponent implements OnInit {
      * @param pagenumber The current page number
      */
     onPageChange(pagenumber: number) {
-        if (pagenumber) this.page = pagenumber;
+        if (pagenumber) {
+            this.page = pagenumber;
+        }
     }
 }
