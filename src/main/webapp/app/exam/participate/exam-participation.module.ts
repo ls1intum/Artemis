@@ -9,11 +9,13 @@ import { examParticipationState } from 'app/exam/participate/exam-participation.
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextEditorExamComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
 import { ModelingSubmissionExamComponent } from 'app/exam/participate/exercises/modeling/modeling-submission-exam.component';
+import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisSharedModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisFullscreenModule],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamParticipationSummaryComponent, TextEditorExamComponent, ModelingSubmissionExamComponent],
 })
 export class ArtemisExamParticipationModule {}
