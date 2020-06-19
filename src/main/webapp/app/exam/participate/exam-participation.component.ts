@@ -20,7 +20,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     examId: number;
     unsavedChanges = false;
     disconnected = false;
-    interval: any;
 
     /**
      * Websocket channels
