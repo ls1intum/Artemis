@@ -22,6 +22,7 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { CookieService } from 'ngx-cookie-service';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
+import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 
 @NgModule({
     imports: [
@@ -85,6 +86,11 @@ import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
+            multi: true,
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: BrowserFingerprintInterceptor,
             multi: true,
         },
         {
