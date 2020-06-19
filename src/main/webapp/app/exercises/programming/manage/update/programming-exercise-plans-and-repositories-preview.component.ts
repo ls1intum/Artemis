@@ -11,9 +11,9 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
 
     getCourseShortName() {
         if (this.programmingExercise?.course) {
-            return this.programmingExercise?.course?.shortName.toLowerCase();
+            return this.programmingExercise?.course?.shortName;
         } else if (this.programmingExercise?.exerciseGroup) {
-            return this.programmingExercise?.exerciseGroup?.exam?.course?.shortName.toLowerCase();
+            return this.programmingExercise?.exerciseGroup?.exam?.course?.shortName;
         }
     }
 }
