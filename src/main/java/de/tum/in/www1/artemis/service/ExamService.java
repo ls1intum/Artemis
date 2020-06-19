@@ -310,7 +310,7 @@ public class ExamService {
 
         for (StudentExam studentExam : studentExams) {
             User student = studentExam.getUser();
-            studentExam.getExercises().stream().filter(exercise -> !exercise.getStudentParticipations().isEmpty())
+            studentExam.getExercises().stream().filter(exercise -> exercise.getStudentParticipations().isEmpty())
                     .forEach(exercise -> generatedParticipations.add(participationService.startExercise(exercise, student)));
         }
 
