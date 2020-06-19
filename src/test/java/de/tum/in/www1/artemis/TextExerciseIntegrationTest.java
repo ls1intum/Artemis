@@ -91,6 +91,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        assertThat(exerciseRepository.findAll().isEmpty());
     }
 
     @Test

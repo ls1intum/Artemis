@@ -22,3 +22,20 @@ export function nextWSSubscriptionId() {
 export function randomArrayValue(array) {
     return array[Math.floor(Math.random() * array.length)];
 }
+
+export function extractDestination(message) {
+    return extractHeader(message, 'destination');
+}
+
+export function extractHeader(message, header) {
+    const headers = extractSTOMPHeaders(message);
+    return headers.match('(?:.*:.*|\\n)*' + header + ':(.*)\\n(?:.*:.*|\\n)*')[1];
+}
+
+export function extractSTOMPHeaders(message) {
+    return message.match('MESSAGE\\n((?:.|\\n)*)\\n\\n(?:(?:.|\\n)*)')[1];
+}
+
+export function extractMessageContent(message) {
+    return message.match('MESSAGE\n(?:.|\\n)*\\n\\n((?:.|\\n)*)\u0000')[1];
+}

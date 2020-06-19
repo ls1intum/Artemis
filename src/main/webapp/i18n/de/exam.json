@@ -14,9 +14,14 @@
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
-
             "created": "Neue Klausur erstellt",
-            "updated": "Klausur bearbeitet"
+            "updated": "Klausur bearbeitet",
+            "validation": {
+                "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
+                "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+            }
         },
         "examParticipation": {
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
@@ -50,7 +55,7 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "maxPoints": "Anzahl an erreichbaren Punkten",
-            "numberOfExercisesInExam": "Anzahl an Aufgabengruppen",
+            "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",
@@ -59,6 +64,40 @@
             "assessmentDashboard": "Bewertungstafel",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
+            "examStudents": {
+                "registeredStudents": "Angemeldete Studenten",
+                "searchResults": "Suchergebnisse",
+                "usersPerPage": "{{number}} Studenten pro Seite",
+                "showAllUsers": "Alle Studenten anzeigen",
+                "searchForUsers": "Studenten für diese Klausur anmelden durch Suchen nach Login oder Namen",
+                "searchNoResults": "Keine Studenten gefunden",
+                "login": "Login",
+                "name": "Name",
+                "firstName": "Vorname",
+                "lastName": "Nachname",
+                "email": "E-Mail",
+                "visibleRegistrationNumber": "Matrikelnummer",
+                "removeFromGroup": {
+                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden?"
+                },
+                "importStudents": {
+                    "buttonLabel": "Studenten importieren",
+                    "dialogTitle": "Studenten importieren nach:",
+                    "introText": "Mit diesem Dialog können Studenten in diese Klausur importiert werden.",
+                    "csvFile": {
+                        "label": ".csv Datei auswählen",
+                        "tooltip": "Bitte wählen Sie die .csv Datei mit den Studenten zum Import aus."
+                    },
+                    "studentsForImport": {
+                        "label": "Studenten zum Importieren",
+                        "tooltip": "Diese Studenten werden importiert beim Klicken auf \"Importieren\"."
+                    },
+                    "numberOfStudents": "Anzahl an Studenten:",
+                    "numberOfStudentsImported": "Importiert:",
+                    "numberOfStudentsNotImported": "Nicht gefunden:",
+                    "genericErrorMessage": "Der Import von Studenten in die Klausur ist gescheitert!"
+                }
+            },
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
                 "create": "Neue Aufgabengruppe erstellen",
@@ -73,7 +112,8 @@
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
-                "addTextExercise": "Textaufgabe hinzufügen"
+                "addTextExercise": "Textaufgabe hinzufügen",
+                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
