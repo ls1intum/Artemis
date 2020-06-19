@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -110,18 +110,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        // TODO: Case distinction for exam mode?
-                        const targetCourseId = params['courseId'];
-                        this.isImport = true;
-                        this.courseService.find(targetCourseId).subscribe((res) => (this.programmingExercise.course = res.body!));
-
-                        this.programmingExercise.dueDate = null;
-                        this.programmingExercise.projectKey = null;
-                        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
-                        this.programmingExercise.assessmentDueDate = null;
-                        this.programmingExercise.releaseDate = null;
-                        this.programmingExercise.shortName = '';
-                        this.programmingExercise.title = '';
+                        this.setupProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['groupId']) {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
@@ -167,6 +156,39 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
+    }
+
+    /**
+     * Setups the programming exercise for import. The route determine whether the new exercise will be imported as an exam
+     * or a normal exercise.
+     *
+     * @param params given by ActivatedRoute
+     */
+    private setupProgrammingExerciseForImport(params: Params) {
+        this.isImport = true;
+        // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
+        if (params['courseId'] && params['examId'] && params['groupId']) {
+            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                this.programmingExercise.exerciseGroup = res.body!;
+                // Set course to null if a normal exercise is imported
+                this.programmingExercise.course = null;
+            });
+            this.isExamMode = true;
+        } else if (params['courseId']) {
+            this.courseService.find(params['courseId']).subscribe((res) => {
+                this.programmingExercise.course = res.body!;
+                // Set exerciseGroup to null if an exam exercise is imported
+                this.programmingExercise.exerciseGroup = null;
+            });
+            this.isExamMode = false;
+        }
+        this.programmingExercise.dueDate = null;
+        this.programmingExercise.projectKey = null;
+        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
+        this.programmingExercise.assessmentDueDate = null;
+        this.programmingExercise.releaseDate = null;
+        this.programmingExercise.shortName = '';
+        this.programmingExercise.title = '';
     }
 
     /**

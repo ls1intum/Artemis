@@ -289,6 +289,19 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Import programming exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/import/:id',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Edit Programming Exercise
     {
         path: ':examId/exercise-groups/:groupId/programming-exercises/:id/edit',

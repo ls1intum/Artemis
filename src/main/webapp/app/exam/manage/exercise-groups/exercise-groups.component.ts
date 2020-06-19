@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -8,6 +8,9 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -20,7 +23,16 @@ export class ExerciseGroupsComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService, private jhiEventManager: JhiEventManager, private alertService: AlertService) {}
+    exerciseType = ExerciseType;
+
+    constructor(
+        private route: ActivatedRoute,
+        private exerciseGroupService: ExerciseGroupService,
+        private jhiEventManager: JhiEventManager,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+        private router: Router,
+    ) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam.
@@ -75,6 +87,39 @@ export class ExerciseGroupsComponent implements OnInit {
                 return 'keyboard';
             default:
                 return 'font';
+        }
+    }
+
+    /**
+     * Opens the import module for a specific exercise type
+     * @param exercise
+     */
+    openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
+        const importBaseRoute = [
+            '/course-management',
+            exerciseGroup.exam?.course?.id,
+            'exams',
+            exerciseGroup.exam?.id,
+            'exercise-groups',
+            exerciseGroup.id,
+            `${exerciseType}-exercises`,
+            'import',
+        ];
+
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                modalRef.result.then(
+                    (result: ProgrammingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
         }
     }
 }
