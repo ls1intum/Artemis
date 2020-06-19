@@ -252,7 +252,8 @@ public class ProgrammingExercise extends Exercise {
         if (this.projectKey != null) {
             return;
         }
-        Course course = getCourse();
+        // Get course over exerciseGroup for exam programming exercises
+        Course course = getCourseViaExerciseGroupOrCourseMember();
         this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
@@ -391,7 +392,9 @@ public class ProgrammingExercise extends Exercise {
      */
     @JsonIgnore
     public String getProjectName() {
-        Course course = getCourse();
+        // Get course over exerciseGroup for exam programming exercises
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+
         // this is the name used for VC service and CI service
         return course.getShortName() + " " + this.getTitle();
     }

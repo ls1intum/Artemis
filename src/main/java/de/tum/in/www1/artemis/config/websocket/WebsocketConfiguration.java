@@ -315,7 +315,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourse(), user);
+        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {

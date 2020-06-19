@@ -568,7 +568,8 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
         try {
-            Course course = programmingExercise.getCourse();
+            // Get course over exerciseGroup in exam mode
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
             grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions

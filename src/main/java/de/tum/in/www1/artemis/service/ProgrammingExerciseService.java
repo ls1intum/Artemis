@@ -547,7 +547,8 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
@@ -732,7 +733,7 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         final var instructorGroup = course.getInstructorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();

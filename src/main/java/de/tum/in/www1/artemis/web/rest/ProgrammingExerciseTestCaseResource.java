@@ -67,7 +67,7 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
-        Course course = programmingExercise.getCourse();
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {

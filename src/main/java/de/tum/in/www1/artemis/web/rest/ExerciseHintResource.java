@@ -68,7 +68,8 @@ public class ExerciseHintResource {
         if (exerciseHint.getExercise() == null) {
             return badRequest();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())) {
+        Course course = exerciseHint.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
         ExerciseHint result = exerciseHintService.save(exerciseHint);
@@ -137,7 +138,7 @@ public class ExerciseHintResource {
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Course course = programmingExercise.getCourse();
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))
             return forbidden();
 
