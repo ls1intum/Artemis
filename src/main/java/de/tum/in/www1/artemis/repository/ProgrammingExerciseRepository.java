@@ -121,5 +121,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse(Course course);
 
-    List<ProgrammingExercise> findAllByShortNameAndCourse(String shortName, Course course);
+    long countByShortNameAndCourse(String shortName, Course course);
+
+    // TODO: write a query that also counts programming exercises that are indirectly associated with the same course (exercise -> exerciseGroup -> exam -> course)
+    long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 }

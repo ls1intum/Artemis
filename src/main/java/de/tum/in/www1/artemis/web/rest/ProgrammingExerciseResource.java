@@ -212,8 +212,11 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
 
-        List<ProgrammingExercise> programmingExercisesWithSameShortName = programmingExerciseRepository.findAllByShortNameAndCourse(programmingExercise.getShortName(), course);
-        if (programmingExercisesWithSameShortName.size() > 0) {
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
+                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
         }

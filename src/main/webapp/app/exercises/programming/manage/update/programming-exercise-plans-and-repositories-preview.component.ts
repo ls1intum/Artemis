@@ -8,4 +8,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 })
 export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     @Input() programmingExercise: ProgrammingExercise | null;
+
+    getCourseShortName() {
+        if (this.programmingExercise?.course) {
+            return this.programmingExercise?.course?.shortName.toLowerCase();
+        } else if (this.programmingExercise?.exerciseGroup) {
+            return this.programmingExercise?.exerciseGroup?.exam?.course?.shortName.toLowerCase();
+        }
+    }
 }
