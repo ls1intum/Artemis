@@ -88,8 +88,7 @@ public class StudentExamAccessService {
 
         // TODO: filter attributes of exercises that should not be visible to the student.
 
-        Optional<ResponseEntity<StudentExam>> studentExamAccessFailure = checkStudentExamAccess(examId, currentUser, studentExam.get());
-        return studentExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExam.get()));
+        return ResponseEntity.ok(studentExam.get());
     }
 
     private <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser) {
