@@ -294,6 +294,10 @@ public class ProgrammingExerciseResource {
         }
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(newExercise, ENTITY_NAME);
+
+        // TODO: We only check the rights to access the target course but never the right to access the source exercise
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
