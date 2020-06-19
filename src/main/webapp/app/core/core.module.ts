@@ -21,6 +21,7 @@ import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ng
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { CookieService } from 'ngx-cookie-service';
+import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 
 @NgModule({
@@ -95,6 +96,11 @@ import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
+            multi: true,
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: LoadingNotificationInterceptor,
             multi: true,
         },
         {
