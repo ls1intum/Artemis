@@ -97,7 +97,8 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam Student exam
      */
     searchTextFromStudentExam = (studentExam: StudentExam): string => {
-        return studentExam.student?.login || '';
+        // @ts-ignore
+        return studentExam.user?.login || '';
     };
 
     private setStudentExams(studentExams: any): void {
