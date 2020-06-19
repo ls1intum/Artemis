@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,14 +97,14 @@ public class StudentExamResource {
     public ResponseEntity<List<Participation>> generateParticipations(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate participations for student exams of exam {}", examId);
 
+        // Checking if the user has necessary permissions to generate participations
         Optional<ResponseEntity<List<Participation>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        // Todo Generate Participation for all the exercises of the student exams belong to the exam
-        List<Participation> generatedParticipations = new ArrayList<>();
+        List<Participation> generatedParticipations = studentExamService.generateParticipations(examId);
 
-        log.info("Generated {} participations for student exams of exam {}", 0, examId);
+        log.info("Generated {} participations for student exams of exam {}", generatedParticipations.size(), examId);
 
         return ResponseEntity.ok().body(generatedParticipations);
     }
