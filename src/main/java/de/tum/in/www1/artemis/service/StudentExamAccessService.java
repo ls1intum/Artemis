@@ -112,7 +112,8 @@ public class StudentExamAccessService {
         }
 
         // Check that the exam is live
-        if (exam.get().getStartDate().isAfter(ZonedDateTime.now()) || exam.get().getEndDate().isBefore(ZonedDateTime.now())) {
+        if (exam.get().getStartDate() != null && exam.get().getEndDate() != null
+                && (exam.get().getStartDate().isAfter(ZonedDateTime.now()) || exam.get().getEndDate().isBefore(ZonedDateTime.now()))) {
             return Optional.of(forbidden());
         }
 
