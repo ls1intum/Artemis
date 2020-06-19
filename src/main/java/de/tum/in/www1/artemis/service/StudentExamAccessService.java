@@ -81,7 +81,7 @@ public class StudentExamAccessService {
             return courseAndExamAccessFailure.get();
         }
 
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUser(currentUser);
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(currentUser.getId(), examId);
         if (studentExam.isEmpty()) {
             return notFound();
         }
