@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, forkJoin } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -11,12 +11,11 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 
 @Injectable({ providedIn: 'root' })
-export class ExamParticipationService {
+export class ExamParticipationService implements OnDestroy {
     set examId(value: number) {
         this._examId = value;
     }
@@ -33,7 +32,7 @@ export class ExamParticipationService {
     private _examId: number;
 
     // autoTimerInterval in seconds
-    autoSaveTime = 60;
+    autoSaveTimer = 0;
     autoSaveInterval: number;
 
     constructor(
@@ -48,6 +47,10 @@ export class ExamParticipationService {
             this.studentExam = studentExam;
             this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
         });
+    }
+
+    ngOnDestroy(): void {
+        window.clearInterval(this.autoSaveTimer);
     }
 
     private getLocalStorageKeyForStudentExam(): string {
@@ -79,11 +82,12 @@ export class ExamParticipationService {
                 this.studentExam$.next(localStoredExam);
             } else {
                 // download student exam from server on service init
-                return this.getStudentExamFromServer().subscribe((studentExam: StudentExam) => {
+                this.getStudentExamFromServer().subscribe((studentExam: StudentExam) => {
                     this.studentExam$.next(studentExam);
                 });
             }
         }
+        this.startAutoSaveTimer();
     }
 
     /**
@@ -101,42 +105,49 @@ export class ExamParticipationService {
     public startAutoSaveTimer(): void {
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
-            this.synchronizeSubmissionsWithServer();
-        }, 1000 * this.autoSaveTime);
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= 60) {
+                this.synchronizeSubmissionsWithServer();
+            }
+        }, 1000);
     }
 
     /**
-     * creates submissions for all submissions in SubmissionSaveList
+     * triggers Synchronization with server
      */
-    private synchronizeSubmissionsWithServer() {
-        // TODO: handle synchronization properly
-        // TODO: map all submissions to observables and join them, at the end clear sync list
-        this.submissionSyncList.forEach((submission) => {
-            switch (submission.participation.exercise?.type) {
-                case ExerciseType.TEXT:
-                    this.textSubmissionService.update(submission as TextSubmission, submission.participation.exercise?.id);
-                    break;
-                case ExerciseType.FILE_UPLOAD:
-                    return this.fileUploadSubmissionService;
-                case ExerciseType.MODELING:
-                    this.modelingSubmissionService.update(submission as ModelingSubmission, submission.participation.exercise.id).subscribe(
-                        (response) => {
-                            submission = response.body!;
-                            submission.participation.submissions = [submission];
-                            this.onSaveSuccess();
-                        },
-                        () => this.onSaveError(),
-                    );
-                    break;
-                case ExerciseType.PROGRAMMING:
-                    return this.programmingSubmissionService;
-                case ExerciseType.QUIZ:
-                    // TODO find submissionService
-                    return null;
-            }
+    public synchronizeSubmissionsWithServer() {
+        this.autoSaveTimer = 0;
+        forkJoin(
+            this.submissionSyncList.map((submission) => {
+                switch (submission.participation.exercise?.type) {
+                    case ExerciseType.TEXT:
+                        this.textSubmissionService.update(submission as TextSubmission, submission.participation.exercise?.id);
+                        break;
+                    case ExerciseType.FILE_UPLOAD:
+                        // TODO: works differently than other services
+                        return this.fileUploadSubmissionService;
+                    case ExerciseType.MODELING:
+                        this.modelingSubmissionService.update(submission as ModelingSubmission, submission.participation.exercise.id).subscribe(
+                            (response) => {
+                                submission = response.body!;
+                                submission.participation.submissions = [submission];
+                                this.onSaveSuccess();
+                            },
+                            () => this.onSaveError(),
+                        );
+                        break;
+                    case ExerciseType.PROGRAMMING:
+                        // TODO: works differently than other services
+                        return this.programmingSubmissionService;
+                    case ExerciseType.QUIZ:
+                        // TODO find submissionService
+                        return null;
+                }
+            }),
+        ).subscribe(() => {
+            // clear sync list
+            this.submissionSyncList = [];
         });
-        // clear sync list
-        this.submissionSyncList = [];
     }
 
     private onSaveSuccess() {
