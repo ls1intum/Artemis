@@ -41,7 +41,7 @@ export class StudentExamsComponent implements OnInit {
         this.loadAll();
     }
 
-    loadAll() {
+    private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
             this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((res) => {
                 this.setStudentExams(res.body);
