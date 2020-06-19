@@ -78,7 +78,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course2.getId(), exam2.getId(), studentExam1.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(forbidden());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course2.getId(), exam2.getId(), studentExam1.getId())).isEqualTo(forbidden());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course2.getId(), exam2.getId())).isEqualTo(forbidden());
     }
 
     @Test
@@ -87,7 +87,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), 55L, studentExam1.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(notFound());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), 55L, studentExam1.getId())).isEqualTo(notFound());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), 55L)).isEqualTo(notFound());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam2.getId(), studentExam1.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(conflict());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam2.getId(), studentExam1.getId())).isEqualTo(conflict());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam2.getId())).isEqualTo(conflict());
     }
 
     @Test
@@ -107,13 +107,13 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotStarted.getId(), studentExam1.getId());
         assertThat(accessFailure1.isPresent()).isTrue();
         assertThat(accessFailure1.get()).isEqualTo(forbidden());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examNotStarted.getId(), studentExam1.getId())).isEqualTo(forbidden());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examNotStarted.getId())).isEqualTo(forbidden());
         // Exam has ended.
         Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
         Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examEnded.getId(), studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(forbidden());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examEnded.getId(), studentExam1.getId())).isEqualTo(forbidden());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examEnded.getId())).isEqualTo(forbidden());
     }
 
     @Test
@@ -123,7 +123,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotRegistered.getId(), studentExam1.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(forbidden());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examNotRegistered.getId(), studentExam1.getId())).isEqualTo(forbidden());
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), examNotRegistered.getId())).isEqualTo(forbidden());
     }
 
     @Test
@@ -132,7 +132,8 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), 55L);
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(notFound());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), 55L)).isEqualTo(notFound());
+        studentExamRepository.delete(studentExam1);
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId())).isEqualTo(notFound());
     }
 
     @Test
@@ -142,7 +143,6 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(conflict());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId())).isEqualTo(conflict());
     }
 
     @Test
@@ -154,13 +154,11 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId());
         assertThat(accessFailure.isPresent()).isTrue();
         assertThat(accessFailure.get()).isEqualTo(forbidden());
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId())).isEqualTo(forbidden());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testReturnsStudentExam() {
-        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId(), studentExam1.getId()))
-                .isEqualTo(ResponseEntity.ok(studentExam1));
+        assertThat(studentExamAccessService.checkAndGetStudentExamAccessWithExercises(course1.getId(), exam1.getId())).isEqualTo(ResponseEntity.ok(studentExam1));
     }
 }
