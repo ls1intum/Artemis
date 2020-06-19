@@ -53,6 +53,7 @@ export class StudentExamsComponent implements OnInit {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     viewAssessment(studentExam: StudentExam) {
         // TODO: go to assessment
     }
