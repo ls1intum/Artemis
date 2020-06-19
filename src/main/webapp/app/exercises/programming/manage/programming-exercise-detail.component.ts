@@ -54,8 +54,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
-            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
-            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
+
+            // Get course via exerciseGroup or course member
+            let course;
+            if (this.isExamExercise) {
+                course = this.programmingExercise.exerciseGroup?.exam?.course;
+            } else {
+                course = this.programmingExercise.course;
+            }
+            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course!);
+            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course!);
 
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
