@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
 
 /**
@@ -32,10 +34,17 @@ public class StudentExamResource {
 
     private final StudentExamAccessService studentExamAccessService;
 
-    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService) {
+    private final UserService userService;
+
+    private final StudentExamRepository studentExamRepository;
+
+    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
+            UserService userService, StudentExamRepository studentExamRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
+        this.userService = userService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -81,7 +90,21 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.debug("REST request to get a user's student exam for conduction of exam : {}", examId);
-        return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId);
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(currentUser.getId(), examId);
+        if (studentExam.isEmpty()) {
+            return notFound();
+        }
+
+        // TODO: filter attributes of exercises that should not be visible to the student.
+
+        return ResponseEntity.ok(studentExam.get());
     }
 }
