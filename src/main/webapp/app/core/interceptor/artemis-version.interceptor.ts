@@ -4,7 +4,6 @@ import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { AlertService } from 'app/core/alert/alert.service';
-import { JhiAlert } from 'ng-jhipster';
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
