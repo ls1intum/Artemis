@@ -19,7 +19,7 @@
             <button (click)="moveUp(i)" [disabled]="i == 0" class="border-0 p-0 mr-1 bg-transparent">
                 <fa-icon [icon]="'angle-up'" style="font-size: 1.3rem;"></fa-icon>
             </button>
-            <button (click)="moveDown(i)" [disabled]="i >= exerciseGroups.length - 1" class="border-0 p-0 bg-transparent">
+            <button (click)="moveDown(i)" [disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
                 <fa-icon [icon]="'angle-down'" style="font-size: 1.3rem;"></fa-icon>
             </button>
         </div>
