@@ -17,12 +17,13 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-editor-exam.component.html',
     providers: [ParticipationService],
-    styleUrls: ['app/exercises/text/participate/text-editor.component.scss'],
+    styleUrls: ['./text-editor-exam.component.scss'],
 })
 export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     textExercise: TextExercise;
@@ -32,8 +33,10 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     private textEditorInput = new Subject<string>();
     answer: string;
 
+    textEditorStream$: Observable<TextSubmission>;
+
     @Input()
-    participationId: number
+    participationId: number;
 
     constructor(
         private textSubmissionService: TextSubmissionService,
@@ -43,6 +46,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
+        private examParticipationService: ExamParticipationService,
     ) {
         this.isSaving = false;
     }
@@ -51,12 +55,16 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         if (Number.isNaN(this.participationId)) {
             return this.jhiAlertService.error('artemisApp.textExercise.error', null, undefined);
         }
-
-        // TODO: replace with new participationExamService
+        // maybe replace with ExamParticipationService?
         this.textService.get(this.participationId).subscribe(
             (data: StudentParticipation) => this.updateParticipation(data),
             (error: HttpErrorResponse) => this.onError(error),
         );
+
+        this.textEditorStream$ = this.buildSubmissionStream$();
+        this.textEditorStream$.subscribe((textSubmission) => {
+            this.examParticipationService.updateSubmission(textSubmission, this.participation.exercise.id);
+        });
     }
 
     private updateParticipation(participation: StudentParticipation) {
@@ -77,7 +85,6 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     /**
      * Stream of submissions being emitted on:
      * 1. text editor input after a debounce time of 2 seconds
-     * // TODO: adapt this to save the text
      */
     private buildSubmissionStream$() {
         const textEditorStream$ = this.textEditorInput
@@ -99,12 +106,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
             }
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                // TODO replace with new submissionExamService
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
-                    this.submission = response.body!;
-                    // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation.submissions = [this.submission];
-                });
+                this.examParticipationService.updateSubmission(newSubmission, this.textExercise.id);
             }
         }
     }
