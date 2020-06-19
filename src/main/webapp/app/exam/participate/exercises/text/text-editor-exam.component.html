@@ -5,23 +5,23 @@
     <div left-body class="text-editor-grid mt-4 pl-2 pb-2 w-100">
         <div class="grid-area-main">
             <div>
-                    <span class="badge badge-primary mb-2">
-                        {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
-                    </span>
                 <span class="badge badge-primary mb-2">
-                        {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
-                    </span>
+                    {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+                </span>
+                <span class="badge badge-primary mb-2">
+                    {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+                </span>
             </div>
             <ng-container>
-                    <textarea
-                        #textEditor
-                        class="text-editor-textarea"
-                        [(ngModel)]="answer"
-                        [readonly]="!isActive || !submission"
-                        [disabled]="!isActive || !submission"
-                        (keydown.tab)="onTextEditorTab(textEditor, $event)"
-                        (input)="onTextEditorInput($event)"
-                    ></textarea>
+                <textarea
+                    #textEditor
+                    class="text-editor-textarea"
+                    [(ngModel)]="answer"
+                    [readonly]="!isActive || !submission"
+                    [disabled]="!isActive || !submission"
+                    (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                    (input)="onTextEditorInput($event)"
+                ></textarea>
             </ng-container>
         </div>
     </div>
