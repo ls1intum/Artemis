@@ -16,9 +16,17 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    set examId(value: number) {
+        this._examId = value;
+    }
+    set courseId(value: number) {
+        this._courseId = value;
+    }
     private studentExam: StudentExam;
-    private submissionSaveList: Submission[] = [];
+    private submissionSyncList: Submission[] = [];
+
+    private _courseId: number;
+    private _examId: number;
 
     // autoTimerInterval in seconds
     autoSaveTime = 60;
@@ -33,16 +41,25 @@ export class ExamParticipationService {
         private fileUploadSubmissionService: FileUploadSubmissionService,
     ) {}
 
-    public getStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+    private getLocalStorageKeyForStudentExam(): string {
+        const prefix = 'artemis_student_exam';
+        return `${prefix}_${this._courseId}_${this._examId}`;
+    }
+
+    private getResourceUrl(): string {
+        return `${SERVER_API_URL}api/courses/${this._courseId}/exams/${this._examId}`;
+    }
+
+    public getStudentExam(): Observable<StudentExam> {
         // TODO: check local storage
-        const localStoredExam: StudentExam = this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId));
+        const localStoredExam: StudentExam = this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam());
 
         if (localStoredExam) {
             this.studentExam = localStoredExam;
             return Observable.of(this.studentExam);
         } else {
             // download student exam from server on service init
-            return this.getStudentExamFromServer(courseId, examId).pipe(
+            return this.getStudentExamFromServer().pipe(
                 tap((studentExam: StudentExam) => {
                     this.studentExam = studentExam;
                 }),
@@ -50,16 +67,14 @@ export class ExamParticipationService {
         }
     }
 
-    private getLocalStorageKeyForStudentExam(courseId: number, examId: number) {
-        const prefix = 'artemis_student_exam';
-        return `${prefix}_${courseId}_${examId}`;
-    }
-
     /**
      * Retrieves a {@link StudentExam} from server
      */
-    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
-        return this.httpClient.get<StudentExam>(this.resourceUrl);
+    private getStudentExamFromServer(): Observable<StudentExam> {
+        // TODO: change this as soon as the server route changes
+        const url = this.getResourceUrl() + '/studentExams/19/conduction';
+        // this._courseId, this._examId
+        return this.httpClient.get<StudentExam>(url);
     }
 
     /**
@@ -77,7 +92,8 @@ export class ExamParticipationService {
      */
     private synchronizeSubmissionsWithServer() {
         // TODO: handle synchronization properly
-        this.submissionSaveList.forEach((submission) => {
+        // TODO: map all submissions to observables and join them, at the end clear sync list
+        this.submissionSyncList.forEach((submission) => {
             switch (submission.participation.exercise?.type) {
                 case ExerciseType.TEXT:
                     this.textSubmissionService.create(submission as TextSubmission, submission.participation.exercise?.id);
@@ -101,6 +117,8 @@ export class ExamParticipationService {
                     return null;
             }
         });
+        // clear sync list
+        this.submissionSyncList = [];
     }
 
     private onSaveSuccess() {
@@ -115,15 +133,15 @@ export class ExamParticipationService {
      * Updates StudentExam on server
      * @param studentExam
      */
-    createSubmission(submission: Submission, courseId: number, examId: number, exerciseId: number) {
-        // TODO: Add to updates
-
+    createSubmission(submission: Submission, exerciseId: number) {
         // update immediately in localStorage and online every 60seconds
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(this.studentExam));
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(), JSON.stringify(this.studentExam));
+        // TODO: Add to updates
+        this.submissionSyncList.push(submission);
     }
 
     getLatestSubmissionForParticipation(participationId: number): Observable<Submission | undefined> {
-        const latestSubmission: Submission | undefined = this.submissionSaveList.find((submission) => submission.participation.id === participationId);
+        const latestSubmission: Submission | undefined = this.submissionSyncList.find((submission) => submission.participation.id === participationId);
         if (!latestSubmission) {
             const exercise: Exercise | undefined = this.studentExam.participations.find((participation) => participation.id === participationId)?.exercise;
             switch (exercise?.type) {

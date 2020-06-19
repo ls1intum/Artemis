@@ -33,6 +33,8 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     private textEditorInput = new Subject<string>();
     answer: string;
 
+    textEditorStream$: Observable<TextSubmission>;
+
     @Input()
     participationId: number;
 
@@ -59,6 +61,11 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
             (data: StudentParticipation) => this.updateParticipation(data),
             (error: HttpErrorResponse) => this.onError(error),
         );
+
+        this.textEditorStream$ = this.buildSubmissionStream$();
+        this.textEditorStream$.subscribe((textSubmission) => {
+            this.examParticipationService.createSubmission(textSubmission, this.participation.exercise.id);
+        });
     }
 
     private updateParticipation(participation: StudentParticipation) {
@@ -79,7 +86,6 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     /**
      * Stream of submissions being emitted on:
      * 1. text editor input after a debounce time of 2 seconds
-     * // TODO: adapt this to save the text
      */
     private buildSubmissionStream$() {
         const textEditorStream$ = this.textEditorInput

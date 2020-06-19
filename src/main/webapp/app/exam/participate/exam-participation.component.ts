@@ -44,12 +44,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
+            // set examId and courseId in service
+            this.examParticipationService.courseId = this.courseId;
+            this.examParticipationService.examId = this.examId;
         });
 
         // load exam like this until service is ready
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
-        this.examParticipationService.getStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
+        this.examParticipationService.getStudentExam().subscribe((studentExam) => {
             this.studentExam = studentExam;
         });
         this.initLiveMode();

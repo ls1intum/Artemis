@@ -22,25 +22,24 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
-    participation: StudentParticipation;
-    modelingExercise: ModelingExercise;
+    @Input()
+    participationId: number;
 
+    modelingExercise: ModelingExercise;
+    umlModel: UMLModel; // input model for Apollon
+
+    participation: StudentParticipation;
     submission: ModelingSubmission;
 
-    umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
     isSaving: boolean;
     autoSaveInterval: number;
-
-    @Input()
-    participationId: number;
 
     constructor(private examParticipationService: ExamParticipationService, private jhiAlertService: AlertService) {
         this.isSaving = false;
     }
 
     ngOnInit(): void {
-        // TODO: replace with exam-participation-service
         this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
             (modelingSubmission) => {
                 this.updateModelingSubmission(modelingSubmission as ModelingSubmission);
