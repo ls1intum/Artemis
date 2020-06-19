@@ -13,7 +13,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 public interface VersionControlService {
 
     /**
-     * Configure the repository for the student(s), this mainly includes
+     * Configure the repository for the student(s), this mainly includes setting permissions for the passed users
+     *
      * @param exercise the programming exercise for which the repository should be configured
      * @param repositoryUrl the url of the repository that needs to be configured
      * @param users one user in an individual exercise, multiple users for a team exercise

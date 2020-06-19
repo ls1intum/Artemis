@@ -1,11 +1,11 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { CourseExerciseService } from '../../course/manage/course-management.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { ParticipationStatus } from 'app/entities/exercise.model';
 import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
