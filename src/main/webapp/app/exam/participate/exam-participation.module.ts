@@ -17,7 +17,21 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule, ArtemisModelingEditorModule, ArtemisFullscreenModule],
-    declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamParticipationSummaryComponent, QuizExamParticipationComponent, TextEditorExamComponent, ModelingSubmissionExamComponent],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedCommonModule,
+        ArtemisSharedModule,
+        ArtemisQuizQuestionTypesModule,
+        ArtemisModelingEditorModule,
+        ArtemisFullscreenModule,
+    ],
+    declarations: [
+        ExamParticipationComponent,
+        ExamParticipationCoverComponent,
+        ExamParticipationSummaryComponent,
+        QuizExamParticipationComponent,
+        TextEditorExamComponent,
+        ModelingSubmissionExamComponent,
+    ],
 })
 export class ArtemisExamParticipationModule {}
