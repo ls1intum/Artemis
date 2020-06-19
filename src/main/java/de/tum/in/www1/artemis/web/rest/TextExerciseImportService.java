@@ -90,6 +90,7 @@ public class TextExerciseImportService {
      * @return A clone of the grading criteria list
      */
     private List<GradingCriterion> copyGradingCriteria(TextExercise originalTextExercise) {
+        log.debug("Copying the grading criteria from {}", originalTextExercise);
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : originalTextExercise.getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
@@ -111,6 +112,7 @@ public class TextExerciseImportService {
      * @return A clone of the grading instruction list of the grading criterion
      */
     private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+        log.debug("Copying the grading instructions for the following criterion {}", originalGradingCriterion);
         List<GradingInstruction> newGradingInstructions = new ArrayList<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
