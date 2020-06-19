@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -14,6 +14,7 @@ import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -22,6 +23,8 @@ import { AlertService } from 'app/core/alert/alert.service';
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
+    AssessmentType = AssessmentType;
+    DiagramType = DiagramType;
     checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
@@ -144,10 +147,21 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     private onError(error: HttpErrorResponse): void {
         this.jhiAlertService.error(error.message);
     }
+
     /**
      * gets the flag of the structured grading instructions slide toggle
      */
     getCheckedFlag(event: boolean) {
         this.checkedFlag = event;
+    }
+
+    /**
+     * when the diagram type changes, we need to
+     */
+    diagramTypeChanged() {
+        const semiAutomaticSupportPossible = this.modelingExercise.diagramType === DiagramType.ClassDiagram || this.modelingExercise.diagramType === DiagramType.ActivityDiagram;
+        if (!semiAutomaticSupportPossible) {
+            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
+        }
     }
 }
