@@ -41,7 +41,6 @@
 .right {
     display: flex;
     height: 100%;
-    touch-action: none;
 }
 
 .expanded {
@@ -96,30 +95,5 @@
     cursor: pointer;
     fa-icon {
         padding-left: 5px;
-    }
-}
-// for smaller screens (tablets, phones)
-@media (max-width: 991.98px) {
-    :host {
-        flex-flow: column-reverse;
-    }
-
-    .expanded {
-        width: 100%;
-
-        .draggable-left {
-            display: none;
-        }
-        .card {
-            margin-bottom: 30px;
-        }
-
-        .card-header {
-            pointer-events: none;
-        }
-
-        #right-header-icon {
-            display: none;
-        }
     }
 }
