@@ -8,6 +8,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -115,6 +116,16 @@ export class ExamManagementService {
      */
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    }
+
+    /**
+     * Generate all student exams for all registered students of the exam.
+     * @param courseId
+     * @param examId
+     * @returns a list with the generate student exams
+     */
+    generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {

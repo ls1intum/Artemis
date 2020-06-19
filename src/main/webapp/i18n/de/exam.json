@@ -14,11 +14,16 @@
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
-
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
-            "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!"
+            "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
+            "validation": {
+                "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
+                "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
+                "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
+            }
         },
         "examParticipation": {
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
@@ -52,7 +57,7 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "maxPoints": "Anzahl an erreichbaren Punkten",
-            "numberOfExercisesInExam": "Anzahl an Aufgabengruppen",
+            "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",
