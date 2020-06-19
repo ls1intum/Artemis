@@ -117,29 +117,28 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         this.examSessionService.createExamSession(this.courseId, this.examId).subscribe((response) => {
             const sessionToken = response.body?.sessionToken ?? '';
             this.sessionStorage.store('ExamSessionToken', sessionToken);
-            console.log('Session Storage', this.sessionStorage);
-        });
+            const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+            console.log('Session Token', localSessionToken);
 
-        // TODO start exam
+            // TODO start exam
+        });
     }
 
     /**
      * Submits the exam if user has valid token
      */
     submit() {
-        // TODO retrieve correct local token
-        const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-        let validSessionToken = '';
         this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
-            validSessionToken = response.body?.sessionToken ?? '';
+            const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+            const validSessionToken = response.body?.sessionToken ?? '';
+
+            if (validSessionToken && localSessionToken === validSessionToken) {
+                console.log(validSessionToken + ' is the same as ' + localSessionToken);
+                // TODO: submit exam
+            } else {
+                console.log('Something went wrong');
+                // error message
+            }
         });
-
-        console.log(validSessionToken);
-
-        if (validSessionToken && localSessionToken === validSessionToken) {
-            // TODO: submit exam
-        } else {
-            // error message
-        }
     }
 }

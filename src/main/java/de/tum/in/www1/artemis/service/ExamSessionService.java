@@ -31,7 +31,7 @@ public class ExamSessionService {
     public ExamSession getCurrentExamSession(StudentExam studentExam) {
         log.debug("REST request to get the current exam session for student exam : {}", studentExam);
         var id = studentExam.getId();
-        return examSessionRepository.findByStudentExamId(id);
+        return examSessionRepository.findByStudentExamId(id).get(0);
     }
 
     public void saveExamSession(ExamSession examSession) {
@@ -40,7 +40,12 @@ public class ExamSessionService {
 
     public void deleteExamSession(StudentExam studentExam) {
         var id = studentExam.getId();
-        var examSession = examSessionRepository.findByStudentExamId(id);
-        examSessionRepository.delete(examSession);
+        var examSessions = examSessionRepository.findByStudentExamId(id);
+        if(!examSessions.isEmpty()) {
+            for (ExamSession examSession : examSessions) {
+                examSessionRepository.delete(examSession);
+            }
+
+        }
     }
 }

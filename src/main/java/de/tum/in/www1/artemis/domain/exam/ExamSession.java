@@ -24,15 +24,14 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
     @JoinColumn(name = "student_exam_id")
     private StudentExam studentExam;
 
-    @JoinColumn(name = "session_token")
+    @Column(name = "session_token")
     private String sessionToken;
 
-    @JoinColumn(name = "user_agent")
+    @Column(name = "user_agent")
     private String userAgent;
 
-    @JoinColumn(name = "browser_fingerprint_hash")
+    @Column(name = "browser_fingerprint_hash")
     private String browserFingerprintHash;
-
 
     public ExamSession() {
     }
