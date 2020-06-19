@@ -20,6 +20,7 @@ import interact from 'interactjs';
 export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
+    @Input() isExerciseParticipation = false;
 
     /**
      * Performed after full initialization of the view.
