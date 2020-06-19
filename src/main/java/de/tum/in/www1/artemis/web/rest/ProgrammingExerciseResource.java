@@ -292,10 +292,10 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
-        if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
+        if (sourceExerciseId < 0) {
             return badRequest();
         }
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(newExercise, ENTITY_NAME);
@@ -304,8 +304,17 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
+            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), course.getId());
             return forbidden();
+        }
+
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(newExercise.getShortName(), course)
+            + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(newExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
         }
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
