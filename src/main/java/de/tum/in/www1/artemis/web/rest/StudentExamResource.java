@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,13 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.service.ExamAccessService;
+import de.tum.in.www1.artemis.service.StudentExamAccessService;
+import de.tum.in.www1.artemis.service.StudentExamService;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -57,8 +56,8 @@ public class StudentExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/studentExams : Get all student exams for the given exam
      *
-     * @param courseId  the course to which the student exams belong to
-     * @param examId    the exam to which the student exams belong to
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
      * @return the ResponseEntity with status 200 (OK) and a list of student exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams")
@@ -84,5 +83,30 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/studentExams/generate-participations : Generate the participation objects
+     * for all the student exams belonging to the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @return ResponsEntity containing the list of generated participations
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/studentExams/generate-participations")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Participation>> generateParticipations(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to generate participations for student exams of exam {}", examId);
+
+        Optional<ResponseEntity<List<Participation>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        // Todo Generate Participation for all the exercises of the student exams belong to the exam
+        List<Participation> generatedParticipations = new ArrayList<>();
+
+        log.info("Generated {} participations for student exams of exam {}", 0, examId);
+
+        return ResponseEntity.ok().body(generatedParticipations);
     }
 }
