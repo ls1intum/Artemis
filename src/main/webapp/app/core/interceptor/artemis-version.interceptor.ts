@@ -11,7 +11,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     private showAlert = new Subject();
 
     constructor(alertService: AlertService) {
-        this.showAlert.pipe(throttleTime(2000)).subscribe(() => alertService.addAlert({ type: 'info', msg: 'artemisApp.outdatedAlert', timeout: 30000 }, []));
+        this.showAlert.pipe(throttleTime(10000)).subscribe(() => alertService.addAlert({ type: 'info', msg: 'artemisApp.outdatedAlert', timeout: 30000 }, []));
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
