@@ -15,7 +15,13 @@
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
-            "updated": "Exam updated"
+            "updated": "Exam updated",
+            "validation": {
+                "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
+                "tooFewExerciseGroups": "The number of exercise groups is too small.",
+                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+            }
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
@@ -49,7 +55,7 @@
             "startDate": "Start of working time",
             "endDate": "End of working time",
             "maxPoints": "Maximum number of points in exam",
-            "numberOfExercisesInExam": "Number of exercise groups",
+            "numberOfExercisesInExam": "Number of exercises in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
             "startText": "Exam start text",
             "endText": "Exam end text",
@@ -58,6 +64,40 @@
             "assessmentDashboard": "Assessment Dashboard",
             "studentExams": "Student Exams",
             "students": "Students",
+            "examStudents": {
+                "registeredStudents": "Registered students",
+                "searchResults": "search results",
+                "usersPerPage": "{{number}} students per page",
+                "showAllUsers": "Show all students",
+                "searchForUsers": "Register a student for this exam by searching for login or name",
+                "searchNoResults": "No students found",
+                "login": "Login",
+                "name": "Name",
+                "firstName": "First name",
+                "lastName": "Last name",
+                "email": "Email",
+                "registrationNumber": "Matriculation number",
+                "removeFromExam": {
+                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?"
+                },
+                "importStudents": {
+                    "buttonLabel": "Import students",
+                    "dialogTitle": "Import students into:",
+                    "introText": "This dialog can be used to import students into this exam.",
+                    "csvFile": {
+                        "label": "Select .csv file",
+                        "tooltip": "Please select the .csv file containing the students for the import."
+                    },
+                    "studentsForImport": {
+                        "label": "Students to import",
+                        "tooltip": "These students will be imported when clicking on the \"Import\" button."
+                    },
+                    "numberOfStudents": "Number of students:",
+                    "numberOfStudentsImported": "Imported:",
+                    "numberOfStudentsNotImported": "Not found:",
+                    "genericErrorMessage": "Import of students into exam failed!"
+                }
+            },
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
@@ -72,7 +112,8 @@
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
-                "addTextExercise": "Add text exercise"
+                "addTextExercise": "Add text exercise",
+                "addFileUploadExercise": "Add file upload exercise"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",

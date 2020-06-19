@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -232,20 +233,26 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get TextExercise : {}", exerciseId);
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         TextExercise textExercise = optionalTextExercise.get();
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
         if (textExercise.hasExerciseGroup()) {
-            Course course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            Course course = exerciseGroup.getExam().getCourse();
+
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            // Set the exerciseGroup, exam and course so that the client can work with those ids
+            textExercise.setExerciseGroup(exerciseGroup);
         }
         else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
@@ -278,7 +285,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (textExercise.hasExerciseGroup()) {
-            course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
             course = textExercise.getCourse();

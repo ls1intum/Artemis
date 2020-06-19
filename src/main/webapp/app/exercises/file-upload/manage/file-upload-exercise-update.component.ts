@@ -19,6 +19,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     checkedFlag: boolean;
+    isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
     maxScorePattern = MAX_SCORE_PATTERN;
@@ -51,13 +52,16 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
-            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
-            this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id).subscribe(
-                (categoryRes: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                },
-                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-            );
+            this.isExamMode = !!this.fileUploadExercise.exerciseGroup;
+            if (!this.isExamMode) {
+                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
+                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id).subscribe(
+                    (categoryRes: HttpResponse<string[]>) => {
+                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                    },
+                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                );
+            }
         });
     }
 
