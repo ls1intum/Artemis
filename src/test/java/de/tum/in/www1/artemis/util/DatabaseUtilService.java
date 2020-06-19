@@ -187,6 +187,9 @@ public class DatabaseUtilService {
     private StudentExamRepository studentExamRepository;
 
     @Autowired
+    private ExamSessionRepository examSessionRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     public void resetDatabase() {
@@ -214,6 +217,7 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
+        examSessionRepository.deleteAll();
         studentExamRepository.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
