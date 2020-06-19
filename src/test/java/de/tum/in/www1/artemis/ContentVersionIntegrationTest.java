@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import java.net.URI;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,11 @@ public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBamb
         final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
 
         assertThat(contentVersionHeader).isEqualTo("1.3.3-beta7");
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
 }
