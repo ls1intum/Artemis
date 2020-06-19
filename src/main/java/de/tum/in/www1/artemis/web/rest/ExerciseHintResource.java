@@ -137,11 +137,6 @@ public class ExerciseHintResource {
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // TODO: How do we deal with the access to exam hints? Is something like this even planned?
-        if (programmingExercise.hasExerciseGroup()) {
-            return forbidden();
-        }
-
         Course course = programmingExercise.getCourse();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))
             return forbidden();

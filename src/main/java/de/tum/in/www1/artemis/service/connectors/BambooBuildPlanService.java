@@ -107,8 +107,7 @@ public class BambooBuildPlanService {
      * @param planKey              The name of the source plan
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
-        // Get course over exerciseGroup in exam mode
-        Course course = programmingExercise.getCourseOverExerciseGroupOrCourseMember();
+        Course course = programmingExercise.getCourse();
 
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();

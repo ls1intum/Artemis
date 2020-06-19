@@ -290,7 +290,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Exercise exercise = exerciseService.findOne(exerciseId);
                 if (exercise.hasExerciseGroup()) {
                     return isUserInstructorOrHigherForExercise(principal, exercise);
-                } else {
+                }
+                else {
                     return isUserTAOrHigherForExercise(principal, exercise);
                 }
             }
@@ -314,7 +315,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseOverExerciseGroupOrCourseMember(), user);
+        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourse(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
