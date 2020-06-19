@@ -295,10 +295,11 @@ public class ProgrammingExerciseResource {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(newExercise, ENTITY_NAME);
+
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // TODO: We only check the rights to access the target course but never the right to access the source exercise
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
