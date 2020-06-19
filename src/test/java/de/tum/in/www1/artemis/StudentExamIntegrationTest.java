@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -118,6 +119,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(response).isEqualTo(studentExam);
         assertThat(response.getExercises().size()).isEqualTo(1);
         assertThat(response.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
+        // Check that sensitive information has been removed
+        TextExercise textExercise = (TextExercise) response.getExercises().get(0);
+        assertThat(textExercise.getGradingCriteria()).isEmpty();
+        assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
+        assertThat(textExercise.getSampleSolution()).isEqualTo(null);
+        // Clean up
         Exercise exercise = response.getExercises().get(0);
         for (StudentParticipation s : response.getExercises().get(0).getStudentParticipations()) {
             assertThat(s.getSubmissions().size()).isEqualTo(1);

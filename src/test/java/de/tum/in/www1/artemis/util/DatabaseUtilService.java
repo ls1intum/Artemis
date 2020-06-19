@@ -551,6 +551,10 @@ public class DatabaseUtilService {
     public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
                 null);
+        GradingCriterion gradingCriterion = ModelFactory.generateGradingCriterion("title");
+        textExercise.addGradingCriteria(gradingCriterion);
+        textExercise.setGradingInstructions("this is a grading instruction");
+        textExercise.setSampleSolution("this is a sample solution");
         textExercise = exerciseRepo.save(textExercise);
 
         Submission submission = ModelFactory.generateTextSubmission("", Language.ENGLISH, true);
