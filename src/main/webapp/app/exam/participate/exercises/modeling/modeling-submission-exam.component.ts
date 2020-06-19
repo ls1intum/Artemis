@@ -40,7 +40,8 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     }
 
     ngOnInit(): void {
-        this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
+        // TODO replace the code below with according service in ExamParticipationService
+        /*this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
             (modelingSubmission) => {
                 this.updateModelingSubmission(modelingSubmission as ModelingSubmission);
                 this.setAutoSaveTimer();
@@ -48,7 +49,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
             (error) => {
                 this.jhiAlertService.error(error.message, null, undefined);
             },
-        );
+        );*/
 
         window.scroll(0, 0);
     }
