@@ -4,6 +4,7 @@ import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateService } from '@ngx-translate/core';
 
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
@@ -11,7 +12,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
-    styles: [],
+    styleUrls: ['./exam-participation-cover.scss'],
 })
 export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
@@ -31,8 +32,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     formattedConfirmationText: SafeHtml | null;
 
     interval: any;
+    waitingForExamStart = false;
+    timeUntilStart = '0';
+    formattedStartDate = '';
 
-    constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
+    constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService, private translateService: TranslateService) {}
 
     /**
      * on init use the correct information to display in either start or final view
@@ -48,6 +52,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
+        this.formattedStartDate = this.exam.startDate ? moment(this.exam.startDate).format('LT') : '';
+        this.interval = setInterval(() => {
+            this.updateDisplayedTimes();
+        }, 100);
     }
 
     ngOnDestroy() {
@@ -76,7 +84,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
     enableStartButton() {
-        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
+        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.visibleDate).isBefore(moment())) {
             return true;
         } else {
             return false;
@@ -84,7 +92,54 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * check if exam already started
+     */
+    notStarted(): boolean {
+        if (!this.exam) {
+            return false;
+        }
+        return this.exam.startDate ? moment(this.exam.startDate).isAfter(moment()) : false;
+    }
+
+    /**
      * TODO: add session management, this function is bound to the start exam button
      */
-    startExam() {}
+    startExam() {
+        if (this.notStarted()) {
+            this.waitingForExamStart = true;
+        }
+    }
+
+    /**
+     * updates all displayed (relative) times in the UI
+     */
+    updateDisplayedTimes() {
+        const translationBasePath = 'showStatistic.';
+        // update time until start
+        if (this.exam && this.exam.startDate) {
+            if (this.notStarted()) {
+                this.timeUntilStart = this.relativeTimeText(moment(this.exam.startDate).diff(moment(), 'seconds'));
+            } else {
+                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+            }
+        } else {
+            this.timeUntilStart = '';
+        }
+    }
+
+    /**
+     * Express the given timespan as humanized text
+     *
+     * @param remainingTimeSeconds {number} the amount of seconds to display
+     * @return {string} humanized text for the given amount of seconds
+     */
+    relativeTimeText(remainingTimeSeconds: number) {
+        if (remainingTimeSeconds > 210) {
+            return Math.ceil(remainingTimeSeconds / 60) + ' min';
+        } else if (remainingTimeSeconds > 59) {
+            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
+        } else {
+            return remainingTimeSeconds + ' s';
+        }
+    }
 }

@@ -20,9 +20,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     examId: number;
     unsavedChanges = false;
     disconnected = false;
-    waitingForExamStart = true;
-    timeUntilStart = '0';
-    // startTime = this.exam.startDate?.format('LT');
+    interval: any;
 
     /**
      * Websocket channels
