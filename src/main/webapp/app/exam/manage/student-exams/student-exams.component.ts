@@ -82,10 +82,7 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam
      */
     searchResultFormatter = (studentExam: StudentExam) => {
-        // studentExam has student but it comes as user from the server
-        // @ts-ignore
         if (studentExam.user) {
-            // @ts-ignore
             return `${studentExam.user.login} (${studentExam.user.name})`;
         }
     };
@@ -97,7 +94,6 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam Student exam
      */
     searchTextFromStudentExam = (studentExam: StudentExam): string => {
-        // @ts-ignore
         return studentExam.user?.login || '';
     };
 

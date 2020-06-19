@@ -33,7 +33,6 @@ export class StudentExamDetailComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
-        // @ts-ignore
         this.student = this.studentExam.user;
     }
 
