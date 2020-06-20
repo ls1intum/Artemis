@@ -5,6 +5,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 
 @Component({
     selector: 'jhi-exercise-row-buttons',
@@ -20,7 +21,12 @@ export class ExerciseRowButtonsComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private textExerciseService: TextExerciseService, private fileUploadExerciseService: FileUploadExerciseService, private eventManager: JhiEventManager) {}
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private fileUploadExerciseService: FileUploadExerciseService,
+        private quizExerciseService: QuizExerciseService,
+        private eventManager: JhiEventManager,
+    ) {}
 
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
@@ -32,6 +38,9 @@ export class ExerciseRowButtonsComponent {
                 break;
             case ExerciseType.FILE_UPLOAD:
                 this.deleteFileUploadExercise();
+                break;
+            case ExerciseType.QUIZ:
+                this.deleteQuizExercise();
                 break;
         }
     }
@@ -57,6 +66,20 @@ export class ExerciseRowButtonsComponent {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted a fileUploadExercise',
+                });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    private deleteQuizExercise() {
+        this.quizExerciseService.delete(this.exercise.id).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Deleted a quiz',
                 });
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
