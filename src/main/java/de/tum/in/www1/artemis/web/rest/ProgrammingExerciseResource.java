@@ -322,8 +322,15 @@ public class ProgrammingExerciseResource {
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
-
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
+
+        // Check if the user has the rights to access the original programming exercise
+        Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
+        if (!authCheckService.isAtLeastInstructorInCourse(originalCourse, user)) {
+            log.debug("User {} is not authorized to import the original exercise in course {}", user.getId(), originalCourse.getId());
+            return forbidden();
+        }
+
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
