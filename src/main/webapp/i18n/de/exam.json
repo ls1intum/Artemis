@@ -113,7 +113,8 @@
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
-                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen"
+                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
+                "addQuizExercise": "Quiz hinzufügen"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
