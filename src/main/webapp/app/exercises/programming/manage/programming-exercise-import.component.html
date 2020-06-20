@@ -16,15 +16,15 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.title">Title</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.language">Programming Language</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.course">Course</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -42,10 +42,10 @@
                         <span>{{ exercise.programmingLanguage }}</span>
                     </td>
                     <td>
-                        <ngb-highlight [result]="exercise.course.title" [term]="searchTerm"></ngb-highlight>
+                        <ngb-highlight [result]="exercise | courseOrExamTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.programmingExercise.import.table.doImport'"> </jhi-button>
+                        <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
                     </td>
                 </tr>
             </tbody>

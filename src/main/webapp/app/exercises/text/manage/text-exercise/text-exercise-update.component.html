@@ -127,7 +127,7 @@
             <ul *ngIf="textExercise.id && !isImport">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
                     <button
-                        [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
+                        [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
                         class="btn btn-link"
                     >
                         Example submission {{ i + 1 }}

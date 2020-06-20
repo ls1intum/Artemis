@@ -16,6 +16,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -24,6 +25,7 @@ import { switchMap, tap } from 'rxjs/operators';
 })
 export class TextExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
+    examCourseId: number;
     checkedFlag: boolean;
     isExamMode: boolean;
     isImport = false;
@@ -45,6 +47,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
+        private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
@@ -63,28 +66,58 @@ export class TextExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         this.$window.nativeWindow.scroll(0, 0);
 
+        // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
-            this.isExamMode = !!this.textExercise.exerciseGroup;
-            if (!this.isExamMode) {
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-                this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-                    (categoryRes: HttpResponse<string[]>) => {
-                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                    },
-                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                );
+            if (!!this.textExercise.course) {
+                this.examCourseId = this.textExercise.course.id;
+            } else {
+                this.examCourseId = this.textExercise.exerciseGroup?.exam?.course.id!;
             }
         });
 
         this.activatedRoute.url
             .pipe(
-                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    if (!this.isExamMode) {
+                        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+                        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                            (categoryRes: HttpResponse<string[]>) => {
+                                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                            },
+                            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                        );
+                    }
                     if (this.isImport) {
-                        const targetCourseId = params['courseId'];
-                        this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                        if (this.isExamMode) {
+                            // The target exerciseId where we want to import into
+                            const exerciseGroupId = params['groupId'];
+                            const courseId = params['courseId'];
+                            const examId = params['examId'];
+
+                            console.log('Is is in Import Mode:' + this.isImport);
+                            console.log('Is In Exam Mode:' + this.isExamMode);
+                            console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
+
+                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
+                            // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
+                            this.textExercise.course = null;
+                        } else {
+                            // The target course where we want to import into
+                            const targetCourseId = params['courseId'];
+                            console.log('Is is in Import Mode:' + this.isImport);
+                            console.log('Is In Exam Mode:' + this.isExamMode);
+                            console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
+                            this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                            // We reference normal exercises by their course, having both would lead to conflicts on the server
+                            this.textExercise.exerciseGroup = null;
+                        }
+                        // Reset the due dates
                         this.textExercise.dueDate = null;
                         this.textExercise.releaseDate = null;
                         this.textExercise.assessmentDueDate = null;
@@ -94,6 +127,9 @@ export class TextExerciseUpdateComponent implements OnInit {
             .subscribe();
         this.isSaving = false;
         this.notificationText = null;
+        console.log('Is is in Import Mode:' + this.isImport);
+        console.log('Is In Exam Mode:' + this.isExamMode);
+        console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
 
         // Set submit button text depending on component state
         if (this.isImport) {

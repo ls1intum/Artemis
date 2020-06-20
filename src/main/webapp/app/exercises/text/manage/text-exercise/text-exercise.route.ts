@@ -14,7 +14,6 @@ import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {

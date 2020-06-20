@@ -25,6 +25,18 @@
             "detail": {
                 "title": "Übung"
             },
+            "import": {
+                "attention": "Achtung! ",
+                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "language": "Programmiersprache",
+                    "course": "Kurs",
+                    "examQuestion": "Klausuraufgabe",
+                    "doImport": "Import"
+                }
+            },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",
             "actions": "Aktionen",

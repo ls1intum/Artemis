@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -66,11 +67,15 @@ public class TextExerciseService {
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
-
-        final var exercisePage = authCheckService.isAdmin()
-                ? textExerciseRepository.findByExerciseGroupIsNullAndTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
-                : textExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourseAndExerciseGroupIsNull(searchTerm, searchTerm, user.getGroups(), sorted);
-
+        final Page<TextExercise> exercisePage;
+        if (authCheckService.isAdmin()) {
+            exercisePage = textExerciseRepository
+                    .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
+                            searchTerm, searchTerm, searchTerm, searchTerm, sorted);
+        }
+        else {
+            exercisePage = textExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+        }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 }

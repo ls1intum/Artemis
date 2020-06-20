@@ -154,17 +154,6 @@
                 "alertNewAfterDueDate": "The after due date has been set to the release date!",
                 "notSet": "not set"
             },
-            "import": {
-                "attention": "Attention! ",
-                "markdownWarning": "You can edit the problem statement after importing the exercise.",
-                "loading": "Loading...",
-                "table": {
-                    "title": "Title",
-                    "language": "Programming Language",
-                    "course": "Course",
-                    "doImport": "Import"
-                }
-            },
             "repositoryIsLocked": {
                 "title": "Your Repository is locked.",
                 "tooltip": "The due date has passed, your repository is locked. You can still read the code but not make any changes to it."

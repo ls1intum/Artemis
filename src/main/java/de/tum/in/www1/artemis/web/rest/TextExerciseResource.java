@@ -436,27 +436,43 @@ public class TextExerciseResource {
     @PostMapping("/text-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody TextExercise importedExercise) throws URISyntaxException {
-        if (sourceExerciseId < 0 || importedExercise.getCourse() == null) {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourse() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
             return badRequest();
         }
-        log.debug("REST request to import text exercise {} into course {}", sourceExerciseId, importedExercise.getCourse().getId());
         final var user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourse(), user)) {
-            log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourse().getId());
-            return forbidden();
-        }
-
         final var optionalOriginalTextExercise = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
         if (optionalOriginalTextExercise.isEmpty()) {
+            log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
             return notFound();
+        }
+        if (importedExercise.getCourse() == null) {
+            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getExerciseGroup().getExam().getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises into course of exercise group {}", user.getId(), importedExercise.getExerciseGroup().getId());
+                return forbidden();
+            }
+        }
+        else {
+            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourse().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourse().getId());
+                return forbidden();
+            }
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourse(), user)) {
-            log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourse().getId());
-            return forbidden();
+        if (originalTextExercise.getCourse() == null) {
+            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises from exercise group {}", user.getId(), originalTextExercise.getExerciseGroup().getId());
+                return forbidden();
+            }
+        }
+        else if (originalTextExercise.getExerciseGroup() == null) {
+            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourse().getId());
+                return forbidden();
+            }
         }
 
         final var newExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
