@@ -16,6 +16,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -45,6 +46,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
+        private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
@@ -79,15 +81,26 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         this.activatedRoute.url
             .pipe(
-                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        const targetCourseId = params['courseId'];
-                        this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
-                        this.textExercise.dueDate = null;
-                        this.textExercise.releaseDate = null;
-                        this.textExercise.assessmentDueDate = null;
+                        if (!this.isExamMode) {
+                            const targetCourseId = params['courseId'];
+                            this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                            this.textExercise.dueDate = null;
+                            this.textExercise.releaseDate = null;
+                            this.textExercise.assessmentDueDate = null;
+                        } else {
+                            const targetExerciseGroupId = params['exerciseGroupId'];
+                            const courseId = params['courseId'];
+                            const examId = params['examId'];
+                            this.exerciseGroupService.find(courseId, examId, targetExerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
+                            this.textExercise.course = null;
+                        }
                     }
                 }),
             )
