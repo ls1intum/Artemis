@@ -7,9 +7,6 @@
                 "editLabel": "Textaufgabe bearbeiten",
                 "importLabel": "Neue Textaufgabe importieren"
             },
-            "import": {
-                "exampleSubmissionsRequireExercise": "Um die Beispielabgaben zu bearbeiten, musst du zunächst den Import der Textaufgabe abschließen."
-            },
             "wordCount": "Anzahl der Wörter: {{ count }}",
             "characterCount": "Anzahl der Zeichen: {{ count }}",
             "created": "Textaufgabe mit ID {{ param }} erstellt",

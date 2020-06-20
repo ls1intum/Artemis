@@ -25,6 +25,19 @@
             "detail": {
                 "title": "Exercise"
             },
+            "import": {
+                "attention": "Attention! ",
+                "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "exampleSubmissionsRequireExercise": "To edit the example submissions, you first need to finish importing the text exercise.",
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "language": "Programming Language",
+                    "course": "Course",
+                    "examQuestion": "Exam Question",
+                    "doImport": "Import"
+                }
+            },
             "exercise": "Exercise",
             "results": "Results",
             "actions": "Actions",

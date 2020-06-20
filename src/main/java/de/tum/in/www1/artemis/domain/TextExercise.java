@@ -78,7 +78,7 @@ public class TextExercise extends Exercise implements Serializable {
     }
 
     /**
-     * Columns for which we allow a pageable search using the {@link TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)} (PageableSearchDTO)}
+     * Columns for which we allow a pageable search using the {@link de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum TextExerciseSearchColumn {
