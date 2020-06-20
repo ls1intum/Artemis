@@ -63,35 +63,23 @@ public class ModelFactory {
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
-        populateProgrammingExercise(programmingExercise, "TESTEX");
+        populateProgrammingExercise(programmingExercise);
         return programmingExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
-        populateProgrammingExercise(programmingExercise, "TESTEXExam");
+        populateProgrammingExercise(programmingExercise);
         return programmingExercise;
     }
 
-    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setShortName(shortName);
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
-        programmingExercise.setPublishBuildPlanUrl(true);
-        programmingExercise.setMaxScore(42.0);
-        programmingExercise.setDifficulty(DifficultyLevel.EASY);
-        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
-        programmingExercise.setProblemStatement("Lorem Ipsum");
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
-        programmingExercise.setGradingInstructions("Lorem Ipsum");
-        programmingExercise.setTitle("Programming");
-        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
-        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
-        programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setTestRepositoryUrl("test@url");
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,

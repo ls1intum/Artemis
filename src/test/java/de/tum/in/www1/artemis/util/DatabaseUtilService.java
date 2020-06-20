@@ -748,6 +748,20 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM");
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -874,8 +888,9 @@ public class DatabaseUtilService {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        var now = ZonedDateTime.now();
-        var programmingExercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.plusDays(7), course);
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        populateProgrammingExercise(programmingExercise, "TSTEXC");
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
@@ -885,6 +900,28 @@ public class DatabaseUtilService {
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+    }
+
+    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setShortName(shortName);
+        programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExercise.setPublishBuildPlanUrl(true);
+        programmingExercise.setMaxScore(42.0);
+        programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
+        programmingExercise.setProblemStatement("Lorem Ipsum");
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setGradingInstructions("Lorem Ipsum");
+        programmingExercise.setTitle("Programming");
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setPackageName("de.test");
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
+        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
     }
 
     public Course addEmptyCourse() {
@@ -912,36 +949,20 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
-    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
-        var now = ZonedDateTime.now();
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(now.minusDays(1), now.plusDays(7), exerciseGroup);
-        final var exercisesNrBefore = exerciseRepo.count();
-        exerciseRepo.save(programmingExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-
-        addTestCases(programmingExercise);
-
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        return programmingExercise;
-    }
-
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
-        addTestCases(programmingExercise);
+        addTestCasesToProgrammingExercise(programmingExercise);
 
         return courseRepo.findById(course.getId()).get();
     }
 
-    private void addTestCases(ProgrammingExercise programmingExercise) {
+    private void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
-        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2).active(true).exercise(programmingExercise).afterDueDate(false));
-        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise).afterDueDate(true));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));

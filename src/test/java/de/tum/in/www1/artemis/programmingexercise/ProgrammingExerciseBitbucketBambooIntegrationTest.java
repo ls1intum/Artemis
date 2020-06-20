@@ -97,16 +97,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     LocalRepository studentTeamRepo = new LocalRepository();
 
-    LocalRepository examExerciseRepo = new LocalRepository();
-
-    LocalRepository examTestRepo = new LocalRepository();
-
-    LocalRepository examSolutionRepo = new LocalRepository();
-
-    LocalRepository examStudentRepo = new LocalRepository();
-
-    LocalRepository examStudentTeamRepo = new LocalRepository();
-
     @BeforeEach
     public void setup() throws Exception {
         database.addUsers(numberOfStudents, 1, 1);
@@ -117,26 +107,16 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        // Repositories for normal programming exercise
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
         studentRepo.configureRepos("studentRepo", "studentOriginRepo");
         studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
-        // Repositories for exam programming exercise
-        examExerciseRepo.configureRepos("examExerciseLocalRepo", "examExerciseOriginRepo");
-        examTestRepo.configureRepos("examTestLocalRepo", "examTestOriginRepo");
-        examSolutionRepo.configureRepos("examSolutionLocalRepo", "examSolutionOriginRepo");
-        examStudentRepo.configureRepos("examStudentRepo", "examStudentOriginRepo");
-        // Add this to simplify repository mock setup
-        examStudentTeamRepo.configureRepos("examStudentTeamRepo", "examStudentTeamOriginRepo");
-
-        setupRepositoryMocks(exercise, exerciseRepo, testRepo, solutionRepo, studentRepo, studentTeamRepo);
+        setupRepositoryMocks(exercise);
     }
 
-    private void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepo, LocalRepository testRepo, LocalRepository solutionRepo,
-            LocalRepository studentRepo, LocalRepository teamRepo) throws Exception {
+    private void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
         final var projectKey = exercise.getProjectKey();
 
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
@@ -149,7 +129,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
         var solutionRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.originRepoFile);
         var studentRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(studentRepo.originRepoFile);
-        var teamRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(teamRepo.originRepoFile);
+        var teamRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(studentTeamRepo.originRepoFile);
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
@@ -161,7 +141,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
         doReturn(gitService.getRepositoryByLocalPath(solutionRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
         doReturn(gitService.getRepositoryByLocalPath(studentRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(studentRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(teamRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(teamRepoTestUrl.getURL(), true);
+        doReturn(gitService.getRepositoryByLocalPath(studentTeamRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(teamRepoTestUrl.getURL(), true);
 
         doReturn(exerciseRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(exerciseRepoTestUrl.getURL());
         doReturn(testRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(testRepoTestUrl.getURL());
@@ -208,7 +188,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseForExam_validExercise_created() throws Exception {
-        setupRepositoryMocks(examExercise, examExerciseRepo, examTestRepo, examSolutionRepo, examStudentRepo, examStudentTeamRepo);
+        setupRepositoryMocks(examExercise);
         mockConnectorRequestsForSetup(examExercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
