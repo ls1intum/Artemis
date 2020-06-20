@@ -392,11 +392,8 @@ public class ProgrammingExercise extends Exercise {
      */
     @JsonIgnore
     public String getProjectName() {
-        // Get course over exerciseGroup for exam programming exercises
-        Course course = getCourseViaExerciseGroupOrCourseMember();
-
         // this is the name used for VC service and CI service
-        return course.getShortName() + " " + this.getTitle();
+        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore
