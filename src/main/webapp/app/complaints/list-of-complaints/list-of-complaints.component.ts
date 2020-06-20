@@ -12,6 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     // TODO this selector is used twice which is not good!!!
@@ -43,6 +44,7 @@ export class ListOfComplaintsComponent implements OnInit {
         private router: Router,
         private location: Location,
         private modalService: NgbModal,
+        private sortService: SortService,
     ) {}
 
     ngOnInit(): void {
@@ -131,7 +133,9 @@ export class ListOfComplaintsComponent implements OnInit {
         this.location.back();
     }
 
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.complaintsToShow, this.complaintsSortingPredicate, this.complaintsReverseOrder);
+    }
 
     triggerAddressedComplaints() {
         this.showAddressedComplaints = !this.showAddressedComplaints;

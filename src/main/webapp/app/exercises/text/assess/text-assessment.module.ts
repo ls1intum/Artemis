@@ -5,7 +5,6 @@ import { TextSelectDirective } from './text-assessment-editor/text-select.direct
 import { TextAssessmentEditorComponent } from './text-assessment-editor/text-assessment-editor.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { RouterModule } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { HighlightedTextAreaComponent } from 'app/exercises/text/assess/highlighted-text-area/highlighted-text-area.component';
@@ -18,7 +17,6 @@ const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
     imports: [
         CommonModule,
-        SortByModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         ArtemisResultModule,

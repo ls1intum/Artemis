@@ -16,9 +16,7 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { DifferencePipe } from 'ngx-moment';
-import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -60,7 +58,6 @@ describe('TeamsComponent', () => {
                 ArtemisSharedModule,
                 ArtemisSharedComponentModule,
                 ArtemisTeamModule,
-                SortByModule,
                 RouterTestingModule.withRoutes([teamRoute[0]]),
             ],
             declarations: [],
@@ -70,7 +67,6 @@ describe('TeamsComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: ExerciseService, useClass: MockExerciseService },
-                { provide: SortByPipe, useClass: SortByPipe },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

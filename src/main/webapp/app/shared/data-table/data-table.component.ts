@@ -6,7 +6,7 @@ import { compose, filter, flatten } from 'lodash/fp';
 import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
-import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
+import { SortService } from 'app/shared/service/sort.service';
 
 /**
  * Enum for ascending and descending order.
@@ -134,7 +134,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     searchQueryTooShort: boolean;
     readonly minSearchQueryLength = 3;
 
-    constructor(private sortByPipe: SortByPipe, private localStorage: LocalStorageService) {
+    constructor(private sortService: SortService, private localStorage: LocalStorageService) {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],
@@ -258,7 +258,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
         const filteredEntities = compose(filter(searchPredicate), filter(this.customFilter))(this.allEntities);
-        this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
+        this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
     }

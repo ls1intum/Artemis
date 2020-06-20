@@ -73,10 +73,10 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         course2.setInstructorGroupName("course2InstructorGroup");
         courseRepository.save(course1);
         courseRepository.save(course2);
-        exam1 = database.addExam(course1);
-        exam2 = database.addExam(course2);
-        exerciseGroup1 = database.addExerciseGroup(exam1, true);
-        exerciseGroup2 = database.addExerciseGroup(exam2, true);
+        exam1 = database.addExamWithExerciseGroup(course1, true);
+        exam2 = database.addExamWithExerciseGroup(course2, true);
+        exerciseGroup1 = exam1.getExerciseGroups().get(0);
+        exerciseGroup2 = exam2.getExerciseGroups().get(0);
         studentExam1 = database.addStudentExam(exam1);
         studentExam2 = database.addStudentExam(exam2);
     }
