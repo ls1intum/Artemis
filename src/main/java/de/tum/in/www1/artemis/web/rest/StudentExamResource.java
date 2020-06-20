@@ -9,10 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.service.ExamAccessService;
-import de.tum.in.www1.artemis.service.StudentExamAccessService;
-import de.tum.in.www1.artemis.service.StudentExamService;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.service.*;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -29,10 +30,17 @@ public class StudentExamResource {
 
     private final StudentExamAccessService studentExamAccessService;
 
-    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService) {
+    private final UserService userService;
+
+    private final StudentExamRepository studentExamRepository;
+
+    public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
+            UserService userService, StudentExamRepository studentExamRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
+        this.userService = userService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -67,19 +75,37 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction : Find a student exam by id.
+     * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
-     * @param courseId      the course to which the student exam belongs to
-     * @param examId        the exam to which the student exam belongs to
-     * @param studentExamId the id of the student exam to find
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/conduction")
+    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        log.debug("REST request to get student exam : {}", studentExamId);
-        return studentExamAccessService.checkAndGetStudentExamAccessWithExercises(courseId, examId, studentExamId);
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(currentUser.getId(), examId);
+        if (studentExam.isEmpty()) {
+            return notFound();
+        }
+
+        // Filter attributes of exercises that should not be visible to the student
+        if (studentExam.get().getExercises() != null) {
+            for (Exercise exercise : studentExam.get().getExercises()) {
+                exercise.filterSensitiveInformation();
+            }
+        }
+
+        return ResponseEntity.ok(studentExam.get());
     }
 }
