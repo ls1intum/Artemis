@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -44,8 +44,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * initializes courseId and course
      */
     ngOnInit(): void {
-        this.studentExamSubscription = this.examParticipationService.studentExam$.subscribe((studentExam) => (this.studentExam = studentExam));
-        this.activeExercise = this.studentExam.exercises[0];
+        this.studentExamSubscription = this.examParticipationService.studentExam$.subscribe((studentExam) => {
+            this.studentExam = studentExam;
+            this.activeExercise = studentExam.exercises[0];
+        });
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
@@ -63,7 +65,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.studentExam.exam) {
+        if (!this.studentExam?.exam) {
             return false;
         }
         return this.studentExam.exam.endDate ? moment(this.studentExam.exam.endDate).isBefore(moment()) : false;
@@ -73,7 +75,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!this.studentExam.exam) {
+        if (!this.studentExam?.exam) {
             return false;
         }
         return this.studentExam.exam.visibleDate ? moment(this.studentExam.exam.visibleDate).isBefore(moment()) : false;
@@ -83,7 +85,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam has started
      */
     isActive(): boolean {
-        if (!this.studentExam.exam) {
+        if (!this.studentExam?.exam) {
             return false;
         }
         return this.studentExam.exam.startDate ? moment(this.studentExam.exam.startDate).isBefore(moment()) : false;
@@ -115,7 +117,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * update the current exercise from the navigation
+     * @param {Exercise} exercise
+     */
     onExerciseChange(exercise: Exercise): void {
-
+        this.activeExercise = exercise;
     }
 }

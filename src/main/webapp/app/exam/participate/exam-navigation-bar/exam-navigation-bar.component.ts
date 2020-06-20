@@ -2,6 +2,7 @@ import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -11,6 +12,9 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 export class ExamNavigationBarComponent implements OnInit {
     @Input()
     exercises: Exercise[] = [];
+
+    @Input()
+    endDate: string;
 
     @Output() onExerciseChanged = new EventEmitter<Exercise>();
     @Output() onSubmitExam = new EventEmitter<void>();
