@@ -156,6 +156,10 @@ public class QuizExerciseResource {
             return forbidden();
         }
 
+        // Forbid conversion between normal course exercise and exam exercise
+        QuizExercise quizExerciseBeforeUpdate = quizExerciseService.findOne(quizExercise.getId());
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, quizExerciseBeforeUpdate, ENTITY_NAME);
+
         // check if quiz is has already started
         Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
         if (originalQuiz.isEmpty()) {
