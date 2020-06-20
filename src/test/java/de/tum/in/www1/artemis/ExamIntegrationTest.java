@@ -201,8 +201,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = examRepository.save(exam2);
 
         // invoke generate student exams
-        List<Participation> participations = request.postListWithResponseBody(
-                "/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/generate-participations", Optional.empty(), Participation.class, HttpStatus.OK);
+        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Participation.class, HttpStatus.OK);
         assertThat(participations).hasSize(exam2.getStudentExams().size());
     }
 

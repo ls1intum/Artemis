@@ -304,7 +304,7 @@ public class ExamService {
     }
 
     @Transactional
-    public List<Participation> generateParticipations(Long examId) {
+    public List<Participation> startExercises(Long examId) {
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         List<Participation> generatedParticipations = new ArrayList<>();
 

@@ -286,24 +286,23 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/studentExams/generate-participations : Generate the participation objects
+     * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
      * for all the student exams belonging to the exam
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the exam to which the student exam belongs to
      * @return ResponsEntity containing the list of generated participations
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/generate-participations")
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Participation>> generateParticipations(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.info("REST request to generate participations for student exams of exam {}", examId);
+    public ResponseEntity<List<Participation>> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to start exercises for student exams of exam {}", examId);
 
-        // Checking if the user has necessary permissions to generate participations
         Optional<ResponseEntity<List<Participation>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        List<Participation> generatedParticipations = examService.generateParticipations(examId);
+        List<Participation> generatedParticipations = examService.startExercises(examId);
 
         log.info("Generated {} participations for student exams of exam {}", generatedParticipations.size(), examId);
 

@@ -63,7 +63,17 @@ export class StudentExamsComponent implements OnInit {
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => this.setStudentExams(res),
-            (err) => this.handleStudentExamGenerationError(err.error),
+            (err) => this.handleError(err.error),
+        );
+    }
+
+    /**
+     * Starts all the exercises of the student exams that belong to the exam
+     */
+    startExercises() {
+        this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
+            (res) => {},
+            (err) => this.handleError(err.error),
         );
     }
 
@@ -106,7 +116,7 @@ export class StudentExamsComponent implements OnInit {
         }
     }
 
-    private handleStudentExamGenerationError(error: any): void {
+    private handleError(error: any): void {
         this.jhiAlertService.error(error.errorKey);
     }
 }
