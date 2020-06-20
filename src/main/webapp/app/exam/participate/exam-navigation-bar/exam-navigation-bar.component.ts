@@ -7,7 +7,7 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
-    styles: ['.navigation-item {margin-left: 0.1rem; margin-right: 0.1rem; width: 3rem;} .text-overflow{text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}'],
+    styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
     @Input()
