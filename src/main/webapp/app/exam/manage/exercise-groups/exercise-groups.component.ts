@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -8,6 +8,9 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -20,7 +23,14 @@ export class ExerciseGroupsComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService, private jhiEventManager: JhiEventManager, private alertService: AlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private exerciseGroupService: ExerciseGroupService,
+        private jhiEventManager: JhiEventManager,
+        private modalService: NgbModal,
+        private router: Router,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam.
@@ -76,5 +86,15 @@ export class ExerciseGroupsComponent implements OnInit {
             default:
                 return 'font';
         }
+    }
+
+    openImportModal(exerciseGroupId: number) {
+        const modalRef = this.modalService.open(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: TextExercise) => {
+                this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroupId, 'text-exercises', result.id, 'import']);
+            },
+            () => {},
+        );
     }
 }
