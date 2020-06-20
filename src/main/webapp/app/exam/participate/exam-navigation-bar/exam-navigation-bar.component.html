@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-between">
-    <p class="h2 w-25 text-overflow" *ngIf="exercises && exercises.length > 0">
+    <p class="h3 w-25 text-overflow" *ngIf="exercises && exercises.length > 0">
         <!--        TODO: translate-->
         {{ exercises[exerciseIndex].title }}
     </p>
@@ -39,8 +39,8 @@
         <button class="btn btn-primary px-5" (click)="submitExam()">
             {{ 'artemisApp.examParticipation.finishExam' | translate }}
         </button>
-        <p>
+        <div class="h3">
             {{ remainingTime }}
-        </p>
+        </div>
     </div>
 </div>
