@@ -29,7 +29,6 @@
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
                 "loading": "Lade...",
-                "exampleSubmissionsRequireExercise": "Um die Beispielabgaben zu bearbeiten, musst du zunächst den Import der Textaufgabe abschließen.",
                 "table": {
                     "title": "Titel",
                     "language": "Programmiersprache",
