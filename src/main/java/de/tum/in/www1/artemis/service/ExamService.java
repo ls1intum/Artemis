@@ -303,6 +303,12 @@ public class ExamService {
         return exercises.get(randomIndex);
     }
 
+    /**
+     * Starts all the exercises of all the student exams of an exam
+     *
+     * @param examId exam to which the student exams belong
+     * @return list of generated participations
+     */
     @Transactional
     public List<Participation> startExercises(Long examId) {
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
