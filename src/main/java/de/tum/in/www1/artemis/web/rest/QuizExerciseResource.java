@@ -134,16 +134,22 @@ public class QuizExerciseResource {
             return createQuizExercise(quizExercise);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
-
         // check if quiz is valid
         if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid
+            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
         }
 
         // check if quiz is has already started
@@ -165,7 +171,8 @@ public class QuizExerciseResource {
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
 
         // TODO: it does not really make sense to notify students here!
-        if (notificationText != null) {
+        // Only notify students about changes if a regular exercise was updated
+        if (notificationText != null && quizExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
