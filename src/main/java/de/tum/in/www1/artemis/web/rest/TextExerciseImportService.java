@@ -67,19 +67,30 @@ public class TextExerciseImportService {
     private TextExercise copyTextExerciseBasis(TextExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
-        newExercise.setCourse(importedExercise.getCourse());
+        if (importedExercise.getCourse() != null) {
+            newExercise.setCourse(importedExercise.getCourse());
+        }
+        else {
+            newExercise.setExerciseGroup(importedExercise.getExerciseGroup());
+        }
+
         newExercise.setSampleSolution(importedExercise.getSampleSolution());
         newExercise.setTitle(importedExercise.getTitle());
         newExercise.setMaxScore(importedExercise.getMaxScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
-        newExercise.setCategories(importedExercise.getCategories());
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(copyGradingCriteria(importedExercise));
-        newExercise.setMode(importedExercise.getMode());
-        if (newExercise.getMode() == ExerciseMode.TEAM) {
-            newExercise.setTeamAssignmentConfig(copyTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig()));
+        if (newExercise.getExerciseGroup() != null) {
+            newExercise.setMode(ExerciseMode.INDIVIDUAL);
+        }
+        else {
+            newExercise.setCategories(importedExercise.getCategories());
+            newExercise.setMode(importedExercise.getMode());
+            if (newExercise.getMode() == ExerciseMode.TEAM) {
+                newExercise.setTeamAssignmentConfig(copyTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig()));
+            }
         }
         return newExercise;
     }
