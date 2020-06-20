@@ -69,7 +69,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param partialCourseTitle course title search term
      * @param groups user groups
      * @param pageable Pageable
-     * @returns Page with search results
+     * @return Page with search results
      */
     @Query("select pe from ProgrammingExercise pe where pe.shortName is not null and (pe.id in (select coursePe.id from ProgrammingExercise coursePe where coursePe.course.instructorGroupName in :groups and (coursePe.title like %:partialTitle% or coursePe.course.title like %:partialCourseTitle%)) or pe.id in (select examPe.id from ProgrammingExercise examPe where examPe.exerciseGroup.exam.course.instructorGroupName in :groups and (examPe.title like %:partialTitle% or examPe.exerciseGroup.exam.course.title like %:partialCourseTitle%)))")
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
