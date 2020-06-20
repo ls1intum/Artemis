@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -25,7 +25,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     examId: number;
     unsavedChanges = false;
     disconnected = false;
-    activeExercise = 0;
+    activeExercise: Exercise;
 
     /**
      * Websocket channels
@@ -45,6 +45,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.studentExamSubscription = this.examParticipationService.studentExam$.subscribe((studentExam) => (this.studentExam = studentExam));
+        this.activeExercise = this.studentExam.exercises[0];
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
@@ -112,5 +113,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService.bind('disconnect', () => {
             this.onDisconnected();
         });
+    }
+
+    onExerciseChange(exercise: Exercise): void {
+
     }
 }
