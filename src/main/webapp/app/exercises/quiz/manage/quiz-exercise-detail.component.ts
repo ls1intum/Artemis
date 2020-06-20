@@ -152,15 +152,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.courseId) {
             this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
-                // load exerciseGroup and set exam mode
+                // Load exerciseGroup and set exam mode
                 if (this.examId && groupId) {
                     this.isExamMode = true;
                     this.exerciseGroupService.find(this.courseId!, this.examId, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                        // Make sure to call init if we didn't receive an id => new quiz-exercise
                         this.exerciseGroup = groupResponse.body!;
+                        if (!quizId) {
+                            this.init();
+                        }
                     });
                 }
                 // Make sure to call init if we didn't receive an id => new quiz-exercise
-                if (!quizId) {
+                if (!quizId && !this.isExamMode) {
                     this.init();
                 }
             });
