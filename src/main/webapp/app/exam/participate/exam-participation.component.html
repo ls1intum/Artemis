@@ -4,7 +4,6 @@
 <!-- exam participation -->
 <ng-container *ngIf="isVisible() && isActive() && !isOver()">
     <!-- exam nav -->
-    <!-- TODO: bind exercises to studentExams-->
     <jhi-exam-navigation-bar [exercises]="studentExam.exercises" [endDate]="studentExam.exam.endDate" (onExerciseChanged)="onExerciseChange($event)"></jhi-exam-navigation-bar>
     <!-- exercises -->
     <ng-container [ngSwitch]="activeExercise.type">
