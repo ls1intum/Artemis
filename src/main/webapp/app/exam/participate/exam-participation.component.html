@@ -1,20 +1,11 @@
-<jhi-exam-participation-cover [startView]="true" [exam]="exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
+<jhi-exam-participation-cover [startView]="true" [exam]="studentExam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
 <jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
 
 <!-- exam participation -->
 <ng-container *ngIf="isVisible() && isActive() && !isOver()">
     <!-- exam nav -->
-    <div class="row">
-        <div class="col" (click)="activeExercise = activeExercise - 1">
-            previous
-        </div>
-        <div class="col">
-            {{ activeExercise }}
-        </div>
-        <div class="col" (click)="activeExercise = activeExercise + 1">
-            next
-        </div>
-    </div>
+    <!-- TODO: bind exercises to studentExams-->
+    <jhi-exam-navigation-bar [exercises]="studentExam.exercises"></jhi-exam-navigation-bar>
     <!-- exercises -->
     <ng-container *ngSwitch="studentExam.exercises[activeExercise].type">
         <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="studentExam.exercises[activeExercise].studentParticipations[0]"></jhi-exam-quiz>

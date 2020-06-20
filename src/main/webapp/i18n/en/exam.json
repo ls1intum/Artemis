@@ -25,7 +25,8 @@
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
-            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
+            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!",
+            "finishExam": "Finish exam"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
