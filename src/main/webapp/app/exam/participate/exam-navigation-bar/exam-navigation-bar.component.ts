@@ -54,4 +54,9 @@ export class ExamNavigationBarComponent implements OnInit {
     submitExam() {
         this.onSubmitExam.emit();
     }
+
+    get remainingTime(): string {
+        const timeDiff = moment.duration(moment(this.endDate).diff(moment()));
+        return timeDiff.asMinutes() > 10 ? timeDiff.asMinutes() + ' min' : moment(timeDiff.asMilliseconds()).format('mm:ss');
+    }
 }

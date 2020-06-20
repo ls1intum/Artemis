@@ -7,10 +7,10 @@
     <!-- TODO: bind exercises to studentExams-->
     <jhi-exam-navigation-bar [exercises]="studentExam.exercises" [endDate]="studentExam.exam.endDate" (onExerciseChanged)="onExerciseChange($event)"></jhi-exam-navigation-bar>
     <!-- exercises -->
-    <ng-container *ngSwitch="activeExercise.type">
+    <ng-container [ngSwitch]="activeExercise.type">
         <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
-        <jhi-text-editor-exam *ngSwitchCase="TEXT"></jhi-text-editor-exam>
-        <jhi-modeling-submission-exam *ngSwitchCase="MODELING"></jhi-modeling-submission-exam>
+        <jhi-text-editor-exam *ngSwitchCase="TEXT" [participationId]="activeExercise.studentParticipations[0].id"></jhi-text-editor-exam>
+        <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [participationId]="activeExercise.studentParticipations[0].id"></jhi-modeling-submission-exam>
     </ng-container>
     <!-- exam connection status footer bar -->
     <div *ngIf="!disconnected" class="exam-footer connected">
