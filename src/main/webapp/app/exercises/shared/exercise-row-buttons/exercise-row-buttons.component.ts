@@ -20,6 +20,7 @@ export class ExerciseRowButtonsComponent {
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    exerciseType = ExerciseType;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -38,9 +39,6 @@ export class ExerciseRowButtonsComponent {
                 break;
             case ExerciseType.FILE_UPLOAD:
                 this.deleteFileUploadExercise();
-                break;
-            case ExerciseType.PROGRAMMING:
-                this.deleteProgrammingExercise();
                 break;
         }
     }
@@ -74,9 +72,8 @@ export class ExerciseRowButtonsComponent {
         );
     }
 
-    private deleteProgrammingExercise() {
-        // TODO: Delete everything here?
-        this.programmingExerciseService.delete(this.exercise.id, true, true).subscribe(
+    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.exercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
