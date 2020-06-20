@@ -604,6 +604,26 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamQuizExercise() throws Exception {
+        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+
+        QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+        checkQuizExercises(quizExercise, quizExerciseGet);
+
+        assertThat(quizExerciseGet).isEqualTo(quizExercise);
+        assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isNotNull();
+        assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
+        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testRecalculateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
