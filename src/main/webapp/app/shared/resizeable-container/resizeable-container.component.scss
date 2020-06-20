@@ -1,9 +1,8 @@
 :host {
     display: flex;
-    // justify-content: space-between;
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .left {
@@ -48,8 +47,9 @@
     width: 30vw;
 
     .card {
-        width: 100%;
+        width: inherit;
         min-width: 200px;
+        max-width: 500px;
 
         .card-header {
             display: flex;
@@ -115,6 +115,7 @@
         }
         .card {
             margin-bottom: 30px;
+            max-width: 100%;
         }
 
         .card-header {
