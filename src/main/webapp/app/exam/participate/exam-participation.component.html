@@ -1,5 +1,5 @@
 <jhi-exam-participation-cover [startView]="true" [exam]="studentExam.exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
-<jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
+<jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 
 <!-- exam participation -->
 <ng-container *ngIf="isVisible() && isActive() && !isOver()">

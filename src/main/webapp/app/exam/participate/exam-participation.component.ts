@@ -65,7 +65,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
         return this.studentExam.exam.endDate ? moment(this.studentExam.exam.endDate).isBefore(moment()) : false;
@@ -75,7 +75,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
         return this.studentExam.exam.visibleDate ? moment(this.studentExam.exam.visibleDate).isBefore(moment()) : false;
@@ -85,7 +85,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam has started
      */
     isActive(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.studentExam.exam) {
             return false;
         }
         return this.studentExam.exam.startDate ? moment(this.studentExam.exam.startDate).isBefore(moment()) : false;
