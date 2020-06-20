@@ -517,6 +517,15 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, User user, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.addUser(user);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
@@ -524,9 +533,38 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addActiveExamWithRegisteredUser(Course course, User user) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.addUser(user);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
+                null);
+        GradingCriterion gradingCriterion = ModelFactory.generateGradingCriterion("title");
+        textExercise.addGradingCriteria(gradingCriterion);
+        textExercise.setGradingInstructions("this is a grading instruction");
+        textExercise.setSampleSolution("this is a sample solution");
+        textExercise = exerciseRepo.save(textExercise);
+
+        Submission submission = ModelFactory.generateTextSubmission("", Language.ENGLISH, true);
+        addSubmission(textExercise, submission, user.getLogin());
+
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.addExercise(textExercise);
+        studentExam.setUser(user);
+        studentExamRepository.save(studentExam);
+
         return studentExam;
     }
 
@@ -722,6 +760,16 @@ public class DatabaseUtilService {
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
         return textExercise;
+    }
+
+    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(fileUploadExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return fileUploadExercise;
     }
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {

@@ -15,11 +15,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -44,6 +46,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     private List<GradingCriterion> gradingCriteria;
 
+    private final String creationFilePattern = "png, pdf, jPg      , r, DOCX";
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
@@ -66,15 +70,18 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExercise() throws Exception {
-        String filePattern = "png, pdf, jPg      , r, DOCX";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
-        fileUploadExercise.setFilePattern(filePattern);
+        fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
-        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
+        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
+                HttpStatus.CREATED);
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
-        assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(receivedFileUploadExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(receivedFileUploadExercise.getCourse().getId()).as("exerciseGroupId was set correctly").isEqualTo(fileUploadExercise.getCourse().getId());
 
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
@@ -82,6 +89,49 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createFileUploadExerciseForExam() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), creationFilePattern,
+                exerciseGroup);
+
+        gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+        FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+
+        assertThat(createdFileUploadExercise).isNotNull();
+        assertThat(createdFileUploadExercise.getId()).isNotNull();
+        assertThat(createdFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(createdFileUploadExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(createdFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(createdFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+
+        assertThat(createdFileUploadExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(createdFileUploadExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
+                .isEqualTo("created first instruction with empty criteria for testing");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), creationFilePattern,
+                exerciseGroup);
+        fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
+
+        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setCourse(null);
+        fileUploadExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -94,6 +144,33 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
         assertThat(fileUploadExercise.getId()).isEqualTo(receivedFileUploadExercise.getId());
         assertThat(fileUploadExercise).isEqualTo(receivedFileUploadExercise);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getExamFileUploadExercise_asStudent_forbidden() throws Exception {
+        getExamFileUploadExercise();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExamFileUploadExercise_asTutor_forbidden() throws Exception {
+        getExamFileUploadExercise();
+    }
+
+    private void getExamFileUploadExercise() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getExamFileUploadExercise_asInstructor() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+
+        FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        assertThat(receivedFileUploadExercise).as("exercise was retrieved").isNotNull();
+        assertThat(receivedFileUploadExercise.getId()).as("exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
     }
 
     @Test
@@ -118,6 +195,15 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExamFileUploadExercise() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        assertThat(exerciseRepo.findAll().isEmpty());
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
@@ -127,6 +213,57 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
                 FileUploadExercise.class, HttpStatus.OK);
         assertThat(receivedFileUploadExercise.getDueDate().equals(ZonedDateTime.now().plusDays(10)));
+        assertThat(receivedFileUploadExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(receivedFileUploadExercise.getCourse().getId()).as("courseId was not updated").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateFileUploadExerciseForExam_asInstructor() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        String newTitle = "New file upload exercise title";
+        fileUploadExercise.setTitle(newTitle);
+
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
+                FileUploadExercise.class, HttpStatus.OK);
+
+        assertThat(updatedFileUploadExercise.getTitle().equals(newTitle));
+        assertThat(updatedFileUploadExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(updatedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(updatedFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(fileUploadExercise.getExerciseGroup().getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
+        FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setExerciseGroup(null);
+        fileUploadExercise.setCourse(null);
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateFileUploadExercise_conversionBetweenCourseAndExamExercise_badRequest() throws Exception {
+        FileUploadExercise fileUploadExerciseWithCourse = database.createFileUploadExercisesWithCourse().get(0);
+        FileUploadExercise fileUploadExerciseWithExerciseGroup = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+
+        fileUploadExerciseWithCourse.setCourse(null);
+        fileUploadExerciseWithCourse.setExerciseGroup(fileUploadExerciseWithExerciseGroup.getExerciseGroup());
+
+        fileUploadExerciseWithExerciseGroup.setCourse(fileUploadExerciseWithCourse.getCourse());
+        fileUploadExerciseWithExerciseGroup.setExerciseGroup(null);
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithCourse.getId(), fileUploadExerciseWithCourse, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithExerciseGroup.getId(), fileUploadExerciseWithExerciseGroup, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
