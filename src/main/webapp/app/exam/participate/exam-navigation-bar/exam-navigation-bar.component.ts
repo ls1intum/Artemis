@@ -24,6 +24,8 @@ export class ExamNavigationBarComponent implements OnInit {
     exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
+    criticalTime = false;
+
     constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
@@ -57,6 +59,9 @@ export class ExamNavigationBarComponent implements OnInit {
 
     get remainingTime(): string {
         const timeDiff = moment.duration(moment(this.endDate).diff(moment()));
-        return timeDiff.asMinutes() > 10 ? Math.round(timeDiff.asMinutes()) + ' min' : moment(timeDiff.asMilliseconds()).format('mm:ss');
+        if (!this.criticalTime && timeDiff.asMinutes() < 5) {
+            this.criticalTime = true;
+        }
+        return timeDiff.asMinutes() > 10 ? Math.round(timeDiff.asMinutes()) + ' min' : timeDiff.asSeconds() / 60 + ' : ' + (timeDiff.asSeconds() % 60);
     }
 }

@@ -1,5 +1,10 @@
 <div class="row justify-content-between align-items-center exam-navigation py-2">
-    <p class="col h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">{{ exerciseIndex + 1 + '/' + exercises.length }} : {{ exercises[exerciseIndex].title }}</p>
+    <div class="col d-none d-md-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+        {{ 'artemisApp.examParticipation.progress' | translate: { current: exerciseIndex + 1, all: exercises.length, title: exercises[exerciseIndex].title } }}
+    </div>
+    <div class="col d-block d-md-none h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+        {{ 'artemisApp.examParticipation.progressSmall' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+    </div>
     <div class="col">
         <div class="d-flex justify-content-center">
             <div class="navigation-item">
@@ -39,7 +44,7 @@
                     {{ 'artemisApp.examParticipation.finishExam' | translate }}
                 </button>
             </div>
-            <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time">
+            <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time" [class.critical]="criticalTime">
                 {{ remainingTime }}
             </div>
         </div>

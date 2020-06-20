@@ -26,7 +26,9 @@
         "examParticipation": {
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
             "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!",
-            "finishExam": "Klausur abgeben"
+            "finishExam": "Klausur abgeben",
+            "progress": "Aufgabe {{ current }} von {{ all }}: {{ title }}",
+            "progressSmall": "{{ current }}/{{ all }}"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
