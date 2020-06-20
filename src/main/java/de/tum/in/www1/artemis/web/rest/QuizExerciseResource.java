@@ -370,20 +370,30 @@ public class QuizExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete QuizExercise : {}", quizExerciseId);
-        Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
-        if (quizExercise.isEmpty()) {
+        Optional<QuizExercise> quizExerciseOptional = quizExerciseService.findById(quizExerciseId);
+        if (quizExerciseOptional.isEmpty()) {
             return notFound();
         }
-        Course course = quizExercise.get().getCourse();
+
+        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
+        QuizExercise quizExercise = quizExerciseOptional.get();
+        Course course;
+        if (quizExercise.hasExerciseGroup()) {
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(quizExercise.getExerciseGroup().getId());
+        }
+        else {
+            course = quizExercise.getCourse();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(quizExercise.get(), course, user);
+        exerciseService.logDeletion(quizExercise, course, user);
         exerciseService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }
 
     /**
