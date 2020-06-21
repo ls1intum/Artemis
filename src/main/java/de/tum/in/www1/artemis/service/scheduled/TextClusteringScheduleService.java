@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.TextExerciseService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile({ "automaticText", "scheduling" })
+@Profile("automaticText & scheduling")
 public class TextClusteringScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(TextClusteringScheduleService.class);

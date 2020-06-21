@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +35,7 @@ public class InstanceMessageReceiveService {
     private Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseService textExerciseService, @Lazy Optional<TextClusteringScheduleService> textClusteringScheduleService, HazelcastInstance hazelcastInstance) {
+            TextExerciseService textExerciseService, Optional<TextClusteringScheduleService> textClusteringScheduleService, HazelcastInstance hazelcastInstance) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseService = textExerciseService;
