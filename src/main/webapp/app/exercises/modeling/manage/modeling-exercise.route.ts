@@ -57,6 +57,18 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/modeling-exercises/:exerciseId/import',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            textExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':courseId/modeling-exercises/:exerciseId',
         component: ModelingExerciseDetailComponent,
         data: {
