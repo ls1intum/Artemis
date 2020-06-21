@@ -177,7 +177,7 @@ public class AssessmentService {
      * @param assessments the List of Feedback
      * @return the total score
      */
-    public static Double calculateTotalScore(List<Feedback> assessments) {
+    public Double calculateTotalScore(List<Feedback> assessments) {
         double totalScore = 0.0;
 
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
