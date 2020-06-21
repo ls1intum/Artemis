@@ -336,9 +336,9 @@ public class QuizScheduleService {
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
-                scheduledFuture.cancel(false);
+                boolean cancelSuccess = scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
-                log.info("Stop Quiz Schedule Service was successful");
+                log.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
                 log.info("Stop Quiz Schedule Service already disposed/cancelled");
@@ -398,12 +398,13 @@ public class QuizScheduleService {
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean taskNotDone = !scheduledFuture.isDone();
+                boolean cancelSuccess = false;
                 if (taskNotDone) {
-                    scheduledFuture.cancel(false);
+                    cancelSuccess = scheduledFuture.cancel(false);
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
-                    log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful");
+                    log.info("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
