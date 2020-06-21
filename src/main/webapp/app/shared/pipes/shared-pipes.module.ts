@@ -12,7 +12,7 @@ import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
-import { CourseOrExamTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
+import { CourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
 @NgModule({
     declarations: [
@@ -29,7 +29,7 @@ import { CourseOrExamTitlePipe } from 'app/shared/pipes/exercise-course-title.pi
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
-        CourseOrExamTitlePipe,
+        CourseTitlePipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -45,7 +45,7 @@ import { CourseOrExamTitlePipe } from 'app/shared/pipes/exercise-course-title.pi
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
-        CourseOrExamTitlePipe,
+        CourseTitlePipe,
     ],
 })
 export class ArtemisSharedPipesModule {}
