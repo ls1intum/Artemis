@@ -23,12 +23,11 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     modelingEditor: ModelingEditorComponent;
 
     @Input()
-    participationId: number;
+    studentParticipation: StudentParticipation;
 
     modelingExercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
-    participation: StudentParticipation;
     submission: ModelingSubmission;
 
     hasElements = false; // indicates if the current model has at least one element
@@ -40,6 +39,9 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     }
 
     ngOnInit(): void {
+        if (this.studentParticipation) {
+            this.submission = this.studentParticipation.submissions[0] as ModelingSubmission;
+        }
         // TODO replace the code below with according service in ExamParticipationService
         /*this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
             (modelingSubmission) => {
@@ -52,29 +54,6 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         );*/
 
         window.scroll(0, 0);
-    }
-
-    private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
-        if (!modelingSubmission) {
-            this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
-        }
-
-        this.submission = modelingSubmission;
-        this.participation = modelingSubmission.participation as StudentParticipation;
-
-        // reconnect participation <--> submission
-        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
-
-        this.modelingExercise = this.participation.exercise as ModelingExercise;
-        this.modelingExercise.studentParticipations = [this.participation];
-        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-        if (this.modelingExercise.diagramType == null) {
-            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
-        }
-        if (this.submission.model) {
-            this.umlModel = JSON.parse(this.submission.model);
-            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
-        }
     }
 
     /**
