@@ -14,8 +14,8 @@
         <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
             <ng-container [ngSwitch]="activeExercise.type">
                 <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
-                <jhi-text-editor-exam *ngSwitchCase="TEXT" [participationId]="activeExercise.studentParticipations[0].id"></jhi-text-editor-exam>
-                <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [participationId]="activeExercise.studentParticipations[0].id"></jhi-modeling-submission-exam>
+                <jhi-text-editor-exam *ngSwitchCase="TEXT" [exercise]="activeExercise" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-text-editor-exam>
+                <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-modeling-submission-exam>
                 <jhi-exam-navigation-bar
                     [exercises]="studentExam.exercises"
                     [endDate]="studentExam.exam.endDate"

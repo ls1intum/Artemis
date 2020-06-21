@@ -18,6 +18,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -26,17 +27,18 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
     styleUrls: ['./text-editor-exam.component.scss'],
 })
 export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    textExercise: TextExercise;
-    participation: StudentParticipation;
-    submission: TextSubmission;
-    isSaving: boolean;
-    private textEditorInput = new Subject<string>();
-    answer: string;
+    @Input()
+    studentParticipation: StudentParticipation;
+    @Input()
+    exercise: Exercise;
 
+    submission: TextSubmission;
+
+    answer: string;
+    private textEditorInput = new Subject<string>();
     textEditorStream$: Observable<TextSubmission>;
 
-    @Input()
-    participationId: number;
+    isSaving: boolean;
 
     constructor(
         private textSubmissionService: TextSubmissionService,
@@ -52,34 +54,13 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     ngOnInit() {
-        if (Number.isNaN(this.participationId)) {
-            return this.jhiAlertService.error('artemisApp.textExercise.error', null, undefined);
+        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
+            this.submission = this.studentParticipation.submissions[0];
         }
-        // maybe replace with ExamParticipationService?
-        this.textService.get(this.participationId).subscribe(
-            (data: StudentParticipation) => this.updateParticipation(data),
-            (error: HttpErrorResponse) => this.onError(error),
-        );
-
         this.textEditorStream$ = this.buildSubmissionStream$();
         this.textEditorStream$.subscribe((textSubmission) => {
-            this.examParticipationService.updateSubmission(textSubmission, this.participation.exercise.id);
+            this.examParticipationService.updateSubmission(textSubmission, this.studentParticipation.exercise.id);
         });
-    }
-
-    private updateParticipation(participation: StudentParticipation) {
-        this.participation = participation;
-        this.textExercise = this.participation.exercise as TextExercise;
-        this.textExercise.studentParticipations = [this.participation];
-        this.textExercise.participationStatus = participationStatus(this.textExercise);
-
-        if (participation.submissions && participation.submissions.length > 0) {
-            this.submission = participation.submissions[0] as TextSubmission;
-
-            if (this.submission && this.submission.text) {
-                this.answer = this.submission.text;
-            }
-        }
     }
 
     /**
@@ -99,14 +80,14 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     ngOnDestroy() {
-        if (this.canDeactivate() && this.textExercise.id) {
+        if (this.canDeactivate() && this.studentParticipation.exercise.id) {
             let newSubmission = new TextSubmission();
             if (this.submission) {
                 newSubmission = this.submission;
             }
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.examParticipationService.updateSubmission(newSubmission, this.textExercise.id);
+                this.examParticipationService.updateSubmission(newSubmission, this.studentParticipation.exercise.id);
             }
         }
     }
@@ -115,7 +96,8 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
      * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
      */
     get isActive(): boolean {
-        const isActive = this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment());
+        const isActive =
+            this.studentParticipation.exercise && this.studentParticipation.exercise.dueDate && moment(this.studentParticipation.exercise.dueDate).isSameOrAfter(moment());
         return !!isActive;
     }
 
@@ -143,9 +125,5 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
 
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
     }
 }

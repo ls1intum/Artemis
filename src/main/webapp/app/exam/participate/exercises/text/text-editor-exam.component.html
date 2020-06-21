@@ -1,7 +1,7 @@
 <!--resizable container-->
-<jhi-resizeable-container class="col-12" *ngIf="textExercise">
+<jhi-resizeable-container class="col-12" *ngIf="exercise">
     <!--region Left Panel-->
-    <span left-header *ngIf="textExercise.title">{{ textExercise.title }}</span>
+    <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <div left-body class="text-editor-grid mt-4 pl-2 pb-2 w-100">
         <div class="grid-area-main">
             <div>
@@ -29,8 +29,8 @@
     <!--region Right Panel-->
     <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-    <p right-body class="markdown-preview mb-3" *ngIf="textExercise!.problemStatement">
-        <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
+    <p right-body class="markdown-preview mb-3" *ngIf="exercise.problemStatement">
+        <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
     </p>
     <!--endregion-->
 </jhi-resizeable-container>
