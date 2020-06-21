@@ -49,7 +49,7 @@ public class QuizScheduleService {
 
     private IMap<Long, QuizExerciseCache> cachedQuizExercises;
 
-    private IScheduledExecutorService threadPoolTaskScheduler;
+    private volatile IScheduledExecutorService threadPoolTaskScheduler;
 
     private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
@@ -300,9 +300,10 @@ public class QuizScheduleService {
     public void startSchedule(long delayInMillis) {
         if (threadPoolTaskScheduler == null) {
             try {
-                threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
+                var threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
                 var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
+                this.threadPoolTaskScheduler = threadPoolTaskScheduler;
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
@@ -334,7 +335,6 @@ public class QuizScheduleService {
                 // if the task has been disposed, this will throw a StaleTaskException
                 // this will cancel the task as well
                 scheduledFuture.dispose();
-                scheduledFuture = null;
                 log.info("Stop Quiz Schedule Service was successful");
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
