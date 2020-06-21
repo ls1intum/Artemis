@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
+import { isRequestToArtemisServer } from './interceptor.util';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -17,18 +17,17 @@ export class AuthInterceptor implements HttpInterceptor {
      * @returns An observable of the event stream.
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (!request || !request.url || (/^http/.test(request.url) && !(SERVER_API_URL && request.url.startsWith(SERVER_API_URL)))) {
-            return next.handle(request);
+        if (isRequestToArtemisServer(request)) {
+            const token = this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
+            if (token) {
+                request = request.clone({
+                    setHeaders: {
+                        Authorization: 'Bearer ' + token,
+                    },
+                });
+            }
         }
 
-        const token = this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
-        if (token) {
-            request = request.clone({
-                setHeaders: {
-                    Authorization: 'Bearer ' + token,
-                },
-            });
-        }
         return next.handle(request);
     }
 }
