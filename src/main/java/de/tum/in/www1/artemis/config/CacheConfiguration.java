@@ -100,6 +100,7 @@ public class CacheConfiguration {
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
+        config.setClassLoader(applicationContext.getClassLoader());
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
         }
