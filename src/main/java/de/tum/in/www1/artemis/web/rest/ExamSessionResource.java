@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.service.ExamSessionService;
-import de.tum.in.www1.artemis.service.StudentExamService;
-import de.tum.in.www1.artemis.service.UserService;
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +12,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.SecureRandom;
-import java.util.Base64;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.service.ExamSessionService;
+import de.tum.in.www1.artemis.service.StudentExamService;
+import de.tum.in.www1.artemis.service.UserService;
 
 /**
  * REST controller for managing ExamSessions.

@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 
 /**
  * Service Implementation for managing ExamSession.
@@ -34,14 +34,24 @@ public class ExamSessionService {
         return examSessionRepository.findByStudentExamId(id).get(0);
     }
 
+    /**
+     * Save an exam session
+     *
+     * @param examSession ExamSession to be saved
+     */
     public void saveExamSession(ExamSession examSession) {
         examSessionRepository.save(examSession);
     }
 
+    /**
+     * Delete an exam session
+     *
+     * @param studentExam StudentExam for which we want to delete all existing sessions
+     */
     public void deleteExamSession(StudentExam studentExam) {
         var id = studentExam.getId();
         var examSessions = examSessionRepository.findByStudentExamId(id);
-        if(!examSessions.isEmpty()) {
+        if (!examSessions.isEmpty()) {
             for (ExamSession examSession : examSessions) {
                 examSessionRepository.delete(examSession);
             }
