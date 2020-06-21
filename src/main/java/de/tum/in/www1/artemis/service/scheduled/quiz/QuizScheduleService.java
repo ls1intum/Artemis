@@ -79,6 +79,7 @@ public class QuizScheduleService {
         this.hazelcastInstance = hazelcastInstance;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.cachedQuizExercises = hazelcastInstance.getMap(Constants.HAZELCAST_EXERCISE_CACHE);
+        this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
     }
 
     /**
@@ -301,12 +302,10 @@ public class QuizScheduleService {
      * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
      */
     public void startSchedule(long delayInMillis) {
-        if (threadPoolTaskScheduler == null) {
+        if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
                 var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                this.threadPoolTaskScheduler = threadPoolTaskScheduler;
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
@@ -331,13 +330,14 @@ public class QuizScheduleService {
      * stop scheduler
      */
     public void stopSchedule() {
-        if (threadPoolTaskScheduler != null) {
+        if (!scheduledProcessQuizSubmissions.isNull()) {
             log.info("Try to stop quiz schedule service");
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean cancelSuccess = scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
+                scheduledProcessQuizSubmissions.set(null);
                 log.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
@@ -350,7 +350,6 @@ public class QuizScheduleService {
             }
             threadPoolTaskScheduler.shutdown();
             threadPoolTaskScheduler.destroy();
-            threadPoolTaskScheduler = null;
         }
         else {
             log.debug("Cannot stop quiz exercise schedule service, it was already STOPPED");
