@@ -333,7 +333,7 @@ public class QuizScheduleService {
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
-                scheduledFuture.cancel(true);
+                scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
                 log.info("Stop Quiz Schedule Service was successful");
             }
@@ -396,7 +396,7 @@ public class QuizScheduleService {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean taskNotDone = !scheduledFuture.isDone();
                 if (taskNotDone) {
-                    scheduledFuture.cancel(true);
+                    scheduledFuture.cancel(false);
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
