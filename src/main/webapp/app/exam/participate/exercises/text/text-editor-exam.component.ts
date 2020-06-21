@@ -41,12 +41,10 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     isSaving: boolean;
 
     constructor(
-        private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private jhiAlertService: AlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
-        private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
         private examParticipationService: ExamParticipationService,
     ) {
@@ -59,7 +57,7 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         }
         this.textEditorStream$ = this.buildSubmissionStream$();
         this.textEditorStream$.subscribe((textSubmission) => {
-            this.examParticipationService.updateSubmission(textSubmission, this.studentParticipation.exercise.id);
+            this.examParticipationService.updateSubmission(this.exercise.id, this.studentParticipation.id, textSubmission);
         });
     }
 
@@ -80,25 +78,12 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     ngOnDestroy() {
-        if (this.canDeactivate() && this.studentParticipation.exercise.id) {
-            let newSubmission = new TextSubmission();
-            if (this.submission) {
-                newSubmission = this.submission;
-            }
-            newSubmission.text = this.answer;
+        if (this.canDeactivate() && this.exercise.id) {
+            this.submission.text = this.answer;
             if (this.submission.id) {
-                this.examParticipationService.updateSubmission(newSubmission, this.studentParticipation.exercise.id);
+                this.examParticipationService.updateSubmission(this.exercise.id, this.studentParticipation.id, this.submission);
             }
         }
-    }
-
-    /**
-     * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
-     */
-    get isActive(): boolean {
-        const isActive =
-            this.studentParticipation.exercise && this.studentParticipation.exercise.dueDate && moment(this.studentParticipation.exercise.dueDate).isSameOrAfter(moment());
-        return !!isActive;
     }
 
     get wordCount(): number {

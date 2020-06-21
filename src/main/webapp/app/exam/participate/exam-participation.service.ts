@@ -13,6 +13,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService implements OnDestroy {
@@ -60,15 +61,6 @@ export class ExamParticipationService implements OnDestroy {
 
     private getResourceUrl(): string {
         return `${SERVER_API_URL}api/courses/${this._courseId}/exams/${this._examId}`;
-    }
-
-    private getExamExerciseByParticipationId(participationId: number): Exercise | undefined {
-        return this.studentExam.exercises.find((examExercise) => examExercise.studentParticipations.some((studentParticipation) => studentParticipation.id === participationId));
-    }
-
-    private getExamExerciseParticiaption(participationId: number): Participation | undefined {
-        const exercise: Exercise | undefined = this.getExamExerciseByParticipationId(participationId);
-        return exercise ? exercise.studentParticipations.find((studentParticipation) => studentParticipation.id === participationId) : undefined;
     }
 
     public initStudentExam() {
@@ -119,32 +111,29 @@ export class ExamParticipationService implements OnDestroy {
         this.autoSaveTimer = 0;
         forkJoin(
             this.submissionSyncList.map((submission) => {
-                switch (submission.participation.exercise?.type) {
-                    case ExerciseType.TEXT:
-                        this.textSubmissionService.update(submission as TextSubmission, submission.participation.exercise?.id);
-                        break;
-                    case ExerciseType.FILE_UPLOAD:
-                        // TODO: works differently than other services
-                        return this.fileUploadSubmissionService;
-                    case ExerciseType.MODELING:
-                        this.modelingSubmissionService.update(submission as ModelingSubmission, submission.participation.exercise.id).subscribe(
-                            (response) => {
-                                submission = response.body!;
-                                submission.participation.submissions = [submission];
-                                this.onSaveSuccess();
-                            },
-                            () => this.onSaveError(),
-                        );
-                        break;
-                    case ExerciseType.PROGRAMMING:
-                        // TODO: works differently than other services
-                        return this.programmingSubmissionService;
-                    case ExerciseType.QUIZ:
-                        // TODO find submissionService
-                        return null;
+                const examExercise = this.studentExam.exercises.find((exercise) =>
+                    exercise.studentParticipations.some((participation) => participation.submissions.some((examSubmission) => examSubmission.id === submission.id)),
+                );
+                if (examExercise) {
+                    switch (examExercise.type) {
+                        case ExerciseType.TEXT:
+                            return this.textSubmissionService.update(submission as TextSubmission, examExercise.id);
+                        case ExerciseType.FILE_UPLOAD:
+                            // TODO: works differently than other services
+                            return this.fileUploadSubmissionService;
+                        case ExerciseType.MODELING:
+                            return this.modelingSubmissionService.update(submission as ModelingSubmission, examExercise.id);
+                        case ExerciseType.PROGRAMMING:
+                            // TODO: works differently than other services
+                            return this.programmingSubmissionService;
+                        case ExerciseType.QUIZ:
+                            // TODO find submissionService
+                            return null;
+                    }
                 }
             }),
         ).subscribe(() => {
+            this.onSaveSuccess();
             // clear sync list
             this.submissionSyncList = [];
         });
@@ -162,14 +151,16 @@ export class ExamParticipationService implements OnDestroy {
      * Updates StudentExam locally, will get synchronized later to the server
      * @param studentExam
      */
-    updateSubmission(submission: Submission, participationId: number) {
-        const examExerciseParticipation = this.getExamExerciseParticiaption(participationId);
+    updateSubmission(exerciseId: number, participationId: number, submission: Submission) {
+        const examExerciseParticipation: StudentParticipation | undefined = this.studentExam.exercises
+            .find((exercise) => exercise.id === exerciseId)
+            ?.studentParticipations.find((participation) => participation.id === participationId);
         if (examExerciseParticipation) {
             examExerciseParticipation.submissions = [submission];
             // update immediately in localStorage and online every 60seconds
             this.studentExam$.next(this.studentExam);
             // filter older submissions of this exercise and push the newest version to be updated
-            this.submissionSyncList.filter((examSubmission) => examSubmission.id !== submission.id).push(submission);
+            this.submissionSyncList = this.submissionSyncList.filter((examSubmission) => examSubmission.id !== submission.id).concat(submission);
         }
     }
 }
