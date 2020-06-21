@@ -96,16 +96,14 @@ public class QuizScheduleService {
         config.getScheduledExecutorConfig(Constants.HAZELCAST_QUIZ_SCHEDULER).setPoolSize(16).setCapacity(1000).setDurability(1);
         // Important to avoid continuous serialization and de-serialization and the implications on transient fields of QuizExerciseCache
         EvictionConfig evictionConfig = new EvictionConfig() //
-                .setMaxSizePolicy(MaxSizePolicy.ENTRY_COUNT) //
-                .setEvictionPolicy(EvictionPolicy.LRU) //
-                .setSize(1000);
+                .setEvictionPolicy(EvictionPolicy.NONE);
         NearCacheConfig nearCacheConfig = new NearCacheConfig() //
                 .setName(Constants.HAZELCAST_EXERCISE_CACHE + "-local") //
                 .setInMemoryFormat(InMemoryFormat.OBJECT) //
                 .setSerializeKeys(true) //
                 .setInvalidateOnChange(true) //
-                .setTimeToLiveSeconds(3600) //
-                .setMaxIdleSeconds(2 * 60) //
+                .setTimeToLiveSeconds(0) //
+                .setMaxIdleSeconds(0) //
                 .setEvictionConfig(evictionConfig) //
                 .setCacheLocalEntries(true);
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
