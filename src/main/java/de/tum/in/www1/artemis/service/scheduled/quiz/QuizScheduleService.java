@@ -45,11 +45,7 @@ public class QuizScheduleService {
 
     static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
-    private static final String HAZELCAST_QUIZ_START_TASK = "-start";
-
-    private static final String HAZELCAST_PROCESS_CACHE_TASK = Constants.HAZELCAST_QUIZ_PREFIX + "process-cache";
-
-    private static final String HAZELCAST_PROCESS_CACHE_HANDLER = HAZELCAST_PROCESS_CACHE_TASK + "-handler";
+    private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
     private IMap<Long, QuizExerciseCache> cachedQuizExercises;
 
@@ -303,8 +299,7 @@ public class QuizScheduleService {
         if (threadPoolTaskScheduler == null) {
             try {
                 threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(TaskUtils.named(HAZELCAST_PROCESS_CACHE_TASK, new QuizProcessCacheTask()), 0, delayInMillis,
-                        TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
@@ -368,9 +363,7 @@ public class QuizScheduleService {
             // schedule sending out filtered quiz over websocket
             try {
                 long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(
-                        TaskUtils.named(Constants.HAZELCAST_QUIZ_PREFIX + quizExerciseId + HAZELCAST_QUIZ_START_TASK, new QuizStartTask(quizExerciseId)), delay,
-                        TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                 // save scheduled future in HashMap
                 performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
                     quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
