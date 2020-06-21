@@ -65,7 +65,7 @@ public class TextExerciseService {
     public SearchResultPageDTO<TextExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         var sorting = Sort.by(TextExercise.TextExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
         final Page<TextExercise> exercisePage;
         if (authCheckService.isAdmin()) {

@@ -12,7 +12,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 
 @Component({

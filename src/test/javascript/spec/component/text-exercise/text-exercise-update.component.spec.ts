@@ -1,7 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { ActivatedRoute, UrlSegment } from '@angular/router';
 
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
@@ -13,6 +12,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import moment = require('moment');
+import { of } from 'rxjs';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;

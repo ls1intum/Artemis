@@ -369,7 +369,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back() {
-        //check if exam exercise
+        // check if exam exercise
         if (this.exercise.course == null) {
             const courseId = this.exercise.exerciseGroup?.exam?.course.id;
             const examId = this.exercise.exerciseGroup?.exam?.id;
