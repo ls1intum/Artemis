@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,11 +22,8 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamAccessService examAccessService) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
         this.studentExamRepository = studentExamRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
@@ -76,4 +71,5 @@ public class StudentExamService {
         log.debug("Request to delete the student exam with Id : {}", studentExamId);
         studentExamRepository.deleteById(studentExamId);
     }
+
 }

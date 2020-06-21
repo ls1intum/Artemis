@@ -38,6 +38,7 @@
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Klausuren erstellen",
+            "startExercises": "Aufgaben starten",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",

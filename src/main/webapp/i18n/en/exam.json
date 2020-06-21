@@ -38,6 +38,7 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate student exams",
+            "startExercises": "Start exercises",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "result": "Result",
