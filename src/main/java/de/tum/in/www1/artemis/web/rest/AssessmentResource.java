@@ -65,7 +65,7 @@ public abstract class AssessmentResource {
             }
         }
         catch (NullPointerException nullPointerException) {
-            throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
+            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", getEntityName(), "courseNotFound");
         }
     }
 
