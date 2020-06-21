@@ -33,7 +33,17 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 
-    @Query("select textExercise from TextExercise textExercise where ((textExercise.course.instructorGroupName in :groups) or (textExercise.exerciseGroup.exam.course.instructorGroupName in :groups)) and (textExercise.title like %:partialTitle% or textExercise.course.title like %:partialCourseTitle%)")
+    /**
+     * Query which fetches all the text exercises for which the user is instructor in the course and matching the search criteria.
+     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
+     *
+     * @param partialTitle exercise title search term
+     * @param partialCourseTitle course title search term
+     * @param groups user groups
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("select te from TextExercise te where (te.id in (select courseTe.id from TextExercise courseTe where courseTe.course.instructorGroupName in :groups and (courseTe.title like %:partialTitle% or courseTe.course.title like %:partialCourseTitle%)) or te.id in (select examTe.id from TextExercise examTe where examTe.exerciseGroup.exam.course.instructorGroupName in :groups and (examTe.title like %:partialTitle% or examTe.exerciseGroup.exam.course.title like %:partialCourseTitle%)))")
     Page<TextExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 
