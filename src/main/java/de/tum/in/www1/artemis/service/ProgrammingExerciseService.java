@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -66,18 +66,18 @@ public class ProgrammingExerciseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final ResourceLoader resourceLoader;
+
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -90,8 +90,8 @@ public class ProgrammingExerciseService {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.groupNotificationService = groupNotificationService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -143,13 +143,13 @@ public class ProgrammingExerciseService {
         setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
 
         return programmingExercise;
@@ -250,7 +250,7 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
