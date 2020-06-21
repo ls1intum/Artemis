@@ -29,6 +29,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     unsavedChanges = false;
     disconnected = false;
 
+    // TODO: save on server
+    examConfirmed = false;
+
     /**
      * Websocket channels
      */

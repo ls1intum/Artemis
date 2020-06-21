@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
@@ -20,6 +20,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     @Input() startView: boolean;
     @Input() exam: Exam;
+    @Output() onExamStarted: EventEmitter<void> = new EventEmitter<void>();
     course: Course | null;
     courseId = 0;
     title: string;
@@ -86,5 +87,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
      * TODO: add session management, this function is bound to the start exam button
      */
-    startExam() {}
+    startExam() {
+        this.onExamStarted.emit();
+    }
 }

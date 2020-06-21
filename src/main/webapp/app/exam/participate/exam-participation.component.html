@@ -1,9 +1,14 @@
 <ng-container *ngIf="studentExam; else noStudentExam">
-    <jhi-exam-participation-cover [startView]="true" [exam]="studentExam.exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
+    <jhi-exam-participation-cover
+        [startView]="true"
+        [exam]="studentExam.exam"
+        *ngIf="isVisible() && !isOver() && !examConfirmed"
+        (onExamStarted)="examConfirmed = true"
+    ></jhi-exam-participation-cover>
     <jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 
     <!-- exam participation -->
-    <ng-container *ngIf="isVisible() && isActive() && !isOver()">
+    <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed">
         <!-- exam nav -->
         <!-- exercises -->
         <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
