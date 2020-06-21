@@ -52,10 +52,15 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      */
     private transient IMap<Long, Result> results;
 
-    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
+    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart, QuizExercise exercise) {
         super(id);
         setQuizStart(quizStart);
+        setExercise(exercise);
         log.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
+    }
+
+    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
+        this(id, quizStart, null);
     }
 
     QuizExerciseDistributedCache(Long id) {
@@ -139,13 +144,15 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
             out.writeLong(exerciseCacheImpl.getExerciseId());
             out.writeObject(exerciseCacheImpl.quizStart);
+            out.writeObject(exerciseCacheImpl.exercise);
         }
 
         @Override
         public QuizExerciseDistributedCache read(ObjectDataInput in) throws IOException {
             Long id = in.readLong();
             List<ScheduledTaskHandler> quizStart = in.readObject();
-            return new QuizExerciseDistributedCache(id, quizStart);
+            QuizExercise exercise = in.readObject();
+            return new QuizExerciseDistributedCache(id, quizStart, exercise);
         }
     }
 
