@@ -618,7 +618,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup, ZonedDateTime.now().plusHours(5), null);
+        quizExercise = quizExerciseService.save(quizExercise);
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
