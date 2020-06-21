@@ -65,32 +65,11 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public FileUploadExercise exerciseWithSGI() throws Exception {
+    public List<Feedback> exerciseWithSGI() throws Exception {
         database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
                 afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
-        return receivedFileUploadExercise;
-    }
-
-    public List<Feedback> applySGIonFeedback() throws Exception {
-        FileUploadExercise receivedFileUploadExercise = exerciseWithSGI();
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
-
-        var gradingInstructionWithNoLimit = receivedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
-        var gradingInstructionWithLimit = receivedFileUploadExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
-
-        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
-        feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
-        feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
-        feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
-        feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
-        feedbacks.get(2).setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
-        var moreFeedback = new Feedback();
-        moreFeedback.setGradingInstruction(gradingInstructionWithNoLimit);
-        moreFeedback.setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
-        feedbacks.add(moreFeedback);
-
-        return feedbacks; // total score should be 3P
+        return ModelFactory.applySGIonFeedback(receivedFileUploadExercise);
     }
 
     @Order(1)
@@ -102,7 +81,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
-        List<Feedback> feedbacks = applySGIonFeedback();
+        List<Feedback> feedbacks = exerciseWithSGI();
 
         Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
                 params);

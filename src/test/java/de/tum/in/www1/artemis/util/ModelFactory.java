@@ -318,7 +318,7 @@ public class ModelFactory {
         return criterion;
     }
 
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
         var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
@@ -327,7 +327,7 @@ public class ModelFactory {
             exampleInstruction1.setGradingScale("good test");
             exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
             exampleInstruction1.setFeedback("test feedback");
-            exampleInstruction1.setUsageCount(1);
+            exampleInstruction1.setUsageCount(usageCount);
             instructions.add(exampleInstruction1);
             numberOfTestInstructions--;
         }
@@ -350,6 +350,26 @@ public class ModelFactory {
         negativeFeedback.setReference("practice");
         feedbacks.add(negativeFeedback);
         return feedbacks;
+    }
+
+    public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+
+        var gradingInstructionWithNoLimit = receivedExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
+        var gradingInstructionWithLimit = receivedExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
+
+        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
+        feedbacks.get(2).setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        var moreFeedback = new Feedback();
+        moreFeedback.setGradingInstruction(gradingInstructionWithNoLimit);
+        moreFeedback.setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        feedbacks.add(moreFeedback);
+
+        return feedbacks; // total score should be 3P
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
