@@ -328,11 +328,16 @@ public class QuizScheduleService {
         if (threadPoolTaskScheduler != null) {
             log.info("Try to stop quiz schedule service");
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
-            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-                boolean cancelSuccess = scheduledFuture.cancel(false);
-                log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
+            try {
+                // if the task has been disposed, this will throw a StaleTaskException
+                // this will cancel the task as well
                 scheduledFuture.dispose();
                 scheduledFuture = null;
+                log.info("Stop Quiz Schedule Service was successful");
+            }
+            catch (@SuppressWarnings("unused") StaleTaskException e) {
+                log.info("Stop Quiz Schedule Service already disposed/cancelled");
+                // has already been disposed (sadly there is no method to check that)
             }
             for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
                 if (cachedQuiz.getQuizStart() != null)
@@ -385,12 +390,18 @@ public class QuizScheduleService {
     public void cancelScheduledQuizStart(Long quizExerciseId) {
         getReadCacheFor(quizExerciseId).getQuizStart().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
-            if (scheduledFuture != null) {
-                if (!scheduledFuture.isDone()) {
-                    boolean cancelSuccess = scheduledFuture.cancel(false);
-                    log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful: " + cancelSuccess);
-                }
+            try {
+                // if the task has been disposed, this will throw a StaleTaskException
+                boolean taskNotDone = !scheduledFuture.isDone();
+                // dispose will also cancel the execution
                 scheduledFuture.dispose();
+                if (taskNotDone) {
+                    log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful");
+                }
+            }
+            catch (@SuppressWarnings("unused") StaleTaskException e) {
+                log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " already disposed/cancelled");
+                // has already been disposed (sadly there is no method to check that)
             }
         });
         performCacheWriteIfPresent(quizExerciseId, cachedQuiz -> {
