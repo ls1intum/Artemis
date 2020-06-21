@@ -151,6 +151,8 @@ public class QuizScheduleService {
             var newCachedQuiz = new QuizExerciseDistributedCache(quizExerciseId);
             newCachedQuiz.setHazelcastInstance(hazelcastInstance);
             cachedQuizExercises.set(quizExerciseId, newCachedQuiz);
+            // return the new deserialized, cached object returned by get()
+            // (this is not the newCachedQuiz anymore although we use near caching in OBJECT in-memory format, because Hazelcast.)
             return cachedQuizExercises.get(quizExerciseId);
         }
         finally {
