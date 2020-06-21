@@ -116,7 +116,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
-        quizExerciseService.save(quizExercise);
+        exerciseRepository.saveAndFlush(quizExercise);
 
         quizScheduleService.processCachedQuizSubmissions();
 
