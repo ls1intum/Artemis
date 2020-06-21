@@ -87,7 +87,7 @@ describe('TextExercise Management Update Component', () => {
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
-            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             route.data = of({ textExercise });
         });
 

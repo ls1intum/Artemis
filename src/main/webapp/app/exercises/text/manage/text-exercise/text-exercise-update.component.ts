@@ -100,19 +100,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                             const courseId = params['courseId'];
                             const examId = params['examId'];
 
-                            console.log('Is is in Import Mode:' + this.isImport);
-                            console.log('Is In Exam Mode:' + this.isExamMode);
-                            console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
-
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
                             this.textExercise.course = null;
                         } else {
                             // The target course where we want to import into
                             const targetCourseId = params['courseId'];
-                            console.log('Is is in Import Mode:' + this.isImport);
-                            console.log('Is In Exam Mode:' + this.isExamMode);
-                            console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
                             this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.textExercise.exerciseGroup = null;
