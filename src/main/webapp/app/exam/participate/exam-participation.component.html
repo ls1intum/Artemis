@@ -1,31 +1,41 @@
-<jhi-exam-participation-cover [startView]="true" [exam]="studentExam.exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
-<jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
+<ng-container *ngIf="studentExam; else noStudentExam">
+    <jhi-exam-participation-cover [startView]="true" [exam]="studentExam.exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
+    <jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 
-<!-- exam participation -->
-<ng-container *ngIf="isVisible() && isActive() && !isOver()">
-    <!-- exam nav -->
-    <jhi-exam-navigation-bar [exercises]="studentExam.exercises" [endDate]="studentExam.exam.endDate" (onExerciseChanged)="onExerciseChange($event)"></jhi-exam-navigation-bar>
-    <!-- exercises -->
-    <ng-container [ngSwitch]="activeExercise.type">
-        <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
-        <jhi-text-editor-exam *ngSwitchCase="TEXT" [participationId]="activeExercise.studentParticipations[0].id"></jhi-text-editor-exam>
-        <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [participationId]="activeExercise.studentParticipations[0].id"></jhi-modeling-submission-exam>
+    <!-- exam participation -->
+    <ng-container *ngIf="isVisible() && isActive() && !isOver()">
+        <!-- exam nav -->
+        <!-- exercises -->
+        <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
+            <ng-container [ngSwitch]="activeExercise.type">
+                <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
+                <jhi-text-editor-exam *ngSwitchCase="TEXT" [participationId]="activeExercise.studentParticipations[0].id"></jhi-text-editor-exam>
+                <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [participationId]="activeExercise.studentParticipations[0].id"></jhi-modeling-submission-exam>
+                <jhi-exam-navigation-bar
+                    [exercises]="studentExam.exercises"
+                    [endDate]="studentExam.exam.endDate"
+                    (onExerciseChanged)="onExerciseChange($event)"
+                ></jhi-exam-navigation-bar>
+            </ng-container>
+        </ng-container>
+        <!-- exam connection status footer bar -->
+        <div *ngIf="!disconnected" class="exam-footer connected">
+            <div class="container">
+                <div class="exam-footer-content">
+                    <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
+                    <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="disconnected" class="exam-footer disconnected">
+            <div class="container">
+                <div class="exam-footer-content">
+                    <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
+                    <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                </div>
+            </div>
+        </div>
     </ng-container>
-    <!-- exam connection status footer bar -->
-    <div *ngIf="!disconnected" class="exam-footer connected">
-        <div class="container">
-            <div class="exam-footer-content">
-                <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
-                <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="disconnected" class="exam-footer disconnected">
-        <div class="container">
-            <div class="exam-footer-content">
-                <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
-                <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
-            </div>
-        </div>
-    </div>
 </ng-container>
+<!--TODO add translation-->
+<ng-template #noStudentExam>No student exam object found.</ng-template>
