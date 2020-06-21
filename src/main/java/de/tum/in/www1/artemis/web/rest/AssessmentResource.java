@@ -63,7 +63,8 @@ public abstract class AssessmentResource {
             if (course == null && exercise.getExerciseGroup().getExam().getCourse() == null) {
                 throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
             }
-        } catch (NullPointerException nullPointerException) {
+        }
+        catch (NullPointerException nullPointerException) {
             throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
         }
     }
