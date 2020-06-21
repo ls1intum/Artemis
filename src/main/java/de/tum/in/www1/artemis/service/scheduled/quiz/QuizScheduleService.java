@@ -462,8 +462,8 @@ public class QuizScheduleService {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            for (QuizExerciseCache cachedQuiz : cachedQuizExercises.values()) {
-                Long quizExerciseId = cachedQuiz.getExerciseId();
+            for (Long quizExerciseId : cachedQuizExercises.keySet()) {
+                QuizExerciseCache cachedQuiz = cachedQuizExercises.get(quizExerciseId);
                 // Get fresh QuizExercise from DB
                 QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
