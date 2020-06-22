@@ -45,7 +45,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.studentParticipation.currentValue !== changes.studentParticipation.previousValue) {
+        if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
             // show submission answers in UI
             this.updateViewFromSubmission();
         }
