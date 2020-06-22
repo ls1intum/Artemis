@@ -224,7 +224,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+    public void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(now.minusDays(1), now.minusHours(2), exerciseGroup);
@@ -235,7 +235,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+    public void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(now.minusDays(1), now.minusHours(2), null);
 
