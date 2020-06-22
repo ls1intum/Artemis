@@ -145,6 +145,47 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validates the course and programming exercise short name.
+     * 1. Check presence and length of exercise short name
+     * 2. Check presence and length of course short name
+     * 3. Find forbidden patterns in exercise short name
+     * 4. Check that the short name doesn't already exist withing course or exam exercises
+     * @param programmingExercise Programming exercise to be validated
+     * @param course Course of the programming exercise
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest()
+                .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
+                .body(null));
+        }
+
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
+                .body(null));
+        }
+
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null));
+        }
+
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
+            + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * POST /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to setup
@@ -193,32 +234,10 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
         }
 
-        // Check if exercise shortname is set
-        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
-                    .body(null);
-        }
-
-        // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
-                    .body(null);
-        }
-
-        // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
-
-        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
-        // course)
-        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
-                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
-        if (numberOfProgrammingExercisesWithSameShortName > 0) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
+        // Validate course and exercise short name
+        Optional<ResponseEntity> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError.get();
         }
 
         // Check if programming language is set
@@ -301,7 +320,6 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        // TODO: We only check the rights to access the target course but never the right to access the source exercise
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
