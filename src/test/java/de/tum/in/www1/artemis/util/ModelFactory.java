@@ -82,17 +82,6 @@ public class ModelFactory {
         programmingExercise.setTestRepositoryUrl("test@url");
     }
 
-    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
-        ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setPackageName("de.test");
-        programmingExercise.setTestRepositoryUrl("test@url");
-        return programmingExercise;
-    }
-
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         ModelingExercise modelingExercise = new ModelingExercise();
