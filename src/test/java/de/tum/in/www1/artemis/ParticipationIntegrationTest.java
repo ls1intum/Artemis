@@ -350,7 +350,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participations.size()).isEqualTo(4);
         participations.forEach(participation -> {
             var exercise = participation.getExercise();
-            assertThat(exercise.getCourse()).isNull();
+            assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).isNull();
             assertThat(exercise.getStudentParticipations()).isEmpty();
             assertThat(exercise.getTutorParticipations()).isEmpty();
             assertThat(exercise.getExampleSubmissions()).isEmpty();

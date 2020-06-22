@@ -284,7 +284,8 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
     public void getNumberOfAllowedTeamComplaintsInCourse() throws Exception {
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourse().getId() + "/allowed-complaints?isTeamMode=true", HttpStatus.OK, Long.class);
+        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?isTeamMode=true",
+                HttpStatus.OK, Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
     }
 

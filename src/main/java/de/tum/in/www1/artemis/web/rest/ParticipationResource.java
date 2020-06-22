@@ -118,7 +118,7 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
@@ -236,7 +236,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
-        Course course = participation.getExercise().getCourse();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -273,7 +273,7 @@ public class ParticipationResource {
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -428,7 +428,7 @@ public class ParticipationResource {
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -613,11 +613,11 @@ public class ParticipationResource {
     }
 
     private Course findCourseFromParticipation(StudentParticipation participation) {
-        if (participation.getExercise() != null && participation.getExercise().getCourse() != null) {
-            return participation.getExercise().getCourse();
+        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
+            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
+        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
     /**

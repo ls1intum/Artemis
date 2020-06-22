@@ -228,8 +228,10 @@ public class Result implements Serializable {
      * @param score new score
      */
     public void setScore(Long score) {
-        this.score = score;
-        this.successful = score == 100L;
+        if (score != null) {
+            this.score = score;
+            this.successful = score == 100L;
+        }
     }
 
     /**

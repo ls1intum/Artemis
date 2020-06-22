@@ -193,7 +193,7 @@ public class StudentQuestion implements Serializable {
             return getLecture().getCourse();
         }
         else if (getExercise() != null) {
-            return getExercise().getCourse();
+            return getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
         return null;
     }
