@@ -5,14 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-public class ResultTest {
+public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest  {
 
     Result result = new Result();
 
     List<Feedback> feedbackList;
+
+    @Autowired
+    AssessmentService assessmentService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -34,7 +40,11 @@ public class ResultTest {
         double maxScore = 7.0;
         result.setFeedbacks(feedbackList);
 
-        result.evaluateFeedback(maxScore);
+        //result.evaluateFeedback(maxScore);
+        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, maxScore);
+        result.setScore(totalScore, maxScore);
+        result.setResultString(totalScore, maxScore);
 
         assertThat(result.getScore()).isEqualTo(Math.round(5.0 / maxScore * 100));
         assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
@@ -44,7 +54,11 @@ public class ResultTest {
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        result.evaluateFeedback(4);
+        //result.evaluateFeedback(4);
+        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 4.0);
+        result.setScore(totalScore, 4.0);
+        result.setResultString(totalScore, 4.0);
 
         assertThat(result.getScore()).isEqualTo(100);
         assertThat(result.getResultString()).isEqualToIgnoringCase("4 of 4 points");
@@ -61,7 +75,11 @@ public class ResultTest {
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
-        result.evaluateFeedback(7);
+        // result.evaluateFeedback(7);
+        Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 7.0);
+        result.setScore(totalScore, 7.0);
+        result.setResultString(totalScore, 7.0);
 
         assertThat(result.getScore()).isEqualTo(0);
         assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
