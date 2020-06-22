@@ -34,8 +34,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result implements Serializable {
 
-    // private static AssessmentService assessmentService;
-
     private static final long serialVersionUID = 1L;
 
     @Id

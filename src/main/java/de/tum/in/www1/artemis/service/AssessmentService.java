@@ -167,7 +167,7 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalScore(Double calculatedScore, Double maxScore) {
+    private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
