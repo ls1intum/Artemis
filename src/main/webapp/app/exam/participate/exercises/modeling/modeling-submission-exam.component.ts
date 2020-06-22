@@ -4,7 +4,6 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs/Observable';
 import * as moment from 'moment';
 import { omit } from 'lodash';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -17,7 +16,7 @@ import { stringifyIgnoringFields } from 'app/shared/util/utils';
     templateUrl: './modeling-submission-exam.component.html',
     styleUrls: ['./modeling-submission-exam.component.scss'],
 })
-export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionExamComponent implements OnInit, OnDestroy {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -39,6 +38,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     }
 
     ngOnInit(): void {
+        this.setAutoSaveTimer();
         window.scroll(0, 0);
     }
 
@@ -68,12 +68,15 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     /**
      * This function sets and starts an auto-save timer that automatically saves changes
      * to the model after at most 60 seconds.
+     *
+     * TODO: I don't really like the logic here, with a second 60s timer.
+     * I think the parent component should handle this and whenever a save is needed (we have 3 cases), then it retrieves the latest UML model from Apollon as submission
      */
     private setAutoSaveTimer(): void {
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(
             () => {
-                if (!this.canDeactivate()) {
+                if (this.modelHasUnsavedChanges()) {
                     this.saveDiagram();
                 }
             }, // 60seconds
@@ -92,6 +95,7 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
 
     ngOnDestroy(): void {
         clearInterval(this.autoSaveInterval);
+        // TODO: sync the latest changes from Apollon to exam-participation.service
     }
 
     /**
@@ -112,18 +116,15 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         }
     }
 
-    canDeactivate(): Observable<boolean> | boolean {
-        if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
-            return true;
-        }
-        const model: UMLModel = this.modelingEditor.getCurrentModel();
-        return !this.modelHasUnsavedChanges(model);
-    }
-
     /**
      * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
      */
-    private modelHasUnsavedChanges(model: UMLModel): boolean {
+    private modelHasUnsavedChanges(): boolean {
+        if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
+            return false;
+        }
+        const model: UMLModel = this.modelingEditor.getCurrentModel();
+
         if (!this.submission || !this.submission.model) {
             return model.elements.length > 0 && JSON.stringify(model) !== '';
         } else if (this.submission && this.submission.model) {
