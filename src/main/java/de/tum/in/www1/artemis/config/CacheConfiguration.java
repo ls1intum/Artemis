@@ -105,16 +105,29 @@ public class CacheConfiguration {
             // see the "spring.application.name" standard Spring property
             String serviceId = registration.getServiceId();
             log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
+
+            // Bind to the interface specified in the config if the value is set
+            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
+                System.setProperty("hazelcast.prefer.ipv4.stack", "false");
+                log.info("Binding Hazelcast to interface " + hazelcastInterface);
+                System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
+                System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
+                config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
+            }
+            else {
+                log.info("Binding Hazelcast to default interface");
+                System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+            }
+
             // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
             if (hazelcastLocalInstances) {
                 log.info("Application is running with the \"localInstances\" setting, Hazelcast " + "cluster will only work with localhost instances");
 
-                System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = "127.0.0.1:" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
+                    String clusterMember = instance.getHost() + ":" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
                     log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
@@ -127,11 +140,6 @@ public class CacheConfiguration {
                     log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
-            }
-
-            // Bind to the interface specified in the config if the value is set
-            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
-                config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
             }
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
