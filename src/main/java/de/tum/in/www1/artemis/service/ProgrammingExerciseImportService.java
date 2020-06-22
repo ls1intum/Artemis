@@ -224,6 +224,10 @@ public class ProgrammingExerciseImportService {
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);
         newExercise.setStudentParticipations(null);
+
+        if (newExercise.isTeamMode()) {
+            newExercise.getTeamAssignmentConfig().setId(null);
+        }
     }
 
     /**
