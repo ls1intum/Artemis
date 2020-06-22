@@ -7,7 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 
 @Component({
     selector: 'jhi-exam-participation',

@@ -6,14 +6,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
-    templateUrl: './modeling-submission-exam.component.html',
-    styleUrls: ['./modeling-submission-exam.component.scss'],
+    templateUrl: './modeling-exam-submission.component.html',
+    styleUrls: ['./modeling-exam-submission.component.scss'],
 })
-export class ModelingSubmissionExamComponent extends ExamSubmissionComponent implements OnInit {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -21,7 +21,7 @@ export class ModelingSubmissionExamComponent extends ExamSubmissionComponent imp
     studentParticipation: StudentParticipation;
 
     @Input()
-    modelingExercise: ModelingExercise;
+    exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
@@ -82,6 +82,6 @@ export class ModelingSubmissionExamComponent extends ExamSubmissionComponent imp
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
     }
 }

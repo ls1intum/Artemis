@@ -59,10 +59,6 @@ export class ExamParticipationService implements OnDestroy {
         return `${prefix}_${this._courseId}_${this._examId}`;
     }
 
-    private getResourceUrl(): string {
-        return `${SERVER_API_URL}api/courses/${this._courseId}/exams/${this._examId}`;
-    }
-
     public initStudentExam() {
         // return studentExamObject in memory
         if (this.studentExam) {
@@ -86,8 +82,7 @@ export class ExamParticipationService implements OnDestroy {
      * Retrieves a {@link StudentExam} from server
      */
     private getStudentExamFromServer(): Observable<StudentExam> {
-        const url = this.getResourceUrl() + '/studentExams/conduction';
-        // this._courseId, this._examId
+        const url = `${SERVER_API_URL}api/courses/${this._courseId}/exams/${this._examId}/studentExams/conduction`;
         return this.httpClient.get<StudentExam>(url);
     }
 

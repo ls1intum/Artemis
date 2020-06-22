@@ -1,12 +1,12 @@
-<div class="quiz-content container" *ngIf="quizExercise">
-    <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+<div class="quiz-content container" *ngIf="exercise">
+    <div *ngFor="let question of exercise.quizQuestions; let i = index">
         <jhi-multiple-choice-question
             id="question{{ i }}"
             *ngIf="question.type === MULTIPLE_CHOICE"
             [question]="question"
             [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
             [fnOnSelection]="onSelectionChanged.bind(this)"
-            [submittedQuizExercise]="quizExercise"
+            [submittedQuizExercise]="exercise"
             [questionIndex]="i + 1"
         ></jhi-multiple-choice-question>
         <jhi-drag-and-drop-question
@@ -27,10 +27,10 @@
         ></jhi-short-answer-question>
     </div>
 </div>
-<div class="quiz-navigation" *ngIf="quizExercise">
+<div class="quiz-navigation" *ngIf="exercise">
     <div class="quiz-navigation-content">
         <div class="stepwizardquiz">
-            <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
+            <div *ngFor="let question of exercise.quizQuestions; let i = index" class="stepwizardquiz__step">
                 <div
                     *ngIf="question.type === DRAG_AND_DROP"
                     class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"

@@ -5,12 +5,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { QuizExamParticipationComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-participation.component';
+import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { examParticipationState } from 'app/exam/participate/exam-participation.route';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { TextEditorExamComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
-import { ModelingSubmissionExamComponent } from 'app/exam/participate/exercises/modeling/modeling-submission-exam.component';
+import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ExamNavigationBarComponent } from './exam-navigation-bar/exam-navigation-bar.component';
@@ -32,9 +32,9 @@ const ENTITY_STATES = [...examParticipationState];
         ExamParticipationComponent,
         ExamParticipationCoverComponent,
         ExamParticipationSummaryComponent,
-        QuizExamParticipationComponent,
-        TextEditorExamComponent,
-        ModelingSubmissionExamComponent,
+        QuizExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
         ExamNavigationBarComponent,
     ],
 })

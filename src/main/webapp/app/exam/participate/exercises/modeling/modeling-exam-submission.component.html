@@ -1,11 +1,11 @@
-<jhi-resizeable-container class="col-12" *ngIf="modelingExercise">
+<jhi-resizeable-container class="col-12" *ngIf="exercise">
     <!--region Left Panel-->
-    <span left-header *ngIf="modelingExercise.title">{{ modelingExercise.title }}</span>
+    <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <div left-body class="submission-container d-flex flex-column pl-2 mt-3 w-100">
         <jhi-fullscreen>
             <div class="row flex-grow-1">
                 <div *ngIf="submission && isActive" class="col-12 editor-large">
-                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
+                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="exercise.diagramType"></jhi-modeling-editor>
                 </div>
             </div>
         </jhi-fullscreen>
@@ -14,8 +14,8 @@
     <!--region Right Panel-->
     <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
-    <p right-body class="mb-3 markdown-preview" *ngIf="modelingExercise!.problemStatement">
-        <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>
+    <p right-body class="mb-3 markdown-preview" *ngIf="exercise!.problemStatement">
+        <span [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></span>
     </p>
     <!--endregion-->
 </jhi-resizeable-container>

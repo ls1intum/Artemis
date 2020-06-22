@@ -1,7 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -17,11 +16,10 @@ export abstract class ExamSubmissionComponent {
 
 @Component({
     selector: 'jhi-text-editor-exam',
-    templateUrl: './text-editor-exam.component.html',
-    providers: [ParticipationService],
-    styleUrls: ['./text-editor-exam.component.scss'],
+    templateUrl: './text-exam-submission.component.html',
+    styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextEditorExamComponent extends ExamSubmissionComponent implements OnInit {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @Input()
     studentParticipation: StudentParticipation;
     @Input()
