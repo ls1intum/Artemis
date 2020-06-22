@@ -5,19 +5,19 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
-    const programmingExercise = new ProgrammingExercise();
-    programmingExercise.id = 123;
-    const route = ({ data: of({ programmingExercise }) } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
             .compileComponents();
@@ -25,15 +25,43 @@ describe('ProgrammingExercise Management Detail Component', () => {
         comp = fixture.componentInstance;
     });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
-            // GIVEN
+    describe('OnInit for course exercise', () => {
+        const programmingExercise = new ProgrammingExercise(new Course());
+        programmingExercise.id = 123;
 
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ programmingExercise });
+        });
+
+        it('Should not be in exam mode', () => {
             // WHEN
             comp.ngOnInit();
 
             // THEN
-            expect(comp.programmingExercise).toEqual(jasmine.objectContaining({ id: 123 }));
+            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.isExamExercise).toBeFalsy();
+        });
+    });
+
+    describe('OnInit for exam exercise', () => {
+        const exerciseGroup = new ExerciseGroup();
+        const programmingExercise = new ProgrammingExercise();
+        programmingExercise.id = 123;
+        programmingExercise.exerciseGroup = exerciseGroup;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ programmingExercise });
+        });
+
+        it('Should be in exam mode', () => {
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.isExamExercise).toBeTruthy();
         });
     });
 });

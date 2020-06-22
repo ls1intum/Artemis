@@ -41,7 +41,7 @@ export class StudentExamsComponent implements OnInit {
         this.loadAll();
     }
 
-    loadAll() {
+    private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
             this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((res) => {
                 this.setStudentExams(res.body);
@@ -53,6 +53,7 @@ export class StudentExamsComponent implements OnInit {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     viewAssessment(studentExam: StudentExam) {
         // TODO: go to assessment
     }
@@ -62,8 +63,20 @@ export class StudentExamsComponent implements OnInit {
      */
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
-            (res) => this.setStudentExams(res),
-            (err) => this.handleStudentExamGenerationError(err.error),
+            () => this.loadAll(),
+            (err) => this.handleError(err.error),
+        );
+    }
+
+    /**
+     * Starts all the exercises of the student exams that belong to the exam
+     */
+    startExercises() {
+        this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
+            () => {
+                this.loadAll();
+            },
+            (err) => this.handleError(err.error),
         );
     }
 
@@ -82,10 +95,7 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam
      */
     searchResultFormatter = (studentExam: StudentExam) => {
-        // studentExam has student but it comes as user from the server
-        // @ts-ignore
         if (studentExam.user) {
-            // @ts-ignore
             return `${studentExam.user.login} (${studentExam.user.name})`;
         }
     };
@@ -97,7 +107,7 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam Student exam
      */
     searchTextFromStudentExam = (studentExam: StudentExam): string => {
-        return studentExam.student?.login || '';
+        return studentExam.user?.login || '';
     };
 
     private setStudentExams(studentExams: any): void {
@@ -106,7 +116,7 @@ export class StudentExamsComponent implements OnInit {
         }
     }
 
-    private handleStudentExamGenerationError(error: any): void {
+    private handleError(error: any): void {
         this.jhiAlertService.error(error.errorKey);
     }
 }

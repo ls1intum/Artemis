@@ -131,7 +131,7 @@
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
                 },
                 "shortName": {
-                    "pattern": "Der Kurzname darf nur aus Buchstaben und Zahlen bestehen!",
+                    "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
