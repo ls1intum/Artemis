@@ -165,7 +165,7 @@ public class LtiService {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
-        addUserToExerciseGroup(user, exercise.getCourse());
+        addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
 
         // Save LTI user ID to automatically sign in the next time
         saveLtiUserId(user, launchRequest.getUser_id());

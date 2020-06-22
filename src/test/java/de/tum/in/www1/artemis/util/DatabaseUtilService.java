@@ -313,7 +313,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();

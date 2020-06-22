@@ -238,7 +238,7 @@ public class ModelingSubmissionResource {
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
@@ -276,7 +276,7 @@ public class ModelingSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         if (compassService.isSupported(modelingExercise)) {
             // ask Compass for optimal submission to assess if diagram type is supported
@@ -387,9 +387,9 @@ public class ModelingSubmissionResource {
     }
 
     private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
-        final Course course = courseService.findOne(exercise.getCourse().getId());
+        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
 }

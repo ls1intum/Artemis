@@ -109,13 +109,13 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetModelingExerciseForCourse_asTA() throws Exception {
-        request.get("/api/courses/" + classExercise.getCourse().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
+        request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void testGetModelingExerciseForCourse_tutorNotInCourse() throws Exception {
-        request.get("/api/courses/" + classExercise.getCourse().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -138,13 +138,13 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
 
-        modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), 1L);
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(2L);
@@ -154,14 +154,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_instructorNotInCourse() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
 
@@ -182,7 +182,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExerciseCriteria_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         var currentCriteriaSize = modelingExercise.getGradingCriteria().size();
         var newCriteria = new GradingCriterion();
@@ -204,7 +204,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExerciseInstructions_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
 
         var currentInstructionsSize = modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size();

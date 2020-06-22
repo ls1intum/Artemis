@@ -211,7 +211,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(participations).hasSize(exam2.getStudentExams().size());
         for (Participation participation : participations) {
             assertThat(participation.getExercise().equals(textExercise));
-            assertThat(participation.getExercise().getCourse() == null);
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
             // TODO: check that submissions have been created to the participations of text exercises
         }
@@ -256,7 +256,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(participations).hasSize(exam2.getStudentExams().size());
         for (Participation participation : participations) {
             assertThat(participation.getExercise().equals(modelingExercise));
-            assertThat(participation.getExercise().getCourse() == null);
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
             // TODO: check that submissions have been created to the participations of modeling exercises
         }

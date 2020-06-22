@@ -83,6 +83,18 @@ export const textExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: ':courseId/text-exercises/:exerciseId/import',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // View list of Text Exercises for Course
     {
         path: ':courseId/text-exercises',

@@ -190,7 +190,11 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            if (this.exercise.course == null) {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
+            } else {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            }
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
@@ -362,16 +366,24 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
     /**
      * Redirects back to the tutor dashboard if route param readOnly or toComplete is set.
-     * Otherwise redirects back to the exercise's edit view.
+     * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back() {
-        const courseId = this.exercise.course!.id;
-
-        if (this.readOnly || this.toComplete) {
-            this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
+        // check if exam exercise
+        if (this.exercise.course == null) {
+            const courseId = this.exercise.exerciseGroup?.exam?.course.id;
+            const examId = this.exercise.exerciseGroup?.exam?.id;
+            const exerciseGroupId = this.exercise.exerciseGroup?.id;
+            await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
         } else {
-            await this.router.navigate(['/course-management', courseId, 'text-exercises']);
-            this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
+            const courseId = this.exercise.course!.id;
+
+            if (this.readOnly || this.toComplete) {
+                this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
+            } else {
+                await this.router.navigate(['/course-management', courseId, 'text-exercises']);
+                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
+            }
         }
     }
 

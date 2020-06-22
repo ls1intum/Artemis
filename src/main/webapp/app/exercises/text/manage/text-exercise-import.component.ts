@@ -1,32 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
-    PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
     COURSE_TITLE = 'COURSE_TITLE',
 }
 
 @Component({
-    selector: 'jhi-programming-exercise-import',
-    templateUrl: './programming-exercise-import.component.html',
-    styles: [],
+    selector: 'jhi-text-exercise-import',
+    templateUrl: './text-exercise-import.component.html',
 })
-export class ProgrammingExerciseImportComponent implements OnInit {
+export class TextExerciseImportComponent implements OnInit {
     readonly column = TableColumn;
 
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
     loading = false;
-    content: SearchResult<ProgrammingExercise>;
+    content: SearchResult<TextExercise>;
     total = 0;
     state: PageableSearch = {
         page: 0,
@@ -36,15 +34,20 @@ export class ProgrammingExerciseImportComponent implements OnInit {
         sortedColumn: TableColumn.ID,
     };
 
-    constructor(private pagingService: ProgrammingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
+    constructor(private pagingService: TextExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
     }
 
+    /** Method to perform the search based on a search subject
+     *
+     * @param searchSubject The search subject which we use to search.
+     * @param debounce The delay we apply to deley the feedback / wait for input
+     */
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
@@ -67,37 +70,6 @@ export class ProgrammingExerciseImportComponent implements OnInit {
         return this.state.page;
     }
 
-    set searchTerm(searchTerm: string) {
-        this.state.searchTerm = searchTerm;
-        this.search.next();
-    }
-
-    get searchTerm(): string {
-        return this.state.searchTerm;
-    }
-
-    set listSorting(ascending: boolean) {
-        const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
-        this.setSearchParam({ sortingOrder });
-    }
-
-    get listSorting(): boolean {
-        return this.state.sortingOrder === SortingOrder.ASCENDING;
-    }
-
-    set sortedColumn(sortedColumn: string) {
-        this.setSearchParam({ sortedColumn });
-    }
-
-    get sortedColumn(): string {
-        return this.state.sortedColumn;
-    }
-
-    private setSearchParam(patch: Partial<PageableSearch>) {
-        Object.assign(this.state, patch);
-        this.sort.next();
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
     }
@@ -109,15 +81,43 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      * @param item The exercise itself
      * @returns The ID of the programming exercise
      */
-    trackId(index: number, item: ProgrammingExercise): number {
+    trackId(index: number, item: TextExercise): number {
         return item.id;
     }
 
-    /**
-     * Closes the modal in which the import component is opened by dismissing it
+    /** Set the list sorting direction
+     *
+     * @param ascending {boolean} Ascending order set
      */
-    clear() {
-        this.activeModal.dismiss('cancel');
+    set listSorting(ascending: boolean) {
+        const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
+        this.setSearchParam({ sortingOrder });
+    }
+
+    get listSorting(): boolean {
+        return this.state.sortingOrder === SortingOrder.ASCENDING;
+    }
+
+    private setSearchParam(patch: Partial<PageableSearch>) {
+        Object.assign(this.state, patch);
+        this.sort.next();
+    }
+
+    set sortedColumn(sortedColumn: string) {
+        this.setSearchParam({ sortedColumn });
+    }
+
+    get sortedColumn(): string {
+        return this.state.sortedColumn;
+    }
+
+    set searchTerm(searchTerm: string) {
+        this.state.searchTerm = searchTerm;
+        this.search.next();
+    }
+
+    get searchTerm(): string {
+        return this.state.searchTerm;
     }
 
     /**
@@ -125,8 +125,15 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      *
      * @param exercise The exercise which was selected by the user for the import.
      */
-    openImport(exercise: ProgrammingExercise) {
+    openImport(exercise: TextExercise) {
         this.activeModal.close(exercise);
+    }
+
+    /**
+     * Closes the modal in which the import component is opened by dismissing it
+     */
+    clear() {
+        this.activeModal.dismiss('cancel');
     }
 
     /** Callback function when the user navigates through the page results

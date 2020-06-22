@@ -85,7 +85,7 @@ public class QuizExerciseResource {
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        Course course = courseService.findOne(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
@@ -126,7 +126,7 @@ public class QuizExerciseResource {
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        Course course = courseService.findOne(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
@@ -266,7 +266,7 @@ public class QuizExerciseResource {
         }
 
         // check permissions
-        Course course = quizExercise.getCourse();
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
@@ -341,7 +341,7 @@ public class QuizExerciseResource {
         if (quizExercise.isEmpty()) {
             return notFound();
         }
-        Course course = quizExercise.get().getCourse();
+        Course course = quizExercise.get().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

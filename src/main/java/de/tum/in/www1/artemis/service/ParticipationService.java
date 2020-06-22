@@ -499,7 +499,8 @@ public class ParticipationService {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
             final var username = participation.getParticipantIdentifier();
-            final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
+            final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
+                    + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
             participation.setBuildPlanId(buildPlanId);
@@ -1076,7 +1077,7 @@ public class ParticipationService {
         // if the user is not the owner of the participation, the user can only see it in case he is
         // a teaching assistant or an instructor of the course, or in case he is admin
         User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourse();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

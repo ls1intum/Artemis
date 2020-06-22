@@ -505,7 +505,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise findWithTestCasesById(Long exerciseId) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
+            Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
@@ -717,7 +717,7 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin()

@@ -237,6 +237,19 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Import Text Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Edit Text Exercise
     {
         path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
