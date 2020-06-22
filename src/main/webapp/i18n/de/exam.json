@@ -119,6 +119,24 @@
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }
+        },
+        "studentExamDetail": {
+            "studentExam": "Klausur ({{ courseTitle }})",
+            "exercises": "Aufgaben",
+            "downloadPDF": " PDF herunterladen",
+            "student": "Student",
+            "name": "Name: ",
+            "login": "Login: ",
+            "email": "Email: ",
+            "matriculationNumber": "Matrikelnummer: ",
+            "id": "ID",
+            "type": "Typ",
+            "title": "Titel",
+            "result": "Ergebnis",
+            "reviewer": "Reviewer",
+            "openSubmission": "Einreichung öffnen",
+            "openAssessment": " Bewertung öffnen",
+            "cancelAssessment": " Bewertung abbrechen"
         }
     }
 }
