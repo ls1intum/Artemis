@@ -28,7 +28,8 @@
             "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!",
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
-            "progressSmall": "{{ current }}/{{ all }}"
+            "progressSmall": "{{ current }}/{{ all }}",
+            "submit": "Submit and continue"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
