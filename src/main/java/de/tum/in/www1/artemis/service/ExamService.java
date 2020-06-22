@@ -310,14 +310,24 @@ public class ExamService {
      * @return list of generated participations
      */
     @Transactional
+    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
     public List<Participation> startExercises(Long examId) {
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         List<Participation> generatedParticipations = new ArrayList<>();
 
         for (StudentExam studentExam : studentExams) {
             User student = studentExam.getUser();
-            studentExam.getExercises().stream().filter(exercise -> exercise.getStudentParticipations().isEmpty())
-                    .forEach(exercise -> generatedParticipations.add(participationService.startExercise(exercise, student)));
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                    try {
+                        var participation = participationService.startExercise(exercise, student);
+                        generatedParticipations.add(participation);
+                    }
+                    catch (Exception ex) {
+                        log.warn("Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    }
+                }
+            }
         }
 
         return generatedParticipations;

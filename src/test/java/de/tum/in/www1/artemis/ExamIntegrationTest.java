@@ -174,6 +174,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testStartExercisesWithTextExercise() throws Exception {
+
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
         // registering users
         var student1 = database.getUserByLogin("student1");
         var student2 = database.getUserByLogin("student2");
@@ -202,7 +205,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         exam2 = examRepository.save(exam2);
 
-        // invoke generate student exams
+        // invoke start exercises
         List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Participation.class, HttpStatus.OK);
         assertThat(participations).hasSize(exam2.getStudentExams().size());
@@ -210,12 +213,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(participation.getExercise().equals(textExercise));
             assertThat(participation.getExercise().getCourse() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of text exercises
         }
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testStartExercisesWithModelingExercise() throws Exception {
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
         // registering users
         var student1 = database.getUserByLogin("student1");
         var student2 = database.getUserByLogin("student2");
@@ -244,7 +250,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         exam2 = examRepository.save(exam2);
 
-        // invoke generate student exams
+        // invoke start exercises
         List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Participation.class, HttpStatus.OK);
         assertThat(participations).hasSize(exam2.getStudentExams().size());
@@ -252,6 +258,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(participation.getExercise().equals(modelingExercise));
             assertThat(participation.getExercise().getCourse() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of modeling exercises
         }
     }
 

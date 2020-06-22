@@ -34,8 +34,8 @@
         },
         "studentExams": {
             "title": "Klausuren",
-            "generateStudentExams": "Klausuren erstellen",
-            "startExercises": "Aufgaben starten",
+            "generateStudentExams": "Individuelle Klausuren erstellen",
+            "startExercises": "Aufgabenstart vorbereiten",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",

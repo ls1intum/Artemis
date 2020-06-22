@@ -62,7 +62,7 @@ export class StudentExamsComponent implements OnInit {
      */
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
-            (_) => this.loadAll(),
+            () => this.loadAll(),
             (err) => this.handleError(err.error),
         );
     }
@@ -72,7 +72,7 @@ export class StudentExamsComponent implements OnInit {
      */
     startExercises() {
         this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
-            (_) => {
+            () => {
                 this.loadAll();
             },
             (err) => this.handleError(err.error),
