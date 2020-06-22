@@ -28,7 +28,7 @@ export class ExamNavigationBarComponent implements OnInit {
     constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
-        this.layoutService.subscribeToLayoutChanges().subscribe((observerResponse) => {
+        this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
                 this.itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
