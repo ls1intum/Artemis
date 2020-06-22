@@ -71,6 +71,8 @@ public final class Constants {
 
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
 
+    public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
+
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
 
     // NOTE: the following values for programming exercises are hard-coded at the moment
@@ -113,13 +115,21 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String DELETE_EXAM = "DELETE_EXAM";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
 
+    public static final String DELETE_EXERCISE_GROUP = "DELETE_EXERCISE_GROUP";
+
     public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
+    public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
+
+    public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
 

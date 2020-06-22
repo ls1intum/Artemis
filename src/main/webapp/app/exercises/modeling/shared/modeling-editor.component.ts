@@ -24,6 +24,8 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     readOnly = false;
     @Input()
     resizeOptions: { initialWidth: string; maxWidth?: number };
+    @Input()
+    showHelpButton = true;
 
     private apollonEditor: ApollonEditor | null = null;
 

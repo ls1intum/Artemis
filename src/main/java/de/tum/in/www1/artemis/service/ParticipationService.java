@@ -392,6 +392,8 @@ public class ParticipationService {
 
         // get submission from HashMap
         QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+
+        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             if (quizSubmission.isSubmitted()) {
                 quizSubmission.setType(SubmissionType.MANUAL);
@@ -412,6 +414,7 @@ public class ParticipationService {
         participation.setExercise(quizExercise);
         participation.addResult(result);
 
+        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
             result.setRated(true);
@@ -844,7 +847,7 @@ public class ParticipationService {
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
                         // this should not happen because the database call above only retrieves rated results
-                        if (result.isRated() == Boolean.FALSE) {
+                        if (Boolean.FALSE.equals(result.isRated())) {
                             continue;
                         }
                         if (result.getCompletionDate() == null || result.getScore() == null) {

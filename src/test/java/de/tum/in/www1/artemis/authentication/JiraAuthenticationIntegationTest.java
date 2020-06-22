@@ -66,9 +66,6 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
     private UserService userService;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     protected DatabaseUtilService database;
 
     @Autowired
@@ -132,7 +129,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
         jiraRequestMockProvider.mockGetUsernameForEmail(email, username);
         jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, username, email, firstName, groups);
-        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
 
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
