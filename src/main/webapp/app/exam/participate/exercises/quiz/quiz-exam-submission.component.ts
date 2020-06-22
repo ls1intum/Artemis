@@ -16,7 +16,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
-    selector: 'jhi-exam-quiz',
+    selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
