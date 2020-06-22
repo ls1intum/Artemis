@@ -49,13 +49,13 @@ public class CacheConfiguration {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    @Value("${spring.hazelcast.interface}")
+    @Value("${spring.hazelcast.interface:}")
     private String hazelcastInterface;
 
-    @Value("${spring.hazelcast.port}")
+    @Value("${spring.hazelcast.port:5701}")
     private int hazelcastPort;
 
-    @Value("${spring.hazelcast.localInstances}")
+    @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
     public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
