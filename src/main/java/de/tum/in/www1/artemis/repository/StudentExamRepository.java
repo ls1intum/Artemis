@@ -30,4 +30,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     List<StudentExam> findByExamId(Long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
+    Optional<StudentExam> findWithEagerExercisesById(Long id);
 }

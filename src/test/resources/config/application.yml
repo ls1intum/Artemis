@@ -3,6 +3,10 @@ logging:
         ROOT: INFO
         de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: INFO
+
+artemis:
+    version: 1.3.3-beta7
+
 spring:
     application:
         name: Artemis
