@@ -119,7 +119,7 @@ public class ResultResource {
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
         final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
@@ -179,7 +179,7 @@ public class ResultResource {
         }
 
         final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
@@ -343,7 +343,7 @@ public class ResultResource {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
@@ -398,7 +398,7 @@ public class ResultResource {
         Optional<Result> result = resultRepository.findById(resultId);
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
-            Course course = participation.getExercise().getCourse();
+            Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
                 return forbidden();
             }
@@ -479,7 +479,7 @@ public class ResultResource {
         Optional<Result> result = resultRepository.findById(resultId);
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
-            Course course = participation.getExercise().getCourse();
+            Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
                 return forbidden();
             }
@@ -546,7 +546,7 @@ public class ResultResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }

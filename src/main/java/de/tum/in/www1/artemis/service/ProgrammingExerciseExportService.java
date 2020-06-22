@@ -210,8 +210,8 @@ public class ProgrammingExerciseExportService {
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
         log.debug("Create zip file for all repositories");
         final var programmingExerciseId = programmingExercise.getId();
-        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(),
-                programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
+        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
         createZipFile(zipFilePath, pathsToZippedRepos);
         scheduleForDeletion(zipFilePath, 15);
         log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");

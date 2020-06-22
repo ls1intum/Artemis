@@ -235,7 +235,7 @@ public class ProgrammingExerciseResource {
             programmingExercise.setExerciseGroup(exerciseGroup);
         }
         else {
-            course = courseService.findOne(programmingExercise.getCourse().getId());
+            course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             programmingExercise.setCourse(course);
         }
 
@@ -544,7 +544,7 @@ public class ProgrammingExerciseResource {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-            Course course = programmingExercise.getCourse();
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
@@ -586,7 +586,7 @@ public class ProgrammingExerciseResource {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
         }
         else {
-            course = programmingExercise.getCourse();
+            course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -619,7 +619,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
 
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -758,7 +758,7 @@ public class ProgrammingExerciseResource {
         }
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();

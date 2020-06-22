@@ -91,7 +91,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return isStudentInCourse(exercise.getCourse(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -305,7 +305,7 @@ public class AuthorizationCheckService {
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
