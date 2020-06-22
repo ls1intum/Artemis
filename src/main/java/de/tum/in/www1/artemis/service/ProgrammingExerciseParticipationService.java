@@ -11,10 +11,7 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -185,7 +182,8 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
@@ -195,7 +193,8 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation = findSolutionParticipation(participation.getId()).get();
         }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
@@ -205,7 +204,8 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation = findTemplateParticipation(participation.getId()).get();
         }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     /**
