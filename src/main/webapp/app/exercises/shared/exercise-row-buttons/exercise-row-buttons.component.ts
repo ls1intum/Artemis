@@ -27,6 +27,7 @@ export class ExerciseRowButtonsComponent {
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private quizExerciseService: QuizExerciseService,
         private eventManager: JhiEventManager,
     ) {}
 
