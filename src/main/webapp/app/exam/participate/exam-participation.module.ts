@@ -13,6 +13,7 @@ import { TextEditorExamComponent } from 'app/exam/participate/exercises/text/tex
 import { ModelingSubmissionExamComponent } from 'app/exam/participate/exercises/modeling/modeling-submission-exam.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { ProgrammingSubmissionExamComponent } from 'app/exam/participate/exercises/programming/programming-submission-exam.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -32,6 +33,7 @@ const ENTITY_STATES = [...examParticipationState];
         QuizExamParticipationComponent,
         TextEditorExamComponent,
         ModelingSubmissionExamComponent,
+        ProgrammingSubmissionExamComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}
