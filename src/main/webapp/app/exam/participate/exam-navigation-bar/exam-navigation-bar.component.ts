@@ -61,6 +61,14 @@ export class ExamNavigationBarComponent implements OnInit {
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
         }
-        return timeDiff.asMinutes() > 10 ? Math.round(timeDiff.asMinutes()) + ' min' : Math.round(timeDiff.asSeconds() / 60) + ' : ' + Math.round(timeDiff.asSeconds() % 60);
+        return timeDiff.asMinutes() > 10
+            ? Math.round(timeDiff.asMinutes()) + ' min'
+            : Math.round(timeDiff.asSeconds() / 60)
+                  .toString()
+                  .padStart(2, '0') +
+                  ' : ' +
+                  Math.round(timeDiff.asSeconds() % 60)
+                      .toString()
+                      .padStart(2, '0');
     }
 }
