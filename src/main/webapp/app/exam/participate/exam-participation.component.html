@@ -19,9 +19,13 @@
                     [endDate]="studentExam.exam.endDate"
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
-                <jhi-exam-quiz *ngSwitchCase="QUIZ" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
+                <jhi-exam-quiz *ngSwitchCase="QUIZ" [exercise]="activeExercise" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
                 <jhi-text-editor-exam *ngSwitchCase="TEXT" [exercise]="activeExercise" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-text-editor-exam>
-                <jhi-modeling-submission-exam *ngSwitchCase="MODELING" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-modeling-submission-exam>
+                <jhi-modeling-submission-exam
+                    *ngSwitchCase="MODELING"
+                    [exercise]="activeExercise"
+                    [studentParticipation]="activeExercise.studentParticipations[0]"
+                ></jhi-modeling-submission-exam>
             </ng-container>
         </ng-container>
         <!-- exam connection status footer bar -->

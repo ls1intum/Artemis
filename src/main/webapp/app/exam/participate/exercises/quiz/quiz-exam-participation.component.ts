@@ -15,6 +15,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
 
 @Component({
     selector: 'jhi-exam-quiz',
@@ -22,7 +23,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     providers: [ParticipationService],
     styleUrls: ['./quiz-exam-participation.component.scss'],
 })
-export class QuizExamParticipationComponent implements OnInit {
+export class QuizExamParticipationComponent extends ExamSubmissionComponent implements OnInit {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -41,19 +42,26 @@ export class QuizExamParticipationComponent implements OnInit {
 
     @Input() studentParticipation: StudentParticipation;
 
-    quizExercise: QuizExercise;
+    @Input() quizExercise: QuizExercise;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-    submission = new QuizSubmission();
+    submission: QuizSubmission;
 
     constructor() {
+        super();
         smoothscroll.polyfill();
     }
 
     ngOnInit(): void {
-        this.quizExercise = this.studentParticipation.exercise as QuizExercise;
-        this.updateParticipation(this.studentParticipation);
+        this.initQuiz();
+        // extract the submission if it exists
+        if (this.studentParticipation && this.studentParticipation.submissions.length) {
+            this.submission = this.studentParticipation.submissions[0] as QuizSubmission;
+
+            // show submission answers in UI
+            this.updateViewFromSubmission();
+        }
     }
 
     /**
@@ -94,16 +102,16 @@ export class QuizExamParticipationComponent implements OnInit {
     }
 
     onSelectionChanged() {
-        this.applySelection();
+        this.updateSubmissionFromView();
     }
 
     /**
-     * applies the data from the model to the UI (reverse of applySelection):
+     * applies the data from the model to the UI (reverse of updateSubmissionFromView):
      *
      * Sets the checkmarks (selected answers) for all questions according to the submission data
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
-    applySubmission() {
+    updateViewFromSubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
@@ -154,15 +162,20 @@ export class QuizExamParticipationComponent implements OnInit {
         }
     }
 
+    hasUnsavedChanges(): boolean {
+        // TODO: implement
+        return true;
+    }
+
     /**
-     * updates the model according to UI state (reverse of applySubmission):
+     * updates the model according to UI state (reverse of updateViewFromSubmission):
      *
      * Creates the submission from the user's selection
      * this needs to be done when we want to send the submission
      * either for saving (through websocket)
      * or for submitting (through REST call)
      */
-    applySelection() {
+    updateSubmissionFromView(): void {
         // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
         // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
         this.submission.submittedAnswers = [];
@@ -216,20 +229,5 @@ export class QuizExamParticipationComponent implements OnInit {
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
-    }
-
-    /**
-     * Apply the data of the participation, replacing all old data
-     */
-    updateParticipation(participation: StudentParticipation) {
-        this.quizExercise = participation.exercise as QuizExercise;
-        this.initQuiz();
-        // apply submission if it exists
-        if (participation && participation.results.length) {
-            this.submission = participation.results[0].submission as QuizSubmission;
-
-            // show submission answers in UI
-            this.applySubmission();
-        }
     }
 }

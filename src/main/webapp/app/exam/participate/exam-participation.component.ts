@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -7,6 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -14,6 +15,10 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy {
+    // TODO: make sure this works https://stackoverflow.com/questions/36842401/angular2-viewchild-from-typescript-base-abstract-class
+    @ViewChild(ExamSubmissionComponent, { static: false })
+    currentSubmissionComponent: ExamSubmissionComponent;
+
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
@@ -100,6 +105,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
         this.studentExamSubscription.unsubscribe();
     }
+
     initLiveMode() {
         // listen to connect / disconnect events
         this.onConnected = () => {
@@ -127,6 +133,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * @param {Exercise} exercise
      */
     onExerciseChange(exercise: Exercise): void {
+        // TODO: trigger save for activeExercise
+        this.triggerSave();
         this.activeExercise = exercise;
+    }
+
+    /**
+     * We support 3 different cases here:
+     * 1) Navigate between two exercises
+     * 2) Click on Save & Continue
+     * 3) The 60s timer was triggered (TODO: move logic from exam.participation.service.ts to here)
+     *      --> in this case, we can even save all submissions with isSynced = true
+     */
+    triggerSave() {
+        // TODO: for the active exercise: check the currentSubmissionComponent if it has changes
+        // TODO: if yes, invoke updateSubmissionFromView
+        // TODO: then save these changes on the server
+        // before the request, we would mark the submission as isSynced = true
+        // right after the response - in case it was successfull - we mark the submission as isSynced = false
     }
 }
