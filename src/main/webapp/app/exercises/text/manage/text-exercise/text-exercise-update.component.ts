@@ -86,12 +86,21 @@ export class TextExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-                        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-                            (categoryRes: HttpResponse<string[]>) => {
-                                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                            },
-                            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                        );
+                        if (!!this.textExercise.course) {
+                            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                                (categoryRes: HttpResponse<string[]>) => {
+                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                                },
+                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                            );
+                        } else {
+                            this.courseService.findAllCategoriesOfCourse(this.textExercise.exerciseGroup!.exam!.course.id).subscribe(
+                                (categoryRes: HttpResponse<string[]>) => {
+                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                                },
+                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                            );
+                        }
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {

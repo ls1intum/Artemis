@@ -38,7 +38,7 @@ public class TextExerciseImportService {
 
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, student questions and dates. <br>
+     * All basic include everything except Student-, Tutor participations, and student questions. <br>
      * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(TextExercise, TextExercise)} for a hard copy of the example submissions.
      *
@@ -79,6 +79,9 @@ public class TextExerciseImportService {
         newExercise.setMaxScore(importedExercise.getMaxScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
+        newExercise.setReleaseDate(importedExercise.getReleaseDate());
+        newExercise.setDueDate(importedExercise.getDueDate());
+        newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(copyGradingCriteria(importedExercise));
