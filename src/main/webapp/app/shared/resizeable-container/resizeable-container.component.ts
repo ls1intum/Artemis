@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, Input, HostListener } from '@angular/core';
 import interact from 'interactjs';
 
 /**
@@ -49,5 +49,13 @@ export class ResizeableContainerComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    // Make right side always expanded for smaller screens
+    @HostListener('window:resize', ['$event'])
+    onWindowResize(event: any) {
+        if(event.target.innerWidth <= 992) {
+            this.collapsed = false;
+        }
     }
 }
