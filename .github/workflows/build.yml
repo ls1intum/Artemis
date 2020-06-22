@@ -63,15 +63,15 @@ jobs:
     runs-on: ubuntu-latest
     services:
       athene-segmentation:
-        image: docker.pkg.github.com/ls1intum/athene/athene-segmentation
+        image: ls1intum/athene-segmentation
         ports: 
           - 8000:8000
       athene-embedding:
-        image: docker.pkg.github.com/ls1intum/athene/athene-embedding
+        image: ls1intum/athene-embedding
         ports: 
           - 8001:8000
       athene-clustering:
-        image: docker.pkg.github.com/ls1intum/athene/athene-clustering
+        image: ls1intum/athene-clustering
         ports: 
           - 8002:8000
     steps:
