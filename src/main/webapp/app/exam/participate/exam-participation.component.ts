@@ -10,8 +10,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { forkJoin } from 'rxjs';
-import { Submission } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -56,8 +54,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
     autoSaveInterval: number;
-
-    private submissionSyncList: Submission[] = [];
 
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
