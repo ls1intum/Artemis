@@ -186,6 +186,28 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validate the programming exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     * @param programmingExercise Programming exercise to be validated
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity> validateTitle(ProgrammingExercise programmingExercise) {
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest()
+                .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null));
+        }
+
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * POST /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to setup
@@ -222,16 +244,10 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Check if exercise title is set
-        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
-        }
-
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
-        if (!titleMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
+        // Validate exercise title
+        Optional<ResponseEntity> optionalTitleValidationError = validateTitle(programmingExercise);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError.get();
         }
 
         // Validate course and exercise short name
