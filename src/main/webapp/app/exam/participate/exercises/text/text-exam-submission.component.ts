@@ -8,11 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise } from 'app/entities/exercise.model';
-
-export abstract class ExamSubmissionComponent {
-    abstract hasUnsavedChanges(): boolean;
-    abstract updateSubmissionFromView(): void;
-}
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-text-editor-exam',

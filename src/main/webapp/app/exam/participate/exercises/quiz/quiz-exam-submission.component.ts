@@ -15,7 +15,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-exam-quiz',
@@ -47,6 +47,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     submission: QuizSubmission;
+
+    hasChanges = false;
 
     constructor() {
         super();
@@ -103,6 +105,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     onSelectionChanged() {
         this.updateSubmissionFromView();
+        this.hasChanges = true;
     }
 
     /**
@@ -162,9 +165,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         }
     }
 
+    /**
+     * returns true if submission was changes due to input in the quiz view
+     * returns false:
+     *  1. if no changes are made
+     *  2. if submission update is triggered by the parent view
+     */
     hasUnsavedChanges(): boolean {
-        // TODO: implement
-        return true;
+        return this.hasChanges;
     }
 
     /**
@@ -229,5 +237,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
+        this.hasChanges = false;
     }
 }

@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -68,9 +68,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
 
-        if (!this.submission || !this.submission.model) {
-            return currentApollonModel.elements.length > 0 && JSON.stringify(currentApollonModel) !== '';
-        } else if (this.submission && this.submission.model) {
+        if (this.submission && this.submission.model) {
             const currentSubmissionModel = JSON.parse(this.submission.model);
             const versionMatch = currentSubmissionModel.version === currentApollonModel.version;
             const modelMatch = stringifyIgnoringFields(currentSubmissionModel, 'size') === stringifyIgnoringFields(currentApollonModel, 'size');

@@ -17,7 +17,6 @@ export class ExamNavigationBarComponent implements OnInit {
     endDate: string;
 
     @Output() onExerciseChanged = new EventEmitter<Exercise>();
-    @Output() onSubmitExam = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
 
@@ -29,7 +28,7 @@ export class ExamNavigationBarComponent implements OnInit {
     constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
-        this.layoutService.subscribeToLayoutChanges().subscribe((observerResponse) => {
+        this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
                 this.itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
@@ -54,7 +53,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     submitExam() {
-        this.onSubmitExam.emit();
+        this.changeExercise(this.exerciseIndex + 1);
     }
 
     get remainingTime(): string {
