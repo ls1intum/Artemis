@@ -1,1 +1,139 @@
-SUMMARY
+<div>
+    <h2>
+        <span jhiTranslate="artemisApp.exam.examSummary.summaryCapital">SUMMARY</span>
+        <button class="btn btn-primary float-right" (click)="printPDF()">
+            <fa-icon [icon]="'print'"></fa-icon>
+            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
+        </button>
+    </h2>
+</div>
+<!--TODO add message if not participated in an exercise/ submission empty / similar-->
+<!--TODO add problem statement-->
+<!--TODO add exercise title-->
+<div *ngFor="let submission of submissions; let i = index">
+    <!--text exercise-->
+    <div class="question card" *ngIf="submission.submissionExerciseType == 'text'">
+        <div class="question-options card-header question-card-header">
+            <h5>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i }}</span>
+            </h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="submission.isCollapsed = !submission.isCollapsed"
+                [attr.aria-expanded]="!submission.isCollapsed"
+                [attr.aria-controls]="submission.isCollapsed"
+            >
+                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <h6>Problem Statement //TODO insert</h6>
+            <div class="editor-outline-background">{{ submission.text }}</div>
+        </div>
+    </div>
+    <!--modeling exercise TODO-->
+    <div class="question card" *ngIf="submission.submissionExerciseType == 'modeling'">
+        <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">(modeling) TODO add title/ problem statement</span></h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="submission.isCollapsed = !submission.isCollapsed"
+                [attr.aria-expanded]="!submission.isCollapsed"
+                [attr.aria-controls]="i"
+            >
+                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <h6>Problem Statement //TODO insert</h6>
+            <div class="editor-outline-background">
+                <jhi-modeling-editor *ngIf="umlModel" [readOnly]="true" [diagramType]="modelingExercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
+            </div>
+        </div>
+    </div>
+    <!--quiz exercise TODO-->
+    <div class="question card" *ngIf="submission.submissionExerciseType == 'quiz'">
+        <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise 2 (modeling) TODO add title/ problem statement</span></h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="submission.isCollapsed = !submission.isCollapsed"
+                [attr.aria-expanded]="!submission.isCollapsed"
+                [attr.aria-controls]="i"
+            >
+                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <div class="quiz-content container">
+                <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+                    <jhi-multiple-choice-question
+                        id="question{{ i }}"
+                        *ngIf="question.type == 'multiple-choice'"
+                        [question]="question"
+                        [(selectedAnswerOptions)]="submission.submittedAnswers[i].selectedOptions"
+                        [fnOnSelection]="applySubmission()"
+                        [clickDisabled]="true"
+                        [showResult]="false"
+                        [submittedResult]="result"
+                        [submittedQuizExercise]="question"
+                        [forceSampleSolution]="false"
+                        [questionIndex]="i + 1"
+                        [score]=""
+                    ></jhi-multiple-choice-question>
+                    <!--
+                    <jhi-drag-and-drop-question
+                        id="question{{ i }}"
+                        *ngIf="question.type === DRAG_AND_DROP"
+                        [question]="question"
+                        [(mappings)]="dragAndDropMappings[question.id]"
+                        [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
+                        [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
+                        [showResult]="showingResult"
+                        [forceSampleSolution]="mode === 'solution'"
+                        [questionIndex]="i + 1"
+                        [score]="questionScores[question.id]"
+                    ></jhi-drag-and-drop-question>
+                    <jhi-short-answer-question
+                        id="question{{ i }}"
+                        *ngIf="question.type === SHORT_ANSWER"
+                        [question]="question"
+                        [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+                        [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
+                        [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
+                        [showResult]="showingResult"
+                        [forceSampleSolution]="mode === 'solution'"
+                        [questionIndex]="i + 1"
+                        [score]="questionScores[question.id]"
+                    ></jhi-short-answer-question> --->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--programming exercise TODO-->
+    <!--file upload exercise TODO-->
+    <div class="question card" *ngIf="submission.submissionExerciseType == 'file-upload'">
+        <div class="question-options card-header question-card-header">
+            <h5>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }} TODO add title/ problem statement</span>
+            </h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="submission.isCollapsed = !submission.isCollapsed"
+                [attr.aria-expanded]="!submission.isCollapsed"
+                [attr.aria-controls]="i"
+            >
+                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <h6>Problem Statement //TODO insert</h6>
+            <div>
+                <a (click)="downloadFile(fileUploadEx.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                <span class="ml-2 badge badge-info">
+                    {{ attachmentExtension(submission.filePath!) | uppercase }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
