@@ -615,7 +615,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_templateIDDoesnotExist_notFound() throws Exception {
-        programmingExercise.setShortName("A new name");
+        programmingExercise.setShortName("newShortName");
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
