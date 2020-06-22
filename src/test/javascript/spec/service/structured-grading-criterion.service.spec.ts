@@ -1,8 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -40,32 +38,13 @@ describe('Structured Grading Criteria Service', () => {
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 
-            const feedback1 = new Feedback();
-            feedback1.gradingInstruction = limitedSGI; // +1P
-            feedback1.credits = limitedSGI.credits;
-            const feedback2 = new Feedback();
-            feedback2.gradingInstruction = limitedSGI; // +1P will not be counted because limit exceeded
-            feedback2.credits = limitedSGI.credits;
-            const feedback3 = new Feedback();
-            feedback3.gradingInstruction = bigLimitSGI; // +1P
-            feedback3.credits = bigLimitSGI.credits;
-            const feedback4 = new Feedback();
-            feedback4.gradingInstruction = bigLimitSGI; // +1P will be counted -> limit not exceeded yet
-            feedback4.credits = bigLimitSGI.credits;
-            const feedback5 = new Feedback();
-            feedback5.gradingInstruction = unlimitedSGI; // +1P
-            feedback5.credits = unlimitedSGI.credits;
-            const feedback6 = new Feedback();
-            feedback6.gradingInstruction = unlimitedSGI; // +1P can be applied as often as possible -> unlimited
-            feedback6.credits = unlimitedSGI.credits;
-
             feedbacks = [];
-            feedbacks.push(feedback1);
-            feedbacks.push(feedback2);
-            feedbacks.push(feedback3);
-            feedbacks.push(feedback4);
-            feedbacks.push(feedback5);
-            feedbacks.push(feedback6);
+            feedbacks.push(createFeedbacK(limitedSGI)); // +1P
+            feedbacks.push(createFeedbacK(limitedSGI)); // +1P will not be counted because limit exceeded
+            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P
+            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
+            feedbacks.push(createFeedbacK(unlimitedSGI)); // +1P
+            feedbacks.push(createFeedbacK(unlimitedSGI)); // +1P
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
@@ -86,32 +65,13 @@ describe('Structured Grading Criteria Service', () => {
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 
-            const feedback1 = new Feedback();
-            feedback1.gradingInstruction = limitedSGI; // +1.5P
-            feedback1.credits = limitedSGI.credits;
-            const feedback2 = new Feedback();
-            feedback2.gradingInstruction = limitedSGI; // +1.5P will not be counted because limit exceeded
-            feedback2.credits = limitedSGI.credits;
-            const feedback3 = new Feedback();
-            feedback3.gradingInstruction = bigLimitSGI; // +1P
-            feedback3.credits = bigLimitSGI.credits;
-            const feedback4 = new Feedback();
-            feedback4.gradingInstruction = bigLimitSGI; // +1P will be counted -> limit not exceeded yet
-            feedback4.credits = bigLimitSGI.credits;
-            const feedback5 = new Feedback();
-            feedback5.gradingInstruction = unlimitedSGI; // -0.5P
-            feedback5.credits = unlimitedSGI.credits;
-            const feedback6 = new Feedback();
-            feedback6.gradingInstruction = unlimitedSGI; // -0.5P can be applied as often as possible -> unlimited
-            feedback6.credits = unlimitedSGI.credits;
-
             feedbacks = [];
-            feedbacks.push(feedback1);
-            feedbacks.push(feedback2);
-            feedbacks.push(feedback3);
-            feedbacks.push(feedback4);
-            feedbacks.push(feedback5);
-            feedbacks.push(feedback6);
+            feedbacks.push(createFeedbacK(limitedSGI)); // +1.5P
+            feedbacks.push(createFeedbacK(limitedSGI)); // +1.5P will not be counted because limit exceeded
+            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P
+            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
+            feedbacks.push(createFeedbacK(unlimitedSGI)); // -0.5P
+            feedbacks.push(createFeedbacK(unlimitedSGI)); // -0.5P can be applied as often as possible -> unlimited
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
@@ -123,3 +83,10 @@ describe('Structured Grading Criteria Service', () => {
         httpMock.verify();
     });
 });
+
+function createFeedbacK(instr: GradingInstruction) {
+    const feedback = new Feedback();
+    feedback.gradingInstruction = instr;
+    feedback.credits = instr.credits;
+    return feedback;
+}
