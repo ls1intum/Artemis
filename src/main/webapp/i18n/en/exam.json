@@ -120,6 +120,24 @@
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             }
+        },
+        "studentExamDetail": {
+            "studentExam": "Student exam ({{ courseTitle }})",
+            "exercises": "Exercises",
+            "downloadPDF": " Download PDF",
+            "student": "Student",
+            "name": "Name: ",
+            "login": "Login: ",
+            "email": "Email: ",
+            "matriculationNumber": "Matriculation number: ",
+            "id": "ID",
+            "type": "Type",
+            "title": "Title",
+            "result": "Result",
+            "reviewer": "Reviewer",
+            "openSubmission": "Open Submission",
+            "openAssessment": " Open Assessment",
+            "cancelAssessment": " Cancel Assessment"
         }
     }
 }
