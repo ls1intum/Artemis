@@ -292,7 +292,7 @@ public class TextExerciseResource {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
-            course = textExercise.getCourse();
+            course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -436,7 +436,7 @@ public class TextExerciseResource {
     @PostMapping("/text-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody TextExercise importedExercise) throws URISyntaxException {
-        if (sourceExerciseId <= 0 || (importedExercise.getCourse() == null && importedExercise.getExerciseGroup() == null)) {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             return badRequest();
         }
@@ -446,7 +446,7 @@ public class TextExerciseResource {
             log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
             return notFound();
         }
-        if (importedExercise.getCourse() == null) {
+        if (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
             if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getExerciseGroup().getExam().getCourse(), user)) {
                 log.debug("User {} is not allowed to import exercises into course of exercise group {}", user.getId(), importedExercise.getExerciseGroup().getId());
@@ -454,23 +454,23 @@ public class TextExerciseResource {
             }
         }
         else {
-            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourse().getId());
-            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourse(), user)) {
-                log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourse().getId());
+            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 return forbidden();
             }
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
-        if (originalTextExercise.getCourse() == null) {
+        if (originalTextExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
             if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {
                 log.debug("User {} is not allowed to import exercises from exercise group {}", user.getId(), originalTextExercise.getExerciseGroup().getId());
                 return forbidden();
             }
         }
         else if (originalTextExercise.getExerciseGroup() == null) {
-            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourse(), user)) {
-                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourse().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 return forbidden();
             }
         }

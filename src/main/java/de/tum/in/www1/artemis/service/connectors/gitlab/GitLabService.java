@@ -280,8 +280,8 @@ public class GitLabService extends AbstractVersionControlService {
         try {
             gitlab.getGroupApi().addGroup(group);
 
-            final var instructors = userService.getInstructors(programmingExercise.getCourse());
-            final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
+            final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+            final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
             for (final var instructor : instructors) {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
                 gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);

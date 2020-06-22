@@ -458,7 +458,8 @@ public abstract class Exercise implements Serializable {
      *
      * @return the course class member
      */
-    public Course getCourse() {
+    @JsonInclude
+    protected Course getCourse() {
         return course;
     }
 
@@ -483,6 +484,12 @@ public abstract class Exercise implements Serializable {
         this.exerciseGroup = exerciseGroup;
     }
 
+    @JsonIgnore
+    public boolean hasCourseDirectly() {
+        return this.course != null;
+    }
+
+    @JsonIgnore
     public boolean hasExerciseGroup() {
         return this.exerciseGroup != null;
     }

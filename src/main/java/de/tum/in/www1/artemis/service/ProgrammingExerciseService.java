@@ -505,7 +505,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise findWithTestCasesById(Long exerciseId) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
+            Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
