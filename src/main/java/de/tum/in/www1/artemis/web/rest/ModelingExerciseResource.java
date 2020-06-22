@@ -10,6 +10,8 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,6 +110,20 @@ public class ModelingExerciseResource {
             return forbidden();
         }
         return null;
+    }
+
+    /**
+     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/modeling-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
     }
 
     /**
