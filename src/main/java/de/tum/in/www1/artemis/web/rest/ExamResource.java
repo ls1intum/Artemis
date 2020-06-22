@@ -340,4 +340,45 @@ public class ExamResource {
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
     }
+
+    /**
+     * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
+     * exercise groups do not belong to the exam the operation is aborted.
+     *
+     * @param courseId          the id of the course
+     * @param examId            the id of the exam
+     * @param orderedExerciseGroups    the exercise groups of the exam in the desired order.
+     * @return the list of exercise groups
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
+        log.debug("REST request to update the order of exercise groups of exam : {}", examId);
+
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Exam exam = examService.findOneWithExerciseGroups(examId);
+
+        // Ensure that exactly as many exercise groups have been received as are currently related to the exam
+        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+            return forbidden();
+        }
+
+        // Ensure that all received exercise groups are already related to the exam
+        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
+            if (!exam.getExerciseGroups().contains(exerciseGroup)) {
+                return forbidden();
+            }
+        }
+
+        exam.setExerciseGroups(orderedExerciseGroups);
+        exam = examService.save(exam);
+
+        return ResponseEntity.ok(exam.getExerciseGroups());
+    }
+
 }

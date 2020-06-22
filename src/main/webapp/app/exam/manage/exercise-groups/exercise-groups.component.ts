@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -19,8 +20,15 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    isSavingOrder = false;
 
-    constructor(private route: ActivatedRoute, private exerciseGroupService: ExerciseGroupService, private jhiEventManager: JhiEventManager, private alertService: AlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private exerciseGroupService: ExerciseGroupService,
+        private examManagementService: ExamManagementService,
+        private jhiEventManager: JhiEventManager,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam.
@@ -86,6 +94,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (this.exerciseGroups) {
             [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
         }
+        this.saveOrder();
     }
 
     /**
@@ -96,5 +105,16 @@ export class ExerciseGroupsComponent implements OnInit {
         if (this.exerciseGroups) {
             [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
         }
+        this.saveOrder();
+    }
+
+    private saveOrder(): void {
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
+            (res) => (this.exerciseGroups = res.body),
+            (err) => {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+                console.log(err);
+            },
+        );
     }
 }

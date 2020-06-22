@@ -9,6 +9,7 @@ import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -126,6 +127,16 @@ export class ExamManagementService {
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, { observe: 'response' });
+    }
+
+    /**
+     * Save the exercise groups of an exam in the given order.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseGroups List of exercise groups.
+     */
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
+        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {
