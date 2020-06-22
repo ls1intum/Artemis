@@ -31,6 +31,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         window.scroll(0, 0);
     }
 
+    // TODO: check if ngOnChanges is needed
+
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {
             // Updates the Apollon editor model state (view) with the latest modeling submission
@@ -49,6 +51,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         const diagramJson = JSON.stringify(currentApollonModel);
         if (this.studentSubmission && diagramJson) {
             this.studentSubmission.model = diagramJson;
+            this.studentSubmission.isSynced = false;
         }
     }
 

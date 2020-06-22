@@ -15,7 +15,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -26,8 +26,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     answer: string;
     private textEditorInput = new Subject<string>();
 
-    isSaving: boolean;
-
     constructor(
         private textService: TextEditorService,
         private jhiAlertService: AlertService,
@@ -36,12 +34,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         private stringCountService: StringCountService,
     ) {
         super();
-        this.isSaving = false;
-    }
-
-    ngOnInit() {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -66,6 +58,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     public updateSubmissionFromView(): void {
         this.studentSubmission.text = this.answer;
         this.studentSubmission.language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission.isSynced = false;
     }
 
     get wordCount(): number {

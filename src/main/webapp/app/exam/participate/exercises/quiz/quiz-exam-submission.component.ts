@@ -60,6 +60,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
+    // TODO: check if ngOnChanges is needed
+
     /**
      * Initialize the selections / mappings for each question with an empty array
      */
@@ -232,5 +234,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
         this.hasChanges = false;
+        // TODO: check if this.studentSubmission.isSynced = false; is needed
     }
 }
