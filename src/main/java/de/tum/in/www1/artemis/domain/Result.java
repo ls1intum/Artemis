@@ -473,10 +473,6 @@ public class Result implements Serializable {
             setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalScore().doubleValue());
         }
     }
-    /*
-     * // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
-     * public void evaluateFeedback(double maxScore) { double totalScore = calculateTotalScore(maxScore); setScore(totalScore, maxScore); setResultString(totalScore, maxScore); }
-     */
 
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
@@ -511,14 +507,4 @@ public class Result implements Serializable {
         return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
     }
-
-    /**
-     * @return sum of every feedback credit rounded to max two numbers after the comma
-     */
-    /*
-     * // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
-     * private double calculateTotalScore(double maxScore) { double totalScore = 0.0; for (Feedback feedback : this.feedbacks) { totalScore += feedback.getCredits(); } // limit
-     * total score to be between 0 and maxScore totalScore = Math.max(Math.min(totalScore, maxScore), 0); return new BigDecimal(totalScore).setScale(2,
-     * RoundingMode.HALF_UP).doubleValue(); }
-     */
 }

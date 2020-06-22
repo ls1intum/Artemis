@@ -257,8 +257,6 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
-        // storedFeedbackResult.evaluateFeedback(20);
-        // sentFeedbackResult.evaluateFeedback(20);
         Double calculatedScore = assessmentService.calculateTotalScore(storedFeedback);
         double totalScore = assessmentService.calculateTotalScore(calculatedScore, 20.0);
         storedFeedbackResult.setScore(totalScore, 20.0);

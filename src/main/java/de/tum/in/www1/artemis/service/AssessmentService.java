@@ -89,8 +89,7 @@ public class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         if (!(exercise instanceof ProgrammingExercise)) {
-            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
-            // originalResult.evaluateFeedback(exercise.getMaxScore());
+            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here
             Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
             return submitResult(originalResult, exercise, calculatedScore);
         }
