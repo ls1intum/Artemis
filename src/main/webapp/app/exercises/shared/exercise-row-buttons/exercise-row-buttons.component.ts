@@ -5,6 +5,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-exercise-row-buttons',
@@ -19,8 +20,14 @@ export class ExerciseRowButtonsComponent {
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    exerciseType = ExerciseType;
 
-    constructor(private textExerciseService: TextExerciseService, private fileUploadExerciseService: FileUploadExerciseService, private eventManager: JhiEventManager) {}
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private fileUploadExerciseService: FileUploadExerciseService,
+        private programmingExerciseService: ProgrammingExerciseService,
+        private eventManager: JhiEventManager,
+    ) {}
 
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
@@ -57,6 +64,20 @@ export class ExerciseRowButtonsComponent {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted a fileUploadExercise',
+                });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.exercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
