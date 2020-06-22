@@ -25,7 +25,7 @@ describe('Structured Grading Criteria Service', () => {
         service = injector.get(StructuredGradingCriterionService);
         httpMock = injector.get(HttpTestingController);
 
-        //define Grading Criteria and Feedback here
+        // define Grading Criteria and Feedback here
         const limitedSGI = new GradingInstruction();
         limitedSGI.id = 1;
         limitedSGI.credits = 1.0;
