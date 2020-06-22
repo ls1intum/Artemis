@@ -18,6 +18,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExercisePagingService } from '../../helpers/mocks/service/mock-programming-exercise-paging.service';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -35,7 +36,7 @@ describe('ProgrammingExerciseImportComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, FeatureToggleModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, FeatureToggleModule, ArtemisSharedPipesModule],
             declarations: [ProgrammingExerciseImportComponent, ButtonComponent],
             providers: [
                 DifferencePipe,

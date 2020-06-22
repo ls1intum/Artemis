@@ -119,7 +119,7 @@
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
                 },
                 "shortName": {
-                    "pattern": "The short name must only consist of alphanumeric characters!",
+                    "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!"
                 },
                 "packageName": {

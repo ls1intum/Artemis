@@ -27,10 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
@@ -571,15 +568,18 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
         try {
+            // Get course over exerciseGroup in exam mode
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
             grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions
 
-            if (programmingExercise.getCourse().getInstructorGroupName() != null && !programmingExercise.getCourse().getInstructorGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
+            if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
             }
 
-            if (programmingExercise.getCourse().getTeachingAssistantGroupName() != null && !programmingExercise.getCourse().getTeachingAssistantGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
+            if (course.getTeachingAssistantGroupName() != null && !course.getTeachingAssistantGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
                 // write-permissions
             }
         }
