@@ -20,7 +20,13 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
-            "exercise": "Exercise {{nr}}"
+            "exercise": "Exercise {{nr}}",
+            "validation": {
+                "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
+                "tooFewExerciseGroups": "The number of exercise groups is too small.",
+                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+            }
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
