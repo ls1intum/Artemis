@@ -13,7 +13,6 @@ describe('Structured Grading Criteria Service', () => {
     let injector: TestBed;
     let service: StructuredGradingCriterionService;
     let httpMock: HttpTestingController;
-    let expectedResult: any;
     let feedbacks: Feedback[];
 
     beforeEach(() => {

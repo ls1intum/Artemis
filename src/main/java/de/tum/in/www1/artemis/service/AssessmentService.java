@@ -174,6 +174,8 @@ public class AssessmentService {
 
     /**
      * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The score of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
      * @param assessments the List of Feedback
      * @return the total score
@@ -190,9 +192,11 @@ public class AssessmentService {
                     var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
                     if (maxCount > 0) {
                         if (encounters >= maxCount) {
+                            // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
                             gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
                         }
                         else {
+                            // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
                             gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
                             totalScore += feedback.getGradingInstruction().getCredits();
                         }
@@ -208,6 +212,7 @@ public class AssessmentService {
                 }
             }
             else {
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
                 totalScore += feedback.getCredits();
             }
         }
