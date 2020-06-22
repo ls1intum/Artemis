@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result implements Serializable {
 
-    private static AssessmentService assessmentService;
+    // private static AssessmentService assessmentService;
 
     private static final long serialVersionUID = 1L;
 
@@ -524,8 +524,9 @@ public class Result implements Serializable {
     // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
     private double calculateTotalScore(double maxScore) {
         double totalScore = 0.0;
-        totalScore = assessmentService.calculateTotalScore(this.feedbacks);
-
+        for (Feedback feedback : this.feedbacks) {
+            totalScore += feedback.getCredits();
+        }
         // limit total score to be between 0 and maxScore
         totalScore = Math.max(Math.min(totalScore, maxScore), 0);
         return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
