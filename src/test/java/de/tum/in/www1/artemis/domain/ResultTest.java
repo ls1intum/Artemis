@@ -5,13 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.service.AssessmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest  {
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.service.AssessmentService;
+
+public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     Result result = new Result();
 
@@ -40,7 +41,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         double maxScore = 7.0;
         result.setFeedbacks(feedbackList);
 
-        //result.evaluateFeedback(maxScore);
+        // result.evaluateFeedback(maxScore);
         Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
         double totalScore = assessmentService.calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
@@ -54,7 +55,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        //result.evaluateFeedback(4);
+        // result.evaluateFeedback(4);
         Double calculatedScore = assessmentService.calculateTotalScore(feedbackList);
         double totalScore = assessmentService.calculateTotalScore(calculatedScore, 4.0);
         result.setScore(totalScore, 4.0);

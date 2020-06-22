@@ -90,9 +90,9 @@ public class AssessmentService {
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         if (!(exercise instanceof ProgrammingExercise)) {
             // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
-            //originalResult.evaluateFeedback(exercise.getMaxScore());
+            // originalResult.evaluateFeedback(exercise.getMaxScore());
             Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-            return submitResult(originalResult,exercise,calculatedScore);
+            return submitResult(originalResult, exercise, calculatedScore);
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.

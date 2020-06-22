@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.service.AssessmentService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -766,8 +766,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
-        //storedFeedbackResult.evaluateFeedback(20);
-        //sentFeedbackResult.evaluateFeedback(20);
+        // storedFeedbackResult.evaluateFeedback(20);
+        // sentFeedbackResult.evaluateFeedback(20);
 
         Double calculatedScore = assessmentService.calculateTotalScore(storedFeedback);
         double totalScore = assessmentService.calculateTotalScore(calculatedScore, 20.0);

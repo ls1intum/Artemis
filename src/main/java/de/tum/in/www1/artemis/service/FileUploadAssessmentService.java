@@ -48,7 +48,7 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
         // result.evaluateFeedback(fileUploadExercise.getMaxScore());
         Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        return submitResult(result,fileUploadExercise,calculatedScore);
+        return submitResult(result, fileUploadExercise, calculatedScore);
         // return resultRepository.save(result);
     }
 
