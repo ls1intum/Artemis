@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -16,7 +16,8 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+    // TODO: remove pariticpation, use submission directly
     @Input()
     studentParticipation: StudentParticipation;
     @Input()
@@ -51,9 +52,23 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         }
     }
 
+    // TODO: remove when participation is changed for submission
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.studentParticipation.currentValue !== changes.studentParticipation.previousValue) {
+            if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
+                this.submission = this.studentParticipation.submissions[0] as TextSubmission;
+
+                // show submission answers in UI
+                this.updateViewFromSubmission();
+            }
+        }
+    }
+
     updateViewFromSubmission(): void {
         if (this.submission.text) {
             this.answer = this.submission.text;
+        } else {
+            this.answer = '';
         }
     }
 

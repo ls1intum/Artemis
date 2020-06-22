@@ -40,6 +40,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     @ViewChildren(ShortAnswerQuestionComponent)
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
+    // TODO: remove pariticpation, use submission directly
     @Input() studentParticipation: StudentParticipation;
 
     @Input() exercise: QuizExercise;

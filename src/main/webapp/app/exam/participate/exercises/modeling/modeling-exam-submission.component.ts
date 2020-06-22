@@ -18,6 +18,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
+    // TODO: remove pariticpation, use submission directly
     @Input()
     studentParticipation: StudentParticipation;
 
