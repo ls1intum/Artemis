@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { Exam } from 'app/entities/exam.model';
@@ -32,7 +32,7 @@ describe('Exam Management Component', () => {
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
 
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
