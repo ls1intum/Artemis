@@ -154,17 +154,6 @@
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "notSet": "nicht gesetzt"
             },
-            "import": {
-                "attention": "Achtung! ",
-                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
-                "loading": "Lade...",
-                "table": {
-                    "title": "Titel",
-                    "language": "Programmiersprache",
-                    "course": "Kurs",
-                    "doImport": "Import"
-                }
-            },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
                 "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."

@@ -17,6 +17,7 @@ import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseRowButtonsComponent } from 'app/exercises/shared/exercise-row-buttons/exercise-row-buttons.component';
 
 const ENTITY_STATES = [...textExerciseRoute];
@@ -35,6 +36,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, ExerciseRowButtonsComponent],
     exports: [TextExerciseComponent, ExerciseRowButtonsComponent],

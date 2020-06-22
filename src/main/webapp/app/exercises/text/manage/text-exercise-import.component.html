@@ -1,12 +1,12 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import a Programming Exercise</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.textExercise.home.importLabel">Import a Text Exercise</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
             Search for exercise: <input class="form-control ml-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-            <span class="ml-3" *ngIf="loading" jhiTranslate="artemisApp.programmingExercise.import.loading">Loading...</span>
+            <span class="ml-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
         </div>
         <table class="table table-striped">
             <thead class="thead-dark">
@@ -19,13 +19,12 @@
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}">
-                        <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}">
                         <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th style="width: 130px;">
+                        <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
                     </th>
                     <th></th>
                 </tr>
@@ -39,10 +38,12 @@
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <span>{{ exercise.programmingLanguage }}</span>
+                        <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
+                        <div style="text-align: center; vertical-align: middle;">
+                            <fa-icon *ngIf="exercise.exerciseGroup" [icon]="'check'"></fa-icon>
+                        </div>
                     </td>
                     <td>
                         <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
