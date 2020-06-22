@@ -5,8 +5,8 @@
     <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
     <div>
-        <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div class="button-toolbar float-right" *ngIf="modelingExercise.automaticAssessmentSupported">
+        <!-- These buttons only make sense when semi automatic assessment is possible -->
+        <div class="button-toolbar float-right" *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
             <button
                 [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)"
                 class="btn btn-success btn-sm mr-1"
@@ -28,7 +28,7 @@
     </h4>
     <jhi-alert></jhi-alert>
     <!-- These statements only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-    <div *ngIf="modelingExercise.automaticAssessmentSupported">
+    <div *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
         <h4>
             <span *ngIf="busy" style="color: grey;"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
         </h4>
@@ -91,19 +91,19 @@
             <p style="color: #5cb85c;"><strong>Congratulation all models have been assessed</strong></p>
         </div>
         <!-- This statement only makes sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div *ngIf="modelingExercise.automaticAssessmentSupported && assessedSubmissions !== submissions.length">
+        <div *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && assessedSubmissions !== submissions.length">
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">
+    <h5 *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && otherSubmissions.length > 0" style="padding-top: 5px;">
         Other submissions:
     </h5>
-    <p *ngIf="modelingExercise.automaticAssessmentSupported && !allSubmissionsVisible && otherSubmissions.length > 0">
+    <p *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
         >
     </p>
-    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (!modelingExercise.automaticAssessmentSupported || allSubmissionsVisible)">
+    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (modelingExercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
@@ -172,7 +172,7 @@
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
-                                *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
+                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !submission.result"
                                 [routerLink]="[
                                     '/course-management',
                                     modelingExercise.course?.id,
@@ -190,7 +190,7 @@
                             </button>
                         </span>
                         <button
-                            *ngIf="modelingExercise.type === MODELING && submission && submission.result"
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.result"
                             [routerLink]="[
                                 '/course-management',
                                 modelingExercise.course?.id,

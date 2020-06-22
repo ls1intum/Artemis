@@ -7,7 +7,7 @@ import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 @Component({
-    selector: 'jhi-assessment-dashboard',
+    selector: 'jhi-statistic-dashboard',
     templateUrl: './modeling-statistics.component.html',
     providers: [ModelingExerciseService],
 })

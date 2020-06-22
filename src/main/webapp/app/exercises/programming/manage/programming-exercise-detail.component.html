@@ -111,6 +111,10 @@
                 <dd>
                     <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde">Allow Offline IDE</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.allowOfflineIde }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
                 <dd>
                     <span>{{ programmingExercise.allowOnlineEditor }}</span>
@@ -185,11 +189,7 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button
-                type="button"
-                [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'edit']"
-                class="btn btn-primary mr-1"
-            >
+            <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
             <span class="mr-1">

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,11 +22,8 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamAccessService examAccessService) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
         this.studentExamRepository = studentExamRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
@@ -41,6 +36,19 @@ public class StudentExamService {
     public StudentExam findOne(Long studentExamId) {
         log.debug("Request to get student exam : {}", studentExamId);
         return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    }
+
+    /**
+     * Get one student exam by id with exercises.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithEagerExercises(Long studentExamId) {
+        log.debug("Request to get student exam with exercises : {}", studentExamId);
+        return studentExamRepository.findWithEagerExercisesById(studentExamId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
     }
 
     /**
@@ -76,4 +84,5 @@ public class StudentExamService {
         log.debug("Request to delete the student exam with Id : {}", studentExamId);
         studentExamRepository.deleteById(studentExamId);
     }
+
 }

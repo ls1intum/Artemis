@@ -211,7 +211,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         final var search = new PageableSearchDTO<String>();
-        search.setPage(0);
+        search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm("");
         search.setSortedColumn(ProgrammingExercise.ProgrammingExerciseSearchColumn.ID.name());
