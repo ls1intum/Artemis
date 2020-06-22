@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -222,14 +221,11 @@ public class QuizExerciseResource {
 
         if (quizExercise.hasExerciseGroup()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(quizExercise.getExerciseGroup().getId());
-            Course course = exerciseGroup.getExam().getCourse();
+            Course course = quizExercise.getExerciseGroup().getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
-            // Set the exerciseGroup, exam and course so that the client can work with those ids
-            quizExercise.setExerciseGroup(exerciseGroup);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
