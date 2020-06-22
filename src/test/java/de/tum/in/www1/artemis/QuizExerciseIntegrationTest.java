@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -224,22 +223,22 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+    public void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(now.minusDays(1), now.minusHours(2), exerciseGroup);
         quizExercise.setCourse(exerciseGroup.getExam().getCourse());
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+    public void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(now.minusDays(1), now.minusHours(2), null);
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -404,39 +403,38 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+    public void updateQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+    public void updateQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-
-    public void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
+    public void updateQuizExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
+    public void updateQuizExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
@@ -444,7 +442,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate) throws Exception {
