@@ -4,7 +4,19 @@
         <span jhiTranslate="artemisApp.textExercise.home.title">Text Exercises</span>
         <button
             *ngIf="course && course.isAtLeastInstructor"
-            class="btn btn-primary float-right jh-create-entity create-text-exercise"
+            id="jh-import-entity"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel">
+                Import new programming exercise
+            </span>
+        </button>
+        <button
+            *ngIf="course && course.isAtLeastInstructor"
+            id="jh-create-entity"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -19,7 +31,7 @@
     <div class="table-responsive" *ngIf="textExercises && textExercises.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
@@ -35,7 +47,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                <tr *ngFor="let textExercise of textExercises | sortBy: predicate:reverse; trackBy: trackId">
+                <tr *ngFor="let textExercise of textExercises; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>
@@ -46,7 +58,7 @@
                     <td>{{ textExercise.maxScore }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
-                        <jhi-text-exercise-row-buttons [courseId]="courseId" [textExercise]="textExercise"></jhi-text-exercise-row-buttons>
+                        <jhi-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-exercise-row-buttons>
                     </td>
                 </tr>
             </tbody>

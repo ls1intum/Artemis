@@ -163,7 +163,7 @@ public class AttachmentResource {
             }
         }
         else if (attachment.getExercise() != null) {
-            course = attachment.getExercise().getCourse();
+            course = attachment.getExercise().getCourseViaExerciseGroupOrCourseMember();
             relatedEntity = "exercise " + attachment.getExercise().getTitle();
         }
         if (course == null) {

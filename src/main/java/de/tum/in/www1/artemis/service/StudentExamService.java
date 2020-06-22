@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,23 +22,46 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamAccessService examAccessService;
-
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamAccessService examAccessService) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
         this.studentExamRepository = studentExamRepository;
-        this.examAccessService = examAccessService;
     }
 
     /**
      * Get one student exam by id.
      *
      * @param studentExamId the id of the student exam
-     * @return the entity
+     * @return the student exam
      */
     @NotNull
     public StudentExam findOne(Long studentExamId) {
         log.debug("Request to get student exam : {}", studentExamId);
         return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    }
+
+    /**
+     * Get one student exam by id with exercises.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithEagerExercises(Long studentExamId) {
+        log.debug("Request to get student exam with exercises : {}", studentExamId);
+        return studentExamRepository.findWithEagerExercisesById(studentExamId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    }
+
+    /**
+     * Get one student exam by id with exercises.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithExercises(Long studentExamId) {
+        log.debug("Request to get student exam {} with exercises", studentExamId);
+        return studentExamRepository.findWithExercisesById(studentExamId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
     }
 
     /**
@@ -50,7 +71,18 @@ public class StudentExamService {
      * @return the list of all student exams
      */
     public List<StudentExam> findAllByExamId(Long examId) {
-        log.debug("REST request to get all student exams for Exam : {}", examId);
+        log.debug("Request to get all student exams for Exam : {}", examId);
         return studentExamRepository.findByExamId(examId);
     }
+
+    /**
+     * Delete a student exam by the Id
+     *
+     * @param studentExamId the id of the student exam to be deleted
+     */
+    public void deleteStudentExam(Long studentExamId) {
+        log.debug("Request to delete the student exam with Id : {}", studentExamId);
+        studentExamRepository.deleteById(studentExamId);
+    }
+
 }

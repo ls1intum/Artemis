@@ -63,18 +63,38 @@ public class ModelFactory {
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setTestRepositoryUrl("test@url");
-        return programmingExercise;
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         ModelingExercise modelingExercise = new ModelingExercise();
         modelingExercise = (ModelingExercise) populateExercise(modelingExercise, releaseDate, dueDate, assessmentDueDate, course);
+        modelingExercise.setDiagramType(diagramType);
+        return modelingExercise;
+    }
+
+    public static ModelingExercise generateModelingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
+            ExerciseGroup exerciseGroup) {
+        ModelingExercise modelingExercise = new ModelingExercise();
+        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         return modelingExercise;
     }
@@ -94,6 +114,13 @@ public class ModelFactory {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
+    }
+
+    public static FileUploadExercise generateFileUploadExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
+            ExerciseGroup exerciseGroup) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setFilePattern(filePattern);
+        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
     }
 
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
@@ -295,7 +322,7 @@ public class ModelFactory {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setTitle("Exercise group title");
         exerciseGroup.setIsMandatory(mandatory);
-        exerciseGroup.setExam(exam);
+        exam.addExerciseGroup(exerciseGroup);
         return exerciseGroup;
     }
 

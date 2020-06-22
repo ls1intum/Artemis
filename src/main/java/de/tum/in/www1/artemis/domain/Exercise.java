@@ -452,7 +452,14 @@ public abstract class Exercise implements Serializable {
         this.studentParticipations = studentParticipations;
     }
 
-    public Course getCourse() {
+    /**
+     * This method exists for serialization. The utility method getCourseViaExerciseGroupOrCourseMember should be used
+     * to get a course for the exercise.
+     *
+     * @return the course class member
+     */
+    @JsonInclude
+    protected Course getCourse() {
         return course;
     }
 
@@ -477,8 +484,30 @@ public abstract class Exercise implements Serializable {
         this.exerciseGroup = exerciseGroup;
     }
 
+    @JsonIgnore
+    public boolean hasCourseDirectly() {
+        return this.course != null;
+    }
+
+    @JsonIgnore
     public boolean hasExerciseGroup() {
         return this.exerciseGroup != null;
+    }
+
+    /**
+     * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
+     * the course class member
+     *
+     * @return Course of the exercise
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMember() {
+        if (hasExerciseGroup()) {
+            return this.getExerciseGroup().getExam().getCourse();
+        }
+        else {
+            return this.getCourse();
+        }
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {

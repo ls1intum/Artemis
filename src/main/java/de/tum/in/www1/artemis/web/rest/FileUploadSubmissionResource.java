@@ -239,7 +239,7 @@ public class FileUploadSubmissionResource {
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
+        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
@@ -336,7 +336,7 @@ public class FileUploadSubmissionResource {
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
+        Course course = courseService.findOne(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

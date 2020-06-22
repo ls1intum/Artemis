@@ -15,6 +15,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -39,6 +42,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     public repositoryPassword: string;
     public wasCopied = false;
+    public useSsh = false;
+
+    public sshEnabled = false;
+    private sshTemplateUrl: string;
+    public sshKeysUrl: string;
 
     private user: User;
 
@@ -49,6 +57,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
+        private translateService: TranslateService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -63,6 +73,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.sshKeysUrl = info.sshKeysURL;
+            this.sshTemplateUrl = info.sshCloneURLTemplate;
+            this.sshEnabled = !!this.sshTemplateUrl;
+        });
     }
 
     /**
@@ -72,6 +87,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      */
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (this.useSsh) {
+            // the same ssh url is used for individual and team exercises
+            return this.getSshCloneUrl(programmingParticipation.repositoryUrl);
+        }
         if (programmingParticipation.team) {
             return this.repositoryUrlForTeam(programmingParticipation);
         }
@@ -113,6 +132,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
+     * check if offline IDE is allowed
+     * @return {boolean}
+     */
+    isOfflineIdeAllowed(): boolean {
+        return (this.exercise as ProgrammingExercise).allowOfflineIde;
+    }
+
+    /**
      * console log if copy fails
      */
     onCopyFailure() {
@@ -149,7 +176,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryClone');
+                        } else {
+                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryOnline');
+                        }
                     }
                 },
                 (error) => {
@@ -228,5 +259,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
+    }
+
+    /**
+     * Transforms the repository url to a ssh url
+     */
+    getSshCloneUrl(url: string) {
+        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
+    }
+
+    /**
+     * Inserts the correct link to the translated ssh tip.
+     */
+    getSshKeyTip() {
+        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
     }
 }

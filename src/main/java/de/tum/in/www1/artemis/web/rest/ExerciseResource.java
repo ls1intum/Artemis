@@ -100,27 +100,29 @@ public class ExerciseResource {
     @GetMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
-        // TODO: Create alternative route so that instructors and admins can access the exercise
-        // The users are not allowed to access the exercise over this route if the exercise belongs to an exam
         if (exercise.hasExerciseGroup()) {
-            return forbidden();
+            // Exam Exercise
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                return forbidden();
+            }
         }
-
+        else {
+            // Normal Exercise
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                return forbidden();
+            }
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                exercise.filterSensitiveInformation();
+            }
+        }
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            exercise.filterSensitiveInformation();
-        }
-
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 

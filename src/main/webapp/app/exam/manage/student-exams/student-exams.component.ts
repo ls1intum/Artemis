@@ -5,6 +5,8 @@ import { Subscription } from 'rxjs/Subscription';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -21,7 +23,13 @@ export class StudentExamsComponent implements OnInit {
     isLoading: boolean;
     filteredStudentExamsSize = 0;
 
-    constructor(private route: ActivatedRoute, private studentExamService: StudentExamService, private courseService: CourseManagementService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private examManagementService: ExamManagementService,
+        private studentExamService: StudentExamService,
+        private courseService: CourseManagementService,
+        private jhiAlertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and examId
@@ -33,10 +41,10 @@ export class StudentExamsComponent implements OnInit {
         this.loadAll();
     }
 
-    loadAll() {
+    private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
-            this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((studentExamResponse) => {
-                this.studentExams = studentExamResponse.body!;
+            this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((res) => {
+                this.setStudentExams(res.body);
             });
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
@@ -45,12 +53,31 @@ export class StudentExamsComponent implements OnInit {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     viewAssessment(studentExam: StudentExam) {
         // TODO: go to assessment
     }
 
+    /**
+     * Generate all student exams for the exam on the server and handle the result.
+     */
     generateStudentExams() {
-        // TODO: generate all exams
+        this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
+            () => this.loadAll(),
+            (err) => this.handleError(err.error),
+        );
+    }
+
+    /**
+     * Starts all the exercises of the student exams that belong to the exam
+     */
+    startExercises() {
+        this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
+            () => {
+                this.loadAll();
+            },
+            (err) => this.handleError(err.error),
+        );
     }
 
     /**
@@ -68,10 +95,7 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam
      */
     searchResultFormatter = (studentExam: StudentExam) => {
-        // studentExam has student but it comes as user from the server
-        // @ts-ignore
         if (studentExam.user) {
-            // @ts-ignore
             return `${studentExam.user.login} (${studentExam.user.name})`;
         }
     };
@@ -83,6 +107,16 @@ export class StudentExamsComponent implements OnInit {
      * @param studentExam Student exam
      */
     searchTextFromStudentExam = (studentExam: StudentExam): string => {
-        return studentExam.student?.login || '';
+        return studentExam.user?.login || '';
     };
+
+    private setStudentExams(studentExams: any): void {
+        if (studentExams) {
+            this.studentExams = studentExams;
+        }
+    }
+
+    private handleError(error: any): void {
+        this.jhiAlertService.error(error.errorKey);
+    }
 }

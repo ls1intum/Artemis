@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -48,6 +50,8 @@ public class TextExerciseResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final TextExerciseImportService textExerciseImportService;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -70,9 +74,9 @@ public class TextExerciseResource {
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
+            ExampleSubmissionRepository exampleSubmissionRepository, Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService,
+            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -82,6 +86,7 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.textExerciseImportService = textExerciseImportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
@@ -232,20 +237,26 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get TextExercise : {}", exerciseId);
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         TextExercise textExercise = optionalTextExercise.get();
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
         if (textExercise.hasExerciseGroup()) {
-            Course course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            Course course = exerciseGroup.getExam().getCourse();
+
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            // Set the exerciseGroup, exam and course so that the client can work with those ids
+            textExercise.setExerciseGroup(exerciseGroup);
         }
         else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
@@ -278,10 +289,10 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (textExercise.hasExerciseGroup()) {
-            course = courseService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
-            course = textExercise.getCourse();
+            course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -392,5 +403,81 @@ public class TextExerciseResource {
         else {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * Search for all text exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/text-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
+     * POST /text-exercises/import: Imports an existing text exercise into an existing course
+     *
+     * This will import the whole exercise except for the participations and Dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * See{@link TextExerciseImportService#importTextExercise(TextExercise, TextExercise)}
+     *
+     * @param sourceExerciseId The ID of the original exercise which should get imported
+     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     *
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     */
+    @PostMapping("/text-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody TextExercise importedExercise) throws URISyntaxException {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            return badRequest();
+        }
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var optionalOriginalTextExercise = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
+        if (optionalOriginalTextExercise.isEmpty()) {
+            log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
+            return notFound();
+        }
+        if (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
+            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getExerciseGroup().getExam().getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises into course of exercise group {}", user.getId(), importedExercise.getExerciseGroup().getId());
+                return forbidden();
+            }
+        }
+        else {
+            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                return forbidden();
+            }
+        }
+
+        final var originalTextExercise = optionalOriginalTextExercise.get();
+        if (originalTextExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
+            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {
+                log.debug("User {} is not allowed to import exercises from exercise group {}", user.getId(), originalTextExercise.getExerciseGroup().getId());
+                return forbidden();
+            }
+        }
+        else if (originalTextExercise.getExerciseGroup() == null) {
+            if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                return forbidden();
+            }
+        }
+
+        final var newExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
+        textExerciseRepository.save(newExercise);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body(newExercise);
     }
 }
