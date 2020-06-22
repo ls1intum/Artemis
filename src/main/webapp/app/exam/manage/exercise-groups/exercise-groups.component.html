@@ -26,7 +26,7 @@
             <div class="d-flex flex-column justify-content-center">
                 <div class="btn-group flex-btn-group-container">
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        <button class="btn btn-info btn-sm mr-1 mb-1" (click)="openImportModal(exerciseGroup.id)">
+                        <button class="btn btn-info btn-sm mr-1 mb-1" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel"></span>
                         </button>

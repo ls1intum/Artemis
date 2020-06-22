@@ -239,7 +239,7 @@ export const examManagementRoute: Routes = [
     },
     // Import Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/import',
+        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,

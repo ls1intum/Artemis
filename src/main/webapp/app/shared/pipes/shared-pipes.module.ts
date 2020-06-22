@@ -30,7 +30,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
-        CourseTitlePipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -47,7 +46,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
-        CourseTitlePipe,
     ],
 })
 export class ArtemisSharedPipesModule {}
