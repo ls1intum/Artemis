@@ -436,7 +436,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
 
         quizExercise.setExerciseGroup(null);
