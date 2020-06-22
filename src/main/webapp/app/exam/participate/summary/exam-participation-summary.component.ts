@@ -27,6 +27,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -44,7 +45,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     submissions: any[];
-    //mock
+    // mock
     course: Course | null;
     courseId: number;
     private paramSubscription: Subscription;
@@ -56,6 +57,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
     modelingSubmission: ModelingSubmission | null;
     quizSubmission: any;
     quizExercise: any;
+    programmingExercise: any;
+    programmingSubmission: any;
     exam: Exam;
     examId: number;
     fileUploadEx: any;
@@ -110,56 +113,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * Quiz Exercise
      * TODO remove any type for question and answer
      */
-    applySubmission() {
-        // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
-        // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-
-        if (this.quizExercise.quizQuestions) {
-            // iterate through all questions of this quiz
-            this.quizExercise.quizQuestions.forEach((question: any) => {
-                // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.quizSubmission.submittedAnswers
-                    ? this.quizSubmission.submittedAnswers.find((answer: any) => {
-                          return answer.quizQuestion.id === question.id;
-                      })
-                    : null;
-
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        this.selectedAnswerOptions[question.id] = selectedOptions ? selectedOptions : [];
-                    } else {
-                        // not found, set to empty array
-                        this.selectedAnswerOptions[question.id] = [];
-                    }
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        this.dragAndDropMappings[question.id] = mappings ? mappings : [];
-                    } else {
-                        // not found, set to empty array
-                        this.dragAndDropMappings[question.id] = [];
-                    }
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? submittedTexts : [];
-                    } else {
-                        // not found, set to empty array
-                        this.shortAnswerSubmittedTexts[question.id] = [];
-                    }
-                } else {
-                    console.error('Unknown question type: ' + question);
-                }
-            }, this);
-        }
-    }
 
     mock() {
         this.modelingExerciseService.find(53).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
@@ -204,7 +157,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionExerciseType: SubmissionExerciseType.MODELING,
         };
 
-        // mock quiz submission
+        // mock quiz exercise
         this.quizExercise = {
             type: 'quiz',
             id: 60,
@@ -295,7 +248,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
             timeUntilPlannedStart: -3,
             adjustedDueDate: '2020-06-20T10:02:40.737Z',
         };
-
+        // mock mc quiz submission
         this.quizSubmission = {
             submissionExerciseType: 'quiz',
             submitted: false,
@@ -397,6 +350,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionDate: '2020-06-20T09:53:00.848Z',
             adjustedSubmissionDate: '2020-06-20T09:53:00.848Z',
         };
+
+        // mock sa quiz submission
+
         // mock file upload submission
         this.fileUploadEx = {
             submissionExerciseType: 'file-upload',
@@ -477,6 +433,15 @@ export class ExamParticipationSummaryComponent implements OnInit {
         };
 
         // mock programming submission
+        this.programmingExercise = {
+            id: 1197,
+        };
+
+        this.programmingSubmission = {
+            repositoryUrl: 'https://ge93hig@bitbucket.ase.in.tum.de/scm/EIST20H02E03/eist20h02e03-ge93hig.git',
+            id: 332562,
+            submissionExerciseType: 'programming',
+        };
 
         this.submissions = [];
         this.submissions.push(this.textSubmission);
@@ -484,5 +449,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.submissions.push(this.textSubmission2);
         this.submissions.push(this.fileUploadEx);
         this.submissions.push(this.quizSubmission);
+        this.submissions.push(this.programmingSubmission);
     }
 }

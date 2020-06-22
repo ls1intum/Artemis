@@ -15,7 +15,7 @@
     <div class="question card" *ngIf="submission.submissionExerciseType == 'text'">
         <div class="question-options card-header question-card-header">
             <h5>
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i }}</span>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <button
                 class="btn btn-light question-collapse"
@@ -34,7 +34,9 @@
     <!--modeling exercise TODO-->
     <div class="question card" *ngIf="submission.submissionExerciseType == 'modeling'">
         <div class="question-options card-header question-card-header">
-            <h5><span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">(modeling) TODO add title/ problem statement</span></h5>
+            <h5>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">(modeling) TODO add title/ problem statement</span>
+            </h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="submission.isCollapsed = !submission.isCollapsed"
@@ -54,7 +56,9 @@
     <!--quiz exercise TODO-->
     <div class="question card" *ngIf="submission.submissionExerciseType == 'quiz'">
         <div class="question-options card-header question-card-header">
-            <h5><span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise 2 (modeling) TODO add title/ problem statement</span></h5>
+            <h5>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
+            </h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="submission.isCollapsed = !submission.isCollapsed"
@@ -65,14 +69,15 @@
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <h6>Problem Statement //TODO insert</h6>
             <div class="quiz-content container">
                 <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
                     <jhi-multiple-choice-question
                         id="question{{ i }}"
-                        *ngIf="question.type == 'multiple-choice'"
+                        *ngIf="question.type === MULTIPLE_CHOICE"
                         [question]="question"
-                        [(selectedAnswerOptions)]="submission.submittedAnswers[i].selectedOptions"
-                        [fnOnSelection]="applySubmission()"
+                        [(selectedAnswerOptions)]="submission.submittedAnswers[0].selectedOptions"
+                        [fnOnSelection]=""
                         [clickDisabled]="true"
                         [showResult]="false"
                         [submittedResult]="result"
@@ -81,41 +86,74 @@
                         [questionIndex]="i + 1"
                         [score]=""
                     ></jhi-multiple-choice-question>
-                    <!--
+
                     <jhi-drag-and-drop-question
                         id="question{{ i }}"
                         *ngIf="question.type === DRAG_AND_DROP"
                         [question]="question"
                         [(mappings)]="dragAndDropMappings[question.id]"
-                        [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
-                        [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                        [showResult]="showingResult"
-                        [forceSampleSolution]="mode === 'solution'"
+                        [fnOnMappingUpdate]=""
+                        [clickDisabled]="true"
+                        [showResult]="false"
+                        [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
-                        [score]="questionScores[question.id]"
+                        [score]=""
                     ></jhi-drag-and-drop-question>
                     <jhi-short-answer-question
                         id="question{{ i }}"
                         *ngIf="question.type === SHORT_ANSWER"
                         [question]="question"
-                        [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
-                        [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
-                        [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                        [showResult]="showingResult"
-                        [forceSampleSolution]="mode === 'solution'"
+                        [(submittedTexts)]="submission.submittedAnswers[1].submittedTexts"
+                        [fnOnSubmittedTextUpdate]=""
+                        [clickDisabled]="true"
+                        [showResult]="false"
+                        [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
-                        [score]="questionScores[question.id]"
-                    ></jhi-short-answer-question> --->
+                        [score]=""
+                    ></jhi-short-answer-question>
                 </div>
             </div>
         </div>
     </div>
     <!--programming exercise TODO-->
+    <div class="question card" *ngIf="submission.submissionExerciseType == 'programming'">
+        <div class="question-options card-header question-card-header">
+            <h5>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
+            </h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="submission.isCollapsed = !submission.isCollapsed"
+                [attr.aria-expanded]="!submission.isCollapsed"
+                [attr.aria-controls]="i"
+            >
+                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+            <h6>Problem Statement //TODO insert</h6>
+            <div class="d-flex align-items-center mb-1 mt-1">
+                <jhi-programming-assessment-repo-export
+                    [exerciseId]="programmingExercise.id"
+                    [singleParticipantMode]="true"
+                    [participationIdList]="submission?.id"
+                ></jhi-programming-assessment-repo-export>
+                <a
+                    class="ml-2"
+                    href="{{ this.submission?.repositoryUrl }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
+                    >Go to repository</a
+                >
+            </div>
+        </div>
+    </div>
     <!--file upload exercise TODO-->
     <div class="question card" *ngIf="submission.submissionExerciseType == 'file-upload'">
         <div class="question-options card-header question-card-header">
             <h5>
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }} TODO add title/ problem statement</span>
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <button
                 class="btn btn-light question-collapse"
