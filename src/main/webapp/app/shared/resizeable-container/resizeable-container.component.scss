@@ -49,7 +49,6 @@
     .card {
         width: inherit;
         min-width: 200px;
-        max-width: 500px;
 
         .card-header {
             display: flex;
@@ -102,7 +101,7 @@
     }
 }
 // for smaller screens (tablets, phones)
-@media (max-width: 991.98px) {
+@media (max-width: 992px) {
     :host {
         flex-flow: column-reverse;
     }
@@ -115,7 +114,6 @@
         }
         .card {
             margin-bottom: 30px;
-            max-width: 100%;
         }
 
         .card-header {

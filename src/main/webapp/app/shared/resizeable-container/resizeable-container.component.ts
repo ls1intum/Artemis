@@ -34,7 +34,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
                     // Set maximum width
                     interact.modifiers!.restrictSize({
                         min: { width: 215, height: 0 },
-                        max: { width: 1000, height: 2000 },
+                        max: { width: 750, height: 2000 },
                     }),
                 ],
                 inertia: true,
