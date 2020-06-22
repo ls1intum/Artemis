@@ -25,8 +25,11 @@ export class ExamParticipationService {
         if (localStoredExam) {
             return Observable.of(localStoredExam);
         } else {
-            // download student exam from server on service init
-            return this.getStudentExamFromServer(courseId, examId);
+            // download student exam from server
+            const studentExam = this.getStudentExamFromServer(courseId, examId);
+            // store studentExam in localStorage after fetching
+            this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), studentExam);
+            return studentExam;
         }
     }
 
