@@ -50,10 +50,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise) {
-        if (exercise.getCourse() == null) {
-            return isAtLeastTeachingAssistantInCourse(exercise.getExerciseGroup().getExam().getCourse(), null);
-        }
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), null);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
     /**
@@ -69,10 +66,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        if (exercise.getCourse() == null) {
-            return isAtLeastTeachingAssistantInCourse(exercise.getExerciseGroup().getExam().getCourse(), user);
-        }
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), user);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
@@ -140,10 +134,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(Exercise exercise, User user) {
-        if (exercise.getCourse() == null) {
-            return isAtLeastInstructorInCourse(exercise.getExerciseGroup().getExam().getCourse(), user);
-        }
-        return isAtLeastInstructorInCourse(exercise.getCourse(), user);
+        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
