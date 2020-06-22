@@ -5,7 +5,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class StudentExam implements BaseEntity {
     public id: number;
-    public student: User;
+    public user: User;
     public exam: Exam;
     public exercises: Exercise[];
 }

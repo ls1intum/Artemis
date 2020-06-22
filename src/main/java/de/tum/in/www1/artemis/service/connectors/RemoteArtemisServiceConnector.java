@@ -5,6 +5,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -54,6 +55,11 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject, HttpHeaders headers) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Artemis Service.");
+
+        if (headers == null) {
+            headers = new HttpHeaders();
+        }
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
         final HttpEntity<RequestType> httpRequestEntity = new HttpEntity<>(requestObject, headers);
 

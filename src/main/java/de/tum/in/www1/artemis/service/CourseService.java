@@ -222,7 +222,7 @@ public class CourseService {
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            return findOne(exercise.getCourse().getId());
+            return findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
     }
 }
