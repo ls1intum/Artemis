@@ -11,7 +11,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -35,22 +34,11 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
     isSaving: boolean;
     autoSaveInterval: number;
 
-    constructor(private examParticipationService: ExamParticipationService, private jhiAlertService: AlertService) {
+    constructor(private jhiAlertService: AlertService) {
         this.isSaving = false;
     }
 
     ngOnInit(): void {
-        // add
-        this.examParticipationService.getLatestSubmissionForParticipation(this.participationId).subscribe(
-            (modelingSubmission) => {
-                this.updateModelingSubmission(modelingSubmission as ModelingSubmission);
-                this.setAutoSaveTimer();
-            },
-            (error) => {
-                this.jhiAlertService.error(error.message, null, undefined);
-            },
-        );
-
         window.scroll(0, 0);
     }
 
@@ -100,7 +88,6 @@ export class ModelingSubmissionExamComponent implements OnInit, OnDestroy, Compo
         }
         this.updateSubmissionModel();
         this.isSaving = true;
-        this.examParticipationService.updateSubmission(this.submission, this.modelingExercise.id);
     }
 
     ngOnDestroy(): void {

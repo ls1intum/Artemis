@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -11,12 +11,10 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
@@ -25,7 +23,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
     providers: [ParticipationService],
     styleUrls: ['./text-editor-exam.component.scss'],
 })
-export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class TextEditorExamComponent implements OnInit {
     textExercise: TextExercise;
     participation: StudentParticipation;
     submission: TextSubmission;
@@ -46,7 +44,6 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
-        private examParticipationService: ExamParticipationService,
     ) {
         this.isSaving = false;
     }
@@ -60,11 +57,6 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
             (data: StudentParticipation) => this.updateParticipation(data),
             (error: HttpErrorResponse) => this.onError(error),
         );
-
-        this.textEditorStream$ = this.buildSubmissionStream$();
-        this.textEditorStream$.subscribe((textSubmission) => {
-            this.examParticipationService.updateSubmission(textSubmission, this.participation.exercise.id);
-        });
     }
 
     private updateParticipation(participation: StudentParticipation) {
@@ -82,33 +74,8 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
-    /**
-     * Stream of submissions being emitted on:
-     * 1. text editor input after a debounce time of 2 seconds
-     */
-    private buildSubmissionStream$() {
-        const textEditorStream$ = this.textEditorInput
-            .asObservable()
-            .pipe(debounceTime(2000), distinctUntilChanged())
-            .pipe(map((answer: string) => this.submissionForAnswer(answer)));
-        return textEditorStream$;
-    }
-
     private submissionForAnswer(answer: string): TextSubmission {
         return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
-    }
-
-    ngOnDestroy() {
-        if (this.canDeactivate() && this.textExercise.id) {
-            let newSubmission = new TextSubmission();
-            if (this.submission) {
-                newSubmission = this.submission;
-            }
-            newSubmission.text = this.answer;
-            if (this.submission.id) {
-                this.examParticipationService.updateSubmission(newSubmission, this.textExercise.id);
-            }
-        }
     }
 
     /**
@@ -125,10 +92,6 @@ export class TextEditorExamComponent implements OnInit, OnDestroy, ComponentCanD
 
     get characterCount(): number {
         return this.stringCountService.countCharacters(this.answer);
-    }
-
-    canDeactivate(): Observable<boolean> | boolean {
-        return this.submission.text !== this.answer;
     }
 
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
