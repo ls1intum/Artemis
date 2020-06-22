@@ -1,9 +1,9 @@
 <div class="btn-group flex-btn-group-container">
     <!-- TODO: display this button in exam mode when its functionality implemented -->
     <button
-        *ngIf="!examMode && textExercise.isAtLeastTutor"
+        *ngIf="!examMode && exercise.isAtLeastTutor"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'exercises', textExercise.id, 'scores']"
+        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
@@ -12,8 +12,8 @@
     <!-- TODO: display this button in exam mode when its functionality implemented -->
     <button
         type="submit"
-        *ngIf="!examMode && textExercise.isAtLeastInstructor"
-        [routerLink]="['/course-management', courseId, 'text-exercises', textExercise.id, 'assessment']"
+        *ngIf="!examMode && exercise.isAtLeastInstructor"
+        [routerLink]="['/course-management', courseId, 'text-exercises', exercise.id, 'assessment']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -21,9 +21,9 @@
     </button>
     <!-- TODO: display this button in exam mode when its functionality implemented -->
     <button
-        *ngIf="!examMode && textExercise.isAtLeastTutor"
+        *ngIf="!examMode && exercise.isAtLeastTutor"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'exercises', textExercise.id, 'participations']"
+        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -31,8 +31,8 @@
     </button>
     <button
         type="submit"
-        *ngIf="!examMode && textExercise.teamMode && textExercise.isAtLeastTutor"
-        [routerLink]="['/course-management', courseId, 'exercises', textExercise.id, 'teams']"
+        *ngIf="!examMode && exercise.teamMode && exercise.isAtLeastTutor"
+        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="'users'"></fa-icon>
@@ -40,25 +40,25 @@
     </button>
     <!-- TODO: display this button in exam mode when its functionality implemented -->
     <button
-        *ngIf="!examMode && textExercise.isAtLeastInstructor"
+        *ngIf="!examMode && exercise.isAtLeastInstructor"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'text-exercises', textExercise.id]"
+        [routerLink]="['/course-management', courseId, 'text-exercises', exercise.id]"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
     </button>
-    <button *ngIf="examMode || textExercise.isAtLeastInstructor" type="submit" [routerLink]="createRouterLink('edit')" class="btn btn-primary btn-sm mr-1">
+    <button *ngIf="examMode || exercise.isAtLeastInstructor" type="submit" [routerLink]="createRouterLink('edit')" class="btn btn-primary btn-sm mr-1">
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </button>
     <button
-        *ngIf="examMode || textExercise.isAtLeastInstructor"
+        *ngIf="examMode || exercise.isAtLeastInstructor"
         jhiDeleteButton
-        [entityTitle]="textExercise.title"
+        [entityTitle]="exercise.title"
         deleteQuestion="artemisApp.exercise.delete.question"
         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-        (delete)="deleteTextExercise(textExercise.id)"
+        (delete)="deleteExercise()"
         [dialogError]="dialogError$"
     >
         <fa-icon [icon]="'times'"></fa-icon>

@@ -18,7 +18,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
                     <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="fileUploadExercise.title" />
                 </div>
-                <div class="form-group-narrow position-relative">
+                <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                     <jhi-category-selector
                         [exerciseCategories]="exerciseCategories"

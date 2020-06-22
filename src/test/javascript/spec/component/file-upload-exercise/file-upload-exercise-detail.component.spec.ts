@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { DebugElement } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
@@ -21,6 +22,8 @@ import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,6 +31,7 @@ const expect = chai.expect;
 describe('FileUploadExercise Management Detail Component', () => {
     let comp: FileUploadExerciseDetailComponent;
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
+    let service: FileUploadExerciseService;
     let debugElement: DebugElement;
 
     const route = ({
@@ -61,6 +65,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             .compileComponents();
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         comp = fixture.componentInstance;
+        service = fixture.debugElement.injector.get(FileUploadExerciseService);
         debugElement = fixture.debugElement;
     });
 
@@ -81,5 +86,46 @@ describe('FileUploadExercise Management Detail Component', () => {
             const descList = debugElement.query(By.css('dl'));
             expect(descList).to.exist;
         }));
+    });
+
+    describe('OnInit', () => {
+        const exerciseGroup: ExerciseGroup = new ExerciseGroup();
+        const fileUploadExerciseExam: FileUploadExercise = new FileUploadExercise(null, exerciseGroup);
+
+        it('Should call load on init and be in exam mode', () => {
+            // GIVEN
+            spyOn(service, 'find').and.returnValue(
+                of(
+                    new HttpResponse({
+                        body: fileUploadExerciseExam,
+                    }),
+                ),
+            );
+            // WHEN
+            fixture.detectChanges();
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.isExamExercise).to.be.true;
+            expect(comp.fileUploadExercise).to.equal(fileUploadExerciseExam);
+        });
+
+        it('Should call load on init and not be in exam mode', () => {
+            // GIVEN
+            spyOn(service, 'find').and.returnValue(
+                of(
+                    new HttpResponse({
+                        body: fileUploadExercise,
+                    }),
+                ),
+            );
+            // WHEN
+            fixture.detectChanges();
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.isExamExercise).to.be.false;
+            expect(comp.fileUploadExercise).to.equal(fileUploadExercise);
+        });
     });
 });
