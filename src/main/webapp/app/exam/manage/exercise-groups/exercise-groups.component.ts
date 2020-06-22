@@ -10,6 +10,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -27,9 +29,9 @@ export class ExerciseGroupsComponent implements OnInit {
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
         private jhiEventManager: JhiEventManager,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
-        private alertService: AlertService,
     ) {}
 
     /**
@@ -88,13 +90,36 @@ export class ExerciseGroupsComponent implements OnInit {
         }
     }
 
-    openImportModal(exerciseGroupId: number) {
-        const modalRef = this.modalService.open(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: TextExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroupId, 'text-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+    /**
+     * Opens the import module for a specific exercise type
+     * @param exercise
+     */
+    openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
+        const importBaseRoute = [
+            '/course-management',
+            exerciseGroup.exam?.course?.id,
+            'exams',
+            exerciseGroup.exam?.id,
+            'exercise-groups',
+            exerciseGroup.id,
+            `${exerciseType}-exercises`,
+            'import',
+        ];
+
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                modalRef.result.then(
+                    (result: ProgrammingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
+        }
     }
 }

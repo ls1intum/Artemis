@@ -13,19 +13,19 @@
                 <ul>
                     <li>
                         <code class="text-white badge badge-primary label-preview"
-                            >{{ programmingExercise.course?.shortName.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise</code
+                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise</code
                         >
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
                         <code class="text-white badge badge-primary label-preview"
-                            >{{ programmingExercise.course?.shortName.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution</code
+                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution</code
                         >
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
                         <code class="text-white badge badge-primary label-preview"
-                            >{{ programmingExercise.course?.shortName.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests</code
+                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests</code
                         >
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
@@ -40,13 +40,13 @@
             <ul>
                 <li>
                     <code class="text-white badge badge-primary label-preview"
-                        >{{ programmingExercise.course?.shortName.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code
+                        >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code
                     >
                     <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
                 </li>
                 <li>
                     <code class="text-white badge badge-primary label-preview"
-                        >{{ programmingExercise.course?.shortName.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
+                        >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
                     >
                     <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
                 </li>

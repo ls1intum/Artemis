@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 @Pipe({
     name: 'courseTitle',
 })
-export class CourseTitlePipe implements PipeTransform {
+export class ExerciseCourseTitlePipe implements PipeTransform {
     /**
      * Returns the course title of the exercise via the exerciseGroup or the usual course member
      *
