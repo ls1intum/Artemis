@@ -16,6 +16,9 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -81,9 +84,33 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                 // initialize all submissions as synced
                 this.studentExam.exercises.forEach((exercise) => {
                     exercise.studentParticipations.forEach((participation) => {
-                        participation.submissions.forEach((submission) => {
+                        if (participation.submissions && participation.submissions.length > 0) {
+                            participation.submissions.forEach((submission) => {
+                                submission.isSynced = true;
+                            });
+                        } else {
+                            // create empty fallback submission
+                            let submission;
+                            switch (exercise.type) {
+                                case ExerciseType.TEXT:
+                                    submission = new TextSubmission();
+                                    break;
+                                case ExerciseType.FILE_UPLOAD:
+                                    submission = new FileUploadSubmission();
+                                    break;
+                                case ExerciseType.MODELING:
+                                    submission = new ModelingSubmission();
+                                    break;
+                                case ExerciseType.PROGRAMMING:
+                                    submission = new ProgrammingSubmission();
+                                    break;
+                                case ExerciseType.QUIZ:
+                                    submission = new QuizSubmission();
+                                    break;
+                            }
                             submission.isSynced = true;
-                        });
+                            participation.submissions = [submission];
+                        }
                     });
                 });
             });

@@ -3,7 +3,6 @@ import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
@@ -18,31 +17,24 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
-    // TODO: remove pariticpation, use submission directly
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentParticipation: StudentParticipation;
+    studentSubmission: ModelingSubmission;
 
     @Input()
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
-    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    submission: ModelingSubmission;
-
     ngOnInit(): void {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
-            this.submission = this.studentParticipation.submissions[0] as ModelingSubmission;
-
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+        // show submission answers in UI
+        this.updateViewFromSubmission();
         window.scroll(0, 0);
     }
 
     updateViewFromSubmission(): void {
-        if (this.submission.model) {
+        if (this.studentSubmission.model) {
             // Updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(this.submission.model);
+            this.umlModel = JSON.parse(this.studentSubmission.model);
         }
     }
 
@@ -55,8 +47,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
-        if (this.submission && diagramJson) {
-            this.submission.model = diagramJson;
+        if (this.studentSubmission && diagramJson) {
+            this.studentSubmission.model = diagramJson;
         }
     }
 
@@ -69,8 +61,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
 
-        if (this.submission && this.submission.model) {
-            const currentSubmissionModel = JSON.parse(this.submission.model);
+        if (this.studentSubmission && this.studentSubmission.model) {
+            const currentSubmissionModel = JSON.parse(this.studentSubmission.model);
             const versionMatch = currentSubmissionModel.version === currentApollonModel.version;
             const modelMatch = stringifyIgnoringFields(currentSubmissionModel, 'size') === stringifyIgnoringFields(currentApollonModel, 'size');
             return versionMatch && !modelMatch;

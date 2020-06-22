@@ -17,8 +17,8 @@
                     #textEditor
                     class="text-editor-textarea"
                     [(ngModel)]="answer"
-                    [readonly]="!submission"
-                    [disabled]="!submission"
+                    [readonly]="!studentSubmission"
+                    [disabled]="!studentSubmission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
                     (input)="onTextEditorInput($event)"
                 ></textarea>

@@ -4,7 +4,6 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -17,14 +16,11 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     styleUrls: ['./text-exam-submission.component.scss'],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
-    // TODO: remove pariticpation, use submission directly
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentParticipation: StudentParticipation;
+    studentSubmission: TextSubmission;
     @Input()
     exercise: Exercise;
-
-    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    submission: TextSubmission;
 
     // answer represents the view state
     answer: string;
@@ -44,41 +40,32 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     ngOnInit() {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
-            this.submission = this.studentParticipation.submissions[0] as TextSubmission;
+        // show submission answers in UI
+        this.updateViewFromSubmission();
+    }
 
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.studentParticipation.currentValue !== changes.studentParticipation.previousValue) {
             // show submission answers in UI
             this.updateViewFromSubmission();
         }
     }
 
-    // TODO: remove when participation is changed for submission
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.studentParticipation.currentValue !== changes.studentParticipation.previousValue) {
-            if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
-                this.submission = this.studentParticipation.submissions[0] as TextSubmission;
-
-                // show submission answers in UI
-                this.updateViewFromSubmission();
-            }
-        }
-    }
-
     updateViewFromSubmission(): void {
-        if (this.submission.text) {
-            this.answer = this.submission.text;
+        if (this.studentSubmission.text) {
+            this.answer = this.studentSubmission.text;
         } else {
             this.answer = '';
         }
     }
 
     public hasUnsavedChanges(): boolean {
-        return this.submission.text !== this.answer;
+        return this.studentSubmission.text !== this.answer;
     }
 
     public updateSubmissionFromView(): void {
-        this.submission.text = this.answer;
-        this.submission.language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission.text = this.answer;
+        this.studentSubmission.language = this.textService.predictLanguage(this.answer);
     }
 
     get wordCount(): number {
