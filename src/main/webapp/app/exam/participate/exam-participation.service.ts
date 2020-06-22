@@ -37,7 +37,7 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), studentExam);
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExam));
     }
 
     /**
