@@ -49,7 +49,7 @@ public class GradingInstruction implements Serializable {
     private GradingCriterion gradingCriterion;
 
     @OneToMany(mappedBy = "gradingInstruction")
-    @JsonIgnoreProperties({ "grading_instruction", "result" })
+    @JsonIgnoreProperties(value = { "grading_instruction", "result" }, allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
 
