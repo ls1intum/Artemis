@@ -150,7 +150,11 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+
+        // Notify tutors only if this a course exercise
+        if (programmingExercise.hasCourse()) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        }
 
         return programmingExercise;
     }
@@ -251,7 +255,9 @@ public class ProgrammingExerciseService {
 
         // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
         programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
-        if (notificationText != null) {
+
+        // Only send notification for course exercises
+        if (notificationText != null && programmingExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
 
@@ -540,7 +546,9 @@ public class ProgrammingExerciseService {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
@@ -725,8 +733,10 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        final var instructorGroup = exercise.getCourse().getInstructorGroupName();
-        final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        final var instructorGroup = course.getInstructorGroupName();
+        final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));

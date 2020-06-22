@@ -42,7 +42,7 @@
                         <span>{{ exercise.programmingLanguage }}</span>
                     </td>
                     <td>
-                        <ngb-highlight [result]="exercise.course.title" [term]="searchTerm"></ngb-highlight>
+                        <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
                         <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.programmingExercise.import.table.doImport'"> </jhi-button>
