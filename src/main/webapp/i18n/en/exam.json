@@ -29,7 +29,8 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Submit and continue"
+            "submit": "Submit & continue",
+            "noExam": "No data found"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

@@ -29,7 +29,8 @@
             "finishExam": "Klausur abgeben",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Speichern und Weiter"
+            "submit": "Speichern & Weiter",
+            "noExam": "Keine Daten gefunden"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

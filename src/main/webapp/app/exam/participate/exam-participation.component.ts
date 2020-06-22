@@ -79,6 +79,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.examId = parseInt(params['examId'], 10);
 
             this.studentExamSubscription = this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
+                // save exam to localStorage
+                this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
+                // init studentExam and activeExercise
                 this.studentExam = studentExam;
                 this.activeExercise = studentExam.exercises[0];
                 // initialize all submissions as synced
@@ -208,32 +211,28 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successfull - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
-        forkJoin(
-            this.submissionSyncList.map((submission) => {
-                const examExercise = this.studentExam.exercises.find((exercise) =>
-                    exercise.studentParticipations.some((participation) => participation.submissions.some((examSubmission) => examSubmission.id === submission.id)),
-                );
-                if (examExercise) {
-                    switch (examExercise.type) {
-                        case ExerciseType.TEXT:
-                            return this.textSubmissionService.update(submission as TextSubmission, examExercise.id);
-                        case ExerciseType.FILE_UPLOAD:
-                            // TODO: works differently than other services
-                            return this.fileUploadSubmissionService;
-                        case ExerciseType.MODELING:
-                            return this.modelingSubmissionService.update(submission as ModelingSubmission, examExercise.id);
-                        case ExerciseType.PROGRAMMING:
-                            // TODO: works differently than other services
-                            return this.programmingSubmissionService;
-                        case ExerciseType.QUIZ:
-                            // TODO find submissionService
-                            return null;
-                    }
-                }
-            }),
-        ).subscribe(() => {
-            // clear sync list
-            this.submissionSyncList = [];
-        });
+        if (this.currentSubmissionComponent.hasUnsavedChanges()) {
+            this.currentSubmissionComponent.updateSubmissionFromView();
+            const submission = this.activeExercise.studentParticipations[0].submissions[0];
+            submission.isSynced = true;
+            switch (this.activeExercise.type) {
+                case ExerciseType.TEXT:
+                    return this.textSubmissionService.update(submission as TextSubmission, this.activeExercise.id);
+                case ExerciseType.FILE_UPLOAD:
+                    // TODO: works differently than other services
+                    return this.fileUploadSubmissionService;
+                case ExerciseType.MODELING:
+                    return this.modelingSubmissionService.update(submission as ModelingSubmission, this.activeExercise.id);
+                case ExerciseType.PROGRAMMING:
+                    // TODO: works differently than other services
+                    return this.programmingSubmissionService;
+                case ExerciseType.QUIZ:
+                    // TODO find submissionService
+                    return null;
+            }
+            // overwrite studentExam in localStorage
+            this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+            submission.isSynced = false;
+        }
     }
 }

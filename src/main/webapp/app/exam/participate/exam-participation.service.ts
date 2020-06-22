@@ -26,11 +26,18 @@ export class ExamParticipationService {
             return Observable.of(localStoredExam);
         } else {
             // download student exam from server
-            const studentExam = this.getStudentExamFromServer(courseId, examId);
-            // store studentExam in localStorage after fetching
-            this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), studentExam);
-            return studentExam;
+            return this.getStudentExamFromServer(courseId, examId);
         }
+    }
+
+    /**
+     * save the studentExam to the local Storage
+     * @param courseId
+     * @param examId
+     * @param studentExam
+     */
+    public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
+        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), studentExam);
     }
 
     /**
