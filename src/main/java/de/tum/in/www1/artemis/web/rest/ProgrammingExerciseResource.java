@@ -158,14 +158,14 @@ public class ProgrammingExerciseResource {
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return Optional.of(ResponseEntity.badRequest()
-                .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
-                .body(null));
+                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
+                    .body(null));
         }
 
         // Check if course shortname is set
         if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
-                .body(null));
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null));
         }
 
         // Check if exercise shortname matches regex
@@ -177,10 +177,10 @@ public class ProgrammingExerciseResource {
         // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
         // course)
         long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
-            + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
         if (numberOfProgrammingExercisesWithSameShortName > 0) {
             return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null));
+                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null));
         }
         return Optional.empty();
     }
@@ -196,7 +196,7 @@ public class ProgrammingExerciseResource {
         // Check if exercise title is set
         if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
             return Optional.of(ResponseEntity.badRequest()
-                .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null));
+                    .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null));
         }
 
         // Check if the exercise title matches regex
