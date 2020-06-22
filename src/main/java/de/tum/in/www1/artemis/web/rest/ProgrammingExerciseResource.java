@@ -343,13 +343,16 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
-        // course)
-        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(newExercise.getShortName(), course)
-                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(newExercise.getShortName(), course);
-        if (numberOfProgrammingExercisesWithSameShortName > 0) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
+        // Validate exercise title
+        Optional<ResponseEntity> optionalTitleValidationError = validateTitle(newExercise);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError.get();
+        }
+
+        // Validate course and exercise short name
+        Optional<ResponseEntity> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError.get();
         }
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
