@@ -20,8 +20,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -164,6 +168,97 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // all registered users must have access to the course
             user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStartExercisesWithTextExercise() throws Exception {
+
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
+        // registering users
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var registeredUsers = Set.of(student1, student2);
+        exam2.setRegisteredUsers(registeredUsers);
+        // setting dates
+        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+
+        // creating exercise
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
+                exam2.getExerciseGroups().get(0));
+        exam2.getExerciseGroups().get(0).addExercise(textExercise);
+        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
+        textExercise = exerciseRepo.save(textExercise);
+
+        // creating student exams
+        for (User user : registeredUsers) {
+            StudentExam studentExam = new StudentExam();
+            studentExam.addExercise(textExercise);
+            studentExam.setUser(user);
+            exam2.addStudentExam(studentExam);
+            studentExamRepository.save(studentExam);
+        }
+
+        exam2 = examRepository.save(exam2);
+
+        // invoke start exercises
+        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Participation.class, HttpStatus.OK);
+        assertThat(participations).hasSize(exam2.getStudentExams().size());
+        for (Participation participation : participations) {
+            assertThat(participation.getExercise().equals(textExercise));
+            assertThat(participation.getExercise().getCourse() == null);
+            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of text exercises
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStartExercisesWithModelingExercise() throws Exception {
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
+        // registering users
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var registeredUsers = Set.of(student1, student2);
+        exam2.setRegisteredUsers(registeredUsers);
+        // setting dates
+        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+
+        // creating exercise
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
+                DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
+        exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
+        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
+        modelingExercise = exerciseRepo.save(modelingExercise);
+
+        // creating student exams
+        for (User user : registeredUsers) {
+            StudentExam studentExam = new StudentExam();
+            studentExam.addExercise(modelingExercise);
+            studentExam.setUser(user);
+            exam2.addStudentExam(studentExam);
+            studentExamRepository.save(studentExam);
+        }
+
+        exam2 = examRepository.save(exam2);
+
+        // invoke start exercises
+        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Participation.class, HttpStatus.OK);
+        assertThat(participations).hasSize(exam2.getStudentExams().size());
+        for (Participation participation : participations) {
+            assertThat(participation.getExercise().equals(modelingExercise));
+            assertThat(participation.getExercise().getCourse() == null);
+            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of modeling exercises
         }
     }
 

@@ -1,1 +1,100 @@
-TODO
+<div class="d-flex pb-3 border-bottom">
+    <div class="d-flex flex-column justify-content-center">
+        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ courseTitle: course?.title }">Student exam ({{ course?.title }})</h4>
+    </div>
+    <div class="ml-auto d-flex" *ngIf="false">
+        <button class="btn btn-primary" style="height: 35px;" (click)="downloadPdf()" *ngIf="course?.isAtLeastInstructor">
+            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.studentExamDetail.downloadPDF">&nbsp;Download PDF</span>
+        </button>
+    </div>
+</div>
+<jhi-alert></jhi-alert>
+<br />
+<div>
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
+        <ol style="list-style-type: none;">
+            <li>
+                <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
+                {{ student.name }}
+            </li>
+            <li>
+                <strong jhiTranslate="artemisApp.studentExamDetail.login">Login:</strong>
+                {{ student.login }}
+            </li>
+            <li>
+                <strong jhiTranslate="artemisApp.studentExamDetail.email">Email:</strong>
+                {{ student.email }}
+            </li>
+            <li>
+                <strong jhiTranslate="artemisApp.studentExamDetail.matriculationNumber">Matriculation number:</strong>
+                {{ student.visibleRegistrationNumber }}
+            </li>
+        </ol>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExamDetail.exercises">Exercises</span></h5>
+        <div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="d-none d-md-table-cell">
+                            <span jhiTranslate="artemisApp.studentExamDetail.id">ID</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.studentExamDetail.type">Type</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.studentExamDetail.title">Title</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.studentExamDetail.result">Result</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of studentExam.exercises">
+                        <td class="align-middle">
+                            {{ exercise?.id }}
+                        </td>
+                        <td class="align-middle" style="font-size: 1.35rem;">
+                            <fa-icon *ngIf="exercise" [icon]="exerciseIcon(exercise)"></fa-icon>
+                        </td>
+                        <td class="align-middle">
+                            {{ exercise?.title }}
+                        </td>
+                        <td class="align-middle">
+                            <!-- TODO show result string -->
+                        </td>
+                        <td class="align-middle">
+                            <!-- TODO show assessor -->
+                        </td>
+                        <td class="d-flex justify-content-end">
+                            <div class="btn-group">
+                                <button class="btn btn-primary btn-sm mr-1 mb-1" style="border: 4px;">
+                                    <span jhiTranslate="artemisApp.studentExamDetail.openSubmission">Open Submission</span>
+                                    <!-- TODO Open Submission -->
+                                </button>
+                                <button class="btn btn-warning btn-sm mr-1 mb-1" style="border: 4px;">
+                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.studentExamDetail.openAssessment">&nbsp;Open Assessment</span>
+                                    <!-- TODO Open Assessment -->
+                                </button>
+                                <button class="btn btn-danger btn-sm mr-1 mb-1">
+                                    <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.studentExamDetail.cancelAssessment">&nbsp;Cancel Assessment</span>
+                                    <!-- TODO Cancel Assessment -->
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
