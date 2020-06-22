@@ -6,6 +6,10 @@
                 "duration": "Dauer: {{duration}} min",
                 "maxPoints": "max. Punkte: {{points}}"
             },
+            "examSummary": {
+                "summaryCapital": "ZUSAMMENFASSUNG",
+                "exportPDF": "Als PDF exportieren"
+            },
             "title": "Klausur",
             "startExam": "Klausur starten",
             "summary": "Zusammenfassung",
@@ -14,9 +18,9 @@
             "endDate": "Ende",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl der registrierten Studenten",
-
             "created": "Neue Klausur erstellt",
-            "updated": "Klausur bearbeitet"
+            "updated": "Klausur bearbeitet",
+            "exercise": "Aufgabe {{nr}}"
         },
         "examParticipation": {
             "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",

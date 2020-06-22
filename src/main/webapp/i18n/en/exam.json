@@ -6,6 +6,10 @@
                 "duration": "Duration: {{duration}} min",
                 "maxPoints": "max. Points: {{points}}"
             },
+            "examSummary": {
+                "summaryCapital": "SUMMARY",
+                "exportPDF": "Export PDF"
+            },
             "title": "Exam",
             "startExam": "Start Exam",
             "summary": "Summary",
@@ -15,7 +19,8 @@
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
-            "updated": "Exam updated"
+            "updated": "Exam updated",
+            "exercise": "Exercise {{nr}}"
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
