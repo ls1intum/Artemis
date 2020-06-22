@@ -70,7 +70,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         Feedback feedback2 = new Feedback();
         feedback2.setCredits(-0.5);
         Feedback feedback3 = new Feedback();
-        feedback3.setCredits(1.5);
+        feedback3.setCredits(1.567);
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
