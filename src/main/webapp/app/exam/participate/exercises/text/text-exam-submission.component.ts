@@ -17,6 +17,7 @@ export abstract class ExamSubmissionComponent {
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {

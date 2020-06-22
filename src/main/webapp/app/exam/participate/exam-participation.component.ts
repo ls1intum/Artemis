@@ -15,7 +15,6 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/tex
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy {
-    // TODO: make sure this works https://stackoverflow.com/questions/36842401/angular2-viewchild-from-typescript-base-abstract-class
     @ViewChild(ExamSubmissionComponent, { static: false })
     currentSubmissionComponent: ExamSubmissionComponent;
 

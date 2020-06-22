@@ -20,7 +20,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/tex
 @Component({
     selector: 'jhi-exam-quiz',
     templateUrl: './quiz-exam-submission.component.html',
-    providers: [ParticipationService],
+    providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {

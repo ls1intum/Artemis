@@ -11,6 +11,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/tex
 @Component({
     selector: 'jhi-modeling-submission-exam',
     templateUrl: './modeling-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
