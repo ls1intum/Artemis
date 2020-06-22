@@ -9,10 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -67,8 +64,8 @@ public class StudentExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/studentExams : Get all student exams for the given exam
      *
-     * @param courseId  the course to which the student exams belong to
-     * @param examId    the exam to which the student exams belong to
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
      * @return the ResponseEntity with status 200 (OK) and a list of student exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams")
