@@ -20,7 +20,11 @@
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
                 <jhi-exam-quiz *ngSwitchCase="QUIZ" [exercise]="activeExercise" [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"></jhi-exam-quiz>
-                <jhi-text-editor-exam *ngSwitchCase="TEXT" [exercise]="activeExercise" [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"></jhi-text-editor-exam>
+                <jhi-text-editor-exam
+                    *ngSwitchCase="TEXT"
+                    [exercise]="activeExercise"
+                    [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                ></jhi-text-editor-exam>
                 <jhi-modeling-submission-exam
                     *ngSwitchCase="MODELING"
                     [exercise]="activeExercise"
