@@ -97,7 +97,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         const modalRef = this.modalService.open(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.result.then(
             (result: ModelingExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'text-exercises', 'import', result.id]);
+                this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
             },
             () => {},
         );

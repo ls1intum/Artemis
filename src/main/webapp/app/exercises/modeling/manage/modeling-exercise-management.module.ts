@@ -6,6 +6,7 @@ import { ArtemisModelingStatisticsModule } from 'app/exercises/modeling/manage/m
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
     imports: [

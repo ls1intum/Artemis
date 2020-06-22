@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<ModelingExercise>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExercisePagingService {
-    public resourceUrl = SERVER_API_URL + 'api/text-exercises';
+    public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
 
     constructor(private http: HttpClient) {}
 
