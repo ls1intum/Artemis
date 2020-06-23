@@ -532,7 +532,6 @@ public class QuizScheduleService {
 
                 // Update cached exercise object (use the expensive operation upfront)
                 quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-                updateQuizExercise(quizExercise);
 
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
                 long start = System.nanoTime();
