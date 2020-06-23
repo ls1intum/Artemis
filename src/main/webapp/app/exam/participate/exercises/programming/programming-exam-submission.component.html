@@ -9,6 +9,18 @@
 <div *ngIf="isOfflineMode()">
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="false">
     </jhi-exercise-details-student-actions>
+    <div style="display: flex; justify-content: flex-end;">
+        <jhi-updating-result
+            *ngIf="studentParticipation"
+            [exercise]="exercise"
+            [showUngradedResults]="true"
+            [showGradedBadge]="true"
+            [participation]="studentParticipation"
+            [short]="true"
+            [personalParticipation]="true"
+            class="mr-2"
+        ></jhi-updating-result>
+    </div>
     <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
