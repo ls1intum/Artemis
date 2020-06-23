@@ -179,9 +179,8 @@ public class QuizSubmissionService {
      * @param quizSubmission    the quiz submission includes the submitted answers by the student
      * @param user              the student who wants to submit the quiz during the exam
      * @return                  the updated quiz submission after it has been saved to the database
-     * @throws QuizSubmissionException      if the original participation cannot be found
      */
-    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) throws QuizSubmissionException {
+    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) {
         // update submission properties
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
