@@ -1,4 +1,4 @@
-import { Component, OnInit, QueryList, ViewChildren, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -14,7 +14,6 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
