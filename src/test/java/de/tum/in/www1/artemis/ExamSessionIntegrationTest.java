@@ -8,16 +8,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.service.ExamSessionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -34,6 +33,9 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    ExamSessionService examSessionService;
 
     private List<User> users;
 
@@ -61,10 +63,11 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExam_asInstructor() throws Exception {
-        String newSessionToken = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/newSession", HttpStatus.OK, ExamSession.class).getSessionToken();
-        String newerSessionToken = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/newSession", HttpStatus.OK, ExamSession.class).getSessionToken();
-        String currentSessionToken = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/currentSession", HttpStatus.OK, ExamSession.class)
-                .getSessionToken();
+
+        String newSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
+        String newerSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
+        String currentSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
+
         assertThat(currentSessionToken).isNotEqualTo(newSessionToken);
         assertThat(currentSessionToken).isEqualTo(newerSessionToken);
     }
