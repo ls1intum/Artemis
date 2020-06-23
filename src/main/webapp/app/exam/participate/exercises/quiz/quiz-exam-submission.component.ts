@@ -22,7 +22,7 @@ import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -48,24 +48,16 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    submittedAnswers: SubmittedAnswer[];
-
     constructor() {
         super();
         smoothscroll.polyfill();
     }
 
-    ngOnInit(): void {
-        this.initQuiz();
-        // show submission answers in UI
-        this.updateViewFromSubmission();
-        if (this.studentSubmission) {
-            this.submittedAnswers = this.studentSubmission.submittedAnswers;
-        }
-    }
-
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
+            this.initQuiz();
+            // show submission answers in UI
+            this.updateViewFromSubmission();
         }
     }
 
@@ -104,61 +96,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
-    }
-
-    onSelectionChanged() {
-        this.submittedAnswers = [];
-        // this.hasChanges = true;
-        // TODO separate method
-        // for multiple-choice questions
-        Object.keys(this.selectedAnswerOptions).forEach((questionID) => {
-            // find the question object for the given question id
-            const question = this.exercise.quizQuestions.find(function (selectedQuestion) {
-                return selectedQuestion.id === Number(questionID);
-            });
-            if (!question) {
-                console.error('question not found for ID: ' + questionID);
-                return;
-            }
-            // generate the submittedAnswer object
-            const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-            mcSubmittedAnswer.quizQuestion = question;
-            mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
-            this.submittedAnswers.push(mcSubmittedAnswer);
-        }, this);
-
-        // for drag-and-drop questions
-        Object.keys(this.dragAndDropMappings).forEach((questionID) => {
-            // find the question object for the given question id
-            const question = this.exercise.quizQuestions.find(function (localQuestion) {
-                return localQuestion.id === Number(questionID);
-            });
-            if (!question) {
-                console.error('question not found for ID: ' + questionID);
-                return;
-            }
-            // generate the submittedAnswer object
-            const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-            dndSubmittedAnswer.quizQuestion = question;
-            dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
-            this.submittedAnswers.push(dndSubmittedAnswer);
-        }, this);
-        // for short-answer questions
-        Object.keys(this.shortAnswerSubmittedTexts).forEach((questionID) => {
-            // find the question object for the given question id
-            const question = this.exercise.quizQuestions.find(function (localQuestion) {
-                return localQuestion.id === Number(questionID);
-            });
-            if (!question) {
-                console.error('question not found for ID: ' + questionID);
-                return;
-            }
-            // generate the submittedAnswer object
-            const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-            shortAnswerSubmittedAnswer.quizQuestion = question;
-            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
-            this.submittedAnswers.push(shortAnswerSubmittedAnswer);
-        }, this);
     }
 
     /**
@@ -219,14 +156,24 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     /**
-     * returns true if submission was changes due to input in the quiz view
-     * returns false:
-     *  1. if no changes are made
-     *  2. if submission update is triggered by the parent view
+     * return true if we have no submission yet and we have new answers
+     * returns false if all submittedAnswers in studentSubmission are similar to the ones we have in the respective maps in this components
      */
     hasUnsavedChanges(): boolean {
-        // if no submitted answers in submission or any answer changed
-        return !this.studentSubmission.submittedAnswers || !this.submittedAnswers.every((answer) => this.studentSubmission.submittedAnswers.indexOf(answer) > 0);
+        if (!this.studentSubmission.submittedAnswers) {
+            // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
+            return Object.keys(this.selectedAnswerOptions).length > 0 || Object.keys(this.dragAndDropMappings).length > 0 || Object.keys(this.shortAnswerSubmittedTexts).length > 0;
+        } else {
+            return !this.studentSubmission.submittedAnswers.every((answer) => {
+                if (answer instanceof MultipleChoiceSubmittedAnswer) {
+                    return this.selectedAnswerOptions[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof DragAndDropSubmittedAnswer) {
+                    return this.dragAndDropMappings[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof ShortAnswerSubmittedAnswer) {
+                    return this.shortAnswerSubmittedTexts[answer.quizQuestion.id] === answer;
+                }
+            });
+        }
     }
 
     /**
