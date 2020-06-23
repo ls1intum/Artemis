@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A Structured Grading Instruction.
@@ -43,6 +47,11 @@ public class GradingInstruction implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private GradingCriterion gradingCriterion;
+
+    @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
+    private Set<Feedback> feedbacks = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -130,6 +139,32 @@ public class GradingInstruction implements Serializable {
     public void setGradingCriterion(GradingCriterion gradingCriterion) {
         this.gradingCriterion = gradingCriterion;
     }
+
+    public Set<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public GradingInstruction feedbacks(Set<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+        return this;
+    }
+
+    public void addFeedback(Feedback feedback) {
+        this.feedbacks.add(feedback);
+        feedback.setGradingInstruction(this);
+    }
+
+    public GradingInstruction removeFeedbacks(Feedback feedback) {
+        this.feedbacks.remove(feedback);
+        feedback.setGradingInstruction(null);
+        return this;
+    }
+
+    public void setFeedbacks(Set<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
