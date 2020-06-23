@@ -113,6 +113,9 @@ public class CacheConfiguration {
                 System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
                 System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
                 config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
+                config.setProperty("hazelcast.socket.bind.any", "false");
+                config.setProperty("hazelcast.socket.server.bind.any", "false");
+                config.setProperty("hazelcast.socket.client.bind.any", "false");
             }
             else {
                 log.info("Binding Hazelcast to default interface");
