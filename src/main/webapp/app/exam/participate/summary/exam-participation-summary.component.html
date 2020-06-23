@@ -11,11 +11,10 @@
 <!--TODO add problem statement-->
 <!--TODO add exercise title-->
 <div *ngFor="let submission of submissions; let i = index">
-    <!--text exercise-->
-    <div class="question card" *ngIf="submission.submissionExerciseType == 'text'">
+    <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon [icon]="'font'"></fa-icon>&nbsp;
+                &nbsp;<fa-icon [icon]="getIcon(submission.submissionExerciseType)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <button
@@ -27,51 +26,20 @@
                 <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+        <!--text exercise-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'text'">
             <h6>Problem Statement //TODO insert</h6>
             <div class="editor-outline-background">{{ submission.text }}</div>
         </div>
-    </div>
-    <!--modeling exercise TODO-->
-    <div class="question card" *ngIf="submission.submissionExerciseType == 'modeling'">
-        <div class="question-options card-header question-card-header">
-            <h5>
-                &nbsp;<fa-icon [icon]="'project-diagram'"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">(modeling) TODO add title/ problem statement</span>
-            </h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="submission.isCollapsed = !submission.isCollapsed"
-                [attr.aria-expanded]="!submission.isCollapsed"
-                [attr.aria-controls]="i"
-            >
-                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
-            </button>
-        </div>
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+        <!--modeling exercise TODO-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'modeling'">
             <h6>Problem Statement //TODO insert</h6>
             <div class="editor-outline-background">
                 <jhi-modeling-editor *ngIf="umlModel" [readOnly]="true" [diagramType]="modelingExercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
             </div>
         </div>
-    </div>
-    <!--quiz exercise TODO-->
-    <div class="question card" *ngIf="submission.submissionExerciseType == 'quiz'">
-        <div class="question-options card-header question-card-header">
-            <h5>
-                &nbsp;<fa-icon [icon]="'check-double'"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
-            </h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="submission.isCollapsed = !submission.isCollapsed"
-                [attr.aria-expanded]="!submission.isCollapsed"
-                [attr.aria-controls]="i"
-            >
-                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
-            </button>
-        </div>
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+        <!--quiz exercise TODO-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'quiz'">
             <h6>Problem Statement //TODO insert</h6>
             <div class="quiz-content container">
                 <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
@@ -117,24 +85,8 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!--programming exercise TODO-->
-    <div class="question card" *ngIf="submission.submissionExerciseType == 'programming'">
-        <div class="question-options card-header question-card-header">
-            <h5>
-                &nbsp;<fa-icon [icon]="'keyboard'"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
-            </h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="submission.isCollapsed = !submission.isCollapsed"
-                [attr.aria-expanded]="!submission.isCollapsed"
-                [attr.aria-controls]="i"
-            >
-                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
-            </button>
-        </div>
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+        <!--programming exercise TODO-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'programming'">
             <h6>Problem Statement //TODO insert</h6>
             <div class="d-flex align-items-center mb-1 mt-1">
                 <jhi-programming-assessment-repo-export
@@ -152,24 +104,8 @@
                 >
             </div>
         </div>
-    </div>
-    <!--file upload exercise TODO-->
-    <div class="question card" *ngIf="submission.submissionExerciseType == 'file-upload'">
-        <div class="question-options card-header question-card-header">
-            <h5>
-                &nbsp;<fa-icon [icon]="'file-upload'"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
-            </h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="submission.isCollapsed = !submission.isCollapsed"
-                [attr.aria-expanded]="!submission.isCollapsed"
-                [attr.aria-controls]="i"
-            >
-                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
-            </button>
-        </div>
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed">
+        <!--file upload exercise TODO-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'file-upload'">
             <h6>Problem Statement //TODO insert</h6>
             <div>
                 <a (click)="downloadFile(fileUploadEx.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>

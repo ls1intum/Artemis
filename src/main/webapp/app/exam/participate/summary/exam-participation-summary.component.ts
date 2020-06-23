@@ -15,19 +15,14 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { HttpResponse } from '@angular/common/http';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
-import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+
+import { getIcon } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -44,6 +39,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
+    getIcon = getIcon;
     submissions: any[];
     // mock
     course: Course | null;
@@ -73,6 +69,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        //this.studentExamService.find(7, 4);
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
