@@ -318,8 +318,11 @@ public class QuizScheduleService {
             List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFuture();
             log.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
             for (QuizExercise quizExercise : quizExercises) {
-                // Note: the quiz exercise does not include questions and statistics, so we pass the id
-                scheduleQuizStart(quizExercise.getId());
+                if (quizExercise.hasCourse()) {
+                    // only schedule quiz exercises in courses, not in exams
+                    // Note: the quiz exercise does not include questions and statistics, so we pass the id
+                    scheduleQuizStart(quizExercise.getId());
+                }
             }
         }
         else {

@@ -140,7 +140,7 @@ public class TextSubmissionResource {
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
         // fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(textExercise.getCourse().getId());
+        final Course course = courseService.findOne(textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
@@ -251,7 +251,7 @@ public class TextSubmissionResource {
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final TextSubmission textSubmission;
         if (lockSubmission) {

@@ -40,6 +40,10 @@
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
             "allowOnlineEditor": "Online Editor erlauben",
+            "onlineEditor": "Online Editor",
+            "allowOfflineIde": "Offline IDE erlauben",
+            "offlineIde": "Offline IDE",
+            "participationMode": "Teilnahme Modus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
@@ -153,17 +157,6 @@
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "notSet": "nicht gesetzt"
-            },
-            "import": {
-                "attention": "Achtung! ",
-                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
-                "loading": "Lade...",
-                "table": {
-                    "title": "Titel",
-                    "language": "Programmiersprache",
-                    "course": "Kurs",
-                    "doImport": "Import"
-                }
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",

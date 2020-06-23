@@ -54,8 +54,8 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
                         <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="allowOnlineEditor">
-                        <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    <th class="d-none d-md-table-cell">
+                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -178,7 +178,12 @@
                     </td>
 
                     <td class="d-none d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.allowOnlineEditor }}</td>
+                    <td class="d-none d-md-table-cell">
+                        <div class="d-flex justify-content-between">{{ 'artemisApp.programmingExercise.offlineIde' | translate }}: {{ programmingExercise.allowOfflineIde }}</div>
+                        <div class="d-flex justify-content-between">
+                            {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ programmingExercise.allowOnlineEditor }}
+                        </div>
+                    </td>
                     <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button

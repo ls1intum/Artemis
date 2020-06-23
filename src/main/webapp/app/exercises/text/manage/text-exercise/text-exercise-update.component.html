@@ -1,11 +1,16 @@
-<form name="editForm" role="form" novalidate #editForm="ngForm">
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div>
-        <h4 *ngIf="!textExercise.id; else editExercise" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createLabel">Create Text Exercise</h4>
-        <ng-template #editExercise><h4 *ngIf="textExercise.id" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4></ng-template>
+        <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">
+            Create a new Text Exercise
+        </h4>
+        <h4 *ngIf="!isImport && textExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel">
+            Edit Text Exercise
+        </h4>
+        <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h4>
     </div>
     <div>
         <jhi-alert-error></jhi-alert-error>
-        <div class="form-group" [hidden]="!textExercise.id">
+        <div class="form-group" [hidden]="isImport || !textExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
         </div>
@@ -73,7 +78,7 @@
                 [(ngModel)]="textExercise.maxScore"
             />
         </div>
-        <div class="form-group" *jhiHasAnyAuthority="['ROLE_ADMIN']">
+        <div class="form-group">
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
@@ -119,10 +124,10 @@
         <div class="form-group">
             <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
 
-            <ul *ngIf="textExercise.id">
+            <ul *ngIf="textExercise.id && !isImport">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
                     <button
-                        [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
+                        [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', exampleSubmission.id]"
                         class="btn btn-link"
                     >
                         Example submission {{ i + 1 }}
@@ -146,7 +151,7 @@
             </ul>
 
             <button
-                *ngIf="textExercise.id"
+                *ngIf="textExercise.id && !isImport"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
@@ -157,8 +162,11 @@
             <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
+            <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.textExercise.import.exampleSubmissionsRequireExercise">
+                T
+            </div>
         </div>
-        <div class="form-group" *ngIf="textExercise.id && !isExamMode">
+        <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
@@ -167,13 +175,14 @@
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button
-            type="submit"
+
+        <jhi-button
+            id="save-entity"
             [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
-            class="btn btn-primary"
-            (click)="save()"
+            [isLoading]="isSaving"
+            [icon]="'save'"
+            [title]="submitButtonTitle"
         >
-            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-        </button>
+        </jhi-button>
     </div>
 </form>

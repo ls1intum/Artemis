@@ -11,7 +11,7 @@
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe forzuführen",
-            "openCodeEditor": "Programmier-Editor öffnen",
+            "openCodeEditor": "Programmier Editor öffnen",
             "openModelingEditor": "Modelierungs-Editor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
             "cloneRepository": "Repository klonen",

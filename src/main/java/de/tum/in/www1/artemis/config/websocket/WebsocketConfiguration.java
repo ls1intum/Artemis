@@ -285,7 +285,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
             if (isResultNonPersonalDestination(destination)) {
                 Long exerciseId = getExerciseIdFromResultDestination(destination);
-                return isUserTAOrHigherForExercise(principal, exerciseId);
+
+                // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
+                Exercise exercise = exerciseService.findOne(exerciseId);
+                if (exercise.hasExerciseGroup()) {
+                    return isUserInstructorOrHigherForExercise(principal, exercise);
+                }
+                else {
+                    return isUserTAOrHigherForExercise(principal, exercise);
+                }
             }
             return true;
         }
@@ -305,8 +313,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return participation.isOwnedBy(principal.getName());
     }
 
-    private boolean isUserTAOrHigherForExercise(Principal principal, Long exerciseId) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+    private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+    }
+
+    private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }

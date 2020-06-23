@@ -92,10 +92,10 @@ public class SubmissionResource {
 
     private Course findCourseFromSubmission(Submission submission) {
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourse() != null) {
-            return studentParticipation.getExercise().getCourse();
+        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
+            return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourse();
+        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }
