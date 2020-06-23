@@ -202,7 +202,10 @@ public class QuizExerciseService {
             }
         }
 
-        quizScheduleService.scheduleQuizStart(quizExercise.getId());
+        if (quizExercise.hasCourse()) {
+            // only schedule quizzes for course exercises, not for exam exercises
+            quizScheduleService.scheduleQuizStart(quizExercise.getId());
+        }
         return quizExercise;
     }
 

@@ -55,11 +55,9 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ExerciseGroupService exerciseGroupService;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            ExerciseService exerciseService, UserService userService, ExerciseGroupService exerciseGroupService) {
+            ExerciseService exerciseService, UserService userService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
@@ -68,7 +66,6 @@ public class QuizExerciseResource {
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
-        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -107,11 +104,10 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-
-        // Only notify tutors if the exercise is created for a course
+        // Only notify students and tutors if the exercise is created for a course
         if (quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
         }
 
@@ -139,7 +135,7 @@ public class QuizExerciseResource {
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
+            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -174,12 +170,11 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-
-        // TODO: it does not really make sense to notify students here!
-        // Only notify students about changes if a regular exercise was updated
+        // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
+        // Only notify students about changes if a regular exercise in a course was updated
         if (notificationText != null && quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
