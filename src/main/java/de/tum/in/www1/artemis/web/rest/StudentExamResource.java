@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -88,6 +89,8 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: remove Transactional here
+    @Transactional(readOnly = true)
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
@@ -107,6 +110,9 @@ public class StudentExamResource {
         if (studentExam.get().getExercises() != null) {
             for (Exercise exercise : studentExam.get().getExercises()) {
                 if (exercise instanceof QuizExercise) {
+                    // NOTE: Currently, we load the quiz questions using the Transactional mechanism above as a workaround, however this is not ideal
+                    // TODO: load the quiz questions for the quiz exercise and add it to the exercise
+
                     // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
                     ((QuizExercise) exercise).filterForStudentsDuringQuiz();
                 }
