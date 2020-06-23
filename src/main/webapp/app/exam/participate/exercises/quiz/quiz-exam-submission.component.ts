@@ -14,6 +14,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -47,7 +48,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    hasChanges = false;
+    submittedAnswers: SubmittedAnswer[];
 
     constructor() {
         super();
@@ -58,11 +59,13 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.initQuiz();
         // show submission answers in UI
         this.updateViewFromSubmission();
+        if (this.studentSubmission) {
+            this.submittedAnswers = this.studentSubmission.submittedAnswers;
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
-            this.hasChanges = true;
         }
     }
 
@@ -104,8 +107,58 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onSelectionChanged() {
-        this.updateSubmissionFromView();
-        this.hasChanges = true;
+        this.submittedAnswers = [];
+        // this.hasChanges = true;
+        // TODO separate method
+        // for multiple-choice questions
+        Object.keys(this.selectedAnswerOptions).forEach((questionID) => {
+            // find the question object for the given question id
+            const question = this.exercise.quizQuestions.find(function (selectedQuestion) {
+                return selectedQuestion.id === Number(questionID);
+            });
+            if (!question) {
+                console.error('question not found for ID: ' + questionID);
+                return;
+            }
+            // generate the submittedAnswer object
+            const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+            mcSubmittedAnswer.quizQuestion = question;
+            mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
+            this.submittedAnswers.push(mcSubmittedAnswer);
+        }, this);
+
+        // for drag-and-drop questions
+        Object.keys(this.dragAndDropMappings).forEach((questionID) => {
+            // find the question object for the given question id
+            const question = this.exercise.quizQuestions.find(function (localQuestion) {
+                return localQuestion.id === Number(questionID);
+            });
+            if (!question) {
+                console.error('question not found for ID: ' + questionID);
+                return;
+            }
+            // generate the submittedAnswer object
+            const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
+            dndSubmittedAnswer.quizQuestion = question;
+            dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
+            this.submittedAnswers.push(dndSubmittedAnswer);
+        }, this);
+        // for short-answer questions
+        Object.keys(this.shortAnswerSubmittedTexts).forEach((questionID) => {
+            // find the question object for the given question id
+            const question = this.exercise.quizQuestions.find(function (localQuestion) {
+                return localQuestion.id === Number(questionID);
+            });
+            if (!question) {
+                console.error('question not found for ID: ' + questionID);
+                return;
+            }
+            // generate the submittedAnswer object
+            const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+            shortAnswerSubmittedAnswer.quizQuestion = question;
+            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
+            this.submittedAnswers.push(shortAnswerSubmittedAnswer);
+        }, this);
     }
 
     /**
@@ -172,7 +225,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      *  2. if submission update is triggered by the parent view
      */
     hasUnsavedChanges(): boolean {
-        return this.hasChanges;
+        // if no submitted answers in submission or any answer changed
+        return !this.studentSubmission.submittedAnswers || !this.submittedAnswers.every((answer) => this.studentSubmission.submittedAnswers.indexOf(answer) > 0);
     }
 
     /**
@@ -237,7 +291,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
-        this.hasChanges = false;
-        // TODO: check if this.studentSubmission.isSynced = false; is needed
+        this.studentSubmission.isSynced = false;
     }
 }
