@@ -1,5 +1,5 @@
 <!-- nGif codeeditor start-->
-<div *ngIf="exercise.allowOnlineEditor">
+<div *ngIf="isOnlyCodeEditorMode()">
     <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
 </div>
 <!-- nGif codeeditor end -->

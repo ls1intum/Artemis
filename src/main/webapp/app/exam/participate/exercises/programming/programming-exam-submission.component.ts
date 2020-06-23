@@ -47,6 +47,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor;
     }
 
+    isOnlyCodeEditorMode(): boolean {
+        return !this.exercise.allowOfflineIde && this.exercise.allowOnlineEditor;
+    }
+
     updateSubmissionFromView(): void {
         this.codeEditorComponent.actions.commit();
     }
