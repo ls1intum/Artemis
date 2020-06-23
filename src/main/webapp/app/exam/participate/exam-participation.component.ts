@@ -76,8 +76,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
 
-            this.studentExamSubscription = this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
+            this.studentExamSubscription = this.examParticipationService.getStudentExamFromServer(this.courseId, this.examId).subscribe((response) => {
                 // save exam to localStorage
+                const studentExam = response.body!;
                 this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
                 // init studentExam and activeExercise
                 this.studentExam = studentExam;

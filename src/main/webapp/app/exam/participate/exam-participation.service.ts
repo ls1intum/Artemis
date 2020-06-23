@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable } from 'rxjs';
+import { Observable, pipe } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { StartExamResponse } from 'app/entities/start-exam-response.model';
+import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -17,21 +17,22 @@ export class ExamParticipationService {
         return `${prefix}_${courseId}_${examId}`;
     }
 
-    /**
-     * Retrieves a {@link StudentExam} from server or localstorge
-     * @param courseId
-     * @param examId
-     */
-    public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
-        // check for localStorage
-        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
-        if (localStoredExam) {
-            return Observable.of(localStoredExam);
-        } else {
-            // download student exam from server
-            return this.getStudentExamFromServer(courseId, examId);
-        }
-    }
+    // TODO: we only take the local storage if the client is offline
+    // /**
+    //  * Retrieves a {@link StudentExam} from server or localstorge
+    //  * @param courseId
+    //  * @param examId
+    //  */
+    // public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+    //     // check for localStorage
+    //     const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
+    //     if (localStoredExam) {
+    //         return Observable.of(localStoredExam);
+    //     } else {
+    //         // download student exam from server
+    //         return this.getStudentExamFromServer(courseId, examId);
+    //     }
+    // }
 
     /**
      * save the studentExam to the local Storage
@@ -58,12 +59,17 @@ export class ExamParticipationService {
     /**
      * Retrieves a {@link StudentExam} from server
      */
-    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> | any {
+    getStudentExamFromServer(courseId: number, examId: number): Observable<HttpResponse<StudentExam>> {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
-        this.httpClient.get<StartExamResponse>(url).subscribe((startExamResponse) => {
-            this.saveExamSessionTokenToSessionStorage(startExamResponse.examSession.sessionToken);
-            return Observable.of(startExamResponse.studentExam);
-        });
+        return this.httpClient
+            .get<StudentExam>(url, { observe: 'response' })
+            .pipe(
+                tap((res: HttpResponse<StudentExam>) => {
+                    if (res.body) {
+                        this.saveExamSessionTokenToSessionStorage(res.body.examSessions[0].sessionToken);
+                    }
+                }),
+            );
     }
 
     /**
