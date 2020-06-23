@@ -122,7 +122,9 @@ public class QuizSubmissionResource {
                     .body(null);
         }
 
-        StudentParticipation participation = participationService.startExercise(quizExercise, user);
+        // the following method either reuses an existing participation or creates a new one
+        StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
+        // we set the exercise again to prevent issues with lazy loaded quiz questions
         participation.setExercise(quizExercise);
 
         // update and save submission
@@ -198,24 +200,17 @@ public class QuizSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizSubmission> submitForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
-        try {
-            QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-            if (quizExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-            }
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
-                return ResponseEntity.status(403)
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise."))
-                        .body(null);
-            }
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
-            return ResponseEntity.ok(updatedQuizSubmission);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
+        if (quizExercise == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " in quiz " + exerciseId);
-            return ResponseEntity.badRequest().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, e.getMessage())).body(null);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+            return ResponseEntity.status(403)
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
+        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
+        return ResponseEntity.ok(updatedQuizSubmission);
     }
 }
