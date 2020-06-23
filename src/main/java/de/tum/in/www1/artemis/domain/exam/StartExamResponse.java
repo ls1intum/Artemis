@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.exam;
 
-public class StartExamResponse  {
+public class StartExamResponse {
 
     private StudentExam studentExam;
 

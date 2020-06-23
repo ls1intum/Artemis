@@ -1,16 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
-
-import java.security.SecureRandom;
-import java.util.Base64;
 
 /**
  * Service Implementation for managing ExamSession.
