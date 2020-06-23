@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -29,7 +29,7 @@ export class ExamParticipationService {
             return Observable.of(localStoredExam);
         } else {
             // download student exam from server
-            return this.getStudentExamFromServer(courseId, examId);
+            return from(this.getStudentExamFromServer(courseId, examId));
         }
     }
 
@@ -58,11 +58,14 @@ export class ExamParticipationService {
     /**
      * Retrieves a {@link StudentExam} from server
      */
-    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> | any {
+    private getStudentExamFromServer(courseId: number, examId: number): Promise<StudentExam> {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
-        this.httpClient.get<StartExamResponse>(url).subscribe((startExamResponse) => {
-            this.saveExamSessionTokenToSessionStorage(startExamResponse.examSession.sessionToken);
-            return Observable.of(startExamResponse.studentExam);
+
+        return new Promise((resolve) => {
+            this.httpClient.get<StartExamResponse>(url).subscribe((startExamResponse) => {
+                this.saveExamSessionTokenToSessionStorage(startExamResponse.examSession.sessionToken);
+                resolve(startExamResponse.studentExam);
+            });
         });
     }
 
