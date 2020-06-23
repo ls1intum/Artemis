@@ -1,4 +1,4 @@
-import { Component, OnInit, QueryList, ViewChildren, Input } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChildren, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -21,7 +21,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -60,7 +60,11 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
-    // TODO: check if ngOnChanges is needed
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
+            this.hasChanges = true;
+        }
+    }
 
     /**
      * Initialize the selections / mappings for each question with an empty array
