@@ -22,4 +22,5 @@ export class Exam implements BaseEntity {
     public exerciseGroups: ExerciseGroup[] | null;
     public studentExams: StudentExam[] | null;
     public registeredUsers: User[] | null;
+    public numberOfRegisteredUsers?: number; // transient
 }
