@@ -114,6 +114,8 @@ public class StudentExamResource {
                     // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
                     exercise.filterSensitiveInformation();
                 }
+                // the exerciseGroup information is not needed
+                exercise.setExerciseGroup(null);
             }
         }
 
