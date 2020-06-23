@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.StudentExamAccessService;
@@ -132,7 +132,23 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         QuizExercise quizExercise = (QuizExercise) response.getExercises().get(1);
         assertThat(quizExercise.getGradingCriteria()).isEmpty();
         assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
-        // TODO: check that the solution for quiz questions is not available
+        assertThat(quizExercise.getQuizQuestions().size()).isEqualTo(3);
+        // TODO: check that other parts of the solution for quiz questions are not available
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                assertThat(((MultipleChoiceQuestion) question).getAnswerOptions()).hasSize(2);
+                for (AnswerOption answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                    assertThat(answerOption.getExplanation()).isNull();
+                    assertThat(answerOption.isIsCorrect()).isNull();
+                }
+            }
+            else if (question instanceof DragAndDropQuestion) {
+                assertThat(((DragAndDropQuestion) question).getCorrectMappings()).hasSize(0);
+            }
+            else if (question instanceof ShortAnswerQuestion) {
+                assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).hasSize(0);
+            }
+        }
 
         // TODO: add other exercises, programming, modeling and file upload
 

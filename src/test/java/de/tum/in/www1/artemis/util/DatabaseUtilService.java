@@ -1588,7 +1588,7 @@ public class DatabaseUtilService {
 
     /**
      * Generate submissions for a student for an exercise. Results are mixed.
-     * @param quizExercise QuizExercise th submissions are for
+     * @param quizExercise QuizExercise the submissions are for (we assume 3 questions here)
      * @param studentID ID of the student
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
