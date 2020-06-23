@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.StudentExamAccessService;
@@ -117,20 +118,31 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
         verify(studentExamAccessService, times(1)).checkCourseAndExamAccess(course.getId(), exam.getId(), users.get(0));
         assertThat(response).isEqualTo(studentExam);
-        assertThat(response.getExercises().size()).isEqualTo(1);
+        assertThat(response.getExercises().size()).isEqualTo(2);
         assertThat(response.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
+        assertThat(response.getExercises().get(1).getStudentParticipations().size()).isEqualTo(1);
+
         // Check that sensitive information has been removed
         TextExercise textExercise = (TextExercise) response.getExercises().get(0);
         assertThat(textExercise.getGradingCriteria()).isEmpty();
         assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
         assertThat(textExercise.getSampleSolution()).isEqualTo(null);
-        // Clean up
-        Exercise exercise = response.getExercises().get(0);
-        for (StudentParticipation s : response.getExercises().get(0).getStudentParticipations()) {
-            assertThat(s.getSubmissions().size()).isEqualTo(1);
-            exercise.removeParticipation(s);
-        }
-        exerciseRepository.save(exercise);
-    }
 
+        // Check that sensitive information has been removed
+        QuizExercise quizExercise = (QuizExercise) response.getExercises().get(1);
+        assertThat(quizExercise.getGradingCriteria()).isEmpty();
+        assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
+        // TODO: check that the solution for quiz questions is not available
+
+        // TODO: add other exercises, programming, modeling and file upload
+
+        // Clean up
+        for (Exercise exercise : response.getExercises()) {
+            for (StudentParticipation s : response.getExercises().get(0).getStudentParticipations()) {
+                assertThat(s.getSubmissions().size()).isEqualTo(1);
+                exercise.removeParticipation(s);
+            }
+            exerciseRepository.save(exercise);
+        }
+    }
 }
