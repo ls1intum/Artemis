@@ -41,7 +41,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      */
     List<ScheduledTaskHandler> quizStart;
 
-    private QuizExercise exercise;
+    private transient QuizExercise exercise;
 
     private transient IMap<String, StudentParticipation> participations;
 

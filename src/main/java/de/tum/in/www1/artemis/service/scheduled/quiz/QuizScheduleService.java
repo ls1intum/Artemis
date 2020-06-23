@@ -290,10 +290,7 @@ public class QuizScheduleService {
      */
     public void updateQuizExercise(QuizExercise quizExercise) {
         log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
-        performCacheWrite(quizExercise.getId(), quiz -> {
-            quiz.setExercise(quizExercise);
-            return quiz;
-        });
+        getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
 
     /**
