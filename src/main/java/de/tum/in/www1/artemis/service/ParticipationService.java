@@ -324,9 +324,6 @@ public class ParticipationService {
      * @param submissionType                type for the submission to be initialized
      */
     private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        if (exercise instanceof QuizExercise) {
-            return Optional.empty();
-        }
 
         Submission submission;
         if (exercise instanceof ProgrammingExercise) {
@@ -338,8 +335,14 @@ public class ParticipationService {
         else if (exercise instanceof TextExercise) {
             submission = new TextSubmission();
         }
-        else {
+        else if (exercise instanceof FileUploadExercise) {
             submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
         }
 
         submission.setType(submissionType);
