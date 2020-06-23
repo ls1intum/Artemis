@@ -28,7 +28,9 @@
             "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!",
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
-            "progressSmall": "{{ current }}/{{ all }}"
+            "progressSmall": "{{ current }}/{{ all }}",
+            "submit": "Submit & continue",
+            "noExam": "No data found"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -117,7 +119,8 @@
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add text exercise",
-                "addFileUploadExercise": "Add file upload exercise"
+                "addFileUploadExercise": "Add file upload exercise",
+                "addProgrammingExercise": "Add programming exercise"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",

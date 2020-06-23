@@ -12,7 +12,14 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
 
-    void configureRepository(URL repositoryUrl, Set<User> users);
+    /**
+     * Configure the repository for the student(s), this mainly includes setting permissions for the passed users
+     *
+     * @param exercise the programming exercise for which the repository should be configured
+     * @param repositoryUrl the url of the repository that needs to be configured
+     * @param users one user in an individual exercise, multiple users for a team exercise
+     */
+    void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users);
 
     /**
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified

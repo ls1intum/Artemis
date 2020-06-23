@@ -1,40 +1,30 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise } from 'app/entities/exercise.model';
-
-export abstract class ExamSubmissionComponent {
-    abstract hasUnsavedChanges(): boolean;
-    abstract updateSubmissionFromView(): void;
-}
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-text-editor-exam',
-    templateUrl: './text-editor-exam.component.html',
-    providers: [ParticipationService],
-    styleUrls: ['./text-editor-exam.component.scss'],
+    templateUrl: './text-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
+    styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextEditorExamComponent extends ExamSubmissionComponent implements OnInit {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentParticipation: StudentParticipation;
+    studentSubmission: TextSubmission;
     @Input()
     exercise: Exercise;
-
-    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    submission: TextSubmission;
 
     // answer represents the view state
     answer: string;
     private textEditorInput = new Subject<string>();
-
-    isSaving: boolean;
 
     constructor(
         private textService: TextEditorService,
@@ -44,31 +34,31 @@ export class TextEditorExamComponent extends ExamSubmissionComponent implements 
         private stringCountService: StringCountService,
     ) {
         super();
-        this.isSaving = false;
     }
 
-    ngOnInit() {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
-            this.submission = this.studentParticipation.submissions[0] as TextSubmission;
-
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
             // show submission answers in UI
             this.updateViewFromSubmission();
         }
     }
 
     updateViewFromSubmission(): void {
-        if (this.submission.text) {
-            this.answer = this.submission.text;
+        if (this.studentSubmission.text) {
+            this.answer = this.studentSubmission.text;
+        } else {
+            this.answer = '';
         }
     }
 
     public hasUnsavedChanges(): boolean {
-        return this.submission.text !== this.answer;
+        return this.studentSubmission.text !== this.answer;
     }
 
     public updateSubmissionFromView(): void {
-        this.submission.text = this.answer;
-        this.submission.language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission.text = this.answer;
+        this.studentSubmission.language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission.isSynced = false;
     }
 
     get wordCount(): number {

@@ -213,7 +213,12 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.studentParticipations && participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations.length > 0"
+            *ngIf="
+                isOfflineIdeAllowed() &&
+                exercise.studentParticipations &&
+                participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
+                exercise.studentParticipations.length > 0
+            "
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>

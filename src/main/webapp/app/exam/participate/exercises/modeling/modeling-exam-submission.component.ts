@@ -3,44 +3,40 @@ import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-editor-exam.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
-    templateUrl: './modeling-submission-exam.component.html',
-    styleUrls: ['./modeling-submission-exam.component.scss'],
+    templateUrl: './modeling-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
+    styleUrls: ['./modeling-exam-submission.component.scss'],
 })
-export class ModelingSubmissionExamComponent extends ExamSubmissionComponent implements OnInit {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentParticipation: StudentParticipation;
+    studentSubmission: ModelingSubmission;
 
     @Input()
-    modelingExercise: ModelingExercise;
+    exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
-    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    submission: ModelingSubmission;
-
     ngOnInit(): void {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length === 1) {
-            this.submission = this.studentParticipation.submissions[0] as ModelingSubmission;
-
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+        // show submission answers in UI
+        this.updateViewFromSubmission();
         window.scroll(0, 0);
     }
 
+    // TODO: check if ngOnChanges is needed
+
     updateViewFromSubmission(): void {
-        if (this.submission.model) {
+        if (this.studentSubmission.model) {
             // Updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(this.submission.model);
+            this.umlModel = JSON.parse(this.studentSubmission.model);
         }
     }
 
@@ -53,8 +49,9 @@ export class ModelingSubmissionExamComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
-        if (this.submission && diagramJson) {
-            this.submission.model = diagramJson;
+        if (this.studentSubmission && diagramJson) {
+            this.studentSubmission.model = diagramJson;
+            this.studentSubmission.isSynced = false;
         }
     }
 
@@ -67,10 +64,8 @@ export class ModelingSubmissionExamComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
 
-        if (!this.submission || !this.submission.model) {
-            return currentApollonModel.elements.length > 0 && JSON.stringify(currentApollonModel) !== '';
-        } else if (this.submission && this.submission.model) {
-            const currentSubmissionModel = JSON.parse(this.submission.model);
+        if (this.studentSubmission && this.studentSubmission.model) {
+            const currentSubmissionModel = JSON.parse(this.studentSubmission.model);
             const versionMatch = currentSubmissionModel.version === currentApollonModel.version;
             const modelMatch = stringifyIgnoringFields(currentSubmissionModel, 'size') === stringifyIgnoringFields(currentApollonModel, 'size');
             return versionMatch && !modelMatch;
@@ -82,6 +77,6 @@ export class ModelingSubmissionExamComponent extends ExamSubmissionComponent imp
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
     }
 }

@@ -19,12 +19,20 @@
                     [endDate]="studentExam.exam.endDate"
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
-                <jhi-exam-quiz *ngSwitchCase="QUIZ" [exercise]="activeExercise" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-exam-quiz>
-                <jhi-text-editor-exam *ngSwitchCase="TEXT" [exercise]="activeExercise" [studentParticipation]="activeExercise.studentParticipations[0]"></jhi-text-editor-exam>
+                <jhi-quiz-submission-exam
+                    *ngSwitchCase="QUIZ"
+                    [exercise]="activeExercise"
+                    [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                ></jhi-quiz-submission-exam>
+                <jhi-text-editor-exam
+                    *ngSwitchCase="TEXT"
+                    [exercise]="activeExercise"
+                    [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                ></jhi-text-editor-exam>
                 <jhi-modeling-submission-exam
                     *ngSwitchCase="MODELING"
                     [exercise]="activeExercise"
-                    [studentParticipation]="activeExercise.studentParticipations[0]"
+                    [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
                 ></jhi-modeling-submission-exam>
             </ng-container>
         </ng-container>
@@ -47,5 +55,6 @@
         </div>
     </ng-container>
 </ng-container>
-<!--TODO add translation-->
-<ng-template #noStudentExam>No student exam object found.</ng-template>
+<ng-template #noStudentExam>
+    <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
+</ng-template>

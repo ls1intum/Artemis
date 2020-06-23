@@ -128,7 +128,7 @@ public class GroupNotification extends Notification implements Serializable {
         target.addProperty("message", message);
         target.addProperty("id", exercise.getId());
         target.addProperty("entity", "exercises");
-        target.addProperty("course", exercise.getCourse().getId());
+        target.addProperty("course", exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
     }
