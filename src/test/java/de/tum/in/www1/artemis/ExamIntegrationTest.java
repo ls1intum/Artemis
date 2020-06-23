@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +20,11 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -188,11 +187,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
 
         // creating exercise
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
-                exam2.getExerciseGroups().get(0));
-        exam2.getExerciseGroups().get(0).addExercise(textExercise);
-        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
+        ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
+
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2), exerciseGroup);
+        exerciseGroup.addExercise(textExercise);
+        exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);
+
+        List<StudentExam> createdStudentExams = new ArrayList<>();
 
         // creating student exams
         for (User user : registeredUsers) {
@@ -200,21 +202,29 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             studentExam.addExercise(textExercise);
             studentExam.setUser(user);
             exam2.addStudentExam(studentExam);
-            studentExamRepository.save(studentExam);
+            createdStudentExams.add(studentExamRepository.save(studentExam));
         }
 
         exam2 = examRepository.save(exam2);
 
         // invoke start exercises
-        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Participation.class, HttpStatus.OK);
-        assertThat(participations).hasSize(exam2.getStudentExams().size());
-        for (Participation participation : participations) {
+        List<StudentParticipation> studentParticipations = request.postListWithResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises", Optional.empty(), StudentParticipation.class, HttpStatus.OK);
+        assertThat(studentParticipations).hasSize(exam2.getStudentExams().size());
+        for (StudentParticipation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(textExercise));
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
             // TODO: check that submissions have been created to the participations of text exercises
         }
+        System.out.println("Test");
+
+        // Cleanup of Bidirectional Relationships
+        for (StudentExam studentExam : createdStudentExams) {
+            exam2.removeStudentExam(studentExam);
+        }
+        examRepository.save(exam2);
+
     }
 
     @Test
@@ -239,13 +249,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
         modelingExercise = exerciseRepo.save(modelingExercise);
 
+        List<StudentExam> createdStudentExams = new ArrayList<>();
+
         // creating student exams
         for (User user : registeredUsers) {
             StudentExam studentExam = new StudentExam();
             studentExam.addExercise(modelingExercise);
             studentExam.setUser(user);
             exam2.addStudentExam(studentExam);
-            studentExamRepository.save(studentExam);
+            createdStudentExams.add(studentExamRepository.save(studentExam));
         }
 
         exam2 = examRepository.save(exam2);
@@ -260,6 +272,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
             // TODO: check that submissions have been created to the participations of modeling exercises
         }
+
+        // Cleanup of Bidirectional Relationships
+        for (StudentExam studentExam : createdStudentExams) {
+            exam2.removeStudentExam(studentExam);
+        }
+        examRepository.save(exam2);
     }
 
     @Test
