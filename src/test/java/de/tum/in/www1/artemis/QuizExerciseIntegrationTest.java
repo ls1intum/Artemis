@@ -296,7 +296,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         // get all exercises for a course
-        List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourse().getId() + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
+        List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises",
+                HttpStatus.OK, QuizExercise.class);
         assertThat(allQuizExercisesForCourse.size()).isEqualTo(1);
         assertThat(allQuizExercisesForCourse.get(0)).isEqualTo(quizExercise);
     }

@@ -29,7 +29,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     content: SearchResult<ProgrammingExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 1,
+        page: 0,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
@@ -60,12 +60,11 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     }
 
     set page(page: number) {
-        page = page - 1;
         this.setSearchParam({ page });
     }
 
     get page(): number {
-        return this.state.page + 1;
+        return this.state.page;
     }
 
     set searchTerm(searchTerm: string) {
@@ -128,5 +127,15 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      */
     openImport(exercise: ProgrammingExercise) {
         this.activeModal.close(exercise);
+    }
+
+    /** Callback function when the user navigates through the page results
+     *
+     * @param pagenumber The current page number
+     */
+    onPageChange(pagenumber: number) {
+        if (pagenumber) {
+            this.page = pagenumber;
+        }
     }
 }

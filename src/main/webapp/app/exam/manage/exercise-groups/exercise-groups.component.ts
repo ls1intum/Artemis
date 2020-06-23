@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -8,7 +8,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -20,6 +19,7 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    exerciseType = ExerciseType;
     isSavingOrder = false;
 
     constructor(
@@ -28,6 +28,8 @@ export class ExerciseGroupsComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
+        private modalService: NgbModal,
+        private router: Router,
     ) {}
 
     /**
@@ -83,6 +85,53 @@ export class ExerciseGroupsComponent implements OnInit {
                 return 'keyboard';
             default:
                 return 'font';
+        }
+    }
+
+    /**
+     * Opens the import module for a specific exercise type
+     * @param exerciseGroup The current exercise group
+     * @param exerciseType The exercise type you want to import
+     */
+    openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
+        const importBaseRoute = [
+            '/course-management',
+            exerciseGroup.exam?.course?.id,
+            'exams',
+            exerciseGroup.exam?.id,
+            'exercise-groups',
+            exerciseGroup.id,
+            `${exerciseType}-exercises`,
+            'import',
+        ];
+
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                const programmingImportModalRef = this.modalService.open(ProgrammingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                programmingImportModalRef.result.then(
+                    (result: ProgrammingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
+            case ExerciseType.TEXT:
+                const textImportModalRef = this.modalService.open(TextExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                textImportModalRef.result.then(
+                    (result: TextExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
         }
     }
 
