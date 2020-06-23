@@ -4,7 +4,19 @@
         <span jhiTranslate="artemisApp.textExercise.home.title">Text Exercises</span>
         <button
             *ngIf="course && course.isAtLeastInstructor"
-            class="btn btn-primary float-right jh-create-entity create-text-exercise"
+            id="jh-import-entity"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel">
+                Import new programming exercise
+            </span>
+        </button>
+        <button
+            *ngIf="course && course.isAtLeastInstructor"
+            id="jh-create-entity"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>

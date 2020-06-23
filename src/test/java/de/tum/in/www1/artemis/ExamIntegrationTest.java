@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -87,7 +93,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void registerUsersInExam() throws Exception {
+    public void testRegisterUsersInExam() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         var exam = createExam();
@@ -162,6 +168,163 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // all registered users must have access to the course
             user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStartExercisesWithTextExercise() throws Exception {
+
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
+        // registering users
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var registeredUsers = Set.of(student1, student2);
+        exam2.setRegisteredUsers(registeredUsers);
+        // setting dates
+        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+
+        // creating exercise
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
+                exam2.getExerciseGroups().get(0));
+        exam2.getExerciseGroups().get(0).addExercise(textExercise);
+        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
+        textExercise = exerciseRepo.save(textExercise);
+
+        // creating student exams
+        for (User user : registeredUsers) {
+            StudentExam studentExam = new StudentExam();
+            studentExam.addExercise(textExercise);
+            studentExam.setUser(user);
+            exam2.addStudentExam(studentExam);
+            studentExamRepository.save(studentExam);
+        }
+
+        exam2 = examRepository.save(exam2);
+
+        // invoke start exercises
+        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Participation.class, HttpStatus.OK);
+        assertThat(participations).hasSize(exam2.getStudentExams().size());
+        for (Participation participation : participations) {
+            assertThat(participation.getExercise().equals(textExercise));
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
+            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of text exercises
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStartExercisesWithModelingExercise() throws Exception {
+        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
+
+        // registering users
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var registeredUsers = Set.of(student1, student2);
+        exam2.setRegisteredUsers(registeredUsers);
+        // setting dates
+        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+
+        // creating exercise
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
+                DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
+        exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
+        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
+        modelingExercise = exerciseRepo.save(modelingExercise);
+
+        // creating student exams
+        for (User user : registeredUsers) {
+            StudentExam studentExam = new StudentExam();
+            studentExam.addExercise(modelingExercise);
+            studentExam.setUser(user);
+            exam2.addStudentExam(studentExam);
+            studentExamRepository.save(studentExam);
+        }
+
+        exam2 = examRepository.save(exam2);
+
+        // invoke start exercises
+        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Participation.class, HttpStatus.OK);
+        assertThat(participations).hasSize(exam2.getStudentExams().size());
+        for (Participation participation : participations) {
+            assertThat(participation.getExercise().equals(modelingExercise));
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
+            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
+            // TODO: check that submissions have been created to the participations of modeling exercises
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExams() throws Exception {
+        var exam = createExam();
+        exam.setNumberOfExercisesInExam(4);
+        exam.setRandomizeExerciseOrder(true);
+        exam = examRepository.save(exam);
+
+        // add exercise groups: 3 mandatory, 2 optional
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        exam = examRepository.save(exam);
+
+        // TODO: also add other exercise types
+
+        // add exercises
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+
+        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
+
+        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
+
+        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
+
+        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
+
+        // register user
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+        var student3 = database.getUserByLogin("student3");
+        var student4 = database.getUserByLogin("student4");
+        var registeredUsers = Set.of(student1, student2, student3, student4);
+
+        exam.setRegisteredUsers(registeredUsers);
+        exam = examRepository.save(exam);
+
+        // invoke generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(registeredUsers.size());
+
+        for (var studentExam : studentExams) {
+            assertThat(studentExam.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
+            assertThat(studentExam.getExam()).isEqualTo(exam);
+            // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
         }
     }
 
@@ -283,6 +446,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
-        request.delete("/api/courses/" + course2.getId() + "/exams/2", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
     }
 }

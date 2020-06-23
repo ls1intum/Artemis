@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -36,19 +37,24 @@ public class CourseService {
 
     private final LectureService lectureService;
 
-    private final ExamService examService;
+    private ExamService examService;
 
     private final ExerciseGroupService exerciseGroupService;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, ExamService examService, ExerciseGroupService exerciseGroupService) {
+            LectureService lectureService, ExerciseGroupService exerciseGroupService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
-        this.examService = examService;
         this.exerciseGroupService = exerciseGroupService;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setExamService(ExamService examService) {
+        this.examService = examService;
     }
 
     /**
@@ -216,7 +222,7 @@ public class CourseService {
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            return findOne(exercise.getCourse().getId());
+            return findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
     }
 }

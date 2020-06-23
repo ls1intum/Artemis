@@ -60,21 +60,56 @@ public class ModelFactory {
         return quizExercise;
     }
 
+    public static QuizExercise generateQuizExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, releaseDate, dueDate, null, exerciseGroup);
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(10);
+        quizExercise.setRandomizeQuestionOrder(true);
+        return quizExercise;
+    }
+
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setTestRepositoryUrl("test@url");
-        return programmingExercise;
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         ModelingExercise modelingExercise = new ModelingExercise();
         modelingExercise = (ModelingExercise) populateExercise(modelingExercise, releaseDate, dueDate, assessmentDueDate, course);
+        modelingExercise.setDiagramType(diagramType);
+        return modelingExercise;
+    }
+
+    public static ModelingExercise generateModelingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
+            ExerciseGroup exerciseGroup) {
+        ModelingExercise modelingExercise = new ModelingExercise();
+        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         return modelingExercise;
     }

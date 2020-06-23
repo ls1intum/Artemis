@@ -210,8 +210,8 @@ public class ProgrammingExerciseExportService {
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
         log.debug("Create zip file for all repositories");
         final var programmingExerciseId = programmingExercise.getId();
-        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(),
-                programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
+        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
         createZipFile(zipFilePath, pathsToZippedRepos);
         scheduleForDeletion(zipFilePath, 15);
         log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
@@ -257,9 +257,9 @@ public class ProgrammingExerciseExportService {
     /**
      * Create a zipfile of the given paths and save it in the zipFilePath
      *
-     * @param zipFilePath path where the zipfile should be saved
+     * @param zipFilePath path where the zip file should be saved
      * @param paths the paths that should be zipped
-     * @throws IOException if an error occured while zipping
+     * @throws IOException if an error occurred while zipping
      */
     private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
