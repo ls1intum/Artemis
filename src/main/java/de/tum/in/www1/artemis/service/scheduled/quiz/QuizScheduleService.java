@@ -276,6 +276,12 @@ public class QuizScheduleService {
         return getReadCacheFor(quizExerciseId).getParticipations().get(username);
     }
 
+    /**
+     * get a cached quiz exercise by quizExerciseId
+     *
+     * @param quizExerciseId   the quizExerciseId of the quiz
+     * @return the QuizExercise with the given quizExerciseId -> return null if no quiz with the given id exists
+     */
     public QuizExercise getQuizExercise(Long quizExerciseId) {
         if (quizExerciseId == null) {
             return null;
