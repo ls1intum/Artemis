@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,6 +168,34 @@ public class QuizSubmissionService {
         QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
         log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        return quizSubmission;
+    }
+
+    /**
+     * Updates a submission for the exam mode
+     *
+     * @param quizExercise
+     * @param quizSubmission
+     * @param user
+     * @return
+     * @throws QuizSubmissionException
+     */
+    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) throws QuizSubmissionException {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user);
+
+        if (optionalParticipation.isEmpty()) {
+            // TODO: think of better way to handle failure
+            throw new QuizSubmissionException("FAILED");
+        }
+        StudentParticipation studentParticipation = optionalParticipation.get();
+        quizSubmission.setParticipation(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        log.debug("submit exam quiz finished: " + quizSubmission);
         return quizSubmission;
     }
 }

@@ -28,6 +28,8 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 interface Reason {
     translateKey: string;
@@ -64,11 +66,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     course: Course;
     quizExercise: QuizExercise;
+    exerciseGroup: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText: string | null;
 
     entity: QuizExercise;
     savedEntity: QuizExercise;
+
+    isExamMode: boolean;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -101,6 +106,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
+    /** Route params **/
+    examId: number | null;
+    courseId: number | null;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -114,6 +123,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private jhiAlertService: AlertService,
         private location: Location,
         private changeDetector: ChangeDetectorRef,
+        private exerciseGroupService: ExerciseGroupService,
     ) {}
 
     /**
@@ -134,14 +144,27 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.shortAnswerFilterEnabled = true;
         this.notificationText = null;
 
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const groupId = Number(this.route.snapshot.paramMap.get('groupId'));
         /** Query the courseService for the participationId given by the params */
-        if (courseId) {
-            this.courseService.find(courseId).subscribe((response: HttpResponse<Course>) => {
+        if (this.courseId) {
+            this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
+                // Load exerciseGroup and set exam mode
+                if (this.examId && groupId) {
+                    this.isExamMode = true;
+                    this.exerciseGroupService.find(this.courseId!, this.examId, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                        // Make sure to call init if we didn't receive an id => new quiz-exercise
+                        this.exerciseGroup = groupResponse.body!;
+                        if (!quizId) {
+                            this.init();
+                        }
+                    });
+                }
                 // Make sure to call init if we didn't receive an id => new quiz-exercise
-                if (!quizId) {
+                if (!quizId && !this.isExamMode) {
                     this.init();
                 }
             });
@@ -176,16 +199,21 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
         this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise();
-        if (!this.quizExercise.course) {
+        if (!this.quizExercise.course && !this.isExamMode) {
             this.quizExercise.course = this.course;
         }
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
-        this.courseService.findAllCategoriesOfCourse(this.quizExercise.course.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
+        if (!this.quizExercise.exerciseGroup && this.isExamMode) {
+            this.quizExercise.exerciseGroup = this.exerciseGroup;
+        }
+        if (!this.isExamMode) {
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
+            this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id).subscribe(
+                (res: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
+        }
         this.updateDuration();
         this.cacheValidation();
     }
@@ -1044,7 +1072,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Navigate back
      */
     cancel(): void {
-        this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercise']);
+        if (!this.isExamMode) {
+            this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercise']);
+        } else {
+            this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']);
+        }
     }
 
     /**

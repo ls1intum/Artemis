@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -32,6 +33,7 @@ export class ExamParticipationService {
 
     /**
      * save the studentExam to the local Storage
+     *
      * @param courseId
      * @param examId
      * @param studentExam
@@ -46,5 +48,16 @@ export class ExamParticipationService {
     private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
         return this.httpClient.get<StudentExam>(url);
+    }
+
+    /**
+     * Update a quizSubmission
+     *
+     * @param exerciseId
+     * @param quizSubmission
+     */
+    public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
+        const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
+        return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 }
