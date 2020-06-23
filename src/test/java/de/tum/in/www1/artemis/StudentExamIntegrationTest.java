@@ -174,6 +174,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 }
             }
 
+            assertThat(response.getExamSessions()).hasSize(1);
+            var examSession = response.getExamSessions().iterator().next();
+            assertThat(examSession.getSessionToken()).isNotNull();
+
             // TODO: add other exercises, programming, modeling and file upload
 
         }

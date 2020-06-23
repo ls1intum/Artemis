@@ -521,9 +521,10 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addExam(Course course, User user, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.addUser(user);
+        exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
         examRepository.save(exam);

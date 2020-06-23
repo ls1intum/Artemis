@@ -62,14 +62,14 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetStudentExam_asInstructor() throws Exception {
+    public void testStartExamSession_asStudent() {
 
         String newSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
         String newerSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
         String currentSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
 
         assertThat(currentSessionToken).isNotEqualTo(newSessionToken);
-        assertThat(currentSessionToken).isEqualTo(newerSessionToken);
+        assertThat(currentSessionToken).isNotEqualTo(newerSessionToken);
     }
 
 }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -162,27 +163,26 @@ public class StudentExamResource {
                 // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
                 exercise.filterSensitiveInformation();
             }
-            // the exerciseGroup information is not needed
-            exercise.setExerciseGroup(null);
         }
 
-        // TODO: this does not work with @Transactional(readOnly = true)
-        // ExamSession examSession = this.examSessionService.startExamSession(studentExam.get());
-        // studentExam.setExamSessions(Set.of(examSession));
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam);
+        studentExam.setExamSessions(Set.of(examSession));
 
-        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + optionalStudentExam.get().getExercises().size()
-                + " exercises for user " + currentUser.getLogin());
-        return ResponseEntity.ok(optionalStudentExam.get());
+        // not needed
+        studentExam.getExam().setCourse(null);
+
+        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
+                + currentUser.getLogin());
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
-     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
-     * result. Filter everything else that is not relevant
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data
      *
+     * @param exercise the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
      */
-    public void filterForExam(Exercise exercise, List<StudentParticipation> participations, String username) {
+    public void filterForExam(Exercise exercise, List<StudentParticipation> participations) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
