@@ -57,7 +57,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
 
-        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+        let participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
     /**
