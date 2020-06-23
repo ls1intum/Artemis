@@ -115,6 +115,8 @@
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
+                "addQuizExercise": "Quiz hinzufügen",
+                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen"
             },
             "delete": {
