@@ -16,99 +16,98 @@
 
 <jhi-alert></jhi-alert>
 
-<div class="submission-container d-flex flex-column pl-2 mt-3">
-    <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
-        <div class="flex-grow-1">
-            <p class="mb-3 markdown-preview">
-                <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
-                <span class="background-editor-color">
-                    <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>
-                </span>
-            </p>
-        </div>
-        <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ml-md-2 ml-lg-3">
-            <jhi-team-participate-info-box
-                [exercise]="modelingExercise"
-                [participation]="participation"
-                [typing$]="submissionStream$"
-                [dockedToRightSide]="true"
-            ></jhi-team-participate-info-box>
-        </div>
-    </div>
-
-    <jhi-fullscreen #fullscreenComponent [class.pt-5]="fullscreenComponent.isFullScreen()">
-        <div class="row flex-grow-1">
-            <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
-                <jhi-modeling-editor
-                    [umlModel]="umlModel"
-                    [diagramType]="modelingExercise.diagramType"
-                    [showHelpButton]="!fullscreenComponent.isFullScreen()"
-                ></jhi-modeling-editor>
-                <jhi-team-submission-sync
-                    *ngIf="modelingExercise.teamMode"
-                    [exerciseType]="modelingExercise.type"
-                    [submission$]="submissionStream$"
+<jhi-resizeable-container *ngIf="modelingExercise" [isExerciseParticipation]="true">
+    <!--region Left Panel-->
+    <div left-body class="submission-container d-flex flex-column w-100">
+        <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
+            <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ml-md-2 ml-lg-3">
+                <jhi-team-participate-info-box
+                    [exercise]="modelingExercise"
                     [participation]="participation"
-                    (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
-                ></jhi-team-submission-sync>
-            </div>
-            <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
-                <jhi-modeling-assessment
-                    [model]="umlModel"
-                    [feedbacks]="assessmentResult?.feedbacks"
-                    [diagramType]="modelingExercise.diagramType"
-                    [maxScore]="modelingExercise.maxScore"
-                    [readOnly]="true"
-                    [enablePopups]="false"
-                    [displayPoints]="false"
-                    (selectionChanged)="onSelectionChanged($event)"
-                ></jhi-modeling-assessment>
-            </div>
-            <div class="col-3" *ngIf="submission?.submitted && (!isActive || result)">
-                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
-                <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
-                    <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
-                    <br />
-                    {{ generalFeedbackText }}
-                </div>
-                <p
-                    *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
-                    jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
-                >
-                    There is no assessment available yet.
-                </p>
-                <ng-container *ngIf="assessmentResult?.feedbacks?.length > 0">
-                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">
-                        Select elements in the editor to filter the assessment.
-                    </p>
-                    <table class="table">
-                        <thead class="thead-light">
-                            <tr>
-                                <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
-                                <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score">Score</th>
-                            </tr>
-                        </thead>
-                        <tbody *ngIf="assessmentsNames">
-                            <!--TODO CZ: replace function call 'isSelected' in html-->
-                            <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback)">
-                                <td>
-                                    <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
-                                    <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
-                                    ><br *ngIf="feedback.reference" />
-                                    <span *ngIf="feedback.text" [ngClass]="{ 'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0 }"
-                                        ><strong>Feedback:</strong> {{ feedback.text }}</span
-                                    >
-                                    <span *ngIf="feedback.detailText" [ngClass]="{ 'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0 }"
-                                        ><strong>Feedback:</strong> {{ feedback.detailText }}</span
-                                    >
-                                </td>
-                                <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </ng-container>
+                    [typing$]="submissionStream$"
+                    [dockedToRightSide]="true"
+                ></jhi-team-participate-info-box>
             </div>
         </div>
-    </jhi-fullscreen>
-    <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
-</div>
+
+        <jhi-fullscreen>
+            <div class="row flex-grow-1">
+                <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
+                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
+                    <jhi-team-submission-sync
+                        *ngIf="modelingExercise.teamMode"
+                        [exerciseType]="modelingExercise.type"
+                        [submission$]="submissionStream$"
+                        [participation]="participation"
+                        (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
+                    ></jhi-team-submission-sync>
+                </div>
+                <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
+                    <jhi-modeling-assessment
+                        [model]="umlModel"
+                        [feedbacks]="assessmentResult?.feedbacks"
+                        [diagramType]="modelingExercise.diagramType"
+                        [maxScore]="modelingExercise.maxScore"
+                        [readOnly]="true"
+                        [enablePopups]="false"
+                        [displayPoints]="false"
+                        (selectionChanged)="onSelectionChanged($event)"
+                    ></jhi-modeling-assessment>
+                </div>
+                <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
+                    <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
+                    <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
+                        <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
+                        <br />
+                        {{ generalFeedbackText }}
+                    </div>
+                    <p
+                        *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
+                        jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
+                    >
+                        There is no assessment available yet.
+                    </p>
+                    <ng-container *ngIf="assessmentResult?.feedbacks?.length > 0">
+                        <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">
+                            Select elements in the editor to filter the assessment.
+                        </p>
+                        <table class="table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
+                                    <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="assessmentsNames">
+                                <!--TODO CZ: replace function call 'isSelected' in html-->
+                                <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback)">
+                                    <td>
+                                        <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
+                                        <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
+                                        ><br *ngIf="feedback.reference" />
+                                        <span *ngIf="feedback.text" [ngClass]="{ 'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0 }"
+                                            ><strong>Feedback:</strong> {{ feedback.text }}</span
+                                        >
+                                        <span *ngIf="feedback.detailText" [ngClass]="{ 'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0 }"
+                                            ><strong>Feedback:</strong> {{ feedback.detailText }}</span
+                                        >
+                                    </td>
+                                    <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </ng-container>
+                </div>
+            </div>
+        </jhi-fullscreen>
+        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
+    </div>
+    <!--endregion-->
+    <!--region Right Panel-->
+    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <span right-header jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
+    <p right-body class="mb-3 markdown-preview" *ngIf="modelingExercise!.problemStatement">
+        <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>
+    </p>
+    <!--endregion-->
+</jhi-resizeable-container>
