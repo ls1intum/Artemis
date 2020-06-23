@@ -1,11 +1,9 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { CommitState, EditorState, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { AnnotationArray } from 'app/entities/annotation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
+import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
+import {ExamSubmissionComponent} from 'app/exam/participate/exercises/exam-submission.component';
+import {ProgrammingExerciseStudentParticipation} from 'app/entities/participation/programming-exercise-student-participation.model';
+import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
+import {ExamCodeEditorStudentContainerComponent} from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
+import {EditorState} from "app/exercises/programming/shared/code-editor/model/code-editor.model";
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -23,23 +21,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     @Input()
     exercise: ProgrammingExercise;
 
-    isSaving: boolean;
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
-
-    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    selectedFile?: string;
-    unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
-    // This variable is used to inform components that a file has changed its filename, e.g. because of renaming
-    fileChange?: FileChange;
-    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
-
-    /** Code Editor State Variables **/
-    editorState: EditorState;
-    commitState: CommitState;
-
     hasUnsavedChanges(): boolean {
-        return false;
+        return this.codeEditorComponent.editorState == EditorState.UNSAVED_CHANGES;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -47,8 +30,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     ngOnInit(): void {
-        //this.initializeProperties();
+
     }
 
-    updateSubmissionFromView(): void {}
+    updateSubmissionFromView(): void {
+        this.codeEditorComponent.actions.onSave();
+    }
 }
