@@ -24,7 +24,6 @@
                         placeholder="Name"
                         [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'blur' }"
-                        (change)="enableStartButton()"
                     />
                 </div>
             </div>
@@ -36,7 +35,7 @@
                 </div>
             </div>
         </div>
-        <button [disabled]="!startEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
+        <button [disabled]="!startButtonEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
             <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
         </button>
     </div>

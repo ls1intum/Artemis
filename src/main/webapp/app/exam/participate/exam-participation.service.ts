@@ -62,7 +62,9 @@ export class ExamParticipationService {
         // TODO: convert Date from server
         return this.httpClient.get<StudentExam>(url).pipe(
             tap((studentExam: StudentExam) => {
-                this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
+                if (studentExam.examSessions) {
+                    this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
+                }
             }),
         );
     }

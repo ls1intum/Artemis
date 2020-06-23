@@ -34,7 +34,7 @@
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "submit": "Speichern & Weiter",
-            "noExam": "Keine Daten gefunden"
+            "noExam": "Gehe online, um die Klausur zu laden"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

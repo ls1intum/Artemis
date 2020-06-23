@@ -34,7 +34,7 @@
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "submit": "Submit & continue",
-            "noExam": "No data found"
+            "noExam": "Go online to load exam"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

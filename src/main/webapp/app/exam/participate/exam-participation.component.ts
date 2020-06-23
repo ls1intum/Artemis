@@ -75,43 +75,46 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
 
+            // TODO: move this to examStarted() when the route to fetch the exam is ready and only load the exam here and pass it to the cover
             this.studentExamSubscription = this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
-                this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
-                // init studentExam and activeExercise
-                this.studentExam = studentExam;
-                this.activeExercise = studentExam.exercises[0];
-                // initialize all submissions as synced
-                this.studentExam.exercises.forEach((exercise) => {
-                    exercise.studentParticipations.forEach((participation) => {
-                        if (participation.submissions && participation.submissions.length > 0) {
-                            participation.submissions.forEach((submission) => {
+                if (studentExam) {
+                    this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
+                    // init studentExam and activeExercise
+                    this.studentExam = studentExam;
+                    this.activeExercise = studentExam.exercises[0];
+                    // initialize all submissions as synced
+                    this.studentExam.exercises.forEach((exercise) => {
+                        exercise.studentParticipations.forEach((participation) => {
+                            if (participation.submissions && participation.submissions.length > 0) {
+                                participation.submissions.forEach((submission) => {
+                                    submission.isSynced = true;
+                                });
+                            } else {
+                                // create empty fallback submission
+                                let submission;
+                                switch (exercise.type) {
+                                    case ExerciseType.TEXT:
+                                        submission = new TextSubmission();
+                                        break;
+                                    case ExerciseType.FILE_UPLOAD:
+                                        submission = new FileUploadSubmission();
+                                        break;
+                                    case ExerciseType.MODELING:
+                                        submission = new ModelingSubmission();
+                                        break;
+                                    case ExerciseType.PROGRAMMING:
+                                        submission = new ProgrammingSubmission();
+                                        break;
+                                    case ExerciseType.QUIZ:
+                                        submission = new QuizSubmission();
+                                        break;
+                                }
                                 submission.isSynced = true;
-                            });
-                        } else {
-                            // create empty fallback submission
-                            let submission;
-                            switch (exercise.type) {
-                                case ExerciseType.TEXT:
-                                    submission = new TextSubmission();
-                                    break;
-                                case ExerciseType.FILE_UPLOAD:
-                                    submission = new FileUploadSubmission();
-                                    break;
-                                case ExerciseType.MODELING:
-                                    submission = new ModelingSubmission();
-                                    break;
-                                case ExerciseType.PROGRAMMING:
-                                    submission = new ProgrammingSubmission();
-                                    break;
-                                case ExerciseType.QUIZ:
-                                    submission = new QuizSubmission();
-                                    break;
+                                participation.submissions = [submission];
                             }
-                            submission.isSynced = true;
-                            participation.submissions = [submission];
-                        }
+                        });
                     });
-                });
+                }
             });
         });
 
@@ -122,6 +125,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * exam start text confirmed and name entered, start button clicked and exam avtive
      */
     examStarted() {
+        this.examConfirmed = true;
         this.startAutoSaveTimer();
     }
 

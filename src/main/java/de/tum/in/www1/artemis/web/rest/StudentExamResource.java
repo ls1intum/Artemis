@@ -156,8 +156,9 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam.get());
-        studentExam.get().setExamSessions(Set.of(examSession));
+        // TODO: fix exam session management
+        // ExamSession examSession = this.examSessionService.startExamSession(studentExam.get());
+        // studentExam.get().setExamSessions(Set.of(examSession));
 
         log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.get().getExercises().size() + " exercises");
         return ResponseEntity.ok(studentExam.get());

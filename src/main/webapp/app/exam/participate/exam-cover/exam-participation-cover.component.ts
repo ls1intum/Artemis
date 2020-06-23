@@ -42,7 +42,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     accountName = '';
     enteredName?: string;
-    falseName = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -100,41 +99,23 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * check, whether exam has started yet and we therefore can enable the Start Exam Button
-     */
-    enableStartButton() {
-        this.falseName = this.enteredName !== this.accountName;
-        if (!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && moment(this.exam.visibleDate).isBefore(moment())) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * check if exam already started
      */
-    notStarted(): boolean {
-        if (!this.exam) {
-            return false;
-        }
-        return this.exam.startDate ? moment().isBefore(moment(this.exam.startDate)) : false;
+    hasStarted(): boolean {
+        return this.exam?.startDate ? moment(this.exam.startDate).isBefore(moment()) : false;
     }
 
     /**
      * TODO: add session management, this function is bound to the start exam button
      */
     startExam() {
-        if (this.notStarted()) {
+        if (this.hasStarted()) {
+            this.onExamStarted.emit();
+        } else {
             this.waitingForExamStart = true;
             this.interval = setInterval(() => {
                 this.updateDisplayedTimes();
-                if (!this.notStarted()) {
-                    this.onExamStarted.emit();
-                }
             }, 100);
-        } else {
-            this.onExamStarted.emit();
         }
     }
 
@@ -145,10 +126,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         const translationBasePath = 'showStatistic.';
         // update time until start
         if (this.exam && this.exam.startDate) {
-            if (this.notStarted()) {
-                this.timeUntilStart = this.relativeTimeText(moment(this.exam.startDate).diff(moment(), 'seconds'));
-            } else {
+            if (this.hasStarted()) {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                this.onExamStarted.emit();
+            } else {
+                this.timeUntilStart = this.relativeTimeText(moment(this.exam.startDate).diff(moment(), 'seconds'));
             }
         } else {
             this.timeUntilStart = '';
@@ -187,5 +169,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         // error message
         //     }
         // });
+    }
+
+    get startButtonEnabled(): boolean {
+        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && moment(this.exam.visibleDate).isBefore(moment()));
+    }
+
+    get falseName(): boolean {
+        return this.enteredName !== this.accountName;
     }
 }
