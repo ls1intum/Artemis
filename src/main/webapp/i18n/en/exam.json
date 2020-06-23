@@ -134,7 +134,7 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Student exam ({{ courseTitle }})",
+            "studentExam": "Student exam ({{ examTitle }})",
             "exercises": "Exercises",
             "downloadPDF": " Download PDF",
             "student": "Student",

@@ -134,7 +134,7 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ courseTitle }})",
+            "studentExam": "Klausur ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
