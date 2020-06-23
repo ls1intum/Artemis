@@ -40,8 +40,11 @@
     <div class="col">
         <div class="row justify-content-end align-items-center flex-nowrap pr-2">
             <div class="col-auto">
-                <button class="btn btn-sm btn-primary px-3" (click)="submitExam()">
-                    {{ 'artemisApp.examParticipation.submit' | translate }}
+                <button *ngIf="!isProgrammingExercise" class="btn btn-sm btn-primary px-3" (click)="submitExam()">
+                    {{ 'artemisApp.examParticipation.submitOtherExercise' | translate }}
+                </button>
+                <button *ngIf="isProgrammingExercise" class="btn btn-sm btn-primary px-3" (click)="submitExam()">
+                    {{ 'artemisApp.examParticipation.submitProgrammingExercise' | translate }}
                 </button>
             </div>
             <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time" [class.critical]="criticalTime">

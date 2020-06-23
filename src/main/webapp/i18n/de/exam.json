@@ -33,8 +33,9 @@
             "finishExam": "Klausur abgeben",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Speichern & Weiter",
-            "noExam": "Gehe online, um die Klausur zu laden"
+            "noExam": "Gehe online, um die Klausur zu laden",
+            "submitProgrammingExercise": "Weiter",
+            "submitOtherExercise": "Speichern & Weitere"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

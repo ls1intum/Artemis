@@ -98,6 +98,9 @@ public class Exam implements Serializable {
     @JoinTable(name = "exam_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> registeredUsers = new HashSet<>();
 
+    @Transient
+    private long numberOfRegisteredUsersTransient;
+
     public Long getId() {
         return id;
     }
@@ -258,6 +261,14 @@ public class Exam implements Serializable {
     public Exam removeUser(User user) {
         this.registeredUsers.remove(user);
         return this;
+    }
+
+    public long getNumberOfRegisteredUsers() {
+        return this.numberOfRegisteredUsersTransient;
+    }
+
+    public void setNumberOfRegisteredUsers(long numberOfRegisteredUsers) {
+        this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 
     @Override

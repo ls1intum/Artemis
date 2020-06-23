@@ -33,8 +33,9 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Submit & continue",
-            "noExam": "Go online to load exam"
+            "noExam": "Go online to load exam",
+            "submitProgrammingExercise": "Continue",
+            "submitOtherExercise": "Submit & continue"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
