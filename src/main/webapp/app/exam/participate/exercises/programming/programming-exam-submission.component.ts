@@ -1,9 +1,9 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {ExamSubmissionComponent} from 'app/exam/participate/exercises/exam-submission.component';
 import {ProgrammingExerciseStudentParticipation} from 'app/entities/participation/programming-exercise-student-participation.model';
 import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
 import {ExamCodeEditorStudentContainerComponent} from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
-import {EditorState} from "app/exercises/programming/shared/code-editor/model/code-editor.model";
+import { EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -11,7 +11,7 @@ import {EditorState} from "app/exercises/programming/shared/code-editor/model/co
     providers: [ProgrammingExamSubmissionComponent],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
     codeEditorComponent: ExamCodeEditorStudentContainerComponent;
 
@@ -23,10 +23,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     hasUnsavedChanges(): boolean {
         return this.codeEditorComponent.editorState == EditorState.UNSAVED_CHANGES;
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        // show submission answers in UI
     }
 
     ngOnInit(): void {
