@@ -403,6 +403,8 @@ public class ExamResource {
             if (!exam.getExerciseGroups().contains(exerciseGroup)) {
                 return forbidden();
             }
+            // Set the exam manually as it won't be included in orderedExerciseGroups
+            exerciseGroup.setExam(exam);
         }
 
         exam.setExerciseGroups(orderedExerciseGroups);
