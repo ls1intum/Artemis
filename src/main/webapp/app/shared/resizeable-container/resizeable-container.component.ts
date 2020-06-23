@@ -54,7 +54,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
     // Make right side always expanded for smaller screens
     @HostListener('window:resize', ['$event'])
     onWindowResize(event: any) {
-        if(event.target.innerWidth <= 992) {
+        if (event.target.innerWidth <= 992) {
             this.collapsed = false;
         }
     }
