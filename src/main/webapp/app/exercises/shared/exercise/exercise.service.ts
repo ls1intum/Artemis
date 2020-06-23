@@ -69,6 +69,13 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
+    findExamExercise(exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/examExercise/${exerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.checkPermission(res));
+    }
+
     /**
      * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      * @param { number } exerciseId - programming exercise for which build plans in respective student participations are deleted

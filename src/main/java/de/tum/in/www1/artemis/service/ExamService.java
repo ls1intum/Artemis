@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -41,10 +43,13 @@ public class ExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService) {
+    private final ParticipationService participationService;
+
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
+        this.participationService = participationService;
     }
 
     @Autowired
@@ -296,5 +301,35 @@ public class ExamService {
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
         int randomIndex = random.nextInt(exercises.size());
         return exercises.get(randomIndex);
+    }
+
+    /**
+     * Starts all the exercises of all the student exams of an exam
+     *
+     * @param examId exam to which the student exams belong
+     * @return list of generated participations
+     */
+    @Transactional
+    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
+    public List<Participation> startExercises(Long examId) {
+        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        List<Participation> generatedParticipations = new ArrayList<>();
+
+        for (StudentExam studentExam : studentExams) {
+            User student = studentExam.getUser();
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                    try {
+                        var participation = participationService.startExercise(exercise, student);
+                        generatedParticipations.add(participation);
+                    }
+                    catch (Exception ex) {
+                        log.warn("Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    }
+                }
+            }
+        }
+
+        return generatedParticipations;
     }
 }

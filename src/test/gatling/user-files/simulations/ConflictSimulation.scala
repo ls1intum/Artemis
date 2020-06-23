@@ -66,7 +66,7 @@ class ConflictSimulation extends Simulation {
         .exec((http("Create ModelingExercise"))
             .post("/api/modeling-exercises")
             .headers(headers_http_authenticated_JSON)
-            .body(StringBody("""{"isAtLeastTutor":false,"isAtLeastInstructor":false,"type":"modeling","automaticAssessmentSupported":false,"course":{"id":""" + "${course_id}" + ""","title":"CourseXY","shortName":"TTTXY","studentGroupName":"tumuser","instructorGroupName":"tumuser","onlineCourse":false,"registrationEnabled":false,"startDate":null,"endDate":null,"exercises":[]},"diagramType":"ClassDiagram","title":"Exercise 1","maxScore":10,"problemStatement":"","releaseDate":null,"dueDate":null,"assessmentDueDate":null}""")).asJson
+            .body(StringBody("""{"isAtLeastTutor":false,"isAtLeastInstructor":false,"type":"modeling","course":{"id":""" + "${course_id}" + ""","title":"CourseXY","shortName":"TTTXY","studentGroupName":"tumuser","instructorGroupName":"tumuser","onlineCourse":false,"registrationEnabled":false,"startDate":null,"endDate":null,"exercises":[]},"diagramType":"ClassDiagram","title":"Exercise 1","maxScore":10,"problemStatement":"","releaseDate":null,"dueDate":null,"assessmentDueDate":null}""")).asJson
             .check(status.is(201))
             .check(jsonPath("$.id").saveAs("exercise_id"))
             .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed

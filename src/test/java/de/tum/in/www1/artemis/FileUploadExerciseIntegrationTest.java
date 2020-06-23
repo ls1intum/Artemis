@@ -79,9 +79,10 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
-        assertThat(receivedFileUploadExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
-        assertThat(receivedFileUploadExercise.getCourse().getId()).as("exerciseGroupId was set correctly").isEqualTo(fileUploadExercise.getCourse().getId());
+        assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly")
+                .isEqualTo(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
@@ -105,7 +106,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.getId()).isNotNull();
         assertThat(createdFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
-        assertThat(createdFileUploadExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(!createdFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
         assertThat(createdFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(createdFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
 
@@ -213,9 +214,9 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
                 FileUploadExercise.class, HttpStatus.OK);
         assertThat(receivedFileUploadExercise.getDueDate().equals(ZonedDateTime.now().plusDays(10)));
-        assertThat(receivedFileUploadExercise.getCourse()).as("course was set for normal exercise").isNotNull();
+        assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
-        assertThat(receivedFileUploadExercise.getCourse().getId()).as("courseId was not updated").isEqualTo(course.getId());
+        assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
     }
 
     @Test
@@ -229,7 +230,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
                 FileUploadExercise.class, HttpStatus.OK);
 
         assertThat(updatedFileUploadExercise.getTitle().equals(newTitle));
-        assertThat(updatedFileUploadExercise.getCourse()).as("course was not set for exam exercise").isNull();
+        assertThat(!updatedFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
         assertThat(updatedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(fileUploadExercise.getExerciseGroup().getId());
     }
@@ -257,7 +258,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         fileUploadExerciseWithCourse.setCourse(null);
         fileUploadExerciseWithCourse.setExerciseGroup(fileUploadExerciseWithExerciseGroup.getExerciseGroup());
 
-        fileUploadExerciseWithExerciseGroup.setCourse(fileUploadExerciseWithCourse.getCourse());
+        fileUploadExerciseWithExerciseGroup.setCourse(fileUploadExerciseWithCourse.getCourseViaExerciseGroupOrCourseMember());
         fileUploadExerciseWithExerciseGroup.setExerciseGroup(null);
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithCourse.getId(), fileUploadExerciseWithCourse, FileUploadExercise.class,

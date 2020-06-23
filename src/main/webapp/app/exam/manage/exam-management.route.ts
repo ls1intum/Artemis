@@ -23,6 +23,9 @@ import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exer
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -235,6 +238,19 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Import Text Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Edit Text Exercise
     {
         path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
@@ -271,6 +287,65 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Programming Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/new',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import programming exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/import/:id',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Programming Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/:id/edit',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
