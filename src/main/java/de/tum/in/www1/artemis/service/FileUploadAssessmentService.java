@@ -46,8 +46,9 @@ public class FileUploadAssessmentService extends AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(fileUploadExercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result.evaluateFeedback(fileUploadExercise.getMaxScore());
-        return resultRepository.save(result);
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, fileUploadExercise, calculatedScore);
+        // return resultRepository.save(result);
     }
 
     /**

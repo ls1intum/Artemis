@@ -8,6 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { ExamSessionService } from 'app/exam/manage/exam-session/exam-session.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -23,8 +27,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Output() onExamStarted: EventEmitter<void> = new EventEmitter<void>();
     course: Course | null;
-    courseId = 0;
-    title: string; // needed? unused at the moment
+    courseId: number;
     startEnabled: boolean;
     confirmed: boolean;
     examId: number;
@@ -37,7 +40,18 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     timeUntilStart = '0';
     formattedStartDate = '';
 
-    constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService, private translateService: TranslateService) {}
+    fullname?: string;
+    falseName = false;
+
+    constructor(
+        private courseService: CourseManagementService,
+        private artemisMarkdown: ArtemisMarkdownService,
+        private translateService: TranslateService,
+        private accountService: AccountService,
+        private sessionStorage: SessionStorageService,
+        private examSessionService: ExamSessionService,
+        private route: ActivatedRoute,
+    ) {}
 
     /**
      * on init use the correct information to display in either start or final view
@@ -57,6 +71,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
         }, 100);
+
+        this.route.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            this.examId = +params['examId'];
+        });
     }
 
     ngOnDestroy() {
@@ -73,7 +92,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.startView) {
             if (this.confirmed) {
                 this.interval = setInterval(() => {
-                    this.startEnabled = this.enableStartButton();
+                    this.enableStartButton().then((enable) => (this.startEnabled = enable));
                 }, 100);
             } else {
                 this.startEnabled = false;
@@ -84,8 +103,19 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
-    enableStartButton() {
-        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.visibleDate).isBefore(moment())) {
+    async enableStartButton() {
+        let fullname = '';
+        await this.accountService.identity().then((user) => {
+            fullname = user?.name ?? '';
+        });
+
+        if (this.fullname && this.fullname !== fullname) {
+            this.falseName = true;
+        } else {
+            this.falseName = false;
+        }
+
+        if (this.fullname && this.fullname === fullname && this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
             return true;
         } else {
             return false;
@@ -144,5 +174,23 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         } else {
             return remainingTimeSeconds + ' s';
         }
+    }
+
+    /**
+     * Submits the exam if user has valid token
+     */
+    submit() {
+        // TODO: refactor following code
+        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
+        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+        //     const validSessionToken = response.body?.sessionToken ?? '';
+        //     if (validSessionToken && localSessionToken === validSessionToken) {
+        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
+        //         // TODO: submit exam
+        //     } else {
+        //         console.log('Something went wrong');
+        //         // error message
+        //     }
+        // });
     }
 }

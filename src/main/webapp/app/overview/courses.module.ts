@@ -69,6 +69,6 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
         CourseExamsComponent,
         CourseExamDetailComponent,
     ],
-    exports: [ExerciseActionButtonComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent],
 })
 export class ArtemisCoursesModule {}

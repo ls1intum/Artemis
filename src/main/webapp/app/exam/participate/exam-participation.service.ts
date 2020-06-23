@@ -4,11 +4,13 @@ import { Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
+import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { StartExamResponse } from 'app/entities/start-exam-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService) {}
+    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     private getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -43,11 +45,25 @@ export class ExamParticipationService {
     }
 
     /**
+     * save the examSession to the session Storage
+     *
+     * @param courseId
+     * @param examId
+     * @param studentExam
+     */
+    public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
+        this.sessionStorage.store('ExamSessionToken', examSessionToken);
+    }
+
+    /**
      * Retrieves a {@link StudentExam} from server
      */
-    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
+    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> | any {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
-        return this.httpClient.get<StudentExam>(url);
+        this.httpClient.get<StartExamResponse>(url).subscribe((startExamResponse) => {
+            this.saveExamSessionTokenToSessionStorage(startExamResponse.examSession.sessionToken);
+            return Observable.of(startExamResponse.studentExam);
+        });
     }
 
     /**

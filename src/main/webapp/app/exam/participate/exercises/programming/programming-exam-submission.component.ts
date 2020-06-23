@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
 import { EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -11,23 +12,42 @@ import { EditorState } from 'app/exercises/programming/shared/code-editor/model/
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
-    @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
-    codeEditorComponent: ExamCodeEditorStudentContainerComponent;
-
-    // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to changes
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+    // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
     studentParticipation: ProgrammingExerciseStudentParticipation;
     @Input()
     exercise: ProgrammingExercise;
+    @Input()
+    courseId: number;
+
+    @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
+    codeEditorComponent: ExamCodeEditorStudentContainerComponent;
+
+    isSaving: boolean;
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
 
     hasUnsavedChanges(): boolean {
+        if (this.isOfflineMode()) {
+            return false;
+        }
         return this.codeEditorComponent.editorState == EditorState.UNSAVED_CHANGES;
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!this.isOfflineMode()) {
+            // show submission answers in UI
+        }
     }
 
     ngOnInit(): void {}
 
+    isOfflineMode(): boolean {
+        return this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor;
+    }
+
     updateSubmissionFromView(): void {
-        this.codeEditorComponent.actions.onSave();
+        this.codeEditorComponent.actions.commit();
     }
 }

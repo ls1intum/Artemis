@@ -14,8 +14,8 @@ import { CodeEditorContainer } from 'app/exercises/programming/shared/code-edito
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import {DomainType} from "app/exercises/programming/shared/code-editor/model/code-editor.model";
-import {DomainService} from "app/exercises/programming/shared/code-editor/service/code-editor-domain.service";
+import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
@@ -44,7 +44,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         translateService: TranslateService,
         jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService) {
+        fileService: CodeEditorFileService,
+    ) {
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
     }
 
