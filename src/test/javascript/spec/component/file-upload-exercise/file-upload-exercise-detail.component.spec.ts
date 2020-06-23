@@ -95,7 +95,6 @@ describe('FileUploadExercise Management Detail Component', () => {
         fileUploadExerciseWithCourse.id = 123;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
             route.params = of({ exerciseId: fileUploadExerciseWithCourse.id });
         });
 
@@ -126,7 +125,6 @@ describe('FileUploadExercise Management Detail Component', () => {
         fileUploadExerciseWithExerciseGroup.id = 123;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
             route.params = of({ exerciseId: fileUploadExerciseWithExerciseGroup.id });
         });
 
