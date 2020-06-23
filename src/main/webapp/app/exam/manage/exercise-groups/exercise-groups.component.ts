@@ -8,6 +8,12 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
