@@ -26,9 +26,7 @@
             </div>
             <div class="mt-2">
                 <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
-                <div *ngIf="validationError" class="my-2 text-danger font-weight-bold">
-                    {{ validationError }}
-                </div>
+                <div *ngIf="validationError" class="mt-4 mb-2 text-danger" [innerHTML]="validationError"></div>
             </div>
         </div>
         <div *ngIf="studentsToImport?.length > 0" class="form-group mt-4">
