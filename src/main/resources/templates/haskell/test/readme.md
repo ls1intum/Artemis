@@ -1,7 +1,7 @@
 ## Test Repository instructions
 
 #### Test tool & command
-Tests will be run using pytest.
+Tests will be run using stack: https://docs.haskellstack.org/en/stable/README/
 
 #### Sequential test runs
 If you have decided to use the sequential test runs feature for this exercise, read the following instructions:
