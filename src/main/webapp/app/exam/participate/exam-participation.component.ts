@@ -207,7 +207,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if (this.currentSubmissionComponent.hasUnsavedChanges()) {
+        if (this.currentSubmissionComponent?.hasUnsavedChanges()) {
             this.currentSubmissionComponent.updateSubmissionFromView();
         }
 

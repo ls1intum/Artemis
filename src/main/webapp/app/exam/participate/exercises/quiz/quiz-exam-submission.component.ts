@@ -14,6 +14,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -21,7 +22,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -47,22 +48,16 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    hasChanges = false;
-
     constructor() {
         super();
         smoothscroll.polyfill();
     }
 
-    ngOnInit(): void {
-        this.initQuiz();
-        // show submission answers in UI
-        this.updateViewFromSubmission();
-    }
-
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
-            this.hasChanges = true;
+            this.initQuiz();
+            // show submission answers in UI
+            this.updateViewFromSubmission();
         }
     }
 
@@ -101,11 +96,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
-    }
-
-    onSelectionChanged() {
-        this.updateSubmissionFromView();
-        this.hasChanges = true;
     }
 
     /**
@@ -166,13 +156,24 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     /**
-     * returns true if submission was changes due to input in the quiz view
-     * returns false:
-     *  1. if no changes are made
-     *  2. if submission update is triggered by the parent view
+     * return true if we have no submission yet and we have new answers
+     * returns false if all submittedAnswers in studentSubmission are similar to the ones we have in the respective maps in this components
      */
     hasUnsavedChanges(): boolean {
-        return this.hasChanges;
+        if (!this.studentSubmission.submittedAnswers) {
+            // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
+            return Object.keys(this.selectedAnswerOptions).length > 0 || Object.keys(this.dragAndDropMappings).length > 0 || Object.keys(this.shortAnswerSubmittedTexts).length > 0;
+        } else {
+            return !this.studentSubmission.submittedAnswers.every((answer) => {
+                if (answer instanceof MultipleChoiceSubmittedAnswer) {
+                    return this.selectedAnswerOptions[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof DragAndDropSubmittedAnswer) {
+                    return this.dragAndDropMappings[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof ShortAnswerSubmittedAnswer) {
+                    return this.shortAnswerSubmittedTexts[answer.quizQuestion.id] === answer;
+                }
+            });
+        }
     }
 
     /**
@@ -237,7 +238,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
-        this.hasChanges = false;
-        // TODO: check if this.studentSubmission.isSynced = false; is needed
+        this.studentSubmission.isSynced = false;
     }
 }

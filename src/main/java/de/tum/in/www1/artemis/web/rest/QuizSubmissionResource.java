@@ -200,6 +200,12 @@ public class QuizSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizSubmission> submitForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
+
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
         if (quizExercise == null) {
             return ResponseEntity.badRequest()

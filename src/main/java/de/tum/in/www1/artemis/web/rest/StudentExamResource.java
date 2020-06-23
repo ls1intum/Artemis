@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
+import de.tum.in.www1.artemis.domain.exam.StartExamResponse;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -38,13 +40,16 @@ public class StudentExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final ExamSessionService examSessionService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserService userService, StudentExamRepository studentExamRepository) {
+            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
         this.userService = userService;
         this.studentExamRepository = studentExamRepository;
+        this.examSessionService = examSessionService;
     }
 
     /**
@@ -91,12 +96,12 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: remove Transactional here
     @Transactional(readOnly = true)
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StartExamResponse> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
+        Optional<ResponseEntity<StartExamResponse>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -150,7 +155,13 @@ public class StudentExamResource {
             }
         }
 
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam.get());
+
+        StartExamResponse startExamResponse = new StartExamResponse();
+        startExamResponse.setStudentExam(studentExam.get());
+        startExamResponse.setExamSession(examSession);
+
         log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.get().getExercises().size() + " exercises");
-        return ResponseEntity.ok(studentExam.get());
+        return ResponseEntity.ok(startExamResponse);
     }
 }
