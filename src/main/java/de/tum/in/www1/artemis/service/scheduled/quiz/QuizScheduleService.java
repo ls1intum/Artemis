@@ -280,7 +280,11 @@ public class QuizScheduleService {
         if (quizExerciseId == null) {
             return null;
         }
-        return getReadCacheFor(quizExerciseId).getExercise();
+        QuizExercise quizExercise = getReadCacheFor(quizExerciseId).getExercise();
+        if(quizExercise == null) {
+            updateQuizExercise(quizExercise);
+    }
+        return quizExercise;
     }
 
     /**
@@ -425,6 +429,7 @@ public class QuizScheduleService {
         });
         log.debug("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        updateQuizExercise(quizExercise);
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
     }
 
@@ -499,7 +504,6 @@ public class QuizScheduleService {
 
                 // Update cached exercise object (use the expensive operation upfront)
                 quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-                cachedQuiz.setExercise(quizExercise);
                 updateQuizExercise(quizExercise);
 
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
