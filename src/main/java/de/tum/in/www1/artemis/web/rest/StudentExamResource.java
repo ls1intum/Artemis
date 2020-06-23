@@ -13,10 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -42,14 +41,17 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
+    private final ParticipationService participationService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService) {
+            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
         this.userService = userService;
         this.studentExamRepository = studentExamRepository;
         this.examSessionService = examSessionService;
+        this.participationService = participationService;
     }
 
     /**
@@ -106,61 +108,99 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        // TODO: We should not load all participations, only the one for the user (have a look at the courses for dashboard call and apply the same principles here)
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsAndResultByUserIdAndExamId(currentUser.getId(), examId);
-        if (studentExam.isEmpty()) {
+        // 1st: load the studentExam with all associated exercises
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(currentUser.getId(), examId);
+        if (optionalStudentExam.isEmpty()) {
             return notFound();
         }
+        var studentExam = optionalStudentExam.get();
 
-        // Filter attributes of exercises that should not be visible to the student
-        if (studentExam.get().getExercises() != null) {
-            for (Exercise exercise : studentExam.get().getExercises()) {
-                if (exercise instanceof QuizExercise) {
-                    // NOTE: Currently, we load the quiz questions using the Transactional mechanism above as a workaround, however this is not ideal
-                    // TODO: load the quiz questions for the quiz exercise and add it to the exercise
+        // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
+                studentExam.getExercises());
 
-                    var quizExercise = (QuizExercise) exercise;
-                    // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
-                    // the following method makes sure that questions and other sub elements are contained (Transactional), but solution aspects are hidden
-                    quizExercise.filterForStudentsDuringQuiz();
+        // 3rd: connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            filterForExam(exercise, participations, currentUser.getLogin());
 
-                    // TODO: also load children of the QuizSubmission in a better way, the following is a temporary workaround
-                    for (var studentParticipation : quizExercise.getStudentParticipations()) {
+            // Filter attributes of exercises that should not be visible to the student
+            if (exercise instanceof QuizExercise) {
+                // NOTE: Currently, we load the quiz questions using the Transactional mechanism above as a workaround, however this is not ideal
+                // TODO: load the quiz questions for the quiz exercise and add it to the exercise
+
+                var quizExercise = (QuizExercise) exercise;
+                // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
+                // the following method makes sure that questions and other sub elements are contained (Transactional), but solution aspects are hidden
+                quizExercise.filterForStudentsDuringQuiz();
+
+                // TODO: the following code should not be necessary, double check!
+                for (var studentParticipation : quizExercise.getStudentParticipations()) {
+                    // should only be one participation for one student
+                    for (var submission : studentParticipation.getSubmissions()) {
                         // should only be one participation for one student
-                        for (var submission : studentParticipation.getSubmissions()) {
-                            // should only be one participation for one student
-                            var quizSubmission = (QuizSubmission) submission;
-                            for (var submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                                    // load these objects with the transaction
-                                    ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().size();
-                                }
-                                else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                                    // load these objects with the transaction
-                                    ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings().size();
-                                }
-                                else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                                    // load these objects with the transaction
-                                    ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().size();
-                                }
+                        var quizSubmission = (QuizSubmission) submission;
+                        for (var submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                                // load these objects with the transaction
+                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().size();
+                            }
+                            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                                // load these objects with the transaction
+                                ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings().size();
+                            }
+                            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                                // load these objects with the transaction
+                                ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().size();
                             }
                         }
                     }
                 }
-                else {
-                    // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
-                    exercise.filterSensitiveInformation();
-                }
-                // the exerciseGroup information is not needed
-                exercise.setExerciseGroup(null);
             }
+            else {
+                // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
+                exercise.filterSensitiveInformation();
+            }
+            // the exerciseGroup information is not needed
+            exercise.setExerciseGroup(null);
         }
 
-        // TODO: fix exam session management
+        // TODO: this does not work with @Transactional(readOnly = true)
         // ExamSession examSession = this.examSessionService.startExamSession(studentExam.get());
-        // studentExam.get().setExamSessions(Set.of(examSession));
+        // studentExam.setExamSessions(Set.of(examSession));
 
-        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.get().getExercises().size() + " exercises");
-        return ResponseEntity.ok(studentExam.get());
+        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + optionalStudentExam.get().getExercises().size()
+                + " exercises for user " + currentUser.getLogin());
+        return ResponseEntity.ok(optionalStudentExam.get());
+    }
+
+    /**
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
+     * result. Filter everything else that is not relevant
+     *
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username used to get quiz submission for the user
+     */
+    public void filterForExam(Exercise exercise, List<StudentParticipation> participations, String username) {
+        // remove the unnecessary inner course attribute
+        exercise.setCourse(null);
+        exercise.setExerciseGroup(null);
+
+        if (exercise instanceof ProgrammingExercise) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercise.setTestRepositoryUrl(null);
+        }
+
+        // get user's participation for the exercise
+        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
+        if (participation != null) {
+            // remove inner exercise from participation
+            participation.setExercise(null);
+            // add participation into an array
+            exercise.setStudentParticipations(Set.of(participation));
+        }
     }
 }

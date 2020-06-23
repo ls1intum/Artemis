@@ -812,7 +812,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();

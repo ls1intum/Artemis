@@ -537,6 +537,15 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -552,40 +561,25 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
-        ExerciseGroup exerciseGroup1 = ModelFactory.generateExerciseGroup(true, exam);
-        ExerciseGroup exerciseGroup2 = ModelFactory.generateExerciseGroup(true, exam);
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime startDate, ZonedDateTime endDate) {
+        var assessmentDueDate = ZonedDateTime.now().plusDays(8);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        exerciseGroup1 = exam.getExerciseGroups().get(0);
-        exerciseGroup2 = exam.getExerciseGroups().get(1);
+        var exerciseGroup1 = exam.getExerciseGroups().get(0);
+        var exerciseGroup2 = exam.getExerciseGroups().get(1);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
-                exerciseGroup1);
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
+        textExercise1 = exerciseRepo.save(textExercise1);
+        textExercise2 = exerciseRepo.save(textExercise2);
 
-        GradingCriterion gradingCriterion = ModelFactory.generateGradingCriterion("title");
-        textExercise.addGradingCriteria(gradingCriterion);
-        textExercise.setGradingInstructions("this is a grading instruction");
-        textExercise.setSampleSolution("this is a sample solution");
-        textExercise = exerciseRepo.save(textExercise);
-
-        QuizExercise quizExercise = createQuizForExam(exerciseGroup2, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5));
-        quizExercise = exerciseRepo.save(quizExercise);
-
-        Submission emptyTextSubmission = ModelFactory.generateTextSubmission("", Language.ENGLISH, false);
-        addSubmission(textExercise, emptyTextSubmission, user.getLogin());
-
-        // TODO: also write a 2nd test where the submission already contains some content
-        Submission emptyQuizSubmission = new QuizSubmission();
-        addSubmission(quizExercise, emptyQuizSubmission, user.getLogin());
-
-        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
-        studentExam.addExercise(textExercise);
-        studentExam.addExercise(quizExercise);
-        studentExam.setUser(user);
-        studentExamRepository.save(studentExam);
-
-        return studentExam;
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup2, startDate, endDate);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup2, startDate, endDate);
+        quizExercise1 = exerciseRepo.save(quizExercise1);
+        quizExercise2 = exerciseRepo.save(quizExercise2);
+        return exam;
     }
 
     /**
@@ -960,9 +954,7 @@ public class DatabaseUtilService {
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
-
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
-
         return course;
     }
 
