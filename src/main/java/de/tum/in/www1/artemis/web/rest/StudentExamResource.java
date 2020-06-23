@@ -124,7 +124,7 @@ public class StudentExamResource {
         // 3rd: connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(exercise, participations, currentUser.getLogin());
+            filterForExam(exercise, participations);
 
             // Filter attributes of exercises that should not be visible to the student
             if (exercise instanceof QuizExercise) {
