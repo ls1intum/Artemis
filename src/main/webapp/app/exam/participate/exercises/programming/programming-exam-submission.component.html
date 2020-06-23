@@ -1,10 +1,13 @@
 <!-- nGif codeeditor start-->
+<div *ngIf="exercise.allowOnlineEditor">
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
 <!-- nGif codeeditor end -->
 <!-- nGif codeeditorwith clone button start -->
 <!-- nGif codeeditorwith clone button end-->
 <!-- nGif Offline IDE clone button start -->
 <div *ngIf="isOfflineMode()">
-    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="2" [showResult]="false">
+    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="false">
     </jhi-exercise-details-student-actions>
     <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
     <jhi-programming-exercise-instructions

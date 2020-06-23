@@ -3,11 +3,7 @@
     <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
 </span>
 
-<div
-    class="form-row"
-    (drop)="structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, $event); didChange()"
-    (dragover)="$event.preventDefault()"
->
+<div class="form-row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
     <div class="form-group col-10">
         <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
         <textarea
@@ -35,6 +31,7 @@
             (click)="onScoreClick($event)"
             (focus)="inFocus()"
             (ngModelChange)="didChange()"
+            [readOnly]="disableEditScore"
         />
     </div>
 </div>

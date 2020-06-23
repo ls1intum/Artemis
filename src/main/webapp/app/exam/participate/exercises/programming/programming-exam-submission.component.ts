@@ -3,6 +3,8 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
+import { EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -14,9 +16,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
     studentParticipation: ProgrammingExerciseStudentParticipation;
-
     @Input()
     exercise: ProgrammingExercise;
+    @Input()
+    courseId: number;
+
+    codeEditorComponent: ExamCodeEditorStudentContainerComponent;
 
     isSaving: boolean;
     readonly ButtonType = ButtonType;
@@ -26,7 +31,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         if (this.isOfflineMode()) {
             return false;
         }
-        return false;
+        return this.codeEditorComponent.editorState == EditorState.UNSAVED_CHANGES;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -35,15 +40,13 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         }
     }
 
-    ngOnInit(): void {
-        console.log('ExerciseId:' + this.exercise.id);
-        console.log('ExerciseGroupId:' + this.exercise.exerciseGroup?.id);
-        console.log('ExerciseGroupId:' + this.exercise.exerciseGroup?.exam?.id);
-    }
+    ngOnInit(): void {}
 
     isOfflineMode(): boolean {
         return this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor;
     }
 
-    updateSubmissionFromView(): void {}
+    updateSubmissionFromView(): void {
+        this.codeEditorComponent.actions.commit();
+    }
 }
