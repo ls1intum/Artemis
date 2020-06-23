@@ -4,10 +4,15 @@
 </div>
 <!-- nGif codeeditor end -->
 <!-- nGif codeeditorwith clone button start -->
+<div *ngIf="!isOnlyCodeEditorMode() && !isNotOfflineIdeMode()">
+    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
+    </jhi-exercise-details-student-actions>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
 <!-- nGif codeeditorwith clone button end-->
 <!-- nGif Offline IDE clone button start -->
-<div *ngIf="isOfflineMode()">
-    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="false">
+<div *ngIf="isNotOfflineIdeMode()">
+    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end;">
         <jhi-updating-result

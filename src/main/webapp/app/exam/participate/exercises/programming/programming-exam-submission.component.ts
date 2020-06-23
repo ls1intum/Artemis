@@ -29,21 +29,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonSize = ButtonSize;
 
     hasUnsavedChanges(): boolean {
-        if (this.isOfflineMode()) {
+        if (this.isNotOfflineIdeMode()) {
             return false;
         }
         return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (!this.isOfflineMode()) {
+        if (!this.isNotOfflineIdeMode()) {
             // show submission answers in UI
         }
     }
 
     ngOnInit(): void {}
 
-    isOfflineMode(): boolean {
+    isNotOfflineIdeMode(): boolean {
         return this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor;
     }
 
