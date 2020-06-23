@@ -136,6 +136,8 @@ public class CacheConfiguration {
                 }
             }
             else { // Production configuration, one host per instance all using the configured port
+                config.setClusterName("prod");
+                config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
                 config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
