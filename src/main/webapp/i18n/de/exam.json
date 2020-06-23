@@ -24,8 +24,10 @@
             }
         },
         "examParticipation": {
-            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
-            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!",
+            "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
+            "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
+            "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
+            "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
             "finishExam": "Klausur abgeben",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
