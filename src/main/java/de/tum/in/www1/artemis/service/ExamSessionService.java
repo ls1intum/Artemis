@@ -41,6 +41,7 @@ public class ExamSessionService {
      * Creates and saves an exam session for given student exam
      *
      * @param studentExam student exam for which an exam session shall be created
+     * @return the newly create exam session
      */
     @Transactional
     public ExamSession startExamSession(StudentExam studentExam) {
@@ -55,7 +56,7 @@ public class ExamSessionService {
 
     private String generateSafeToken() {
         SecureRandom random = new SecureRandom();
-        byte bytes[] = new byte[16];
+        byte[] bytes = new byte[16];
         random.nextBytes(bytes);
         Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
         String token = encoder.encodeToString(bytes);

@@ -177,13 +177,12 @@ public class StudentExamResource {
     }
 
     /**
-     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
-     * result. Filter everything else that is not relevant
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data
      *
+     * @param exercise the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
      */
-    public void filterForExam(Exercise exercise, List<StudentParticipation> participations, String username) {
+    public void filterForExam(Exercise exercise, List<StudentParticipation> participations) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
