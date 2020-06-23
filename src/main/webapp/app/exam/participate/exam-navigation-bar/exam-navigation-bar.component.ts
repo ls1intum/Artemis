@@ -53,7 +53,13 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     submitExam() {
-        this.changeExercise(this.exerciseIndex + 1);
+        const newIndex = this.exerciseIndex + 1;
+        if (newIndex > this.exercises.length - 1) {
+            // if out of range "change" active exercise to current in order to trigger a save
+            this.changeExercise(this.exerciseIndex);
+        } else {
+            this.changeExercise(newIndex);
+        }
     }
 
     get remainingTime(): string {
