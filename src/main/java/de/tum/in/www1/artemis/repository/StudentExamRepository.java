@@ -27,9 +27,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     // we need results (if available) for programming exercises
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.studentParticipations", "exercises.studentParticipations.submissions",
-            "exercises.studentParticipations.submissions.results" })
-    @Query("SELECT studentExam FROM StudentExam studentExam WHERE studentExam.user.id = :#{#userId} AND studentExam.exam.id = :#{#examId}")
-    Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+            "exercises.studentParticipations.submissions.result" })
+    Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsAndResultByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     List<StudentExam> findByExamId(Long examId);
 

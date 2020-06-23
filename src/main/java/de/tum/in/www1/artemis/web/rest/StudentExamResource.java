@@ -105,9 +105,8 @@ public class StudentExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-
-        // TODO: we should not load all participations, only the one for the user (have a look at the courses for dashboard call and apply the same principles here)
-        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(currentUser.getId(), examId);
+        
+        Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsAndResultByUserIdAndExamId(currentUser.getId(), examId);
         if (studentExam.isEmpty()) {
             return notFound();
         }
