@@ -15,6 +15,13 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ExamNavigationBarComponent } from './exam-navigation-bar/exam-navigation-bar.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
+import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
+import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -27,15 +34,22 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisModelingEditorModule,
         ArtemisFullscreenModule,
         ArtemisSharedComponentModule,
+        ArtemisProgrammingParticipationModule,
+        ArtemisCodeEditorModule,
+        ArtemisResultModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisExerciseHintParticipationModule,
     ],
     declarations: [
         ExamParticipationComponent,
         ExamParticipationCoverComponent,
         ExamParticipationSummaryComponent,
         QuizExamSubmissionComponent,
+        ProgrammingExamSubmissionComponent,
         TextExamSubmissionComponent,
         ModelingExamSubmissionComponent,
         ExamNavigationBarComponent,
+        ExamCodeEditorStudentContainerComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}

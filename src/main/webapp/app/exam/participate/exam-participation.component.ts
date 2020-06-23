@@ -31,6 +31,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly MODELING = ExerciseType.MODELING;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     private paramSubscription: Subscription;
     private studentExamSubscription: Subscription;

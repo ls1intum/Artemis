@@ -34,6 +34,11 @@
                     [exercise]="activeExercise"
                     [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
                 ></jhi-modeling-submission-exam>
+                <jhi-programming-submission-exam
+                    *ngSwitchCase="PROGRAMMING"
+                    [exercise]="activeExercise"
+                    [studentParticipation]="activeExercise.studentParticipations[0]"
+                ></jhi-programming-submission-exam>
             </ng-container>
         </ng-container>
         <!-- exam connection status footer bar -->
