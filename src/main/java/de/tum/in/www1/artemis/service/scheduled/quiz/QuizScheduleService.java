@@ -22,6 +22,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.IAtomicReference;
 import com.hazelcast.map.IMap;
 import com.hazelcast.scheduledexecutor.*;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
@@ -47,7 +48,11 @@ public class QuizScheduleService {
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
+    private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
+
     private IMap<Long, QuizExerciseCache> cachedQuizExercises;
+
+    private ITopic<QuizExercise> cachedQuizExerciseUpdates;
 
     private volatile IScheduledExecutorService threadPoolTaskScheduler;
 
@@ -80,6 +85,8 @@ public class QuizScheduleService {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.cachedQuizExercises = hazelcastInstance.getMap(Constants.HAZELCAST_EXERCISE_CACHE);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
+        this.cachedQuizExerciseUpdates = hazelcastInstance.getTopic(HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC);
+        this.cachedQuizExerciseUpdates.addMessageListener(newQuizExerciseMessage -> updateQuizExerciseLocally(newQuizExerciseMessage.getMessageObject()));
     }
 
     /**
@@ -302,6 +309,11 @@ public class QuizScheduleService {
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(QuizExercise quizExercise) {
+        Objects.requireNonNull(quizExercise, "quizExercise must not be null");
+        cachedQuizExerciseUpdates.publish(quizExercise);
+    }
+
+    private void updateQuizExerciseLocally(QuizExercise quizExercise) {
         log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
