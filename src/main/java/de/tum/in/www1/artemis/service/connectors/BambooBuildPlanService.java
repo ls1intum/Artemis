@@ -164,7 +164,7 @@ public class BambooBuildPlanService {
             case HASKELL: {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("haskell:8.4.4"));
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("tumfpv/fpv-stack:8.4.4"));
                 }
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
