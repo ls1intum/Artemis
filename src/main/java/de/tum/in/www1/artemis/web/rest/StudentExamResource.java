@@ -105,7 +105,7 @@ public class StudentExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        
+
         Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesAndStudentParticipationsAndSubmissionsAndResultByUserIdAndExamId(currentUser.getId(), examId);
         if (studentExam.isEmpty()) {
             return notFound();
