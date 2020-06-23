@@ -571,6 +571,7 @@ public class DatabaseUtilService {
         Submission emptyTextSubmission = ModelFactory.generateTextSubmission("", Language.ENGLISH, false);
         addSubmission(textExercise, emptyTextSubmission, user.getLogin());
 
+        // TODO: also write a 2nd test where the submission already contains some content
         Submission emptyQuizSubmission = new QuizSubmission();
         addSubmission(quizExercise, emptyQuizSubmission, user.getLogin());
 
