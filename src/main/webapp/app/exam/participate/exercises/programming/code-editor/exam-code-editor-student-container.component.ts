@@ -14,6 +14,8 @@ import { CodeEditorContainer } from 'app/exercises/programming/shared/code-edito
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import {DomainType} from "app/exercises/programming/shared/code-editor/model/code-editor.model";
+import {DomainService} from "app/exercises/programming/shared/code-editor/service/code-editor-domain.service";
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
@@ -37,7 +39,12 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
     repositoryIsLocked = false;
 
-    constructor(translateService: TranslateService, jhiAlertService: AlertService, sessionService: CodeEditorSessionService, fileService: CodeEditorFileService) {
+    constructor(
+        private domainService: DomainService,
+        translateService: TranslateService,
+        jhiAlertService: AlertService,
+        sessionService: CodeEditorSessionService,
+        fileService: CodeEditorFileService) {
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
     }
 
@@ -49,6 +56,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
+
+        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
     }
 
     /**
