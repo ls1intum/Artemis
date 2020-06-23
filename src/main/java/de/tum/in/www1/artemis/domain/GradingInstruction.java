@@ -48,7 +48,7 @@ public class GradingInstruction implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private GradingCriterion gradingCriterion;
 
-    @OneToMany(mappedBy = "gradingInstruction")
+    @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
