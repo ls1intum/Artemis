@@ -12,6 +12,16 @@
             <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
         </button>
     </div>
+    <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
+        <span>{{ 'artemisApp.examParticipation.waitForStart' | translate: { title: exam.title } }}</span>
+        <div *ngIf="exam.startDate">
+            <hr />
+            <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
+            <span class="text-bold">{{ timeUntilStart }}</span>
+            <br />
+            <span>({{ formattedStartDate }})</span>
+        </div>
+    </div>
     <div *ngIf="!startView" style="text-align: center;">
         <button [disabled]="!confirmed" type="submit" class="btn btn-primary" id="summaryBtn">
             <span jhiTranslate="artemisApp.exam.summary">Summary</span>

@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +14,14 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class QuizSubmissionService {
@@ -174,11 +175,11 @@ public class QuizSubmissionService {
     /**
      * Updates a submission for the exam mode
      *
-     * @param quizExercise
-     * @param quizSubmission
-     * @param user
-     * @return
-     * @throws QuizSubmissionException
+     * @param quizExercise      the quiz exercise for which the submission for the exam mode should be done
+     * @param quizSubmission    the quiz submission includes the submitted answers by the student
+     * @param user              the student who wants to submit the quiz during the exam
+     * @return                  the updated quiz submission after it has been saved to the database
+     * @throws QuizSubmissionException      if the original participation cannot be found
      */
     public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) throws QuizSubmissionException {
         // update submission properties
@@ -189,8 +190,10 @@ public class QuizSubmissionService {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user);
 
         if (optionalParticipation.isEmpty()) {
+            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user);
             // TODO: think of better way to handle failure
-            throw new QuizSubmissionException("FAILED");
+            throw new EntityNotFoundException(
+                    "Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user " + user + " was not found!");
         }
         StudentParticipation studentParticipation = optionalParticipation.get();
         quizSubmission.setParticipation(studentParticipation);

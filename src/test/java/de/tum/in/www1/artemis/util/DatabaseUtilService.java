@@ -549,19 +549,34 @@ public class DatabaseUtilService {
     }
 
     public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
+        ExerciseGroup exerciseGroup1 = ModelFactory.generateExerciseGroup(true, exam);
+        ExerciseGroup exerciseGroup2 = ModelFactory.generateExerciseGroup(true, exam);
+        exam = examRepository.save(exam);
+        // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
+        exerciseGroup1 = exam.getExerciseGroups().get(0);
+        exerciseGroup2 = exam.getExerciseGroups().get(1);
+
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
-                null);
+                exerciseGroup1);
+
         GradingCriterion gradingCriterion = ModelFactory.generateGradingCriterion("title");
         textExercise.addGradingCriteria(gradingCriterion);
         textExercise.setGradingInstructions("this is a grading instruction");
         textExercise.setSampleSolution("this is a sample solution");
         textExercise = exerciseRepo.save(textExercise);
 
-        Submission submission = ModelFactory.generateTextSubmission("", Language.ENGLISH, true);
-        addSubmission(textExercise, submission, user.getLogin());
+        QuizExercise quizExercise = createQuizForExam(exerciseGroup2, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5));
+        quizExercise = exerciseRepo.save(quizExercise);
+
+        Submission emptyTextSubmission = ModelFactory.generateTextSubmission("", Language.ENGLISH, false);
+        addSubmission(textExercise, emptyTextSubmission, user.getLogin());
+
+        Submission emptyQuizSubmission = new QuizSubmission();
+        addSubmission(quizExercise, emptyQuizSubmission, user.getLogin());
 
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExam.addExercise(textExercise);
+        studentExam.addExercise(quizExercise);
         studentExam.setUser(user);
         studentExamRepository.save(studentExam);
 
@@ -1573,7 +1588,7 @@ public class DatabaseUtilService {
 
     /**
      * Generate submissions for a student for an exercise. Results are mixed.
-     * @param quizExercise QuizExercise th submissions are for
+     * @param quizExercise QuizExercise the submissions are for (we assume 3 questions here)
      * @param studentID ID of the student
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
