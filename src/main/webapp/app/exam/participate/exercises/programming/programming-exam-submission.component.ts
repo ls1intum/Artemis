@@ -28,6 +28,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     ngOnInit(): void {}
 
     updateSubmissionFromView(): void {
-        this.codeEditorComponent.actions.onSave();
+        this.codeEditorComponent.actions.commit();
     }
 }
