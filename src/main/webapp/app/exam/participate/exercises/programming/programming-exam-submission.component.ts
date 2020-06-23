@@ -32,7 +32,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         if (this.isOfflineMode()) {
             return false;
         }
-        return this.codeEditorComponent.editorState == EditorState.UNSAVED_CHANGES;
+        return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
