@@ -575,6 +575,7 @@ public class DatabaseUtilService {
         Submission emptyTextSubmission = ModelFactory.generateTextSubmission("", Language.ENGLISH, false);
         addSubmission(textExercise, emptyTextSubmission, user.getLogin());
 
+        // TODO: also write a 2nd test where the submission already contains some content
         Submission emptyQuizSubmission = new QuizSubmission();
         addSubmission(quizExercise, emptyQuizSubmission, user.getLogin());
 
@@ -723,16 +724,25 @@ public class DatabaseUtilService {
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
+
+        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
+
         testCriterion.setExercise(exercise);
         var criteria = new ArrayList<GradingCriterion>();
         criteria.add(emptyCriterion);
         criteria.add(testCriterion);
+        criteria.add(testCriterion2);
         exercise.setGradingCriteria(criteria);
         return exercise.getGradingCriteria();
     }

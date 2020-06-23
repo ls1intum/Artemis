@@ -1,21 +1,5 @@
-<jhi-alert></jhi-alert>
-<nav *ngIf="loadingParticipation || participationCouldNotBeFetched" class="card">
-    <div class="card-body">
-        <span *ngIf="loadingParticipation">
-            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
-                Your participation is being loaded...
-            </span>
-        </span>
-        <span *ngIf="participationCouldNotBeFetched">
-            <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
-        </span>
-    </div>
-</nav>
-<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
+<jhi-code-editor-grid #grid [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"

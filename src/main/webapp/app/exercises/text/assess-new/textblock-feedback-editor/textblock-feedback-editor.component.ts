@@ -19,6 +19,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Output() onFocus = new EventEmitter<void>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
+    @Input() disableEditScore = false;
     private textareaElement: HTMLTextAreaElement;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
@@ -43,6 +44,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
+        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
+        }
     }
     /**
      * Increase size of text area automatically
@@ -101,5 +107,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+    }
+    connectFeedbackWithInstruction(event: Event) {
+        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
+        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
+        }
+        this.didChange();
     }
 }

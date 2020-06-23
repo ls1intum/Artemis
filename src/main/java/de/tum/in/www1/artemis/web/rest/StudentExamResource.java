@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StartExamResponse;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
 
@@ -118,8 +118,33 @@ public class StudentExamResource {
                     // NOTE: Currently, we load the quiz questions using the Transactional mechanism above as a workaround, however this is not ideal
                     // TODO: load the quiz questions for the quiz exercise and add it to the exercise
 
+                    var quizExercise = (QuizExercise) exercise;
                     // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
-                    ((QuizExercise) exercise).filterForStudentsDuringQuiz();
+                    // the following method makes sure that questions and other sub elements are contained (Transactional), but solution aspects are hidden
+                    quizExercise.filterForStudentsDuringQuiz();
+
+                    // TODO: also load children of the QuizSubmission in a better way, the following is a temporary workaround
+                    for (var studentParticipation : quizExercise.getStudentParticipations()) {
+                        // should only be one participation for one student
+                        for (var submission : studentParticipation.getSubmissions()) {
+                            // should only be one participation for one student
+                            var quizSubmission = (QuizSubmission) submission;
+                            for (var submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                                    // load these objects with the transaction
+                                    ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().size();
+                                }
+                                else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                                    // load these objects with the transaction
+                                    ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings().size();
+                                }
+                                else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                                    // load these objects with the transaction
+                                    ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().size();
+                                }
+                            }
+                        }
+                    }
                 }
                 else {
                     // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
