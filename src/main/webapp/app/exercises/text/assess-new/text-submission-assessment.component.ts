@@ -288,10 +288,13 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     /**
-     * Sort
+     * Sorts text block refs by there appearance and cheecks for overlaps or gaps.
+     * Prevent dupliace text when manual and automatic text blocks are present.
+     *
      * @param matchBlocksWithFeedbacks
      */
     private sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[]) {
+        // Sort by start index to process all refs in order
         const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block.startIndex - b.block.startIndex);
 
         let previousIndex = 0;
@@ -299,6 +302,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         for (let i = 0; i <= sortedRefs.length; i++) {
             let ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
+
+            // new text block starts before previous one ended (overlap)
             if (previousIndex > nextIndex) {
                 const previousRef = this.textBlockRefs.pop();
                 if (!previousRef) {
@@ -308,6 +313,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.MANUAL)) {
                     console.log('Overlapping MANUAL Text Blocks!', previousRef, ref);
                 } else {
+                    // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
                     switch (TextBlockType.MANUAL) {
                         case previousRef.block.type:
                             this.unusedTextBlockRefs.push(ref);
@@ -319,6 +325,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                             break;
                     }
                 }
+
+                // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
             } else if (previousIndex < nextIndex) {
                 // There is a gap. We need to add a Text Block in between
                 this.addTextBlockByIndices(previousIndex, nextIndex);
@@ -332,6 +340,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
     }
 
+    /**
+     * Invoked by Child @Output when adding/removing text blocks. Recalculating refs to keep order and prevent duplicate text displayed.
+     */
     public recalculateTextBlockRefs(): void {
         // This is racing with another @Output, so we wait one loop
         setTimeout(() => {

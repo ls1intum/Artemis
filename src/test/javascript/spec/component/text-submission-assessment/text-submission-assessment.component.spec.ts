@@ -25,6 +25,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
+import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -77,7 +78,13 @@ describe('TextSubmissionAssessmentComponent', () => {
                 ArtemisConfirmIconModule,
                 RouterModule,
             ],
-            declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
+            declarations: [
+                TextSubmissionAssessmentComponent,
+                TextAssessmentAreaComponent,
+                TextblockAssessmentCardComponent,
+                TextblockFeedbackEditorComponent,
+                ManualTextblockSelectionComponent,
+            ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .overrideModule(ArtemisTestModule, {

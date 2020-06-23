@@ -28,6 +28,13 @@ export class ManualTextblockSelectionComponent {
         this.textBlockRefsChange.emit(this.textBlockRefs);
     }
 
+    /**
+     * Called by [jhiTextSelect] directive. Select Text within text block ref group and emit to parent component
+     * if it is indeed a new text block.
+     *
+     * @param $event response from directive, we are interested in $event.text.
+     * @param group TextBlockRefGroup of text blocks allowed to select text in.
+     */
     handleTextSelection($event: TextSelectEvent, group: TextBlockRefGroup): void {
         const text = $event.text;
         // create new Text Block for text
