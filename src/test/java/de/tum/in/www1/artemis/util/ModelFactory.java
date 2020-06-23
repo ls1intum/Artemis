@@ -91,6 +91,7 @@ public class ModelFactory {
 
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");

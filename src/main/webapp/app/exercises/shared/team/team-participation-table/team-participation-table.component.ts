@@ -74,10 +74,15 @@ export class TeamParticipationTableComponent implements OnInit {
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
         return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams[0];
-            exercise.participation = get(exercise, 'studentParticipations[0]', null);
+            const participation = get(exercise, 'studentParticipations[0]', null);
+            exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
             if (exercise.submission) {
                 exercise.submission.result = get(exercise, 'participation.results[0]', null);
+                // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
+                if (exercise.submission.result) {
+                    exercise.submission.result.participation = participation;
+                }
             }
             return exercise;
         });
