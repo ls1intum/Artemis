@@ -282,7 +282,10 @@ public class QuizScheduleService {
         }
         QuizExercise quizExercise = getReadCacheFor(quizExerciseId).getExercise();
         if (quizExercise == null) {
-            updateQuizExercise(quizExercise);
+            quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+            if (quizExercise != null) {
+                updateQuizExercise(quizExercise);
+            }
         }
         return quizExercise;
     }
