@@ -313,7 +313,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -1494,6 +1494,17 @@ public class DatabaseUtilService {
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);
+        quizExercise.addQuestions(createMultipleChoiceQuestion());
+        quizExercise.addQuestions(createDragAndDropQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
+        return quizExercise;
+    }
+
+    @NotNull
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());

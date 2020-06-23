@@ -16,15 +16,15 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.title">Title</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.language">Programming Language</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.programmingExercise.import.table.course">Course</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -45,14 +45,15 @@
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.programmingExercise.import.table.doImport'"> </jhi-button>
+                        <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
                     </td>
                 </tr>
             </tbody>
         </table>
 
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination [collectionSize]="total" [(page)]="page" [pageSize]="state.pageSize"> </ngb-pagination>
+            <ngb-pagination maxSize="10" rotate="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
         </div>
     </div>
 </form>

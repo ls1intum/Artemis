@@ -64,7 +64,7 @@ public class SingleUserNotification extends Notification implements Serializable
         target.addProperty("message", "newAnswer");
         target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
         target.addProperty("entity", "exercises");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
+        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
     }

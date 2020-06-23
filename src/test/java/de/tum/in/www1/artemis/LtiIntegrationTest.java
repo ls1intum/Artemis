@@ -80,7 +80,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithAnonymousUser
     void launchAsAnonymousUser() throws Exception {
         Long exerciseId = programmingExercise.getId();
-        Long courseId = programmingExercise.getCourse().getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?login&jwt="));
@@ -93,7 +93,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(value = "student1", roles = "USER")
     void launchAsNewStudent() throws Exception {
         Long exerciseId = programmingExercise.getId();
-        Long courseId = programmingExercise.getCourse().getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?welcome&jwt="));

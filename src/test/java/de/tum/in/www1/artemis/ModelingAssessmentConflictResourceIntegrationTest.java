@@ -103,7 +103,7 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllConflicts_OK() throws Exception {
         assertThat(userService.getUserWithGroupsAndAuthorities().getGroups()).contains("instructor");
-        assertThat(modelingExercise.getCourse()).isEqualTo(course);
+        assertThat(modelingExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
         assertThat(authCheckService.isAtLeastInstructorForExercise(modelingExercise)).isTrue();
 
         assertThat(modelingExerciseRepository.findById(modelingExercise.getId()).get()).as("modeling exercise is present").isNotNull();

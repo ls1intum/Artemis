@@ -235,7 +235,7 @@ public class ProgrammingExerciseResource {
             programmingExercise.setExerciseGroup(exerciseGroup);
         }
         else {
-            course = courseService.findOne(programmingExercise.getCourse().getId());
+            course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             programmingExercise.setCourse(course);
         }
 
@@ -278,6 +278,11 @@ public class ProgrammingExerciseResource {
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
         programmingExercise.generateAndSetProjectKey();
@@ -432,6 +437,14 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
+        if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
+        // TODO: if isAllowOfflineIde changes, we might want to change access for all existing student participations
+        // false --> true: add access for students to all existing student participations
+        // true --> false: remove access for students from all existing student participations
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise.get(), ENTITY_NAME);
@@ -544,7 +557,7 @@ public class ProgrammingExerciseResource {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-            Course course = programmingExercise.getCourse();
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
@@ -586,7 +599,7 @@ public class ProgrammingExerciseResource {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
         }
         else {
-            course = programmingExercise.getCourse();
+            course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -619,7 +632,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
 
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -758,7 +771,7 @@ public class ProgrammingExerciseResource {
         }
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();

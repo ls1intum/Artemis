@@ -14,6 +14,7 @@ import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/studen
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -41,6 +42,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisTextExerciseModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisProgrammingExerciseManagementModule,
+        ArtemisQuizManagementModule,
         MomentModule,
     ],
     declarations: [

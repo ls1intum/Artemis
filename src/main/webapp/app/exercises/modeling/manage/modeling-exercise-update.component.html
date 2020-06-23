@@ -78,7 +78,7 @@
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
-            <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType">
+            <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" (ngModelChange)="diagramTypeChanged()" id="field_diagramType">
                 <option value="ClassDiagram">{{ 'artemisApp.DiagramType.ClassDiagram' | translate }}</option>
                 <option value="ActivityDiagram">{{ 'artemisApp.DiagramType.ActivityDiagram' | translate }}</option>
                 <option value="ObjectDiagram">{{ 'artemisApp.DiagramType.ObjectDiagram' | translate }}</option>
@@ -87,6 +87,19 @@
                 <option value="ComponentDiagram">{{ 'artemisApp.DiagramType.ComponentDiagram' | translate }}</option>
                 <option value="DeploymentDiagram">{{ 'artemisApp.DiagramType.DeploymentDiagram' | translate }}</option>
             </select>
+        </div>
+        <div class="form-group" *ngIf="this.modelingExercise.diagramType === DiagramType.ClassDiagram || this.modelingExercise.diagramType === DiagramType.ActivityDiagram">
+            <div class="form-check custom-control custom-checkbox">
+                <input
+                    type="checkbox"
+                    id="automatic_assessment_enabled"
+                    [ngModel]="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
+                    (ngModelChange)="modelingExercise.assessmentType = $event ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL"
+                    class="form-check-input custom-control-input"
+                    name="automaticAssessmentEnabled"
+                />
+                <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
+            </div>
         </div>
         <jhi-presentation-score-checkbox [exercise]="modelingExercise"></jhi-presentation-score-checkbox>
         <div class="form-group" name="problemStatement" id="field_problemStatement">

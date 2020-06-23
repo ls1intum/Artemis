@@ -344,7 +344,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse() throws Exception {
-        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourse().getId());
+        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         var programmingExercisesServer = request.getList(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExercisesServer).isNotEmpty();
         // TODO add more assertions
@@ -354,7 +354,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourse().getId());
+        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
@@ -390,7 +390,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
-        programmingExerciseInExam.setCourse(programmingExercise.getCourse());
+        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
@@ -472,7 +472,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void setupProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
-        programmingExerciseInExam.setCourse(programmingExercise.getCourse());
+        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         request.post(ROOT + SETUP, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
@@ -633,7 +633,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
-        programmingExerciseInExam.setCourse(programmingExercise.getCourse());
+        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
