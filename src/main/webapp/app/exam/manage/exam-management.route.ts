@@ -23,6 +23,7 @@ import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exer
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 
@@ -286,6 +287,26 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

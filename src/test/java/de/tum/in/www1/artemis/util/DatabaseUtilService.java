@@ -1503,6 +1503,17 @@ public class DatabaseUtilService {
     }
 
     @NotNull
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
+        quizExercise.addQuestions(createMultipleChoiceQuestion());
+        quizExercise.addQuestions(createDragAndDropQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
+        return quizExercise;
+    }
+
+    @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
