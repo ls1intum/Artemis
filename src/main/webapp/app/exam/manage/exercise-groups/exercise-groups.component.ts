@@ -26,7 +26,6 @@ export class ExerciseGroupsComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
-    isSavingOrder = false;
 
     constructor(
         private route: ActivatedRoute,
