@@ -76,18 +76,6 @@ public class StudentExamService {
     }
 
     /**
-     * Get student exam for the given exam and user.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the user
-     * @return the list of all student exams
-     */
-    public StudentExam findOneByExamIdAndUserId(Long examId, Long userId) {
-        log.debug("Request to get student exams for Exam : {} and User : {}", examId, userId);
-        return studentExamRepository.findByExamIdAndUserId(examId, userId);
-    }
-
-    /**
      * Delete a student exam by the Id
      *
      * @param studentExamId the id of the student exam to be deleted

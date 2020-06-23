@@ -13,6 +13,6 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 @Repository
 public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> {
 
-    List<ExamSession> findByStudentExamId(Long studentExamId);
+    ExamSession findByStudentExamId(Long studentExamId);
 
 }

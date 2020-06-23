@@ -28,7 +28,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Output() onExamStarted: EventEmitter<void> = new EventEmitter<void>();
     course: Course | null;
     courseId: number;
-    title: string; // needed? unused at the moment
     startEnabled: boolean;
     confirmed: boolean;
     examId: number;
@@ -140,14 +139,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.notStarted()) {
             this.waitingForExamStart = true;
         } else {
-            this.examSessionService.createExamSession(this.courseId, this.examId).subscribe((response) => {
-                const sessionToken = response.body?.sessionToken ?? '';
-                this.sessionStorage.store('ExamSessionToken', sessionToken);
-                const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-                console.log('Session Token', localSessionToken);
-
-                this.onExamStarted.emit();
-            });
+            this.onExamStarted.emit();
         }
     }
 
@@ -188,17 +180,17 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * Submits the exam if user has valid token
      */
     submit() {
-        this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
-            const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-            const validSessionToken = response.body?.sessionToken ?? '';
-
-            if (validSessionToken && localSessionToken === validSessionToken) {
-                console.log(validSessionToken + ' is the same as ' + localSessionToken);
-                // TODO: submit exam
-            } else {
-                console.log('Something went wrong');
-                // error message
-            }
-        });
+        // TODO: refactor following code
+        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
+        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+        //     const validSessionToken = response.body?.sessionToken ?? '';
+        //     if (validSessionToken && localSessionToken === validSessionToken) {
+        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
+        //         // TODO: submit exam
+        //     } else {
+        //         console.log('Something went wrong');
+        //         // error message
+        //     }
+        // });
     }
 }
