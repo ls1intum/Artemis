@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
 
@@ -88,6 +89,7 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
@@ -104,10 +106,18 @@ public class StudentExamResource {
         // Filter attributes of exercises that should not be visible to the student
         if (studentExam.get().getExercises() != null) {
             for (Exercise exercise : studentExam.get().getExercises()) {
-                exercise.filterSensitiveInformation();
+                if (exercise instanceof QuizExercise) {
+                    // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
+                    ((QuizExercise) exercise).filterForStudentsDuringQuiz();
+                }
+                else {
+                    // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
+                    exercise.filterSensitiveInformation();
+                }
             }
         }
 
+        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.get().getExercises().size() + " exercises");
         return ResponseEntity.ok(studentExam.get());
     }
 }
