@@ -9,6 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -22,7 +24,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     @Input() startView: boolean;
     @Input() exam: Exam;
-    @Output() onExamStarted: EventEmitter<void> = new EventEmitter<void>();
+    @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     course: Course | null;
     startEnabled: boolean;
     confirmed: boolean;
@@ -43,6 +45,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private accountService: AccountService,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     /**
@@ -92,27 +95,32 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         return this.exam?.startDate ? this.exam.startDate.isBefore(moment()) : false;
     }
 
+    /**
+     * displays popup or start exam participation immediately
+     */
     startExam() {
-        if (this.hasStarted()) {
-            this.onExamStarted.emit();
-        } else {
-            this.waitingForExamStart = true;
-            this.interval = window.setInterval(() => {
-                this.updateDisplayedTimes();
-            }, 100);
-        }
+        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+            if (this.hasStarted()) {
+                this.onExamStarted.emit(studentExam);
+            } else {
+                this.waitingForExamStart = true;
+                this.interval = window.setInterval(() => {
+                    this.updateDisplayedTimes(studentExam);
+                }, 100);
+            }
+        });
     }
 
     /**
      * updates all displayed (relative) times in the UI
      */
-    updateDisplayedTimes() {
+    updateDisplayedTimes(studentExam: StudentExam) {
         const translationBasePath = 'showStatistic.';
         // update time until start
         if (this.exam && this.exam.startDate) {
             if (this.hasStarted()) {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
-                this.onExamStarted.emit();
+                this.onExamStarted.emit(studentExam);
             } else {
                 this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(moment(), 'seconds'));
             }

@@ -13,6 +13,10 @@ import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
+    public getResourceURL(courseId: number, examId: number): string {
+        return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
+    }
+
     constructor(
         private httpClient: HttpClient,
         private localStorageService: LocalStorageService,
@@ -27,8 +31,8 @@ export class ExamParticipationService {
 
     /**
      * Retrieves a {@link StudentExam} from server or localstorge
-     * @param courseId
-     * @param examId
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         // download student exam from server
@@ -38,6 +42,16 @@ export class ExamParticipationService {
                 return Observable.of(localStoredExam);
             }),
         );
+    }
+
+    /**
+     * Loads {@link Exam} object from server
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadExam(courseId: number, examId: number): Observable<Exam> {
+        const url = this.getResourceURL(courseId, examId) + '/conduction';
+        return this.httpClient.get<Exam>(url).map((exam: Exam) => this.convertExamDateFromServer(exam));
     }
 
     /**
@@ -63,8 +77,7 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server
      */
     private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
-        const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
-        // TODO: convert Date from server
+        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 if (studentExam.examSessions) {

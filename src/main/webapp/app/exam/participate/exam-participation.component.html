@@ -1,14 +1,14 @@
-<ng-container *ngIf="studentExam; else noStudentExam">
+<ng-container *ngIf="exam; else noExam">
     <jhi-exam-participation-cover
         [startView]="true"
-        [exam]="studentExam.exam"
+        [exam]="exam"
         *ngIf="isVisible() && !isOver() && !examConfirmed"
-        (onExamStarted)="examStarted()"
+        (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
     <jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 
     <!-- exam participation -->
-    <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed">
+    <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed && studentExam">
         <!-- exam nav -->
         <!-- exercises -->
         <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
@@ -61,6 +61,6 @@
         </div>
     </ng-container>
 </ng-container>
-<ng-template #noStudentExam>
+<ng-template #noExam>
     <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
 </ng-template>

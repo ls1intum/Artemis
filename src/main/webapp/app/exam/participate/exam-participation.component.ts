@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -18,6 +17,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -33,13 +33,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
-    private paramSubscription: Subscription;
-    private studentExamSubscription: Subscription;
-
     courseId: number;
     examId: number;
 
+    // needed, because studentExam is downloaded only when exam is started
+    exam: Exam;
     studentExam: StudentExam;
+
     activeExercise: Exercise;
     unsavedChanges = false;
     disconnected = false;
@@ -71,60 +71,56 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * initializes courseId and course
      */
     ngOnInit(): void {
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-
-            // TODO: move this to examStarted() when the route to fetch the exam is ready and only load the exam here and pass it to the cover
-            this.studentExamSubscription = this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
-                if (studentExam) {
-                    this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
-                    // init studentExam and activeExercise
-                    this.studentExam = studentExam;
-                    this.activeExercise = studentExam.exercises[0];
-                    // initialize all submissions as synced
-                    this.studentExam.exercises.forEach((exercise) => {
-                        exercise.studentParticipations.forEach((participation) => {
-                            if (participation.submissions && participation.submissions.length > 0) {
-                                participation.submissions.forEach((submission) => {
-                                    submission.isSynced = true;
-                                });
-                            } else {
-                                // create empty fallback submission
-                                let submission;
-                                switch (exercise.type) {
-                                    case ExerciseType.TEXT:
-                                        submission = new TextSubmission();
-                                        break;
-                                    case ExerciseType.FILE_UPLOAD:
-                                        submission = new FileUploadSubmission();
-                                        break;
-                                    case ExerciseType.MODELING:
-                                        submission = new ModelingSubmission();
-                                        break;
-                                    case ExerciseType.PROGRAMMING:
-                                        submission = new ProgrammingSubmission();
-                                        break;
-                                    case ExerciseType.QUIZ:
-                                        submission = new QuizSubmission();
-                                        break;
-                                }
-                                submission.isSynced = true;
-                                participation.submissions = [submission];
-                            }
-                        });
-                    });
-                }
-            });
+            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => (this.exam = exam));
         });
-
         this.initLiveMode();
     }
 
     /**
      * exam start text confirmed and name entered, start button clicked and exam avtive
      */
-    examStarted() {
+    examStarted(studentExam: StudentExam) {
+        if (studentExam) {
+            this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
+            // init studentExam and activeExercise
+            this.studentExam = studentExam;
+            this.activeExercise = studentExam.exercises[0];
+            // initialize all submissions as synced
+            this.studentExam.exercises.forEach((exercise) => {
+                exercise.studentParticipations.forEach((participation) => {
+                    if (participation.submissions && participation.submissions.length > 0) {
+                        participation.submissions.forEach((submission) => {
+                            submission.isSynced = true;
+                        });
+                    } else {
+                        // create empty fallback submission
+                        let submission;
+                        switch (exercise.type) {
+                            case ExerciseType.TEXT:
+                                submission = new TextSubmission();
+                                break;
+                            case ExerciseType.FILE_UPLOAD:
+                                submission = new FileUploadSubmission();
+                                break;
+                            case ExerciseType.MODELING:
+                                submission = new ModelingSubmission();
+                                break;
+                            case ExerciseType.PROGRAMMING:
+                                submission = new ProgrammingSubmission();
+                                break;
+                            case ExerciseType.QUIZ:
+                                submission = new QuizSubmission();
+                                break;
+                        }
+                        submission.isSynced = true;
+                        participation.submissions = [submission];
+                    }
+                });
+            });
+        }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
     }
@@ -173,8 +169,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.paramSubscription.unsubscribe();
-        this.studentExamSubscription.unsubscribe();
         window.clearInterval(this.autoSaveTimer);
     }
 
@@ -219,6 +213,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.currentSubmissionComponent.updateSubmissionFromView();
         }
 
+        // goes through all exercises and checks if there are unsynched submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises.forEach((exercise: Exercise) => {
             exercise.studentParticipations.forEach((participation) => {

@@ -4,6 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -15,7 +16,7 @@ export class ExamNavigationBarComponent implements OnInit {
     exercises: Exercise[] = [];
 
     @Input()
-    endDate: string;
+    endDate: Moment;
 
     @Output() onExerciseChanged = new EventEmitter<Exercise>();
 
@@ -69,7 +70,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     get remainingTime(): string {
-        const timeDiff = moment.duration(moment(this.endDate).diff(moment()));
+        const timeDiff = moment.duration(this.endDate.diff(moment()));
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
         }
