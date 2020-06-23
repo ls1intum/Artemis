@@ -49,8 +49,8 @@ public class GradingInstruction implements Serializable {
     private GradingCriterion gradingCriterion;
 
     @OneToMany(mappedBy = "gradingInstruction")
-    @JsonIgnoreProperties({ "gradingInstruction", "result" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
