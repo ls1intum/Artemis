@@ -281,9 +281,9 @@ public class QuizScheduleService {
             return null;
         }
         QuizExercise quizExercise = getReadCacheFor(quizExerciseId).getExercise();
-        if(quizExercise == null) {
+        if (quizExercise == null) {
             updateQuizExercise(quizExercise);
-    }
+        }
         return quizExercise;
     }
 
@@ -474,7 +474,11 @@ public class QuizScheduleService {
         // global try-catch for error logging
         try {
             for (Long quizExerciseId : cachedQuizExercises.keySet()) {
+                // this way near cache is used (values will deserialize new objects)
                 QuizExerciseCache cachedQuiz = cachedQuizExercises.get(quizExerciseId);
+                // safety check because of concurrent and distributed processes
+                if (cachedQuiz == null)
+                    continue;
                 // Get fresh QuizExercise from DB
                 QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
