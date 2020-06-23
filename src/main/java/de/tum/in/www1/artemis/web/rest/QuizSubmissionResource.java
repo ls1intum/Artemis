@@ -202,12 +202,13 @@ public class QuizSubmissionResource {
             QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
             if (quizExercise == null) {
                 return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
             }
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
                 return ResponseEntity.status(403)
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise."))
+                        .body(null);
             }
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
             return ResponseEntity.ok(updatedQuizSubmission);

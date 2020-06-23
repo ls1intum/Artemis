@@ -217,9 +217,9 @@ public class DatabaseUtilService {
         studentExamRepository.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
-        exerciseGroupRepository.deleteAll();
         examRepository.deleteAll();
         assertThat(examRepository.findAll()).as("result data has been cleared").isEmpty();
+        exerciseGroupRepository.deleteAll();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
@@ -550,10 +550,11 @@ public class DatabaseUtilService {
 
     public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
         ExerciseGroup exerciseGroup1 = ModelFactory.generateExerciseGroup(true, exam);
-        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
-
         ExerciseGroup exerciseGroup2 = ModelFactory.generateExerciseGroup(true, exam);
-        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
+        exam = examRepository.save(exam);
+        // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
+        exerciseGroup1 = exam.getExerciseGroups().get(0);
+        exerciseGroup2 = exam.getExerciseGroups().get(1);
 
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
                 exerciseGroup1);

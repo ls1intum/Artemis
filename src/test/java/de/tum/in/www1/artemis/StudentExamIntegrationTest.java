@@ -136,6 +136,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // TODO: add other exercises, programming, modeling and file upload
 
+        // TODO: why is this necessary? this should be done in the reset method
         // Clean up
         for (Exercise exercise : response.getExercises()) {
             for (StudentParticipation s : response.getExercises().get(0).getStudentParticipations()) {
