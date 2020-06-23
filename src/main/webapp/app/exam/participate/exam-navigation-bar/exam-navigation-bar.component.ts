@@ -25,7 +25,7 @@ export class ExamNavigationBarComponent implements OnInit {
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
     criticalTime = false;
-    private isProgrammingExercise = false;
+    isProgrammingExercise = false;
 
     constructor(private layoutService: LayoutService) {}
 
@@ -52,11 +52,7 @@ export class ExamNavigationBarComponent implements OnInit {
         if (i > this.exercises.length - 1 || i < 0) {
             return;
         }
-        if (this.exercises[i] instanceof ProgrammingExercise) {
-            this.isProgrammingExercise = true;
-        } else {
-            this.isProgrammingExercise = false;
-        }
+        this.isProgrammingExercise = this.exercises[i] instanceof ProgrammingExercise;
         // set index and emit event
         this.exerciseIndex = i;
         this.onExerciseChanged.emit(this.exercises[i]);
