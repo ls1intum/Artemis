@@ -43,7 +43,11 @@
             "view": "View",
             "assessment": "Assessment",
             "id": "ID",
-            "exam": "Exam"
+            "exam": "Exam",
+            "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
+            "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
+            "startExerciseSuccess": "{{number}} exercises successfully prepared!",
+            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",

@@ -7,6 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -63,8 +64,29 @@ export class StudentExamsComponent implements OnInit {
      */
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
-            () => this.loadAll(),
-            (err) => this.handleError(err.error),
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.studentExamGenerationSuccess',
+                        params: { number: res?.body?.length },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.loadAll();
+            },
+            (err: HttpErrorResponse) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'danger',
+                        msg: 'artemisApp.studentExams.studentExamGenerationError',
+                        params: { message: err.message },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+            },
         );
     }
 
@@ -73,10 +95,29 @@ export class StudentExamsComponent implements OnInit {
      */
     startExercises() {
         this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
-            () => {
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.startExerciseSuccess',
+                        params: { number: res?.body?.length },
+                        timeout: 10000,
+                    },
+                    [],
+                );
                 this.loadAll();
             },
-            (err) => this.handleError(err.error),
+            (err: HttpErrorResponse) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'danger',
+                        msg: 'artemisApp.studentExams.startExerciseFailure',
+                        params: { message: err.message },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+            },
         );
     }
 
@@ -114,9 +155,5 @@ export class StudentExamsComponent implements OnInit {
         if (studentExams) {
             this.studentExams = studentExams;
         }
-    }
-
-    private handleError(error: any): void {
-        this.jhiAlertService.error(error.errorKey);
     }
 }
