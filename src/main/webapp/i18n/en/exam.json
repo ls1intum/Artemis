@@ -33,7 +33,8 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Submit & continue",
+            "submitProgrammingExercise": "Continue",
+            "submitOtherExercise": "Submit & continue",
             "noExam": "No data found"
         },
         "exerciseGroup": {

@@ -33,7 +33,8 @@
             "finishExam": "Klausur abgeben",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "submit": "Speichern & Weiter",
+            "submitProgrammingExercise": "Weiter",
+            "submitOtherExercise": "Speichern & Weitere",
             "noExam": "Keine Daten gefunden"
         },
         "exerciseGroup": {

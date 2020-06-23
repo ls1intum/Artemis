@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
@@ -24,6 +25,7 @@ export class ExamNavigationBarComponent implements OnInit {
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
     criticalTime = false;
+    private isProgrammingExercise = false;
 
     constructor(private layoutService: LayoutService) {}
 
@@ -40,12 +42,20 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
+        if (this.exercises[0] instanceof ProgrammingExercise) {
+            this.isProgrammingExercise = true;
+        }
     }
 
     changeExercise(i: number) {
         // out of index -> do nothing
         if (i > this.exercises.length - 1 || i < 0) {
             return;
+        }
+        if (this.exercises[i] instanceof ProgrammingExercise) {
+            this.isProgrammingExercise = true;
+        } else {
+            this.isProgrammingExercise = false;
         }
         // set index and emit event
         this.exerciseIndex = i;
