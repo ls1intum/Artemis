@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { SelectionRectangle, TextSelectEvent } from './text-select.directive';
+import { SelectionRectangle, TextSelectEvent } from '../../shared/text-select.directive';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
