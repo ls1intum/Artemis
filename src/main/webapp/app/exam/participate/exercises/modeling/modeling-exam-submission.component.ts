@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, ViewChild, Input, OnChanges } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -13,7 +13,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
 })
-export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -25,13 +25,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
-        window.scroll(0, 0);
     }
-
-    // TODO: check if ngOnChanges is needed
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {

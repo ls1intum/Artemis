@@ -1,16 +1,24 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable, from } from 'rxjs';
+import { Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Exam } from 'app/entities/exam.model';
+import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private localStorageService: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     private getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -44,11 +52,8 @@ export class ExamParticipationService {
     }
 
     /**
-     * save the examSession to the session Storage
-     *
-     * @param courseId
-     * @param examId
-     * @param studentExam
+     * saves latest examSessionToken to sessionStorage
+     * @param examSessionToken latest examSessionToken
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
         this.sessionStorage.store('ExamSessionToken', examSessionToken);
@@ -61,10 +66,12 @@ export class ExamParticipationService {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
         // TODO: convert Date from server
         return this.httpClient.get<StudentExam>(url).pipe(
-            tap((studentExam: StudentExam) => {
+            map((studentExam: StudentExam) => {
                 if (studentExam.examSessions) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
+
+                return this.convertStudentExamFromServer(studentExam);
             }),
         );
     }
@@ -78,5 +85,18 @@ export class ExamParticipationService {
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
         const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
+    }
+
+    private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
+        studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
+        studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
+        return studentExam;
+    }
+
+    private convertExamDateFromServer(exam: Exam): Exam {
+        exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : null;
+        exam.startDate = exam.startDate ? moment(exam.startDate) : null;
+        exam.endDate = exam.endDate ? moment(exam.endDate) : null;
+        return exam;
     }
 }

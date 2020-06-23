@@ -9,9 +9,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { ExamSessionService } from 'app/exam/manage/exam-session/exam-session.service';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -27,15 +24,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Output() onExamStarted: EventEmitter<void> = new EventEmitter<void>();
     course: Course | null;
-    courseId: number;
     startEnabled: boolean;
     confirmed: boolean;
-    examId: number;
 
     formattedGeneralInformation: SafeHtml | null;
     formattedConfirmationText: SafeHtml | null;
 
-    interval: any;
+    interval: number;
     waitingForExamStart = false;
     timeUntilStart = '0';
     formattedStartDate = '';
@@ -48,9 +43,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private accountService: AccountService,
-        private sessionStorage: SessionStorageService,
-        private examSessionService: ExamSessionService,
-        private route: ActivatedRoute,
     ) {}
 
     /**
@@ -67,12 +59,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
-        this.formattedStartDate = this.exam.startDate ? moment(this.exam.startDate).format('LT') : '';
-
-        this.route.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
-            this.examId = +params['examId'];
-        });
+        this.formattedStartDate = this.exam.startDate ? this.exam.startDate.format('LT') : '';
 
         this.accountService.identity().then((user) => {
             if (user && user.name) {
@@ -102,18 +89,15 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check if exam already started
      */
     hasStarted(): boolean {
-        return this.exam?.startDate ? moment(this.exam.startDate).isBefore(moment()) : false;
+        return this.exam?.startDate ? this.exam.startDate.isBefore(moment()) : false;
     }
 
-    /**
-     * TODO: add session management, this function is bound to the start exam button
-     */
     startExam() {
         if (this.hasStarted()) {
             this.onExamStarted.emit();
         } else {
             this.waitingForExamStart = true;
-            this.interval = setInterval(() => {
+            this.interval = window.setInterval(() => {
                 this.updateDisplayedTimes();
             }, 100);
         }
@@ -130,7 +114,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 this.onExamStarted.emit();
             } else {
-                this.timeUntilStart = this.relativeTimeText(moment(this.exam.startDate).diff(moment(), 'seconds'));
+                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(moment(), 'seconds'));
             }
         } else {
             this.timeUntilStart = '';
@@ -172,7 +156,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get startButtonEnabled(): boolean {
-        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && moment(this.exam.visibleDate).isBefore(moment()));
+        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(moment()));
     }
 
     get falseName(): boolean {
