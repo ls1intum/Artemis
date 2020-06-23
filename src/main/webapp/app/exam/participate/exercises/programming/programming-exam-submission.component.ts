@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -21,6 +21,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     @Input()
     courseId: number;
 
+    @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
     codeEditorComponent: ExamCodeEditorStudentContainerComponent;
 
     isSaving: boolean;
