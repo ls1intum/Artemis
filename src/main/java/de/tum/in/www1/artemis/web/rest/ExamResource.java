@@ -149,21 +149,26 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId      the course to which the exam belongs
-     * @param examId        the exam to find
-     * @param withStudents  boolean flag whether to include all students registered for the exam
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @param withStudents          boolean flag whether to include all students registered for the exam
+     * @param withExerciseGroups    boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
+            @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        if (!withStudents) {
+        if (!withStudents && !withExerciseGroups) {
             return ResponseEntity.ok(examService.findOne(examId));
+        }
+        if (withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithExerciseGroups(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));

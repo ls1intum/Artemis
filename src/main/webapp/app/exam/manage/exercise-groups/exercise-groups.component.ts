@@ -43,8 +43,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe(
-            (res) => (this.exerciseGroups = res.body),
+        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
+            (res) => (this.exerciseGroups = res.body!.exerciseGroups),
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
