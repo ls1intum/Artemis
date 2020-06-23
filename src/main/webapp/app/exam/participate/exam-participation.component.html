@@ -3,7 +3,7 @@
         [startView]="true"
         [exam]="studentExam.exam"
         *ngIf="isVisible() && !isOver() && !examConfirmed"
-        (onExamStarted)="examConfirmed = true"
+        (onExamStarted)="examStarted()"
     ></jhi-exam-participation-cover>
     <jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 

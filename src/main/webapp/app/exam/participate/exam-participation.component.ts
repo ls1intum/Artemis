@@ -44,7 +44,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     unsavedChanges = false;
     disconnected = false;
 
-    // TODO: save on server
     examConfirmed = false;
 
     /**
@@ -76,9 +75,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
 
-            this.studentExamSubscription = this.examParticipationService.getStudentExamFromServer(this.courseId, this.examId).subscribe((response) => {
-                // save exam to localStorage
-                const studentExam = response.body!;
+            this.studentExamSubscription = this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe((studentExam) => {
                 this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
                 // init studentExam and activeExercise
                 this.studentExam = studentExam;
@@ -118,8 +115,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             });
         });
 
-        this.startAutoSaveTimer();
         this.initLiveMode();
+    }
+
+    /**
+     * exam start text confirmed and name entered, start button clicked and exam avtive
+     */
+    examStarted() {
+        this.startAutoSaveTimer();
     }
 
     /**

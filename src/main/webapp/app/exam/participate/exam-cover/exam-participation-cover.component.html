@@ -5,7 +5,7 @@
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div style="text-align: center;">
         <label for="confirmBox"><span [innerHTML]="formattedConfirmationText"></span></label>
-        <input type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
+        <input [(ngModel)]="confirmed" type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
     </div>
     <div *ngIf="startView" style="text-align: center;">
         <div class="login-form">
@@ -22,7 +22,7 @@
                         name="fullname"
                         id="fullname"
                         placeholder="Name"
-                        [(ngModel)]="fullname"
+                        [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'blur' }"
                         (change)="enableStartButton()"
                     />
