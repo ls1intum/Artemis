@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { StartExamResponse } from 'app/entities/start-exam-response.model';
+import { catchError, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -23,14 +23,13 @@ export class ExamParticipationService {
      * @param examId
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
-        // check for localStorage
-        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
-        if (localStoredExam) {
-            return Observable.of(localStoredExam);
-        } else {
-            // download student exam from server
-            return from(this.getStudentExamFromServer(courseId, examId));
-        }
+        // download student exam from server
+        return this.getStudentExamFromServer(courseId, examId).pipe(
+            catchError(() => {
+                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
+                return Observable.of(localStoredExam);
+            }),
+        );
     }
 
     /**
@@ -58,15 +57,14 @@ export class ExamParticipationService {
     /**
      * Retrieves a {@link StudentExam} from server
      */
-    private getStudentExamFromServer(courseId: number, examId: number): Promise<StudentExam> {
+    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
         const url = `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}/studentExams/conduction`;
-
-        return new Promise((resolve) => {
-            this.httpClient.get<StartExamResponse>(url).subscribe((startExamResponse) => {
-                this.saveExamSessionTokenToSessionStorage(startExamResponse.examSession.sessionToken);
-                resolve(startExamResponse.studentExam);
-            });
-        });
+        // TODO: convert Date from server
+        return this.httpClient.get<StudentExam>(url).pipe(
+            tap((studentExam: StudentExam) => {
+                this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
+            }),
+        );
     }
 
     /**

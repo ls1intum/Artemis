@@ -40,7 +40,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     timeUntilStart = '0';
     formattedStartDate = '';
 
-    fullname?: string;
+    accountName = '';
+    enteredName?: string;
     falseName = false;
 
     constructor(
@@ -68,18 +69,23 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
         this.formattedStartDate = this.exam.startDate ? moment(this.exam.startDate).format('LT') : '';
-        this.interval = setInterval(() => {
-            this.updateDisplayedTimes();
-        }, 100);
 
         this.route.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
+
+        this.accountService.identity().then((user) => {
+            if (user && user.name) {
+                this.accountName = user.name;
+            }
+        });
     }
 
     ngOnDestroy() {
-        clearInterval(this.interval);
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
     }
 
     /**
@@ -88,34 +94,17 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * if confirmed, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
-        this.confirmed = !this.confirmed;
         if (this.startView) {
-            if (this.confirmed) {
-                this.interval = setInterval(() => {
-                    this.enableStartButton().then((enable) => (this.startEnabled = enable));
-                }, 100);
-            } else {
-                this.startEnabled = false;
-            }
+            this.startEnabled = this.confirmed;
         }
     }
 
     /**
      * check, whether exam has started yet and we therefore can enable the Start Exam Button
      */
-    async enableStartButton() {
-        let fullname = '';
-        await this.accountService.identity().then((user) => {
-            fullname = user?.name ?? '';
-        });
-
-        if (this.fullname && this.fullname !== fullname) {
-            this.falseName = true;
-        } else {
-            this.falseName = false;
-        }
-
-        if (this.fullname && this.fullname === fullname && this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
+    enableStartButton() {
+        this.falseName = this.enteredName !== this.accountName;
+        if (!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && moment(this.exam.visibleDate).isBefore(moment())) {
             return true;
         } else {
             return false;
@@ -129,7 +118,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (!this.exam) {
             return false;
         }
-        return this.exam.startDate ? moment(this.exam.startDate).isAfter(moment()) : false;
+        return this.exam.startDate ? moment().isBefore(moment(this.exam.startDate)) : false;
     }
 
     /**
@@ -138,6 +127,12 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startExam() {
         if (this.notStarted()) {
             this.waitingForExamStart = true;
+            this.interval = setInterval(() => {
+                this.updateDisplayedTimes();
+                if (!this.notStarted()) {
+                    this.onExamStarted.emit();
+                }
+            }, 100);
         } else {
             this.onExamStarted.emit();
         }
