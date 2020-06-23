@@ -186,4 +186,35 @@ public class QuizSubmissionResource {
 
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * PUT /exercises/:exerciseId/submissions/exam : Update a QuizSubmission for exam mode
+     *
+     * @param exerciseId        the id of the exercise for which to update the submission
+     * @param quizSubmission    the quizSubmission to update
+     * @return                  the ResponseEntity with status 200 and body the result or the appropriate error code.
+     */
+    @PutMapping("exercises/{exerciseId}/submissions/exam")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<QuizSubmission> submitForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+        log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
+        try {
+            QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
+            if (quizExercise == null) {
+                return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+            }
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+                return ResponseEntity.status(403)
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
+            }
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
+            return ResponseEntity.ok(updatedQuizSubmission);
+        }
+        catch (QuizSubmissionException e) {
+            log.warn("QuizSubmissionException :" + e.getMessage() + " in quiz " + exerciseId);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, e.getMessage())).body(null);
+        }
+    }
 }

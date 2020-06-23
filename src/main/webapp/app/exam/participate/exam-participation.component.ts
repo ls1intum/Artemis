@@ -244,8 +244,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                         // this.programmingSubmissionService;
                         break;
                     case ExerciseType.QUIZ:
-                        // TODO find submissionService
-                        return null;
+                        this.examParticipationService
+                            .updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission)
+                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        break;
                 }
             });
         }
