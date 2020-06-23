@@ -1,0 +1,98 @@
+cabal-version: 2.2
+name: test
+version: 0.1
+build-type: Simple
+
+Flag Prod
+  Description: Enable production mode
+  Default: False
+  Manual: True
+
+Flag Solution
+  Description: Set to True to test solution submitted as an assignment
+  Default: False
+  Manual: True
+
+common common-all
+  default-language: Haskell2010
+  build-depends:
+    base == 4.*
+
+common common-tests
+  import: common-all
+  hs-source-dirs: test
+  other-modules: Interface
+  build-depends:
+    tasty == 1.*,
+    tasty-smallcheck == 0.*,
+    smallcheck == 1.*,
+    tasty-quickcheck == 0.*,
+    QuickCheck == 2.*,
+    quickcheck-assertions == 0.*,
+    tasty-hunit == 0.*,
+    tasty-ant-xml == 1.*,
+    solution
+  ghc-options:
+    -main-is Test
+    -- necessary to allow interrupts of non-allocating loops
+    -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/bugs.html#bugs-in-ghc
+    -fno-omit-yields
+
+-- build a normal submission
+library submission
+  import: common-all
+  -- Safe Haskell mode; disallow unsafe features
+  default-extensions: Safe
+  ghc-options: -fpackage-trust -trust base
+  hs-source-dirs: assignment/src
+  if flag(Solution)
+    exposed-modules: Solution
+  else
+    exposed-modules: Exercise
+
+-- build the template
+library template
+  import: common-all
+  -- There is no template folder on the production server, but cabal tries to build all executables
+  -- without exception (https://github.com/commercialhaskell/stack/issues/3486). We hence disable
+  -- the build explicitly with a flag.
+  if flag(Prod)
+    buildable: False
+  else
+    hs-source-dirs: template/src
+  exposed-modules: Exercise
+
+-- build the solution
+library solution
+  import: common-all
+  hs-source-dirs: solution/src
+  exposed-modules: Solution
+
+-- run tests for a submission
+executable test
+  import: common-tests
+  build-depends: submission
+  main-is: Test.hs
+  if flag(Solution)
+    -- rename the solution module so that it can be picked up by the interface
+    mixins: submission (Solution as Exercise)
+
+-- run tests for template (locally)
+executable test-template
+  import: common-tests
+  build-depends: template
+  main-is: Test.hs
+  if flag(Prod)
+    buildable: False
+
+-- run tests for solution (locally)
+executable test-solution
+  import: common-tests
+  main-is: Test.hs
+  mixins:
+    -- use solution as both, submission and solution
+    solution (Solution as Exercise),
+    solution (Solution as Solution)
+  if flag(Prod)
+    buildable: False
+

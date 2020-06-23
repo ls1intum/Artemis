@@ -127,7 +127,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the currently logged in user is at least an instructor in the course of the given exercise.
-     * The course is identified from either {@link Exercise#getCourse()} or {@link Exam#getCourse()}
+     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
