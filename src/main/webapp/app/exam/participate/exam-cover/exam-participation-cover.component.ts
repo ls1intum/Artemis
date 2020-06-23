@@ -23,7 +23,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     course: Course | null;
     courseId = 0;
-    title: string;
+    title: string; // needed? unused at the moment
     startEnabled: boolean;
     confirmed: boolean;
     examId: number;
