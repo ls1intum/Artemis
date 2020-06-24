@@ -1,0 +1,10 @@
+assignment/
+solution/
+template/
+test-reports/
+
+# Haskell output files
+*.o
+*.hi
+# Stack output
+.stack-work/
