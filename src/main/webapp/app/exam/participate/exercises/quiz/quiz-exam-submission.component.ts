@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -21,7 +21,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -52,12 +52,10 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         smoothscroll.polyfill();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
-            this.initQuiz();
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+    ngOnInit(): void {
+        this.initQuiz();
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     /**
