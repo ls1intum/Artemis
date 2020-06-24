@@ -54,6 +54,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(): void {
         // Saves the changed files but does not commit the changes, as this would trigger a CI run
-        this.codeEditorComponent.actions.saveChangedFiles();
+        this.codeEditorComponent.actions.commit();
     }
 }
