@@ -73,7 +73,7 @@ export class ExamNavigationBarComponent implements OnInit {
             : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0');
     }
 
-    isProgrammingExercise(exercise: Exercise) {
-        return exercise.type === ExerciseType.PROGRAMMING;
+    isProgrammingExercise() {
+        return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
 }
