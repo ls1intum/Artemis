@@ -27,9 +27,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;
-    readonly JAVA = ProgrammingLanguage.JAVA;
-    readonly PYTHON = ProgrammingLanguage.PYTHON;
-    readonly C = ProgrammingLanguage.C;
+    ProgrammingLanguage = ProgrammingLanguage;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
