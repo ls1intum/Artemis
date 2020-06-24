@@ -193,7 +193,9 @@ public class ExerciseGroupResource {
             exerciseService.delete(exercise.getId(), false, false);
         }
 
-        exerciseGroupService.delete(exerciseGroupId);
+        Exam exam = examService.findOneWithExerciseGroups(examId);
+        exam.removeExerciseGroup(exerciseGroup);
+        examService.save(exam);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
     }
