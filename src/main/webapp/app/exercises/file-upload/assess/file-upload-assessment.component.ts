@@ -25,6 +25,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -81,6 +82,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
         private fileService: FileService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -417,8 +419,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
-
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     downloadFile(filePath: string) {

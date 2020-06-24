@@ -1,0 +1,3 @@
+# Haskell output files
+*.o
+*.hi

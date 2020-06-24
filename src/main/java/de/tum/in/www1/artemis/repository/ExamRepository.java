@@ -49,4 +49,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     @Query("SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END FROM Exam exam LEFT JOIN exam.registeredUsers registeredUsers WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}")
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
+
+    @Query("select exam.id, count(registeredUsers) from Exam exam left join exam.registeredUsers registeredUsers where exam.id in :#{#examIds} group by exam.id")
+    List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
+
 }
