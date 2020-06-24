@@ -448,7 +448,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateOrderOfExerciseGroups() throws Exception {
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         exerciseGroup1.setTitle("first");
@@ -461,15 +461,39 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.addExerciseGroup(exerciseGroup1);
         exam.addExerciseGroup(exerciseGroup2);
         exam.addExerciseGroup(exerciseGroup3);
+        examRepository.save(exam);
 
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
+        exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
         List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(exerciseGroup1);
 
-        request.put("/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", null, HttpStatus.OK); // TODO
+        // Should save new order
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam.getId());
+        List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
+        assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
+        assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
+        assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
 
-        // TODO: verify exam access service has been called
-        // TODO: soll failen bei anderer exercise group
+        // Should fail with too many exercise groups
+        orderedExerciseGroups.add(exerciseGroup1);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+
+        // Should fail with too few exercise groups
+        orderedExerciseGroups.remove(3);
+        orderedExerciseGroups.remove(2);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+
+        // Should fail with different exercise group
+        orderedExerciseGroups = new ArrayList<>();
+        orderedExerciseGroups.add(exerciseGroup2);
+        orderedExerciseGroups.add(exerciseGroup3);
+        orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
     }
 }
