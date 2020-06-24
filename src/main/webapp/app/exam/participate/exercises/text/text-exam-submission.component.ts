@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -15,7 +15,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -36,11 +36,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.studentSubmission.currentValue !== changes.studentSubmission.previousValue) {
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+    ngOnInit() {
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     updateViewFromSubmission(): void {
