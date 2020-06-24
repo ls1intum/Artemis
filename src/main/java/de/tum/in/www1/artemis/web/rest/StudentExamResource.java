@@ -181,6 +181,16 @@ public class StudentExamResource {
         if (participation != null) {
             // remove inner exercise from participation
             participation.setExercise(null);
+            // only include the latest submission
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+            if (latestSubmission.isPresent()) {
+                participation.setSubmissions(Set.of(latestSubmission.get()));
+                // Set the latest result into the participation as the client expects it there for programming exercise feedback
+                Result result = latestSubmission.get().getResult();
+                if (result != null) {
+                    participation.setResults(Set.of(result));
+                }
+            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
         }
