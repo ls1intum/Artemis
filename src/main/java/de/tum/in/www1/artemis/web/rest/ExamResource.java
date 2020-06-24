@@ -391,7 +391,7 @@ public class ExamResource {
         log.debug("REST request to get exam {} for conduction", examId);
         return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
     }
-    
+
     /**
      * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
