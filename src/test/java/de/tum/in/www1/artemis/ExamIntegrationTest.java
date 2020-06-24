@@ -71,6 +71,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @SpyBean
     ExamAccessService examAccessService;
 
+    private List<User> users;
+
     private Course course1;
 
     private Course course2;
@@ -81,7 +83,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(4, 5, 1);
+        users = database.addUsers(4, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -454,5 +456,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetExamForConduction() throws Exception {
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        Exam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/conduction", HttpStatus.OK, Exam.class);
+        assertThat(response).isEqualTo(exam);
+        verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
     }
 }
