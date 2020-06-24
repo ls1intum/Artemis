@@ -117,7 +117,8 @@
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
-                "addProgrammingExercise": "Programmieraufgabe hinzufügen"
+                "addProgrammingExercise": "Programmieraufgabe hinzufügen",
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
