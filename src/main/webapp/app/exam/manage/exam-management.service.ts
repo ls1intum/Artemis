@@ -133,9 +133,9 @@ export class ExamManagementService {
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
-     * @returns a list of the generated participations
+     * @returns number of generated participations
      */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<Participation[]>> {
+    startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
     }
 

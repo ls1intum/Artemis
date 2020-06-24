@@ -103,7 +103,7 @@ export class StudentExamsComponent implements OnInit {
                     {
                         type: 'success',
                         msg: 'artemisApp.studentExams.startExerciseSuccess',
-                        params: { number: res?.body?.length },
+                        params: { number: res?.body },
                         timeout: 10000,
                     },
                     [],

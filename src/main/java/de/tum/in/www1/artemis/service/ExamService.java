@@ -330,9 +330,9 @@ public class ExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return list of generated participations
+     * @return number of generated Participations
      */
-    public List<Participation> startExercises(Long examId) {
+    public Integer startExercises(Long examId) {
 
         var exam = examRepository.findWithStudentExamsExercisesParticipationsSubmissionsById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
@@ -356,6 +356,6 @@ public class ExamService {
             }
         }
 
-        return generatedParticipations;
+        return generatedParticipations.size();
     }
 }
