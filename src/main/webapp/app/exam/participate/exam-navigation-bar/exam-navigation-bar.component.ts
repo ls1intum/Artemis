@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
@@ -25,6 +25,7 @@ export class ExamNavigationBarComponent implements OnInit {
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
     criticalTime = false;
+    icon: string;
 
     constructor(private layoutService: LayoutService) {}
 
@@ -75,5 +76,19 @@ export class ExamNavigationBarComponent implements OnInit {
 
     isProgrammingExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
+    }
+
+    setExerciseButtonStatus(i: number): string {
+        this.icon = 'edit';
+        if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
+            // make button blue
+            return 'synced';
+        } else {
+            // make button yellow
+            return 'notSynced';
+        }
+        if (this.exercises[i].participationStatus === ParticipationStatus.INACTIVE) {
+            return 'inactive';
+        }
     }
 }
