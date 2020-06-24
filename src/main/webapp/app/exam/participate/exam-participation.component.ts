@@ -56,6 +56,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
+    _reload = true;
+
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -194,6 +196,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     onExerciseChange(exercise: Exercise): void {
         this.triggerSave();
         this.activeExercise = exercise;
+        this.reloadSubmissionComponent();
+    }
+
+    private reloadSubmissionComponent() {
+        setTimeout(() => (this._reload = false));
+        setTimeout(() => (this._reload = true));
     }
 
     /**
