@@ -150,21 +150,29 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId      the course to which the exam belongs
-     * @param examId        the exam to find
-     * @param withStudents  boolean flag whether to include all students registered for the exam
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @param withStudents          boolean flag whether to include all students registered for the exam
+     * @param withExerciseGroups    boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
+            @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        if (!withStudents) {
+        if (!withStudents && !withExerciseGroups) {
             return ResponseEntity.ok(examService.findOne(examId));
+        }
+        if (withStudents && withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroups(examId));
+        }
+        if (withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithExerciseGroups(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
@@ -382,5 +390,47 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
+    }
+    
+    /**
+     * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
+     * exercise groups do not belong to the exam the operation is aborted.
+     *
+     * @param courseId              the id of the course
+     * @param examId                the id of the exam
+     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
+     * @return the list of exercise groups
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
+        log.debug("REST request to update the order of exercise groups of exam : {}", examId);
+
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Exam exam = examService.findOneWithExerciseGroups(examId);
+
+        // Ensure that exactly as many exercise groups have been received as are currently related to the exam
+        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+            return forbidden();
+        }
+
+        // Ensure that all received exercise groups are already related to the exam
+        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
+            if (!exam.getExerciseGroups().contains(exerciseGroup)) {
+                return forbidden();
+            }
+            // Set the exam manually as it won't be included in orderedExerciseGroups
+            exerciseGroup.setExam(exam);
+        }
+
+        exam.setExerciseGroups(orderedExerciseGroups);
+        exam = examService.save(exam);
+
+        return ResponseEntity.ok(exam.getExerciseGroups());
     }
 }

@@ -617,7 +617,9 @@ public class UserService {
      * @return all users matching search criteria
      */
     public Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
-        return userRepository.searchAllByLoginOrName(pageable, loginOrName).map(UserDTO::new);
+        Page<User> users = userRepository.searchAllByLoginOrName(pageable, loginOrName);
+        users.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        return users.map(UserDTO::new);
     }
 
     /**

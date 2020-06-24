@@ -8,11 +8,12 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -29,6 +30,7 @@ export class ExerciseGroupsComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
+        private examManagementService: ExamManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -48,8 +50,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe(
-            (res) => (this.exerciseGroups = res.body),
+        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
+            (res) => (this.exerciseGroups = res.body!.exerciseGroups),
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
@@ -136,5 +138,37 @@ export class ExerciseGroupsComponent implements OnInit {
                 );
                 break;
         }
+    }
+
+    /**
+     * Move the exercise group up one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveUp(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
+        }
+        this.saveOrder();
+    }
+
+    /**
+     * Move the exercise group down one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveDown(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
+        }
+        this.saveOrder();
+    }
+
+    private saveOrder(): void {
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
+            (res) => (this.exerciseGroups = res.body),
+            (err) => {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+                console.log(err);
+            },
+        );
     }
 }
