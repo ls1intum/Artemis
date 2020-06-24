@@ -182,7 +182,11 @@ public class ExamResource {
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
         Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
-        return courseAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findAllByCourseId(courseId)));
+        return courseAccessFailure.orElseGet(() -> {
+            List<Exam> exams = examService.findAllByCourseId(courseId);
+            examService.setNumberOfRegisteredUsersForExams(exams);
+            return ResponseEntity.ok(exams);
+        });
     }
 
     /**
