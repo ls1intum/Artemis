@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +21,14 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
+import de.tum.in.www1.artemis.service.ExerciseGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -67,6 +66,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    ExerciseGroupService exerciseGroupService;
 
     @SpyBean
     ExamAccessService examAccessService;
@@ -465,5 +467,95 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/conduction", HttpStatus.OK, Exam.class);
         assertThat(response).isEqualTo(exam);
         verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
+    }
+    
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateOrderOfExerciseGroups() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+        exerciseGroup1.setTitle("first");
+        ExerciseGroup exerciseGroup2 = new ExerciseGroup();
+        exerciseGroup2.setTitle("second");
+        ExerciseGroup exerciseGroup3 = new ExerciseGroup();
+        exerciseGroup3.setTitle("third");
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.addExerciseGroup(exerciseGroup2);
+        exam.addExerciseGroup(exerciseGroup3);
+        examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
+        exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
+
+        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup1);
+        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup1);
+        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup2);
+        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        exercise1_1 = textExerciseRepository.save(exercise1_1);
+        exercise1_2 = textExerciseRepository.save(exercise1_2);
+        exercise2_1 = textExerciseRepository.save(exercise2_1);
+        exercise3_1 = textExerciseRepository.save(exercise3_1);
+        exercise3_2 = textExerciseRepository.save(exercise3_2);
+        exercise3_3 = textExerciseRepository.save(exercise3_3);
+
+        examWithExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
+        exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
+        List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>();
+        orderedExerciseGroups.add(exerciseGroup2);
+        orderedExerciseGroups.add(exerciseGroup3);
+        orderedExerciseGroups.add(exerciseGroup1);
+
+        // Should save new order
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.OK);
+        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam.getId());
+        List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
+        assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
+        assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
+        assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
+
+        // Exercises should be preserved
+        Exam savedExam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(exam.getId()).get();
+        ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
+        ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
+        ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
+        assertThat(savedExerciseGroup1.getExercises().size()).isEqualTo(2);
+        assertThat(savedExerciseGroup2.getExercises().size()).isEqualTo(1);
+        assertThat(savedExerciseGroup3.getExercises().size()).isEqualTo(3);
+        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_1)).isTrue();
+        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_2)).isTrue();
+        assertThat(savedExerciseGroup2.getExercises().contains(exercise2_1)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_1)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_2)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_3)).isTrue();
+
+        // Should fail with too many exercise groups
+        orderedExerciseGroups.add(exerciseGroup1);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+
+        // Should fail with too few exercise groups
+        orderedExerciseGroups.remove(3);
+        orderedExerciseGroups.remove(2);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+
+        // Should fail with different exercise group
+        orderedExerciseGroups = new ArrayList<>();
+        orderedExerciseGroups.add(exerciseGroup2);
+        orderedExerciseGroups.add(exerciseGroup3);
+        orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+>>>>>>> 164b2afc978ea45a6629a85790410392177a6229
     }
 }

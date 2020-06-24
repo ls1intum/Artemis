@@ -40,6 +40,8 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 5, max = 100)
     private String email;
 
+    private String visibleRegistrationNumber;
+
     @Size(max = 256)
     private String imageUrl;
 
@@ -61,14 +63,14 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
-                user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getLastNotificationRead(),
-                user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
+                user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
+                user.getLastNotificationRead(), user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
     }
 
-    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
-            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, Set<String> groups,
-            Set<GuidedTourSetting> guidedTourSettings) {
+    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
+            String langKey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities,
+            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings) {
 
         this.id = id;
         this.login = login;
@@ -76,6 +78,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.visibleRegistrationNumber = visibleRegistrationNumber;
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
@@ -135,6 +138,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getVisibleRegistrationNumber() {
+        return visibleRegistrationNumber;
+    }
+
+    public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
+        this.visibleRegistrationNumber = visibleRegistrationNumber;
     }
 
     public String getImageUrl() {
@@ -198,6 +209,6 @@ public class UserDTO extends AuditingEntityDTO {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
                 + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
-                + ", authorities=" + authorities + ",guidedTourSettings=" + guidedTourSettings + "}";
+                + ", authorities=" + authorities + "}";
     }
 }

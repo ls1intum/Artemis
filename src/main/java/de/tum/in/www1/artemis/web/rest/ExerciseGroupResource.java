@@ -193,8 +193,13 @@ public class ExerciseGroupResource {
             exerciseService.delete(exercise.getId(), false, false);
         }
 
+        // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
+        // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
+        // receive null values for the gaps in exam.getExerciseGroups().
         Exam exam = examService.findOneWithExerciseGroups(examId);
-        exam.removeExerciseGroup(exerciseGroup);
+        List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
+        filteredExerciseGroups.removeIf(e -> e.getId().equals(exerciseGroupId));
+        exam.setExerciseGroups(filteredExerciseGroups);
         examService.save(exam);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
