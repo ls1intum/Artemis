@@ -704,16 +704,25 @@ public class DatabaseUtilService {
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
+
+        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
+
         testCriterion.setExercise(exercise);
         var criteria = new ArrayList<GradingCriterion>();
         criteria.add(emptyCriterion);
         criteria.add(testCriterion);
+        criteria.add(testCriterion2);
         exercise.setGradingCriteria(criteria);
         return exercise.getGradingCriteria();
     }
@@ -1494,6 +1503,17 @@ public class DatabaseUtilService {
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);
+        quizExercise.addQuestions(createMultipleChoiceQuestion());
+        quizExercise.addQuestions(createDragAndDropQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
+        return quizExercise;
+    }
+
+    @NotNull
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());

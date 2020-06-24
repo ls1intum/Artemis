@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -58,6 +59,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ObjectMapper mapper;
+
+    @Autowired
+    AssessmentService assessmentService;
 
     private ModelingExercise modelingExercise;
 
@@ -423,8 +427,15 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
-        storedFeedbackResult.evaluateFeedback(20);
-        sentFeedbackResult.evaluateFeedback(20);
+        Double calculatedScore = assessmentService.calculateTotalScore(storedFeedback);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 20.0);
+        storedFeedbackResult.setScore(totalScore, 20.0);
+        storedFeedbackResult.setResultString(totalScore, 20.0);
+
+        Double calculatedScore2 = assessmentService.calculateTotalScore(sentFeedback);
+        double totalScore2 = assessmentService.calculateTotalScore(calculatedScore2, 20.0);
+        sentFeedbackResult.setScore(totalScore2, 20.0);
+        sentFeedbackResult.setResultString(totalScore2, 20.0);
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> {
             assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(FeedbackType.MANUAL);
