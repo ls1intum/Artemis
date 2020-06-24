@@ -5,7 +5,7 @@
 <!-- nGif codeeditor end -->
 <!-- nGif codeeditorwith clone button start -->
 <div *ngIf="!isOnlyCodeEditorMode() && !isNotOfflineIdeMode()">
-    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
+    <jhi-exercise-details-student-actions jhiOrionFilter [examMode]="true" [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
 </div>

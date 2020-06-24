@@ -74,6 +74,6 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     isProgrammingExercise(exercise: Exercise) {
-        return exercise.type == ExerciseType.PROGRAMMING;
+        return exercise.type === ExerciseType.PROGRAMMING;
     }
 }
