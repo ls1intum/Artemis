@@ -468,7 +468,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response).isEqualTo(exam);
         verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
     }
-    
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateOrderOfExerciseGroups() throws Exception {
@@ -556,6 +556,5 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
->>>>>>> 164b2afc978ea45a6629a85790410392177a6229
     }
 }
