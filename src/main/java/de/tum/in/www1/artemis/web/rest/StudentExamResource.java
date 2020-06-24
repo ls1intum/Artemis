@@ -10,10 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -41,10 +41,13 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
+    private final QuizExerciseService quizExerciseService;
+
     private final ParticipationService participationService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService) {
+            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
+            QuizExerciseService quizExerciseService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -52,6 +55,7 @@ public class StudentExamResource {
         this.studentExamRepository = studentExamRepository;
         this.examSessionService = examSessionService;
         this.participationService = participationService;
+        this.quizExerciseService = quizExerciseService;
     }
 
     /**
@@ -96,8 +100,6 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: remove Transactional here
-    @Transactional(readOnly = true)
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
@@ -115,6 +117,18 @@ public class StudentExamResource {
         }
         var studentExam = optionalStudentExam.get();
 
+        // we reload the quiz exercise because we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used in
+        // studentExamRepository.findWithExercisesByUserIdAndExamId
+        for (int i = 0; i < studentExam.getExercises().size(); i++) {
+            var exercise = studentExam.getExercises().get(i);
+            if (exercise instanceof QuizExercise) {
+                // reload and replace the quiz exercise
+                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                quizExercise.filterForStudentsDuringQuiz();
+                studentExam.getExercises().set(i, quizExercise);
+            }
+        }
+
         // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
@@ -126,46 +140,15 @@ public class StudentExamResource {
             filterForExam(exercise, participations);
 
             // Filter attributes of exercises that should not be visible to the student
-            if (exercise instanceof QuizExercise) {
-                // NOTE: Currently, we load the quiz questions using the Transactional mechanism above as a workaround, however this is not ideal
-                // TODO: load the quiz questions for the quiz exercise and add it to the exercise
-
-                var quizExercise = (QuizExercise) exercise;
-                // filterSensitiveInformation() does not work for quizzes, because then the questions won't be visible
-                // the following method makes sure that questions and other sub elements are contained (Transactional), but solution aspects are hidden
-                quizExercise.filterForStudentsDuringQuiz();
-
-                // TODO: the following code should not be necessary, double check!
-                for (var studentParticipation : quizExercise.getStudentParticipations()) {
-                    // should only be one participation for one student
-                    for (var submission : studentParticipation.getSubmissions()) {
-                        // should only be one participation for one student
-                        var quizSubmission = (QuizSubmission) submission;
-                        for (var submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                                // load these objects with the transaction
-                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().size();
-                            }
-                            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                                // load these objects with the transaction
-                                ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings().size();
-                            }
-                            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                                // load these objects with the transaction
-                                ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().size();
-                            }
-                        }
-                    }
-                }
-            }
-            else {
+            // Note: sensitive information for quizzes was already removed in the for loop above
+            if (!(exercise instanceof QuizExercise)) {
                 // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
                 exercise.filterSensitiveInformation();
             }
         }
 
-        // ExamSession examSession = this.examSessionService.startExamSession(studentExam);
-        // studentExam.setExamSessions(Set.of(examSession));
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam);
+        studentExam.setExamSessions(Set.of(examSession));
 
         // not needed
         studentExam.getExam().setCourse(null);
