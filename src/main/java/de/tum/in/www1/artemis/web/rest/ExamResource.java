@@ -168,6 +168,9 @@ public class ExamResource {
         if (!withStudents && !withExerciseGroups) {
             return ResponseEntity.ok(examService.findOne(examId));
         }
+        if (withStudents && withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroups(examId));
+        }
         if (withExerciseGroups) {
             return ResponseEntity.ok(examService.findOneWithExerciseGroups(examId));
         }
@@ -379,9 +382,9 @@ public class ExamResource {
      * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *
-     * @param courseId          the id of the course
-     * @param examId            the id of the exam
-     * @param orderedExerciseGroups    the exercise groups of the exam in the desired order.
+     * @param courseId              the id of the course
+     * @param examId                the id of the exam
+     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
      * @return the list of exercise groups
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
