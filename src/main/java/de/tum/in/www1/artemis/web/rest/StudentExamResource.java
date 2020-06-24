@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -165,8 +164,8 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam);
-        studentExam.setExamSessions(Set.of(examSession));
+        // ExamSession examSession = this.examSessionService.startExamSession(studentExam);
+        // studentExam.setExamSessions(Set.of(examSession));
 
         // not needed
         studentExam.getExam().setCourse(null);
