@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +20,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -447,5 +445,31 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testUpdateOrderOfExerciseGroups() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+        exerciseGroup1.setTitle("first");
+        ExerciseGroup exerciseGroup2 = new ExerciseGroup();
+        exerciseGroup2.setTitle("second");
+        ExerciseGroup exerciseGroup3 = new ExerciseGroup();
+        exerciseGroup3.setTitle("third");
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.addExerciseGroup(exerciseGroup2);
+        exam.addExerciseGroup(exerciseGroup3);
+
+        List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>();
+        orderedExerciseGroups.add(exerciseGroup2);
+        orderedExerciseGroups.add(exerciseGroup3);
+        orderedExerciseGroups.add(exerciseGroup1);
+
+        request.put("/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", null, HttpStatus.OK); // TODO
+
+        // TODO: verify exam access service has been called
+        // TODO: soll failen bei anderer exercise group
     }
 }
