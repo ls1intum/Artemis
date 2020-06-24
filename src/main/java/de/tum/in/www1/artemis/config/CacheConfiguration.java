@@ -108,11 +108,16 @@ public class CacheConfiguration {
 
             // Bind to the interface specified in the config if the value is set
             if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
+                // We should not prefer IPv4, this will ensure that both IPv4 and IPv6 work as none is preferred
                 System.setProperty("hazelcast.prefer.ipv4.stack", "false");
+
+                // Hazelcast should bind to the interface and use it as local and public address
                 log.info("Binding Hazelcast to interface " + hazelcastInterface);
                 System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
                 System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
                 config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
+
+                // Hazelcast should only bind to the interface provided, not to any interface
                 config.setProperty("hazelcast.socket.bind.any", "false");
                 config.setProperty("hazelcast.socket.server.bind.any", "false");
                 config.setProperty("hazelcast.socket.client.bind.any", "false");
