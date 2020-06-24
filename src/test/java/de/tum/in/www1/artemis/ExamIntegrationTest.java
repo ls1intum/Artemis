@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
+import de.tum.in.www1.artemis.service.ExerciseGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -63,6 +64,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    ExerciseGroupService exerciseGroupService;
 
     @SpyBean
     ExamAccessService examAccessService;
@@ -467,6 +471,30 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
         exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
+
+        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup1);
+        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup1);
+        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup2);
+        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
+                exerciseGroup3);
+        exercise1_1 = textExerciseRepository.save(exercise1_1);
+        exercise1_2 = textExerciseRepository.save(exercise1_2);
+        exercise2_1 = textExerciseRepository.save(exercise2_1);
+        exercise3_1 = textExerciseRepository.save(exercise3_1);
+        exercise3_2 = textExerciseRepository.save(exercise3_2);
+        exercise3_3 = textExerciseRepository.save(exercise3_3);
+
+        examWithExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
+        exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
         List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
@@ -479,6 +507,21 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
         assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
+
+        // Exercises should be preserved
+        Exam savedExam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(exam.getId()).get();
+        ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
+        ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
+        ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
+        assertThat(savedExerciseGroup1.getExercises().size()).isEqualTo(2);
+        assertThat(savedExerciseGroup2.getExercises().size()).isEqualTo(1);
+        assertThat(savedExerciseGroup3.getExercises().size()).isEqualTo(3);
+        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_1)).isTrue();
+        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_2)).isTrue();
+        assertThat(savedExerciseGroup2.getExercises().contains(exercise2_1)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_1)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_2)).isTrue();
+        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_3)).isTrue();
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
