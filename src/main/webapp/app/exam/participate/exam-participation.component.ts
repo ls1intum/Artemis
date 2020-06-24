@@ -168,7 +168,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        window.clearInterval(this.autoSaveTimer);
+        window.clearInterval(this.autoSaveInterval);
     }
 
     initLiveMode() {
