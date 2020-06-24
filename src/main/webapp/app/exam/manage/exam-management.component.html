@@ -41,7 +41,7 @@
                     <th>
                         <span>{{ 'artemisApp.exam.duration' | translate }}</span>
                     </th>
-                    <th jhiSortBy="registeredUsers">
+                    <th jhiSortBy="numberOfRegisteredUsers">
                         <span>{{ 'artemisApp.exam.nrOfStudents' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -63,7 +63,7 @@
                     <td>{{ exam.startDate | artemisDate }}</td>
                     <td>{{ exam.endDate | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
-                    <td>{{ exam.registeredUsers || 0 }}</td>
+                    <td>{{ exam.numberOfRegisteredUsers }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
