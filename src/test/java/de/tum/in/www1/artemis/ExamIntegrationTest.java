@@ -8,7 +8,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -18,14 +17,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -169,118 +162,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
-    }
-
-    @Test
-    @Disabled("Needs to be rewritten for call only returning number of participations")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testStartExercisesWithTextExercise() throws Exception {
-
-        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
-
-        // registering users
-        var student1 = database.getUserByLogin("student1");
-        var student2 = database.getUserByLogin("student2");
-        var registeredUsers = Set.of(student1, student2);
-        exam2.setRegisteredUsers(registeredUsers);
-        // setting dates
-        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
-        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
-
-        // creating exercise
-        ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
-
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2), exerciseGroup);
-        exerciseGroup.addExercise(textExercise);
-        exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
-
-        List<StudentExam> createdStudentExams = new ArrayList<>();
-
-        // creating student exams
-        for (User user : registeredUsers) {
-            StudentExam studentExam = new StudentExam();
-            studentExam.addExercise(textExercise);
-            studentExam.setUser(user);
-            exam2.addStudentExam(studentExam);
-            createdStudentExams.add(studentExamRepository.save(studentExam));
-        }
-
-        exam2 = examRepository.save(exam2);
-
-        // invoke start exercises
-        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
-        assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        for (StudentParticipation participation : studentParticipations) {
-            assertThat(participation.getExercise().equals(textExercise));
-            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
-            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
-            // TODO: check that submissions have been created to the participations of text exercises
-        }
-        System.out.println("Test");
-
-        // Cleanup of Bidirectional Relationships
-        for (StudentExam studentExam : createdStudentExams) {
-            exam2.removeStudentExam(studentExam);
-        }
-        examRepository.save(exam2);
-
-    }
-
-    @Test
-    @Disabled("Needs to be rewritten for call only returning number of participations")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testStartExercisesWithModelingExercise() throws Exception {
-        // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
-
-        // registering users
-        var student1 = database.getUserByLogin("student1");
-        var student2 = database.getUserByLogin("student2");
-        var registeredUsers = Set.of(student1, student2);
-        exam2.setRegisteredUsers(registeredUsers);
-        // setting dates
-        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
-        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
-
-        // creating exercise
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
-                DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
-        exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
-        exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
-        modelingExercise = exerciseRepo.save(modelingExercise);
-
-        List<StudentExam> createdStudentExams = new ArrayList<>();
-
-        // creating student exams
-        for (User user : registeredUsers) {
-            StudentExam studentExam = new StudentExam();
-            studentExam.addExercise(modelingExercise);
-            studentExam.setUser(user);
-            exam2.addStudentExam(studentExam);
-            createdStudentExams.add(studentExamRepository.save(studentExam));
-        }
-
-        exam2 = examRepository.save(exam2);
-
-        // invoke start exercises
-        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Participation.class, HttpStatus.OK);
-        assertThat(participations).hasSize(exam2.getStudentExams().size());
-        for (Participation participation : participations) {
-            assertThat(participation.getExercise().equals(modelingExercise));
-            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
-            assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
-            // TODO: check that submissions have been created to the participations of modeling exercises
-        }
-
-        // Cleanup of Bidirectional Relationships
-        for (StudentExam studentExam : createdStudentExams) {
-            exam2.removeStudentExam(studentExam);
-        }
-        examRepository.save(exam2);
     }
 
     @Test
