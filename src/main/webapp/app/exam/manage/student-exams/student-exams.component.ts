@@ -63,6 +63,7 @@ export class StudentExamsComponent implements OnInit {
      * Generate all student exams for the exam on the server and handle the result.
      */
     generateStudentExams() {
+        this.isLoading = true;
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
                 this.jhiAlertService.addAlert(
@@ -86,6 +87,7 @@ export class StudentExamsComponent implements OnInit {
                     },
                     [],
                 );
+                this.isLoading = false;
             },
         );
     }
@@ -94,6 +96,7 @@ export class StudentExamsComponent implements OnInit {
      * Starts all the exercises of the student exams that belong to the exam
      */
     startExercises() {
+        this.isLoading = true;
         this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
             (res) => {
                 this.jhiAlertService.addAlert(
@@ -117,6 +120,7 @@ export class StudentExamsComponent implements OnInit {
                     },
                     [],
                 );
+                this.isLoading = false;
             },
         );
     }
