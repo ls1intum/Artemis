@@ -6,7 +6,6 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -27,23 +26,11 @@ public class ExamSessionService {
     }
 
     /**
-     * Get the current exam session for a student exam
-     *
-     * @param studentExam StudentExam
-     * @return the current exam session
-     */
-    public ExamSession getCurrentExamSession(StudentExam studentExam) {
-        var id = studentExam.getId();
-        return examSessionRepository.findByStudentExamId(id);
-    }
-
-    /**
      * Creates and saves an exam session for given student exam
      *
      * @param studentExam student exam for which an exam session shall be created
      * @return the newly create exam session
      */
-    @Transactional
     public ExamSession startExamSession(StudentExam studentExam) {
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
