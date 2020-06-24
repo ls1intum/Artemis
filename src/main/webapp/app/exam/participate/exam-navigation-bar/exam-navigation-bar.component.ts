@@ -79,16 +79,20 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     setExerciseButtonStatus(i: number): string {
+        let status = '';
         this.icon = 'edit';
         if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
             // make button blue
-            return 'synced';
+            status = 'synced';
+            if (i === this.exerciseIndex) {
+                status = status + ' active';
+                return status;
+            }
+            return status;
         } else {
             // make button yellow
-            return 'notSynced';
-        }
-        if (this.exercises[i].participationStatus === ParticipationStatus.INACTIVE) {
-            return 'inactive';
+            status = 'notSynced';
+            return status;
         }
     }
 }

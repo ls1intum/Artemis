@@ -25,12 +25,15 @@
 }
 .synced {
     color: white;
-    background-color: #2980b9;
+    background-color: #3e8acc;
 }
 .notSynced {
     color: #1a1a1a;
-    background-color: yellow;
+    background-color: #e8bf48;
 }
 .inactive {
     background-color: gray;
+}
+.active {
+    background-color: #276091;
 }
