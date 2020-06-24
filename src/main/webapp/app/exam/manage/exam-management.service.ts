@@ -48,9 +48,10 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The id of the exam to get.
      * @param withStudents Boolean flag whether to fetch all students registered for the exam
+     * @param withExerciseGroups Boolean flag whether to fetch all exercise groups of the exam
      */
-    find(courseId: number, examId: number, withStudents = false): Observable<EntityResponseType> {
-        const options = createRequestOption({ withStudents });
+    find(courseId: number, examId: number, withStudents = false, withExerciseGroups = false): Observable<EntityResponseType> {
+        const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
@@ -136,6 +137,16 @@ export class ExamManagementService {
      */
     startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Save the exercise groups of an exam in the given order.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseGroups List of exercise groups.
+     */
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
+        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
     }
 
     private static convertDateFromClient(exam: Exam): Exam {
