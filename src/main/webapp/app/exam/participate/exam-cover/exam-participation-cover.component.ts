@@ -100,6 +100,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     startExam() {
         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
             if (this.hasStarted()) {
                 this.onExamStarted.emit(studentExam);
             } else {

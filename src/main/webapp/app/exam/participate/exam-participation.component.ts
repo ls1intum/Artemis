@@ -84,7 +84,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
-            this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
@@ -142,30 +141,30 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.exam) {
             return false;
         }
-        return this.studentExam.exam.endDate ? moment(this.studentExam.exam.endDate).isBefore(moment()) : false;
+        return this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
     }
 
     /**
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.exam) {
             return false;
         }
-        return this.studentExam.exam.visibleDate ? moment(this.studentExam.exam.visibleDate).isBefore(moment()) : false;
+        return this.exam.visibleDate ? this.exam.visibleDate.isBefore(moment()) : false;
     }
 
     /**
      * check if exam has started
      */
     isActive(): boolean {
-        if (!this.studentExam?.exam) {
+        if (!this.exam) {
             return false;
         }
-        return this.studentExam.exam.startDate ? moment(this.studentExam.exam.startDate).isBefore(moment()) : false;
+        return this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
     }
 
     ngOnDestroy(): void {
