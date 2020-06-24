@@ -50,7 +50,7 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadExam(courseId: number, examId: number): Observable<Exam> {
-        const url = this.getResourceURL(courseId, examId);
+        const url = this.getResourceURL(courseId, examId) + '/conduction';
         return this.httpClient.get<Exam>(url).map((exam: Exam) => this.convertExamDateFromServer(exam));
     }
 
