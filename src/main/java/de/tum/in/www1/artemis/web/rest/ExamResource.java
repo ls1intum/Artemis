@@ -369,4 +369,18 @@ public class ExamResource {
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
     }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/conduction : Get an exam for conduction.
+     *
+     * @param courseId  the id of the course
+     * @param examId    the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/conduction")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam {} for conduction", examId);
+        return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
+    }
 }
