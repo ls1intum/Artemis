@@ -33,7 +33,7 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noExam": "Go online to load exam",
+            "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Submit & continue"
         },
