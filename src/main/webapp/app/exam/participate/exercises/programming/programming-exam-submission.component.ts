@@ -35,6 +35,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.isNotOfflineIdeMode()) {
             // show submission answers in UI
