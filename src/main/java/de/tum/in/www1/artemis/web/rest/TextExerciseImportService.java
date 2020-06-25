@@ -67,7 +67,7 @@ public class TextExerciseImportService {
     private TextExercise copyTextExerciseBasis(TextExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
-        if (importedExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
+        if (importedExercise.hasCourse()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         else {
