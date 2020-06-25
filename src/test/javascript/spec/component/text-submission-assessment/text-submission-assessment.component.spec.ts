@@ -26,6 +26,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
+import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -77,6 +78,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 TranslateModule.forRoot(),
                 ArtemisConfirmIconModule,
                 RouterModule,
+                TextSharedModule,
             ],
             declarations: [
                 TextSubmissionAssessmentComponent,
