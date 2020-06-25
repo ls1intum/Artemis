@@ -1,29 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 
-import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-
-import { FileService } from 'app/shared/http/file.service';
+import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { HttpResponse } from '@angular/common/http';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 
 import { getIcon } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { HttpResponse } from '@angular/common/http';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -38,13 +32,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
 
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
-    getIcon = getIcon;
-
-    exam: Exam;
+    @Input()
     studentExam: StudentExam;
     exercises: any[];
     submissions: any[];
@@ -52,7 +40,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
     // Quiz
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
+    collapsedSubmissionIds: number[] = [];
+
     // mock
+    result: Result | null;
     umlModel: UMLModel;
     modelingExercise: ModelingExercise;
     textSubmission: TextSubmission | null;
@@ -72,25 +63,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
      *  exam:
      */
 
-    constructor(
-        private courseCalculationService: CourseScoreCalculationService,
-        private route: ActivatedRoute,
-        private modelingExerciseService: ModelingExerciseService,
-        private fileService: FileService,
-    ) {}
+    constructor(private courseCalculationService: CourseScoreCalculationService, private route: ActivatedRoute, private modelingExerciseService: ModelingExerciseService) {}
 
     ngOnInit() {
-        // TODO remove - temporary submission mocks
         this.mock();
+    }
 
-        // map a stand alone collapseControl to each submission
-        // TODO add id?
-        this.collapseKeys = [];
-        for (let i = 0; i < this.submissions.length; i++) {
-            this.collapseKeys.push({ isCollapsed: false });
-        }
-
-        // TODO use exercises [] for problem statements, submissions [] for actual student submissions
+    getIcon(exerciseType: ExerciseType) {
+        return getIcon(exerciseType);
     }
 
     /**
@@ -98,23 +78,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     printPDF() {
         window.print();
-    }
-
-    /**
-     *
-     * @param filePath
-     * File Upload Exercise
-     */
-    downloadFile(filePath: string) {
-        this.fileService.downloadFileWithAccessToken(filePath);
-    }
-
-    attachmentExtension(filePath: string): string {
-        if (!filePath) {
-            return 'N/A';
-        }
-
-        return filePath.split('.').pop()!;
     }
 
     mock() {
@@ -431,24 +394,26 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionExerciseType: 'programming',
         };
 
-        // this.studentExam.exercises
-        this.exercises = [];
-        this.exercises.push({ problemStatement: 'PS TEXT 1', title: 'TEXT TITLE' });
-        this.exercises.push({ problemStatement: 'PS MODELING 1' });
-        this.exercises.push({ problemStatement: 'PS TEXT 2' });
-        this.exercises.push({ problemStatement: 'PS FILE UPLOAD 1' });
-        this.exercises.push({ problemStatement: 'PS QUIZ 1' });
-        this.exercises.push({
-            problemStatement: 'PS PROGRAMMING 1',
-            id: 2,
-        });
-
         this.submissions = [];
-        this.submissions.push(this.textSubmission);
-        this.submissions.push(this.modelingSubmission);
-        this.submissions.push(this.textSubmission2);
         this.submissions.push(this.fileUploadSub);
         this.submissions.push(this.quizSubmission);
         this.submissions.push(this.programmingSubmission);
+    }
+
+    getSubmissionForExercise(exercise: Exercise): Submission {
+        return exercise.studentParticipations[0].submissions[0];
+    }
+
+    isCollapsed(submissionId: number): boolean {
+        return this.collapsedSubmissionIds.includes(submissionId);
+    }
+
+    toggleCollapseSubmission(submissionId: number): void {
+        const collapsed = this.isCollapsed(submissionId);
+        if (collapsed) {
+            this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
+        } else {
+            this.collapsedSubmissionIds.push(submissionId);
+        }
     }
 }

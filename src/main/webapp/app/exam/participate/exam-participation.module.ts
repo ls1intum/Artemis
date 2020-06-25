@@ -14,6 +14,11 @@ import { ModelingSubmissionExamComponent } from 'app/exam/participate/exercises/
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
+import { ProgrammingExamSummaryComponent } from './summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { ModelingExamSummaryComponent } from './summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
+import { FileUploadExamSummaryComponent } from './summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
+import { TextExamSummaryComponent } from './summary/exercises/text-exam-summary/text-exam-summary.component';
+import { QuizExamSummaryComponent } from './summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -34,6 +39,11 @@ const ENTITY_STATES = [...examParticipationState];
         QuizExamParticipationComponent,
         TextEditorExamComponent,
         ModelingSubmissionExamComponent,
+        ProgrammingExamSummaryComponent,
+        ModelingExamSummaryComponent,
+        FileUploadExamSummaryComponent,
+        TextExamSummaryComponent,
+        QuizExamSummaryComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}

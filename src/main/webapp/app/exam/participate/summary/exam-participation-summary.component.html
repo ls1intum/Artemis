@@ -10,108 +10,45 @@
 <!--TODO add message if not participated in an exercise/ submission empty / similar?-->
 <!--adjust object extraction-->
 <!--TODO add exercise title?-->
-<div *ngFor="let submission of submissions; let i = index">
+<div *ngFor="let exercise of exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon [icon]="getIcon(submission.submissionExerciseType)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon [icon]="getIcon(exercise.exerciseType)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <button
                 class="btn btn-light question-collapse"
-                (click)="collapseKeys[i].isCollapsed = !collapseKeys[i].isCollapsed"
-                [attr.aria-expanded]="!collapseKeys[i].isCollapsed"
-                [attr.aria-controls]="collapseKeys[i].isCollapsed"
+                (click)="toggleCollapseSubmission(getSubmissionForExercise(exercise).id)"
+                [attr.aria-expanded]="!isCollapsed(getSubmissionForExercise(exercise).id)"
+                [attr.aria-controls]="isCollapsed(getSubmissionForExercise(exercise).id)"
             >
-                <fa-icon size="2x" [icon]="collapseKeys[i].isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(getSubmissionForExercise(exercise).id) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
         <!--text exercise-->
-        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === TEXT">
-            <h6>{{ exercises[i].problemStatement }}</h6>
-            <div class="editor-outline-background">{{ submission.text }}</div>
-        </div>
-        <!--modeling exercise TODO remove mock usage-->
-        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === MODELING">
-            <h6>{{ exercises[i].problemStatement }}</h6>
-            <div class="editor-outline-background">
-                <jhi-modeling-editor *ngIf="umlModel" [readOnly]="true" [diagramType]="modelingExercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
-            </div>
-        </div>
-        <!--quiz exercise-->
-        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === QUIZ">
-            <h6>{{ exercises[i].problemStatement }}</h6>
-            <div class="quiz-content container">
-                <div *ngFor="let question of submission.submittedAnswers; let i = index">
-                    <jhi-multiple-choice-question
-                        id="question{{ i }}"
-                        *ngIf="question.type === MULTIPLE_CHOICE"
-                        [question]="question.quizQuestion"
-                        [(selectedAnswerOptions)]="question.selectedOptions"
-                        [fnOnSelection]=""
-                        [clickDisabled]="true"
-                        [showResult]="false"
-                        [submittedResult]="null"
-                        [submittedQuizExercise]="question.quizQuestion"
-                        [forceSampleSolution]="false"
-                        [questionIndex]="i + 1"
-                        [score]="question.quizQuestion.score"
-                    ></jhi-multiple-choice-question>
-                    <jhi-drag-and-drop-question
-                        id="question{{ i }}"
-                        *ngIf="question.type === DRAG_AND_DROP"
-                        [question]="question.quizQuestion"
-                        [(mappings)]="question.mappings"
-                        [fnOnMappingUpdate]=""
-                        [clickDisabled]="true"
-                        [showResult]="false"
-                        [forceSampleSolution]="false"
-                        [questionIndex]="i + 1"
-                        [score]="question.quizQuestion.score"
-                    ></jhi-drag-and-drop-question>
-                    <jhi-short-answer-question
-                        id="question{{ i }}"
-                        *ngIf="question.type === SHORT_ANSWER"
-                        [question]="question.quizQuestion"
-                        [(submittedTexts)]="question.submittedTexts"
-                        [fnOnSubmittedTextUpdate]=""
-                        [clickDisabled]="true"
-                        [showResult]="false"
-                        [forceSampleSolution]="false"
-                        [questionIndex]="i + 1"
-                        [score]="question.quizQuestion.score"
-                    ></jhi-short-answer-question>
-                </div>
-            </div>
-        </div>
-        <!--programming exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === PROGRAMMING">
-            <h6>{{ exercises[i].problemStatement }}</h6>
-            <div class="d-flex align-items-center mb-1 mt-1">
-                <jhi-programming-assessment-repo-export
-                    [exerciseId]="exercises[i].id"
-                    [singleParticipantMode]="true"
-                    [participationIdList]="submission?.id"
-                ></jhi-programming-assessment-repo-export>
-                <a
-                    class="ml-2"
-                    href="{{ this.submission?.repositoryUrl }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
-                    >Go to repository</a
-                >
-            </div>
-        </div>
-        <!--file upload exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === FILE_UPLOAD">
-            <h6>{{ exercises[i].problemStatement }}</h6>
-            <div>
-                <a (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
-                <span class="ml-2 badge badge-info">
-                    {{ attachmentExtension(submission.filePath!) | uppercase }}
-                </span>
-            </div>
+        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(getSubmissionForExercise(exercise).id)">
+            <h6>{{ exercise.problemStatement }}</h6>
+            <!-- Text Exercise -->
+            <ng-container *ngIf="exercise.type === TEXT">
+                <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+            </ng-container>
+            <!-- Modeling Exercise -->
+            <ng-container *ngIf="exercise.type === MODELING">
+                <jhi-modeling-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+            </ng-container>
+            <!-- Quiz Exercise -->
+            <ng-container *ngIf="exercise.type === QUIZ">
+                <jhi-quiz-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
+            </ng-container>
+            <!-- Programming Exercise -->
+            <ng-container *ngIf="exercise.type === PROGRAMMING">
+                <jhi-programming-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-programming-exam-summary>
+            </ng-container>
+            <!-- File Upload Exercise -->
+            <ng-container *ngIf="exercise.type === FILE_UPLOAD">
+                <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+            </ng-container>
         </div>
     </div>
 </div>
