@@ -108,16 +108,18 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testExamIsLive() {
-        // Exam has not started.
-        Exam examNotStarted = database.addExam(course1, users.get(0), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3));
+
+        // Exam is not visible.
+        Exam examNotStarted = database.addExam(course1, users.get(0), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
         Optional<ResponseEntity<Void>> accessFailure1_1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examNotStarted.getId(), users.get(0));
         assertThat(accessFailure1_1.isPresent()).isTrue();
         assertThat(accessFailure1_1.get()).isEqualTo(forbidden());
         Optional<ResponseEntity<Void>> accessFailure1_2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotStarted.getId(), studentExam1.getId());
         assertThat(accessFailure1_2.isPresent()).isTrue();
         assertThat(accessFailure1_2.get()).isEqualTo(forbidden());
+
         // Exam has ended.
-        Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
         Optional<ResponseEntity<Void>> accessFailure2_1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examEnded.getId(), users.get(0));
         assertThat(accessFailure2_1.isPresent()).isTrue();
         assertThat(accessFailure2_1.get()).isEqualTo(forbidden());
@@ -129,7 +131,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testUserIsRegisteredForExam() {
-        Exam examNotRegistered = database.addExam(course1, users.get(1), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        Exam examNotRegistered = database.addExam(course1, users.get(1), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
         Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examNotRegistered.getId(), users.get(0));
         assertThat(accessFailure1.isPresent()).isTrue();
         assertThat(accessFailure1.get()).isEqualTo(forbidden());

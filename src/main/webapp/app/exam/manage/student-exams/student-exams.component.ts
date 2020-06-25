@@ -8,6 +8,7 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -18,6 +19,7 @@ export class StudentExamsComponent implements OnInit {
     examId: number;
     studentExams: StudentExam[];
     course: Course;
+    exam: Exam;
 
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -49,6 +51,9 @@ export class StudentExamsComponent implements OnInit {
             });
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
+            });
+            this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse) => {
+                this.exam = examResponse.body!;
             });
             this.isLoading = false;
         });

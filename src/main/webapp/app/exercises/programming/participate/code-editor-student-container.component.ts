@@ -71,7 +71,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route!.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);

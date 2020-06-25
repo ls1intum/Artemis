@@ -35,9 +35,9 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     commitState: CommitState;
 
     constructor(
-        protected participationService: ParticipationService,
+        protected participationService: ParticipationService | null,
         private translateService: TranslateService,
-        protected route: ActivatedRoute,
+        protected route: ActivatedRoute | null,
         private jhiAlertService: AlertService,
         protected sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,

@@ -68,7 +68,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/view">{{ course?.title }}</a>
+                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/view">{{ exam?.title }}</a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -110,7 +110,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value?.startDate | artemisDate: 'long':true }}
+                        <!-- {{ value?.startDate | artemisDate: 'long':true }} -->
                     </ng-template>
                 </ngx-datatable-column>
 

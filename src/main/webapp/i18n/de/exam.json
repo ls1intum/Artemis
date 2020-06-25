@@ -16,6 +16,8 @@
             "nrOfStudents": "Anzahl der registrierten Studenten",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
+            "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "validation": {
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
@@ -24,8 +26,16 @@
             }
         },
         "examParticipation": {
-            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
-            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
+            "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
+            "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
+            "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
+            "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
+            "finishExam": "Klausur abgeben",
+            "progress": "Aufgabe {{ current }} von {{ all }}",
+            "progressSmall": "{{ current }}/{{ all }}",
+            "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
+            "submitProgrammingExercise": "Weiter",
+            "submitOtherExercise": "Speichern & Weitere"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -130,7 +140,7 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ courseTitle }})",
+            "studentExam": "Klausur ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
