@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -75,6 +75,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void tearDown() {
         database.resetDatabase();
         quizScheduleService.stopSchedule();
+        quizScheduleService.clearAllQuizData();
     }
 
     @Test

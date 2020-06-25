@@ -168,10 +168,10 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOne(examId));
         }
         if (withStudents && withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroups(examId));
+            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId));
         }
         if (withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithExerciseGroups(examId));
+            return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
