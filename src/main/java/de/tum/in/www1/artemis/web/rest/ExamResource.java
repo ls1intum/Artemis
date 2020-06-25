@@ -172,7 +172,6 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId));
         }
         if (withExerciseGroups) {
-            var tmp = examService.findOneWithExerciseGroupsAndExercises(examId);
             return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
