@@ -21,7 +21,7 @@ public class FileUploadSubmission extends Submission implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private FileService fileService = new FileService();
+    private transient FileService fileService = new FileService();
 
     @Column(name = "file_path")
     private String filePath;

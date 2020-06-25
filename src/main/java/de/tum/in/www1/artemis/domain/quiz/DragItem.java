@@ -28,7 +28,7 @@ public class DragItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private FileService fileService = new FileService();
+    private transient FileService fileService = new FileService();
 
     @Transient
     private String prevPictureFilePath;

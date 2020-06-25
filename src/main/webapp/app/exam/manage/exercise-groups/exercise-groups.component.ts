@@ -99,16 +99,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = [
-            '/course-management',
-            exerciseGroup.exam?.course?.id,
-            'exams',
-            exerciseGroup.exam?.id,
-            'exercise-groups',
-            exerciseGroup.id,
-            `${exerciseType}-exercises`,
-            'import',
-        ];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`, 'import'];
 
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
