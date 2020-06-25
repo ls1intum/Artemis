@@ -10,11 +10,11 @@
 <!--TODO add message if not participated in an exercise/ submission empty / similar?-->
 <!--adjust object extraction-->
 <!--TODO add exercise title?-->
-<div *ngFor="let exercise of exercises; let i = index">
+<div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon [icon]="getIcon(exercise.exerciseType)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <button
@@ -39,7 +39,7 @@
             </ng-container>
             <!-- Quiz Exercise -->
             <ng-container *ngIf="exercise.type === QUIZ">
-                <jhi-quiz-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
+                <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
             </ng-container>
             <!-- Programming Exercise -->
             <ng-container *ngIf="exercise.type === PROGRAMMING">
