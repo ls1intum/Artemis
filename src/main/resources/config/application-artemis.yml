@@ -78,4 +78,5 @@ artemis:
         secret: null
     athene:
         tracking-url: http://localhost:8003/tracking
-        secret: null
+        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+        token-validity-in-seconds: 10800

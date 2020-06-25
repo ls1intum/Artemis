@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
@@ -65,12 +66,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
+
     private final GradingCriterionService gradingCriterionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
             UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
@@ -83,6 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.gradingCriterionService = gradingCriterionService;
+        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
     /**
@@ -301,7 +306,9 @@ public class TextAssessmentResource extends AssessmentResource {
         // Remove Submission from Result
         result.setSubmission(null);
 
-        return ResponseEntity.ok(participation);
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission));
+        return bodyBuilder.body(participation);
     }
 
     /**

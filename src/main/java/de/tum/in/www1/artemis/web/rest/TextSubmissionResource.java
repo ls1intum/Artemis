@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -80,9 +81,12 @@ public class TextSubmissionResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
+            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -93,6 +97,7 @@ public class TextSubmissionResource {
         this.gradingCriterionService = gradingCriterionService;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.textAssessmentService = textAssessmentService;
+        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
     /**
@@ -280,6 +285,9 @@ public class TextSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
-        return ResponseEntity.ok(textSubmission);
+
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission));
+        return bodyBuilder.body(textSubmission);
     }
 }
