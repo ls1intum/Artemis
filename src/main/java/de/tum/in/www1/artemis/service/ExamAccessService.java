@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -31,13 +33,56 @@ public class ExamAccessService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserService userService;
+
     public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            CourseService courseService, AuthorizationCheckService authorizationCheckService) {
+            CourseService courseService, AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
         this.courseService = courseService;
         this.authorizationCheckService = authorizationCheckService;
+        this.userService = userService;
+    }
+
+    /**
+     * Checks if the current user is allowed to see the requested exam. If he is allowed the exam will be returned.
+     *
+     * @param courseId  The id of the course
+     * @param examId    The id of the exam
+     * @return a ResponseEntity with the exam
+     */
+    public ResponseEntity<Exam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+
+        // Check that the current user is at least student in the course.
+        Course course = courseService.findOne(courseId);
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+            return forbidden();
+        }
+
+        // Check that the exam exists
+        Optional<Exam> exam = examRepository.findById(examId);
+        if (exam.isEmpty()) {
+            return notFound();
+        }
+
+        // Check that the exam belongs to the course
+        if (!exam.get().getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
+        // Check that the current user is registered for the exam
+        if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+            return forbidden();
+        }
+
+        // Check that the exam is visible
+        if (exam.get().getVisibleDate() != null && exam.get().getVisibleDate().isAfter(ZonedDateTime.now())) {
+            return forbidden();
+        }
+
+        return ResponseEntity.ok(exam.get());
     }
 
     /**

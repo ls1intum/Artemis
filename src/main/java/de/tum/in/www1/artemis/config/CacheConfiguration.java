@@ -28,7 +28,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.cache.PrefixedKeyGenerator;
 

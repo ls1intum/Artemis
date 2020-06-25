@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,8 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private UserRepository userRepository;
 
+    private List<User> users;
+
     private Course course1;
 
     private Course course2;
@@ -60,7 +63,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 1, 2);
+        users = database.addUsers(1, 1, 2);
         User instructor1 = users.get(2);
         User instructor2 = users.get(3);
         instructor1.setGroups(Collections.singleton("course1InstructorGroup"));
@@ -279,5 +282,46 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Optional<ResponseEntity<Exam>> accessFailureCourseAndExamAndStudentExam = examAccessService.checkCourseAndExamAndStudentExamAccess(course1.getId(), exam1.getId(),
                 studentExam1.getId());
         assertThat(accessFailureCourseAndExamAndStudentExam.isEmpty()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckAndGetCourseAndExamAccessForConduction_isStudentInCourse() {
+        Course course = database.addEmptyCourse();
+        course.setStudentGroupName("another");
+        courseRepository.save(course);
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
+        assertThat(result).isEqualTo(forbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 55L);
+        assertThat(result).isEqualTo(notFound());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckAndGetCourseAndExamAccessForConduction_examBelongsToCourse() {
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
+        assertThat(result).isEqualTo(conflict());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam1.getId());
+        assertThat(result).isEqualTo(forbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckAndGetCourseAndExamAccessForConduction_examIsVisible() {
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        examRepository.save(exam);
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
+        assertThat(result).isEqualTo(forbidden());
     }
 }
