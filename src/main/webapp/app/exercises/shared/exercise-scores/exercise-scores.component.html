@@ -256,7 +256,15 @@
                         </button>
                         <button
                             *ngIf="exercise.exerciseGroup"
-                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup?.exam.course.id,
+                                'file-upload-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -278,7 +286,15 @@
                         </button>
                         <button
                             *ngIf="exercise.exerciseGroup"
-                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup?.exam.course.id,
+                                'modeling-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -300,7 +316,15 @@
                         </button>
                         <button
                             *ngIf="exercise.exerciseGroup"
-                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup?.exam.course.id,
+                                'text-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
