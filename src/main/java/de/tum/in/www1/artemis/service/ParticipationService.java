@@ -178,9 +178,10 @@ public class ParticipationService {
      *
      * @param exercise the exercise which is started
      * @param participant the user or team who starts the exercise
+     * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
@@ -196,7 +197,6 @@ public class ParticipationService {
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
-
             participation = save(participation);
         }
         else {
@@ -232,8 +232,10 @@ public class ParticipationService {
             }
 
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
-                // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise, null);
+                // initialize a modeling, text, file upload or quiz submission
+                if (createInitialSubmission) {
+                    initializeSubmission(participation, exercise, null);
+                }
             }
         }
         participation = save(participation);
@@ -329,9 +331,6 @@ public class ParticipationService {
      * @param submissionType                type for the submission to be initialized
      */
     private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        if (exercise instanceof QuizExercise) {
-            return Optional.empty();
-        }
 
         Submission submission;
         if (exercise instanceof ProgrammingExercise) {
@@ -343,8 +342,14 @@ public class ParticipationService {
         else if (exercise instanceof TextExercise) {
             submission = new TextSubmission();
         }
-        else {
+        else if (exercise instanceof FileUploadExercise) {
             submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
         }
 
         submission.setType(submissionType);

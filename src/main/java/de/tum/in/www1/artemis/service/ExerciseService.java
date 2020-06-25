@@ -14,6 +14,8 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -45,6 +47,10 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final ExamRepository examRepository;
+
+    private final StudentExamService studentExamService;
+
     private final ExampleSubmissionService exampleSubmissionService;
 
     private final AuditEventRepository auditEventRepository;
@@ -58,8 +64,10 @@ public class ExerciseService {
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamService studentExamService,
+            ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
+        this.examRepository = exampRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -71,6 +79,7 @@ public class ExerciseService {
         this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -98,7 +107,7 @@ public class ExerciseService {
      * Finds all Exercises for a given Course
      *
      * @param course corresponding course
-     * @param user the user entity
+     * @param user   the user entity
      * @return a List of all Exercises for the given course
      */
     public Set<Exercise> findAllForCourse(Course course, User user) {
@@ -139,6 +148,7 @@ public class ExerciseService {
 
     /**
      * Finds all team-based exercises for a course
+     *
      * @param course Course for which to return all team-based exercises
      * @return set of exercises
      */
@@ -164,7 +174,7 @@ public class ExerciseService {
     /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
-     *
+     * <p>
      * DEPRECATED: Please use findOne() or write a custom method
      *
      * @param exerciseId the exerciseId of the entity
@@ -205,8 +215,9 @@ public class ExerciseService {
 
     /**
      * Get one exercise with all exercise hints and all student questions + answers and with all categories
+     *
      * @param exerciseId the id of the exercise to find
-     * @param user the current user
+     * @param user       the current user
      * @return the exercise
      */
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
@@ -273,6 +284,13 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
+        if (exercise.hasExerciseGroup()) {
+            Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
+            for (StudentExam studentExam : exam.getStudentExams()) {
+                studentExamService.deleteStudentExam(studentExam.getId());
+            }
+        }
+
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
@@ -285,7 +303,7 @@ public class ExerciseService {
     /**
      * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      *
-     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
+     * @param exerciseId         programming exercise for which build plans in respective student participations are deleted
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
@@ -342,7 +360,7 @@ public class ExerciseService {
     /**
      * Check whether the exercise has either a course or an exerciseGroup.
      *
-     * @param exercise the Exercise to be validated
+     * @param exercise   the Exercise to be validated
      * @param entityName name of the entity
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
@@ -356,8 +374,8 @@ public class ExerciseService {
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
      * @param updatedExercise the updated Exercise
-     * @param oldExercise the old Exercise
-     * @param entityName name of the entity
+     * @param oldExercise     the old Exercise
+     * @param entityName      name of the entity
      * @throws BadRequestAlertException if updated exercise was converted
      */
     public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
@@ -447,7 +465,7 @@ public class ExerciseService {
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute
-     * @param user the user for which to check to which team (or no team) he belongs to
+     * @param user     the user for which to check to which team (or no team) he belongs to
      */
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
