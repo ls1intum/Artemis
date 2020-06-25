@@ -307,7 +307,8 @@ public class TextAssessmentResource extends AssessmentResource {
         result.setSubmission(null);
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, result));
+        final Result finalResult = result;
+        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, finalResult));
         return bodyBuilder.body(participation);
     }
 
