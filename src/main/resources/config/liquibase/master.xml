@@ -64,4 +64,10 @@
     <include file="classpath:config/liquibase/changelog/20200526172043_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20200601234000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20200608203410_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20200618141500_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20200621123510_changelog.xml" relativeToChangelogFile="false"/>
+    <!-- TODO: activate the following change at a later point to prevent development problems
+    <include file="classpath:config/liquibase/changelog/20200621141500_changelog.xml" relativeToChangelogFile="false"/>
+    -->
+    <include file="classpath:config/liquibase/changelog/20200526120801_changelog.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

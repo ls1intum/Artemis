@@ -186,6 +186,8 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
             (click)="startExercise()"
         ></button>
+        <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
+        code editor button. We should think about refactoring the clone repo button into a own component -->
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
@@ -195,6 +197,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
+                !examMode &&
                 isOnlineEditorAllowed() &&
                 participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
                 exercise.studentParticipations &&
@@ -213,7 +216,12 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.studentParticipations && participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations.length > 0"
+            *ngIf="
+                isOfflineIdeAllowed() &&
+                exercise.studentParticipations &&
+                participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
+                exercise.studentParticipations.length > 0
+            "
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>

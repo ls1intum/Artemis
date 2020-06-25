@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -71,13 +72,16 @@ public class ParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final QuizScheduleService quizScheduleService;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService,
+            @Lazy QuizScheduleService quizScheduleService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -95,6 +99,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -173,9 +178,10 @@ public class ParticipationService {
      *
      * @param exercise the exercise which is started
      * @param participant the user or team who starts the exercise
+     * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
@@ -191,7 +197,6 @@ public class ParticipationService {
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
-
             participation = save(participation);
         }
         else {
@@ -204,7 +209,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
@@ -227,8 +232,10 @@ public class ParticipationService {
             }
 
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
-                // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise, null);
+                // initialize a modeling, text, file upload or quiz submission
+                if (createInitialSubmission) {
+                    initializeSubmission(participation, exercise, null);
+                }
             }
         }
         participation = save(participation);
@@ -274,7 +281,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
             programmingParticipation = copyRepository(programmingParticipation);
-            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
@@ -324,9 +331,6 @@ public class ParticipationService {
      * @param submissionType                type for the submission to be initialized
      */
     private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        if (exercise instanceof QuizExercise) {
-            return Optional.empty();
-        }
 
         Submission submission;
         if (exercise instanceof ProgrammingExercise) {
@@ -338,8 +342,14 @@ public class ParticipationService {
         else if (exercise instanceof TextExercise) {
             submission = new TextSubmission();
         }
-        else {
+        else if (exercise instanceof FileUploadExercise) {
             submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
         }
 
         submission.setType(submissionType);
@@ -385,13 +395,13 @@ public class ParticipationService {
         }
 
         // Look for Participation in ParticipationHashMap first
-        StudentParticipation participation = QuizScheduleService.getParticipation(quizExercise.getId(), username);
+        StudentParticipation participation = quizScheduleService.getParticipation(quizExercise.getId(), username);
         if (participation != null) {
             return participation;
         }
 
         // get submission from HashMap
-        QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
         // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
@@ -482,9 +492,9 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudents());
+            versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -499,7 +509,8 @@ public class ParticipationService {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
             final var username = participation.getParticipantIdentifier();
-            final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
+            final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
+                    + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
             participation.setBuildPlanId(buildPlanId);
@@ -1076,7 +1087,7 @@ public class ParticipationService {
         // if the user is not the owner of the participation, the user can only see it in case he is
         // a teaching assistant or an instructor of the course, or in case he is admin
         User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourse();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

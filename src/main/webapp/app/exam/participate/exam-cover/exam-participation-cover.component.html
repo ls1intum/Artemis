@@ -5,15 +5,44 @@
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div style="text-align: center;">
         <label for="confirmBox"><span [innerHTML]="formattedConfirmationText"></span></label>
-        <input type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
+        <input [(ngModel)]="confirmed" type="checkbox" id="confirmBox" (click)="updateConfirmation()" />
     </div>
     <div *ngIf="startView" style="text-align: center;">
-        <button [disabled]="!startEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
+        <div class="login-form">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <label class="font-weight-bold" for="fullname" jhiTranslate="artemisApp.exam.consentText"></label>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="form-group">
+                    <input type="text" class="form-control" name="fullname" id="fullname" placeholder="Name" [(ngModel)]="enteredName" [ngModelOptions]="{ updateOn: 'blur' }" />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="form-group">
+                    <div class="alert alert-danger mt-1" *ngIf="falseName">
+                        <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button [disabled]="!startButtonEnabled" type="submit" (click)="startExam()" class="btn btn-primary" id="startExamBtn">
             <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
         </button>
     </div>
+    <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
+        <span>{{ 'artemisApp.examParticipation.waitForStart' | translate: { title: exam.title } }}</span>
+        <div *ngIf="exam.startDate">
+            <hr />
+            <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
+            <span class="text-bold">{{ timeUntilStart }}</span>
+            <br />
+            <span>({{ formattedStartDate }})</span>
+        </div>
+    </div>
     <div *ngIf="!startView" style="text-align: center;">
-        <button [disabled]="!confirmed" type="submit" class="btn btn-primary" id="summaryBtn">
+        <button [disabled]="!confirmed" type="submit" (click)="submit()" class="btn btn-primary" id="summaryBtn">
             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
         </button>
     </div>

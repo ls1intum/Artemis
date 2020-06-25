@@ -103,7 +103,7 @@ public class ModelingExerciseResource {
     @Nullable
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
+        Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
@@ -243,7 +243,7 @@ public class ModelingExerciseResource {
         if (modelingExercise.isEmpty()) {
             return notFound();
         }
-        Course course = modelingExercise.get().getCourse();
+        Course course = modelingExercise.get().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

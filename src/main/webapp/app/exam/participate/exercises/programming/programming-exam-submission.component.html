@@ -1,0 +1,37 @@
+<!-- nGif codeeditor start-->
+<div *ngIf="isOnlyCodeEditorMode()">
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
+<!-- nGif codeeditor end -->
+<!-- nGif codeeditorwith clone button start -->
+<div *ngIf="!isOnlyCodeEditorMode() && !isNotOfflineIdeMode()">
+    <jhi-exercise-details-student-actions jhiOrionFilter [examMode]="true" [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
+    </jhi-exercise-details-student-actions>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
+<!-- nGif codeeditorwith clone button end-->
+<!-- nGif Offline IDE clone button start -->
+<div *ngIf="isNotOfflineIdeMode()">
+    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
+    </jhi-exercise-details-student-actions>
+    <div style="display: flex; justify-content: flex-end;">
+        <jhi-updating-result
+            *ngIf="studentParticipation"
+            [exercise]="exercise"
+            [showUngradedResults]="true"
+            [showGradedBadge]="true"
+            [participation]="studentParticipation"
+            [short]="true"
+            [personalParticipation]="true"
+            class="mr-2"
+        ></jhi-updating-result>
+    </div>
+    <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
+    <jhi-programming-exercise-instructions
+        *ngIf="exercise"
+        [exercise]="exercise"
+        [participation]="studentParticipation"
+        [personalParticipation]="true"
+    ></jhi-programming-exercise-instructions>
+</div>
+<!-- nGif Offline IDE clone button end-->

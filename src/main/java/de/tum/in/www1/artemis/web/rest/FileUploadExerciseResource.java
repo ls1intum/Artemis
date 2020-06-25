@@ -262,7 +262,7 @@ public class FileUploadExerciseResource {
             course = exerciseGroupService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
         }
         else {
-            course = fileUploadExercise.getCourse();
+            course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();

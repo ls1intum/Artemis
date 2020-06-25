@@ -60,21 +60,56 @@ public class ModelFactory {
         return quizExercise;
     }
 
+    public static QuizExercise generateQuizExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, releaseDate, dueDate, null, exerciseGroup);
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(10);
+        quizExercise.setRandomizeQuestionOrder(true);
+        return quizExercise;
+    }
+
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
+        populateProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setTestRepositoryUrl("test@url");
-        return programmingExercise;
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         ModelingExercise modelingExercise = new ModelingExercise();
         modelingExercise = (ModelingExercise) populateExercise(modelingExercise, releaseDate, dueDate, assessmentDueDate, course);
+        modelingExercise.setDiagramType(diagramType);
+        return modelingExercise;
+    }
+
+    public static ModelingExercise generateModelingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
+            ExerciseGroup exerciseGroup) {
+        ModelingExercise modelingExercise = new ModelingExercise();
+        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         return modelingExercise;
     }
@@ -318,16 +353,16 @@ public class ModelFactory {
         return criterion;
     }
 
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
         var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
             exampleInstruction1.setGradingCriterion(criterion);
-            exampleInstruction1.setCredits(0.5);
+            exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");
             exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
             exampleInstruction1.setFeedback("test feedback");
-            exampleInstruction1.setUsageCount(3);
+            exampleInstruction1.setUsageCount(usageCount);
             instructions.add(exampleInstruction1);
             numberOfTestInstructions--;
         }
@@ -340,12 +375,36 @@ public class ModelFactory {
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
         feedbacks.add(positiveFeedback);
+        Feedback positiveFeedback2 = new Feedback();
+        positiveFeedback2.setCredits(1D);
+        positiveFeedback2.setReference("theory2");
+        feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
         negativeFeedback.setReference("practice");
         feedbacks.add(negativeFeedback);
         return feedbacks;
+    }
+
+    public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+
+        var gradingInstructionWithNoLimit = receivedExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
+        var gradingInstructionWithLimit = receivedExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
+
+        feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(1).setGradingInstruction(gradingInstructionWithLimit);
+        feedbacks.get(1).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P
+        feedbacks.get(2).setGradingInstruction(gradingInstructionWithNoLimit);
+        feedbacks.get(2).setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        var moreFeedback = new Feedback();
+        moreFeedback.setGradingInstruction(gradingInstructionWithNoLimit);
+        moreFeedback.setCredits(gradingInstructionWithNoLimit.getCredits()); // score +1P
+        feedbacks.add(moreFeedback);
+
+        return feedbacks; // total score should be 3P
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {

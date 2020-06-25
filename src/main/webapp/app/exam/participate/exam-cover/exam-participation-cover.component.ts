@@ -1,17 +1,21 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateService } from '@ngx-translate/core';
 
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
-    styles: [],
+    styleUrls: ['./exam-participation-cover.scss'],
 })
 export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
@@ -20,19 +24,29 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     @Input() startView: boolean;
     @Input() exam: Exam;
+    @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     course: Course | null;
-    courseId = 0;
-    title: string;
     startEnabled: boolean;
     confirmed: boolean;
-    examId: number;
 
     formattedGeneralInformation: SafeHtml | null;
     formattedConfirmationText: SafeHtml | null;
 
-    interval: any;
+    interval: number;
+    waitingForExamStart = false;
+    timeUntilStart = '0';
+    formattedStartDate = '';
 
-    constructor(private courseService: CourseManagementService, private artemisMarkdown: ArtemisMarkdownService) {}
+    accountName = '';
+    enteredName?: string;
+
+    constructor(
+        private courseService: CourseManagementService,
+        private artemisMarkdown: ArtemisMarkdownService,
+        private translateService: TranslateService,
+        private accountService: AccountService,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * on init use the correct information to display in either start or final view
@@ -48,10 +62,19 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
+        this.formattedStartDate = this.exam.startDate ? this.exam.startDate.format('LT') : '';
+
+        this.accountService.identity().then((user) => {
+            if (user && user.name) {
+                this.accountName = user.name;
+            }
+        });
     }
 
     ngOnDestroy() {
-        clearInterval(this.interval);
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
     }
 
     /**
@@ -60,31 +83,92 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * if confirmed, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
-        this.confirmed = !this.confirmed;
         if (this.startView) {
-            if (this.confirmed) {
-                this.interval = setInterval(() => {
-                    this.startEnabled = this.enableStartButton();
-                }, 100);
+            this.startEnabled = this.confirmed;
+        }
+    }
+
+    /**
+     * check if exam already started
+     */
+    hasStarted(): boolean {
+        return this.exam?.startDate ? this.exam.startDate.isBefore(moment()) : false;
+    }
+
+    /**
+     * displays popup or start exam participation immediately
+     */
+    startExam() {
+        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
+            if (this.hasStarted()) {
+                this.onExamStarted.emit(studentExam);
             } else {
-                this.startEnabled = false;
+                this.waitingForExamStart = true;
+                this.interval = window.setInterval(() => {
+                    this.updateDisplayedTimes(studentExam);
+                }, 100);
             }
-        }
+        });
     }
 
     /**
-     * check, whether exam has started yet and we therefore can enable the Start Exam Button
+     * updates all displayed (relative) times in the UI
      */
-    enableStartButton() {
-        if (this.confirmed && this.exam && this.exam.startDate && moment(this.exam.startDate).isBefore(moment())) {
-            return true;
+    updateDisplayedTimes(studentExam: StudentExam) {
+        const translationBasePath = 'showStatistic.';
+        // update time until start
+        if (this.exam && this.exam.startDate) {
+            if (this.hasStarted()) {
+                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                this.onExamStarted.emit(studentExam);
+            } else {
+                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(moment(), 'seconds'));
+            }
         } else {
-            return false;
+            this.timeUntilStart = '';
         }
     }
 
     /**
-     * TODO: add session management, this function is bound to the start exam button
+     * Express the given timespan as humanized text
+     *
+     * @param remainingTimeSeconds {number} the amount of seconds to display
+     * @return {string} humanized text for the given amount of seconds
      */
-    startExam() {}
+    relativeTimeText(remainingTimeSeconds: number): string {
+        if (remainingTimeSeconds > 210) {
+            return Math.ceil(remainingTimeSeconds / 60) + ' min';
+        } else if (remainingTimeSeconds > 59) {
+            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
+        } else {
+            return remainingTimeSeconds + ' s';
+        }
+    }
+
+    /**
+     * Submits the exam if user has valid token
+     */
+    submit() {
+        // TODO: refactor following code
+        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
+        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
+        //     const validSessionToken = response.body?.sessionToken ?? '';
+        //     if (validSessionToken && localSessionToken === validSessionToken) {
+        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
+        //         // TODO: submit exam
+        //     } else {
+        //         console.log('Something went wrong');
+        //         // error message
+        //     }
+        // });
+    }
+
+    get startButtonEnabled(): boolean {
+        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(moment()));
+    }
+
+    get falseName(): boolean {
+        return this.enteredName !== this.accountName;
+    }
 }

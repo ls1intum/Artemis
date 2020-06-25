@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -41,10 +43,13 @@ public class ExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService) {
+    private final ParticipationService participationService;
+
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
+        this.participationService = participationService;
     }
 
     @Autowired
@@ -89,15 +94,40 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with exercise groups and exercises.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NotNull
+    public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with exercise groups : {}", examId);
+        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one exam by id with registered users.
      *
      * @param examId the id of the entity
-     * @return the exam with registered user
+     * @return the exam with registered users
      */
     @NotNull
     public Exam findOneWithRegisteredUsers(Long examId) {
         log.debug("Request to get exam with registered users : {}", examId);
         return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
+     * Get one exam by id with registered users and exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with registered users and exercise groups
+     */
+    @NotNull
+    public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with registered users and registered students : {}", examId);
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 
     /**
@@ -277,6 +307,30 @@ public class ExamService {
         return notFoundStudentsDtos;
     }
 
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    public void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId())));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
+    }
+
     private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
         // Add all mandatory indices
         List<Integer> indices = new ArrayList<>(mandatoryIndices);
@@ -296,5 +350,35 @@ public class ExamService {
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
         int randomIndex = random.nextInt(exercises.size());
         return exercises.get(randomIndex);
+    }
+
+    /**
+     * Starts all the exercises of all the student exams of an exam
+     *
+     * @param examId exam to which the student exams belong
+     * @return list of generated participations
+     */
+    @Transactional
+    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
+    public List<Participation> startExercises(Long examId) {
+        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        List<Participation> generatedParticipations = new ArrayList<>();
+
+        for (StudentExam studentExam : studentExams) {
+            User student = studentExam.getUser();
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                    try {
+                        var participation = participationService.startExercise(exercise, student, true);
+                        generatedParticipations.add(participation);
+                    }
+                    catch (Exception ex) {
+                        log.warn("Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    }
+                }
+            }
+        }
+
+        return generatedParticipations;
     }
 }

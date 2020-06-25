@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.3.1"
+    id "com.diffplug.gradle.spotless" version "4.4.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.2.3"
+version = "4.2.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -166,7 +166,7 @@ dependencies {
     implementation files('libs/acli-9.0.0.jar')
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.8.0.202006091008-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -243,7 +243,7 @@ dependencies {
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
     }
-    implementation "io.springfox:springfox-bean-validators"
+    implementation "io.springfox:springfox-bean-validators:2.10.0"
     implementation "mysql:mysql-connector-java:8.0.20"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 

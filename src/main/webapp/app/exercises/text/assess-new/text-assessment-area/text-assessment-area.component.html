@@ -1,0 +1,27 @@
+<ng-container *ngIf="autoTextBlockAssessment; else manualTextBlockSelection">
+    <jhi-textblock-assessment-card
+        *ngFor="let ref of textBlockRefs"
+        [textBlockRef]="ref"
+        [selected]="selectedRef === ref"
+        (didSelect)="selectedRef = $event"
+        (didChange)="textBlockRefsChangeEmit()"
+        (didDelete)="removeTextBlockRef($event)"
+    ></jhi-textblock-assessment-card>
+</ng-container>
+<ng-template #manualTextBlockSelection>
+    <jhi-manual-textblock-selection
+        [(textBlockRefs)]="textBlockRefs"
+        [(selectedRef)]="selectedRef"
+        (textBlockRefAdded)="addTextBlockRef($event)"
+        [submission]="submission"
+    ></jhi-manual-textblock-selection>
+</ng-template>
+
+<div>
+    <span class="badge badge-primary mb-2">
+        {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+    </span>
+    <span class="badge badge-primary mb-2">
+        {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+    </span>
+</div>

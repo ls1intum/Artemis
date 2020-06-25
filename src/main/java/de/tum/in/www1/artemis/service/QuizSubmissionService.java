@@ -14,12 +14,14 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class QuizSubmissionService {
@@ -32,11 +34,14 @@ public class QuizSubmissionService {
 
     private QuizExerciseService quizExerciseService;
 
+    private QuizScheduleService quizScheduleService;
+
     private ParticipationService participationService;
 
-    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository) {
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.quizScheduleService = quizScheduleService;
     }
 
     @Autowired
@@ -100,7 +105,7 @@ public class QuizSubmissionService {
         result.setParticipation(participation);
 
         // add result to statistics
-        QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
+        quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
         log.debug("submit practice quiz finished: " + quizSubmission);
         return result;
     }
@@ -124,9 +129,10 @@ public class QuizSubmissionService {
 
         long start = System.nanoTime();
         // check if submission is still allowed
-        QuizExercise quizExercise = QuizScheduleService.getQuizExercise(exerciseId);
+        QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
         if (quizExercise == null) {
             // Fallback solution
+            log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
             if (optionalQuizExercise.isEmpty()) {
                 log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
@@ -164,9 +170,38 @@ public class QuizSubmissionService {
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
+        quizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
         log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        return quizSubmission;
+    }
+
+    /**
+     * Updates a submission for the exam mode
+     *
+     * @param quizExercise      the quiz exercise for which the submission for the exam mode should be done
+     * @param quizSubmission    the quiz submission includes the submitted answers by the student
+     * @param user              the student who wants to submit the quiz during the exam
+     * @return                  the updated quiz submission after it has been saved to the database
+     */
+    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user);
+
+        if (optionalParticipation.isEmpty()) {
+            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user);
+            // TODO: think of better way to handle failure
+            throw new EntityNotFoundException(
+                    "Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user " + user + " was not found!");
+        }
+        StudentParticipation studentParticipation = optionalParticipation.get();
+        quizSubmission.setParticipation(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        log.debug("submit exam quiz finished: " + quizSubmission);
         return quizSubmission;
     }
 }

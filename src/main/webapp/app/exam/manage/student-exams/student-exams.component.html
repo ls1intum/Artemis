@@ -9,6 +9,9 @@
             <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor">
                 <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
             </button>
+            <button class="btn btn-secondary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor">
+                <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
+            </button>
         </div>
     </div>
     <jhi-alert></jhi-alert>
@@ -63,7 +66,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/view">{{ course?.title }}</a>
+                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/view">{{ exam?.title }}</a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -105,7 +108,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value?.startDate | artemisDate: 'long':true }}
+                        <!-- {{ value?.startDate | artemisDate: 'long':true }} -->
                     </ng-template>
                 </ngx-datatable-column>
 

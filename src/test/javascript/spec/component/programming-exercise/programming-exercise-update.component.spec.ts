@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import * as moment from 'moment';
 
@@ -12,11 +13,17 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('ProgrammingExercise Management Update Component', () => {
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
-    let service: ProgrammingExerciseService;
+    let programmingExerciseService: ProgrammingExerciseService;
+    let courseService: CourseManagementService;
+    let exerciseGroupService: ExerciseGroupService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -26,6 +33,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .overrideTemplate(ProgrammingExerciseUpdateComponent, '')
@@ -33,7 +41,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
     });
 
     describe('save', () => {
@@ -42,14 +52,14 @@ describe('ProgrammingExercise Management Update Component', () => {
             const entity = new ProgrammingExercise(new Course());
             entity.id = 123;
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+            spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             // WHEN
             comp.save();
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(entity, {});
+            expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
             expect(comp.isSaving).toEqual(false);
         }));
 
@@ -57,15 +67,77 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise();
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(service, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             // WHEN
             comp.save();
             tick(); // simulate async
 
             // THEN
-            expect(service.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
+        }));
+    });
+
+    describe('exam mode', () => {
+        const courseId = 1;
+        const examId = 1;
+        const groupId = 1;
+        const exerciseGroup = new ExerciseGroup();
+        exerciseGroup.id = groupId;
+        const expectedExamProgrammingExercise = new ProgrammingExercise();
+        expectedExamProgrammingExercise.exerciseGroup = exerciseGroup;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.params = of({ courseId, examId, groupId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise() });
+        });
+
+        it('Should be in exam mode after onInit', fakeAsync(() => {
+            // GIVEN
+            spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
+
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+
+            // THEN
+            expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, groupId);
+            expect(comp.isSaving).toEqual(false);
+            expect(comp.programmingExercise).toEqual(expectedExamProgrammingExercise);
+            expect(comp.isExamMode).toBeTruthy();
+        }));
+    });
+
+    describe('course mode', () => {
+        const courseId = 1;
+        const course = new Course();
+        course.id = courseId;
+        const expectedProgrammingExercise = new ProgrammingExercise();
+        expectedProgrammingExercise.course = course;
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise() });
+        });
+
+        it('Should be in exam mode after onInit', fakeAsync(() => {
+            // GIVEN
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.isSaving).toEqual(false);
+            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
+            expect(comp.isExamMode).toBeFalsy();
         }));
     });
 });

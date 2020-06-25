@@ -7,6 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -17,6 +18,7 @@ export class StudentExamsComponent implements OnInit {
     examId: number;
     studentExams: StudentExam[];
     course: Course;
+    exam: Exam;
 
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -49,6 +51,9 @@ export class StudentExamsComponent implements OnInit {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
+            this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse) => {
+                this.exam = examResponse.body!;
+            });
             this.isLoading = false;
         });
     }
@@ -63,8 +68,20 @@ export class StudentExamsComponent implements OnInit {
      */
     generateStudentExams() {
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
-            (res) => this.setStudentExams(res),
-            (err) => this.handleStudentExamGenerationError(err.error),
+            () => this.loadAll(),
+            (err) => this.handleError(err.error),
+        );
+    }
+
+    /**
+     * Starts all the exercises of the student exams that belong to the exam
+     */
+    startExercises() {
+        this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
+            () => {
+                this.loadAll();
+            },
+            (err) => this.handleError(err.error),
         );
     }
 
@@ -104,7 +121,7 @@ export class StudentExamsComponent implements OnInit {
         }
     }
 
-    private handleStudentExamGenerationError(error: any): void {
+    private handleError(error: any): void {
         this.jhiAlertService.error(error.errorKey);
     }
 }

@@ -80,7 +80,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
             this.isParsing = false;
         }
         if (csvStudents.length > 0) {
-            this.performExtraValidations(csvStudents);
+            this.performExtraValidations(csvFile, csvStudents);
         }
         if (this.validationError) {
             $event.target.value = ''; // remove selected file so user can fix the file and select it again
@@ -99,15 +99,21 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     /**
      * Performs validations on the parsed students
      * - checks if values for the required column {csvColumns.registrationNumber} are present
+     *
+     * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
      * @param csvStudents Parsed list of students
      */
-    performExtraValidations(csvStudents: CsvStudent[]) {
+    performExtraValidations(csvFile: File, csvStudents: CsvStudent[]) {
         const invalidStudentEntries = this.computeInvalidStudentEntries(csvStudents);
         if (invalidStudentEntries) {
-            const msg = 'Error: Rows without value in required column';
+            const msg = (body: string) => `
+                Could not read file <b>${csvFile.name}</b> due to the following error:
+                <ul class="mt-1"><li><b>Rows without value in required column ${body}</b></li></ul>
+                Please repair the file and try again.
+            `;
             const maxLength = 30;
             const entriesFormatted = invalidStudentEntries.length <= maxLength ? invalidStudentEntries : invalidStudentEntries.slice(0, maxLength) + '...';
-            this.validationError = `${msg} "${csvColumns.registrationNumber}": ${entriesFormatted}`;
+            this.validationError = msg(`"${csvColumns.registrationNumber}": ${entriesFormatted}`);
         }
     }
 
