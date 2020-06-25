@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -67,7 +68,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    ParticipationTestRepository participationRepository;
 
     @SpyBean
     ExamAccessService examAccessService;
@@ -217,7 +218,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAll();
+        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(textExercise));
@@ -276,7 +277,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAll();
+        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(modelingExercise));
