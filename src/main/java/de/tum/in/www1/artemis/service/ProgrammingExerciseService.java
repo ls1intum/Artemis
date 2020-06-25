@@ -149,7 +149,7 @@ public class ProgrammingExerciseService {
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
         // Notify tutors only if this a course exercise
         if (programmingExercise.hasCourse()) {
