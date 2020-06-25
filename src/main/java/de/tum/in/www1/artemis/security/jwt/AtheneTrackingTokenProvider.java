@@ -5,12 +5,14 @@ import java.util.Date;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -19,6 +21,8 @@ import io.jsonwebtoken.security.Keys;
 @Component
 @Profile("athene")
 public class AtheneTrackingTokenProvider {
+
+    private final Logger log = LoggerFactory.getLogger(AtheneTrackingTokenProvider.class);
 
     @Value("${artemis.athene.base64-secret}")
     private String BASE64_SECRET;
@@ -41,24 +45,26 @@ public class AtheneTrackingTokenProvider {
     }
 
     /**
-     * Create JWT Token to communicate with the Athene Tracking Component for a given Submission.
-     * @param submission TextSubmission Object
+     * Create JWT Token to communicate with the Athene Tracking Component for a given Result.
+     * @param result Result Object
      * @return JWT Token
      */
-    public String createToken(TextSubmission submission) {
+    public String createToken(Result result) {
+        log.trace("Create Athene Tracking Token for Result {}", result);
+
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.tokenValidityInMilliseconds);
 
-        return Jwts.builder().claim("submission_id", submission.getId()).signWith(key, SignatureAlgorithm.HS256).setExpiration(validity).compact();
+        return Jwts.builder().claim("result_id", result.getId()).signWith(key, SignatureAlgorithm.HS256).setExpiration(validity).compact();
     }
 
     /**
      * Create JWT Token to communicate with the Athene Tracking Component and add it as HTTP Header.
      *
      * @param bodyBuilder HttpResponse BodyBuilder
-     * @param submission TextSubmission Object
+     * @param result Result Object
      */
-    public void addTokenToResponseEntity(ResponseEntity.BodyBuilder bodyBuilder, TextSubmission submission) {
-        bodyBuilder.header("X-Athene-Tracking-Authorization", createToken(submission));
+    public void addTokenToResponseEntity(ResponseEntity.BodyBuilder bodyBuilder, Result result) {
+        bodyBuilder.header("X-Athene-Tracking-Authorization", createToken(result));
     }
 }

@@ -287,7 +287,10 @@ public class TextSubmissionResource {
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission));
+        if (textSubmission.getResult() != null) {
+            this.atheneTrackingTokenProvider
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+        }
         return bodyBuilder.body(textSubmission);
     }
 }
