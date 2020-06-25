@@ -181,5 +181,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             // TODO: add other exercises, programming, modeling and file upload
 
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 }
