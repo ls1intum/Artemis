@@ -76,3 +76,6 @@ artemis:
         embedding-chunk-size: 50
         clustering-url: http://localhost:8002/cluster
         secret: null
+    athene:
+        tracking-url: http://localhost:8003/tracking
+        secret: null
