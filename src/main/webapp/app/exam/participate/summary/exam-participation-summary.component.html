@@ -19,27 +19,27 @@
             </h5>
             <button
                 class="btn btn-light question-collapse"
-                (click)="submission.isCollapsed = !submission.isCollapsed"
-                [attr.aria-expanded]="!submission.isCollapsed"
-                [attr.aria-controls]="submission.isCollapsed"
+                (click)="collapseKeys[i].isCollapsed = !collapseKeys[i].isCollapsed"
+                [attr.aria-expanded]="!collapseKeys[i].isCollapsed"
+                [attr.aria-controls]="collapseKeys[i].isCollapsed"
             >
-                <fa-icon size="2x" [icon]="submission.isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="collapseKeys[i].isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
         <!--text exercise-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === TEXT">
+        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === TEXT">
             <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="editor-outline-background">{{ submission.text }}</div>
         </div>
         <!--modeling exercise TODO remove mock usage-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === MODELING">
+        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === MODELING">
             <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="editor-outline-background">
                 <jhi-modeling-editor *ngIf="umlModel" [readOnly]="true" [diagramType]="modelingExercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
             </div>
         </div>
         <!--quiz exercise-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === QUIZ">
+        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === QUIZ">
             <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="quiz-content container">
                 <div *ngFor="let question of submission.submittedAnswers; let i = index">
@@ -51,23 +51,23 @@
                         [fnOnSelection]=""
                         [clickDisabled]="true"
                         [showResult]="false"
-                        [submittedResult]="result"
+                        [submittedResult]="null"
                         [submittedQuizExercise]="question.quizQuestion"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
-                        [score]=""
+                        [score]="question.quizQuestion.score"
                     ></jhi-multiple-choice-question>
                     <jhi-drag-and-drop-question
                         id="question{{ i }}"
                         *ngIf="question.type === DRAG_AND_DROP"
                         [question]="question.quizQuestion"
-                        [(mappings)]="dragAndDropMappings[question.id]"
+                        [(mappings)]="question.mappings"
                         [fnOnMappingUpdate]=""
                         [clickDisabled]="true"
                         [showResult]="false"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
-                        [score]=""
+                        [score]="question.quizQuestion.score"
                     ></jhi-drag-and-drop-question>
                     <jhi-short-answer-question
                         id="question{{ i }}"
@@ -79,13 +79,13 @@
                         [showResult]="false"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
-                        [score]=""
+                        [score]="question.quizQuestion.score"
                     ></jhi-short-answer-question>
                 </div>
             </div>
         </div>
         <!--programming exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === PROGRAMMING">
+        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === PROGRAMMING">
             <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="d-flex align-items-center mb-1 mt-1">
                 <jhi-programming-assessment-repo-export
@@ -104,7 +104,7 @@
             </div>
         </div>
         <!--file upload exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === FILE_UPLOAD">
+        <div class="card-body question-card-body" [ngbCollapse]="collapseKeys[i].isCollapsed" *ngIf="submission.submissionExerciseType === FILE_UPLOAD">
             <h6>{{ exercises[i].problemStatement }}</h6>
             <div>
                 <a (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>

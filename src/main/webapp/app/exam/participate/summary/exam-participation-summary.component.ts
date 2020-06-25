@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
 
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -15,16 +14,12 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 
 import { FileService } from 'app/shared/http/file.service';
-import { Result } from 'app/entities/result.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { HttpResponse } from '@angular/common/http';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 
@@ -53,14 +48,11 @@ export class ExamParticipationSummaryComponent implements OnInit {
     studentExam: StudentExam;
     exercises: any[];
     submissions: any[];
+    collapseKeys: any[];
     // Quiz
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
     // mock
-    course: Course | null;
-    courseId: number;
-    private paramSubscription: Subscription;
-    result: Result | null;
     umlModel: UMLModel;
     modelingExercise: ModelingExercise;
     textSubmission: TextSubmission | null;
@@ -76,7 +68,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     /**
      *  Submission is of Form: studentExam, Exam
      *
-     *  studentExam: { exercises: [], exam: {}}
+     *  studentExam: { exercises: [{studentParticipations: [] Submissions}], exam: {}}
      *  exam:
      */
 
@@ -84,22 +76,19 @@ export class ExamParticipationSummaryComponent implements OnInit {
         private courseCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute,
         private modelingExerciseService: ModelingExerciseService,
-        private participationService: ParticipationService,
-        private quizExerciseService: QuizExerciseService,
         private fileService: FileService,
     ) {}
 
     ngOnInit() {
-        //this.studentExamService.find(7, 4);
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-            this.examId = parseInt(params['examId'], 10);
-        });
-        // load exam like this until service is ready
-        this.course = this.courseCalculationService.getCourse(this.courseId);
-        this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
+        // TODO remove - temporary submission mocks
         this.mock();
-        this.submissions.map((obj) => ({ ...obj, isCollapsed: 'false' }));
+
+        // map a stand alone collapseControl to each submission
+        // TODO add id?
+        this.collapseKeys = [];
+        for (let i = 0; i < this.submissions.length; i++) {
+            this.collapseKeys.push({ isCollapsed: false });
+        }
 
         // TODO use exercises [] for problem statements, submissions [] for actual student submissions
     }
@@ -171,17 +160,21 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionExerciseType: SubmissionExerciseType.MODELING,
         };
 
-        // mock mc quiz submission
+        // mock mc quiz submission (all types)
         this.quizSubmission = {
             submissionExerciseType: 'quiz',
-            submitted: false,
+            id: 46,
+            submitted: true,
+            type: 'MANUAL',
+            submissionDate: '2020-06-25T13:06:25.2128146+02:00',
             submittedAnswers: [
                 {
                     type: 'multiple-choice',
+                    id: 7,
                     quizQuestion: {
                         type: 'multiple-choice',
-                        id: 6,
-                        title: 'MC2',
+                        id: 10,
+                        title: 'MC Q1',
                         text: 'Enter your long question if needed',
                         hint: 'Add a hint here (visible during the quiz via ?-Button)',
                         score: 1,
@@ -190,18 +183,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
                         invalid: false,
                         answerOptions: [
                             {
-                                id: 9,
+                                id: 14,
                                 text: 'Enter a correct answer option here',
                                 hint: 'Add a hint here (visible during the quiz via ?-Button)',
                                 invalid: false,
                             },
                             {
-                                id: 11,
-                                text: 'Enter a wrong answer option here',
-                                invalid: false,
-                            },
-                            {
-                                id: 10,
+                                id: 15,
                                 text: 'Enter a wrong answer option here',
                                 invalid: false,
                             },
@@ -209,39 +197,120 @@ export class ExamParticipationSummaryComponent implements OnInit {
                     },
                     selectedOptions: [
                         {
-                            id: 9,
-                            text: 'Enter a correct answer option here',
-                            hint: 'Add a hint here (visible during the quiz via ?-Button)',
-                            invalid: false,
-                        },
-                        {
-                            id: 11,
+                            id: 15,
                             text: 'Enter a wrong answer option here',
                             invalid: false,
                         },
                     ],
                 },
                 {
+                    type: 'drag-and-drop',
+                    id: 8,
+                    quizQuestion: {
+                        type: 'drag-and-drop',
+                        id: 11,
+                        title: 'DnD Q2',
+                        text: 'Enter your long question if needed',
+                        hint: 'Add a hint here (visible during the quiz via ?-Button)',
+                        score: 1,
+                        scoringType: 'PROPORTIONAL_WITH_PENALTY',
+                        randomizeOrder: true,
+                        invalid: false,
+                        backgroundFilePath: '/api/files/drag-and-drop/backgrounds/11/DragAndDropBackground_2020-06-25T13-05-41-381_317a86a5.jpg',
+                        dropLocations: [
+                            {
+                                id: 3,
+                                posX: 33,
+                                posY: 82,
+                                width: 64,
+                                height: 39,
+                                invalid: false,
+                            },
+                            {
+                                id: 4,
+                                posX: 122,
+                                posY: 144,
+                                width: 49,
+                                height: 31,
+                                invalid: false,
+                            },
+                        ],
+                        dragItems: [
+                            {
+                                id: 4,
+                                pictureFilePath: null,
+                                text: 'Text2',
+                                invalid: false,
+                            },
+                            {
+                                id: 3,
+                                pictureFilePath: null,
+                                text: 'Text',
+                                invalid: false,
+                            },
+                        ],
+                    },
+                    mappings: [
+                        {
+                            id: 5,
+                            invalid: false,
+                            dragItem: {
+                                id: 4,
+                                pictureFilePath: null,
+                                text: 'Text2',
+                                invalid: false,
+                            },
+                            dropLocation: {
+                                id: 3,
+                                posX: 33,
+                                posY: 82,
+                                width: 64,
+                                height: 39,
+                                invalid: false,
+                            },
+                        },
+                        {
+                            id: 6,
+                            invalid: false,
+                            dragItem: {
+                                id: 3,
+                                pictureFilePath: null,
+                                text: 'Text',
+                                invalid: false,
+                            },
+                            dropLocation: {
+                                id: 4,
+                                posX: 122,
+                                posY: 144,
+                                width: 49,
+                                height: 31,
+                                invalid: false,
+                            },
+                        },
+                    ],
+                },
+                {
                     type: 'short-answer',
+                    id: 9,
                     quizQuestion: {
                         type: 'short-answer',
-                        id: 5,
-                        title: 'SA Q',
+                        id: 12,
+                        title: 'SA Q3',
                         text:
                             'Enter your long question if needed\n\nSelect a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\nYou can define a input field like this: This [-spot 1] an [-spot 2] field.\n\nTo define the solution for the input fields you need to create a mapping (multiple mapping also possible):',
-                        score: 1,
+                        score: 5,
                         scoringType: 'ALL_OR_NOTHING',
                         randomizeOrder: true,
                         invalid: false,
                         spots: [
                             {
-                                id: 3,
+                                id: 7,
                                 spotNr: 1,
                                 width: 15,
                                 invalid: false,
                             },
                             {
-                                id: 4,
+                                id: 8,
                                 spotNr: 2,
                                 width: 15,
                                 invalid: false,
@@ -250,18 +319,22 @@ export class ExamParticipationSummaryComponent implements OnInit {
                     },
                     submittedTexts: [
                         {
-                            text: 'is',
+                            id: 5,
+                            text: 'test 1',
+                            isCorrect: false,
                             spot: {
-                                id: 3,
+                                id: 7,
                                 spotNr: 1,
                                 width: 15,
                                 invalid: false,
                             },
                         },
                         {
-                            text: 'input',
+                            id: 6,
+                            text: 'test 2',
+                            isCorrect: false,
                             spot: {
-                                id: 4,
+                                id: 8,
                                 spotNr: 2,
                                 width: 15,
                                 invalid: false,
@@ -270,10 +343,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
                     ],
                 },
             ],
-            submissionDate: '2020-06-20T09:53:00.848Z',
-            adjustedSubmissionDate: '2020-06-20T09:53:00.848Z',
+            adjustedSubmissionDate: '2020-06-25T11:06:25.212Z',
         };
-
         // mock file upload submission
         this.fileUploadSub = {
             submissionExerciseType: 'file-upload',
@@ -355,8 +426,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
         // mock programming submission
         this.programmingSubmission = {
-            repositoryUrl: 'https://ge93hig@bitbucket.ase.in.tum.de/scm/EIST20H02E03/eist20h02e03-ge93hig.git',
-            id: 332562,
+            repositoryUrl: 'https://bitbucket.ase.in.tum.de/dashboard',
+            id: 1,
             submissionExerciseType: 'programming',
         };
 
@@ -369,7 +440,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.exercises.push({ problemStatement: 'PS QUIZ 1' });
         this.exercises.push({
             problemStatement: 'PS PROGRAMMING 1',
-            id: 1197,
+            id: 2,
         });
 
         this.submissions = [];
