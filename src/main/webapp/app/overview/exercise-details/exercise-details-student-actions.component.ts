@@ -40,6 +40,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
     @Input() showResult: boolean;
 
+    @Input() examMode: boolean;
+
     public repositoryPassword: string;
     public wasCopied = false;
     public useSsh = false;

@@ -369,7 +369,7 @@ public class ExamService {
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
                     try {
-                        var participation = participationService.startExercise(exercise, student);
+                        var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {

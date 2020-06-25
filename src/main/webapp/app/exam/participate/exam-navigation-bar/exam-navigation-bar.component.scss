@@ -1,0 +1,39 @@
+.exam-navigation {
+    background: #e1e1e1;
+    margin: -1.25rem -1.25rem 1.25rem -1.25rem;
+
+    .remaining-time {
+        background: white;
+        text-align: center;
+    }
+
+    .critical {
+        background: #fedc56;
+    }
+}
+
+.navigation-item {
+    margin-left: 0.1rem;
+    margin-right: 0.1rem;
+    width: 3rem;
+}
+
+.text-overflow {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.synced {
+    color: white;
+    background-color: #3e8acc;
+}
+.notSynced {
+    color: #1a1a1a;
+    background-color: #e8bf48;
+}
+.inactive {
+    background-color: gray;
+}
+.active {
+    background-color: #276091;
+}

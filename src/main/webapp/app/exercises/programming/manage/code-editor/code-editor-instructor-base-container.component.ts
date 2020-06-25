@@ -93,7 +93,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route!.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
@@ -295,8 +295,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         }
         const assignmentParticipationId = this.exercise.studentParticipations[0].id;
         this.exercise.studentParticipations = [];
-        this.participationService
-            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+        this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError('participationCouldNotBeDeleted')),
                 tap(() => this.createAssignmentParticipation()),
