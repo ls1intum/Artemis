@@ -2,7 +2,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import { TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
 
 @Component({
     selector: 'jhi-manual-textblock-selection',
@@ -21,7 +20,6 @@ export class ManualTextblockSelectionComponent {
     @Input() selectedRef: TextBlockRef | null = null;
     @Output() selectedRefChange = new EventEmitter<TextBlockRef | null>();
     @Input() submission: TextSubmission;
-
     textBlockRefGroups: TextBlockRefGroup[];
 
     textBlockRefsChangeEmit(): void {
@@ -29,14 +27,13 @@ export class ManualTextblockSelectionComponent {
     }
 
     /**
-     * Called by [jhiTextSelect] directive. Select Text within text block ref group and emit to parent component
-     * if it is indeed a new text block.
+     * Called by <jhi-manual-text-selection> component (form [jhiTextSelect] directive).
+     * Select Text within text block ref group and emit to parent component if it is indeed a new text block.
      *
-     * @param $event response from directive, we are interested in $event.text.
+     * @param $text response from directive.
      * @param group TextBlockRefGroup of text blocks allowed to select text in.
      */
-    handleTextSelection($event: TextSelectEvent, group: TextBlockRefGroup): void {
-        const text = $event.text;
+    handleTextSelection($text: string, group: TextBlockRefGroup): void {
         // create new Text Block for text
         const textBlockRef = TextBlockRef.new();
         const textBlock = textBlockRef.block;
@@ -44,14 +41,14 @@ export class ManualTextblockSelectionComponent {
         const baseIndex = group.startIndex;
         const groupText = group.getText(this.submission);
 
-        const startIndexInGroup = groupText.indexOf(text);
+        const startIndexInGroup = groupText.indexOf($text);
 
-        if (text.length > groupText.length || startIndexInGroup === -1) {
+        if ($text.length > groupText.length || startIndexInGroup === -1) {
             return;
         }
 
         textBlock.startIndex = baseIndex + startIndexInGroup;
-        textBlock.endIndex = textBlock.startIndex + text.length;
+        textBlock.endIndex = textBlock.startIndex + $text.length;
         textBlock.setTextFromSubmission(this.submission);
         textBlock.computeId();
         const existingRef = this.textBlockRefs.find((ref) => ref.block.id === textBlock.id);

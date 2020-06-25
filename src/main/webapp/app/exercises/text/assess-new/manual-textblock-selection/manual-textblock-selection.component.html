@@ -7,6 +7,8 @@
         (didChange)="textBlockRefsChangeEmit()"
     ></jhi-textblock-assessment-card>
     <ng-template #selectionInterface>
-        <span [innerText]="group.getText(submission)" (jhiTextSelect)="handleTextSelection($event, group)"></span>
+        <jhi-manual-text-selection [positionRelative]="true" (assess)="handleTextSelection($event, group)">
+            <span [innerText]="group.getText(submission)"></span>
+        </jhi-manual-text-selection>
     </ng-template>
 </ng-container>
