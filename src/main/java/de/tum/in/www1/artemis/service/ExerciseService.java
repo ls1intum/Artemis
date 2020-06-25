@@ -45,11 +45,11 @@ public class ExerciseService {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final QuizScheduleService quizScheduleService;
+
     private final ExamRepository examRepository;
 
     private final StudentExamService studentExamService;
-
-    private final QuizScheduleService quizScheduleService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
