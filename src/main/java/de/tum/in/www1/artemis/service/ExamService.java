@@ -102,8 +102,7 @@ public class ExamService {
     @NotNull
     public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
-        return breakSerializationCycleExercises(exam);
+        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 
     /**
@@ -127,9 +126,8 @@ public class ExamService {
     @NotNull
     public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with registered users and registered students : {}", examId);
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
-        return breakSerializationCycleExercises(exam);
     }
 
     /**
@@ -382,14 +380,5 @@ public class ExamService {
         }
 
         return generatedParticipations;
-    }
-
-    private Exam breakSerializationCycleExercises(Exam exam) {
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                exercise.setExerciseGroup(null);
-            }
-        }
-        return exam;
     }
 }
