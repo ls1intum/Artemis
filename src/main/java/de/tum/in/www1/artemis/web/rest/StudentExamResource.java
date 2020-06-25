@@ -185,7 +185,7 @@ public class StudentExamResource {
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
             if (latestSubmission.isPresent()) {
                 participation.setSubmissions(Set.of(latestSubmission.get()));
-                // Set the latest result into the participation as the client expects it there for programming exercise feedback
+                // Set the latest result into the participation as the client expects it there for programming exercises
                 Result result = latestSubmission.get().getResult();
                 if (result != null) {
                     participation.setResults(Set.of(result));
