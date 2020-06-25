@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 
 @Service
 public class QuizSubmissionService {
@@ -32,11 +32,14 @@ public class QuizSubmissionService {
 
     private QuizExerciseService quizExerciseService;
 
+    private QuizScheduleService quizScheduleService;
+
     private ParticipationService participationService;
 
-    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository) {
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.quizScheduleService = quizScheduleService;
     }
 
     @Autowired
@@ -100,7 +103,7 @@ public class QuizSubmissionService {
         result.setParticipation(participation);
 
         // add result to statistics
-        QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
+        quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
         log.debug("submit practice quiz finished: " + quizSubmission);
         return result;
     }
@@ -124,9 +127,10 @@ public class QuizSubmissionService {
 
         long start = System.nanoTime();
         // check if submission is still allowed
-        QuizExercise quizExercise = QuizScheduleService.getQuizExercise(exerciseId);
+        QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
         if (quizExercise == null) {
             // Fallback solution
+            log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
             if (optionalQuizExercise.isEmpty()) {
                 log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
@@ -164,7 +168,7 @@ public class QuizSubmissionService {
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
+        quizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
         log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;

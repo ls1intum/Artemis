@@ -17,6 +17,7 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -24,7 +25,10 @@ import org.springframework.core.env.Environment;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -45,6 +49,8 @@ public class CacheConfiguration {
     private final DiscoveryClient discoveryClient;
 
     private Registration registration;
+
+    private ApplicationContext applicationContext;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -67,6 +73,11 @@ public class CacheConfiguration {
     @Autowired(required = false)
     public void setRegistration(Registration registration) {
         this.registration = registration;
+    }
+
+    @Autowired
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @PreDestroy
@@ -97,6 +108,9 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        // Allows using @SpringAware and therefore Spring Services in distributed tasks
+        config.setManagedContext(new SpringManagedContext(applicationContext));
+        config.setClassLoader(applicationContext.getClassLoader());
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
         }
@@ -154,6 +168,9 @@ public class CacheConfiguration {
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        QuizScheduleService.configureHazelcast(config);
+
         return Hazelcast.newHazelcastInstance(config);
     }
 
