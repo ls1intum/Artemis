@@ -181,6 +181,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         }
 
+        // change back to instructor user
+        database.changeUser("instructor1");
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
