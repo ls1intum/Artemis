@@ -129,9 +129,6 @@ export class TextExerciseUpdateComponent implements OnInit {
             .subscribe();
         this.isSaving = false;
         this.notificationText = null;
-        console.log('Is is in Import Mode:' + this.isImport);
-        console.log('Is In Exam Mode:' + this.isExamMode);
-        console.log('Is Exam Exercise:' + !!this.textExercise.exerciseGroup);
 
         // Set submit button text depending on component state
         if (this.isImport) {
