@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 /**
@@ -32,8 +32,6 @@ import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 public class ProgrammingExerciseSimulationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -49,19 +47,20 @@ public class ProgrammingExerciseSimulationService {
 
     public final String domain = "artemislocalhost:7990/scm/";
 
-    public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            GroupNotificationService groupNotificationService, ProgrammingExerciseService programmingExerciseService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, GroupNotificationService groupNotificationService,
+            ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.groupNotificationService = groupNotificationService;
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -89,7 +88,7 @@ public class ProgrammingExerciseSimulationService {
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
 
         return programmingExercise;

@@ -175,6 +175,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -359,6 +362,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentExam.getExam()).isEqualTo(exam);
             // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     public Exam createExam() {

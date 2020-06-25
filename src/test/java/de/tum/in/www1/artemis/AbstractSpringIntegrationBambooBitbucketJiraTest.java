@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap" })
+@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @SpyBean

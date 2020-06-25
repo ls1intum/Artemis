@@ -35,7 +35,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.2.4"
+version = "4.2.5"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -182,7 +182,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.5.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.5.2"
     implementation "net.logstash.logback:logstash-logback-encoder:6.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -227,7 +227,7 @@ dependencies {
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
     implementation "io.netty:netty-all:4.1.49.Final"
-    implementation "io.projectreactor.netty:reactor-netty:0.9.7.RELEASE"
+    implementation "io.projectreactor.netty:reactor-netty:0.9.9.RELEASE"
     implementation "org.springframework:spring-messaging:5.2.7.RELEASE"
     implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.6.RELEASE_1"
 
@@ -240,10 +240,10 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-    implementation ("io.springfox:springfox-swagger2") {
+    implementation ("io.springfox:springfox-swagger2:2.10.5") {
         exclude module: "mapstruct"
     }
-    implementation "io.springfox:springfox-bean-validators:2.10.0"
+    implementation "io.springfox:springfox-bean-validators:2.10.5"
     implementation "mysql:mysql-connector-java:8.0.20"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
