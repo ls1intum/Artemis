@@ -32,7 +32,6 @@ export class QuizExamSummaryComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        console.log(this.submission);
         this.updateViewFromSubmission();
     }
 

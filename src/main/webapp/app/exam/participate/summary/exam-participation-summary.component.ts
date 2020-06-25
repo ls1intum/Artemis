@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
@@ -9,7 +9,7 @@ import { getIcon } from 'app/entities/exercise.model';
     templateUrl: './exam-participation-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
 })
-export class ExamParticipationSummaryComponent implements OnInit {
+export class ExamParticipationSummaryComponent {
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -30,10 +30,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
 
     constructor() {}
-
-    ngOnInit() {
-        console.log(this.studentExam);
-    }
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
