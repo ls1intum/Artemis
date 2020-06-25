@@ -1,0 +1,14 @@
+<ng-container *ngFor="let group of textBlockRefGroups">
+    <jhi-textblock-assessment-card
+        *ngIf="group.singleRef; else selectionInterface"
+        [textBlockRef]="group.singleRef"
+        [selected]="selectedRef === group.singleRef"
+        (didSelect)="selectedRef = $event; selectedRefChange.emit($event)"
+        (didChange)="textBlockRefsChangeEmit()"
+    ></jhi-textblock-assessment-card>
+    <ng-template #selectionInterface>
+        <jhi-manual-text-selection [positionRelative]="true" (assess)="handleTextSelection($event, group)">
+            <span [innerText]="group.getText(submission)"></span>
+        </jhi-manual-text-selection>
+    </ng-template>
+</ng-container>

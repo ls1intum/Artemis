@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -66,17 +66,17 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
-
     private final GradingCriterionService gradingCriterionService;
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            ExampleSubmissionRepository exampleSubmissionRepository, Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService,
-            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -89,10 +89,10 @@ public class TextExerciseResource {
         this.textExerciseImportService = textExerciseImportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
         this.exerciseGroupService = exerciseGroupService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -138,7 +138,7 @@ public class TextExerciseResource {
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);
-        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
+        instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
         // Only notify tutors when the exercise is created for a course
         if (textExercise.hasCourse()) {
@@ -186,7 +186,7 @@ public class TextExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
-        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
+        instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
@@ -299,7 +299,8 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise));
+
+        instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, course, user);
         exerciseService.delete(exerciseId, false, false);
@@ -388,21 +389,16 @@ public class TextExerciseResource {
 
     /**
      * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment (clustering task) for given exercise id
+     * As the clustering can be performed on a different node, this will always return 200, despite an error could occur on the other node.
      *
      * @param exerciseId id of the exercised that for which the automatic assessment should be triggered
-     * @return the ResponseEntity with status 200 (OK) or with status 400 (Bad Request)
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
-        if (textClusteringScheduleService.isPresent()) {
-            TextExercise textExercise = textExerciseService.findOne(exerciseId);
-            textClusteringScheduleService.get().scheduleExerciseForInstantClustering(textExercise);
-            return ResponseEntity.ok().build();
-        }
-        else {
-            return ResponseEntity.badRequest().build();
-        }
+        instanceMessageSendService.sendTextExerciseInstantClustering(exerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**
