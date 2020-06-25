@@ -2,10 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+
 import { Exam } from 'app/entities/exam.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+
 import { FileService } from 'app/shared/http/file.service';
 import { Result } from 'app/entities/result.model';
 import { UMLModel } from '@ls1intum/apollon';
@@ -18,9 +26,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 
 import { getIcon } from 'app/entities/exercise.model';
 
@@ -30,17 +36,26 @@ import { getIcon } from 'app/entities/exercise.model';
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
 })
 export class ExamParticipationSummaryComponent implements OnInit {
-    // Quiz
-    selectedAnswerOptions = new Map<number, AnswerOption[]>();
-    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-    shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     // make constants available to html for comparison
+    readonly TEXT = ExerciseType.TEXT;
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly MODELING = ExerciseType.MODELING;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     getIcon = getIcon;
+
+    exam: Exam;
+    studentExam: StudentExam;
+    exercises: any[];
     submissions: any[];
+    // Quiz
+    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+
     // mock
     course: Course | null;
     courseId: number;
@@ -55,9 +70,15 @@ export class ExamParticipationSummaryComponent implements OnInit {
     quizExercise: any;
     programmingExercise: any;
     programmingSubmission: any;
-    exam: Exam;
     examId: number;
-    fileUploadEx: any;
+    fileUploadSub: any;
+
+    /**
+     *  Submission is of Form: studentExam, Exam
+     *
+     *  studentExam: { exercises: [], exam: {}}
+     *  exam:
+     */
 
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
@@ -74,12 +95,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
         });
-
         // load exam like this until service is ready
         this.course = this.courseCalculationService.getCourse(this.courseId);
         this.exam = this.course!.exams.filter((exam) => exam.id === this.examId)[0]!;
         this.mock();
         this.submissions.map((obj) => ({ ...obj, isCollapsed: 'false' }));
+
+        // TODO use exercises [] for problem statements, submissions [] for actual student submissions
     }
 
     /**
@@ -105,11 +127,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
         return filePath.split('.').pop()!;
     }
-
-    /**
-     * Quiz Exercise
-     * TODO remove any type for question and answer
-     */
 
     mock() {
         this.modelingExerciseService.find(53).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
@@ -146,7 +163,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionExerciseType: SubmissionExerciseType.TEXT,
             submitted: true,
             text:
-                'Hallo Mausi ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+                'Hallo ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
         };
         // @ts-ignore
         this.modelingSubmission = {
@@ -154,97 +171,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
             submissionExerciseType: SubmissionExerciseType.MODELING,
         };
 
-        // mock quiz exercise
-        this.quizExercise = {
-            type: 'quiz',
-            id: 60,
-            title: 'Test Q 1',
-            releaseDate: '2020-06-20T09:52:41.000Z',
-            dueDate: '2020-06-20T10:02:41.000Z',
-            course: {
-                id: 1,
-                title: 'Einführung in die Softwaretechnik',
-                description: 'Test1',
-                shortName: 'EIST',
-                studentGroupName: 'artemis-dev',
-                teachingAssistantGroupName: 'artemis-dev',
-                instructorGroupName: 'artemis-dev',
-                startDate: '2020-04-07T00:00:00+02:00',
-                endDate: '2020-07-22T18:13:54+02:00',
-                onlineCourse: true,
-                maxComplaints: 3,
-                maxTeamComplaints: 3,
-                maxComplaintTimeDays: 7,
-                studentQuestionsEnabled: true,
-            },
-            randomizeQuestionOrder: true,
-            isVisibleBeforeStart: true,
-            isOpenForPractice: false,
-            isPlannedToStart: true,
-            duration: 600,
-            quizQuestions: [
-                {
-                    type: 'short-answer',
-                    id: 5,
-                    title: 'SA Q',
-                    text:
-                        'Enter your long question if needed\n\nSelect a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\nYou can define a input field like this: This [-spot 1] an [-spot 2] field.\n\nTo define the solution for the input fields you need to create a mapping (multiple mapping also possible):',
-                    score: 1,
-                    scoringType: 'ALL_OR_NOTHING',
-                    randomizeOrder: true,
-                    invalid: false,
-                    spots: [
-                        {
-                            id: 3,
-                            spotNr: 1,
-                            width: 15,
-                            invalid: false,
-                        },
-                        {
-                            id: 4,
-                            spotNr: 2,
-                            width: 15,
-                            invalid: false,
-                        },
-                    ],
-                },
-                {
-                    type: 'multiple-choice',
-                    id: 6,
-                    title: 'MC2',
-                    text: 'Enter your long question if needed',
-                    hint: 'Add a hint here (visible during the quiz via ?-Button)',
-                    score: 1,
-                    scoringType: 'ALL_OR_NOTHING',
-                    randomizeOrder: true,
-                    invalid: false,
-                    answerOptions: [
-                        {
-                            id: 9,
-                            text: 'Enter a correct answer option here',
-                            hint: 'Add a hint here (visible during the quiz via ?-Button)',
-                            invalid: false,
-                        },
-                        {
-                            id: 11,
-                            text: 'Enter a wrong answer option here',
-                            invalid: false,
-                        },
-                        {
-                            id: 10,
-                            text: 'Enter a wrong answer option here',
-                            invalid: false,
-                        },
-                    ],
-                },
-            ],
-            started: true,
-            visibleToStudents: true,
-            remainingTime: 596,
-            ended: false,
-            timeUntilPlannedStart: -3,
-            adjustedDueDate: '2020-06-20T10:02:40.737Z',
-        };
         // mock mc quiz submission
         this.quizSubmission = {
             submissionExerciseType: 'quiz',
@@ -348,10 +274,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
             adjustedSubmissionDate: '2020-06-20T09:53:00.848Z',
         };
 
-        // mock sa quiz submission
-
         // mock file upload submission
-        this.fileUploadEx = {
+        this.fileUploadSub = {
             submissionExerciseType: 'file-upload',
             id: 35,
             submitted: true,
@@ -430,21 +354,29 @@ export class ExamParticipationSummaryComponent implements OnInit {
         };
 
         // mock programming submission
-        this.programmingExercise = {
-            id: 1197,
-        };
-
         this.programmingSubmission = {
             repositoryUrl: 'https://ge93hig@bitbucket.ase.in.tum.de/scm/EIST20H02E03/eist20h02e03-ge93hig.git',
             id: 332562,
             submissionExerciseType: 'programming',
         };
 
+        // this.studentExam.exercises
+        this.exercises = [];
+        this.exercises.push({ problemStatement: 'PS TEXT 1', title: 'TEXT TITLE' });
+        this.exercises.push({ problemStatement: 'PS MODELING 1' });
+        this.exercises.push({ problemStatement: 'PS TEXT 2' });
+        this.exercises.push({ problemStatement: 'PS FILE UPLOAD 1' });
+        this.exercises.push({ problemStatement: 'PS QUIZ 1' });
+        this.exercises.push({
+            problemStatement: 'PS PROGRAMMING 1',
+            id: 1197,
+        });
+
         this.submissions = [];
         this.submissions.push(this.textSubmission);
         this.submissions.push(this.modelingSubmission);
         this.submissions.push(this.textSubmission2);
-        this.submissions.push(this.fileUploadEx);
+        this.submissions.push(this.fileUploadSub);
         this.submissions.push(this.quizSubmission);
         this.submissions.push(this.programmingSubmission);
     }

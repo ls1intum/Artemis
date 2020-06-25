@@ -7,9 +7,9 @@
         </button>
     </h2>
 </div>
-<!--TODO add message if not participated in an exercise/ submission empty / similar-->
-<!--TODO add problem statement-->
-<!--TODO add exercise title-->
+<!--TODO add message if not participated in an exercise/ submission empty / similar?-->
+<!--adjust object extraction-->
+<!--TODO add exercise title?-->
 <div *ngFor="let submission of submissions; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
@@ -27,41 +27,40 @@
             </button>
         </div>
         <!--text exercise-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'text'">
-            <h6>Problem Statement //TODO insert</h6>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === TEXT">
+            <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="editor-outline-background">{{ submission.text }}</div>
         </div>
-        <!--modeling exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'modeling'">
-            <h6>Problem Statement //TODO insert</h6>
+        <!--modeling exercise TODO remove mock usage-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === MODELING">
+            <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="editor-outline-background">
                 <jhi-modeling-editor *ngIf="umlModel" [readOnly]="true" [diagramType]="modelingExercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
             </div>
         </div>
-        <!--quiz exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'quiz'">
-            <h6>Problem Statement //TODO insert</h6>
+        <!--quiz exercise-->
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === QUIZ">
+            <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="quiz-content container">
-                <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+                <div *ngFor="let question of submission.submittedAnswers; let i = index">
                     <jhi-multiple-choice-question
                         id="question{{ i }}"
                         *ngIf="question.type === MULTIPLE_CHOICE"
-                        [question]="question"
-                        [(selectedAnswerOptions)]="submission.submittedAnswers[0].selectedOptions"
+                        [question]="question.quizQuestion"
+                        [(selectedAnswerOptions)]="question.selectedOptions"
                         [fnOnSelection]=""
                         [clickDisabled]="true"
                         [showResult]="false"
                         [submittedResult]="result"
-                        [submittedQuizExercise]="question"
+                        [submittedQuizExercise]="question.quizQuestion"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
                         [score]=""
                     ></jhi-multiple-choice-question>
-
                     <jhi-drag-and-drop-question
                         id="question{{ i }}"
                         *ngIf="question.type === DRAG_AND_DROP"
-                        [question]="question"
+                        [question]="question.quizQuestion"
                         [(mappings)]="dragAndDropMappings[question.id]"
                         [fnOnMappingUpdate]=""
                         [clickDisabled]="true"
@@ -73,8 +72,8 @@
                     <jhi-short-answer-question
                         id="question{{ i }}"
                         *ngIf="question.type === SHORT_ANSWER"
-                        [question]="question"
-                        [(submittedTexts)]="submission.submittedAnswers[1].submittedTexts"
+                        [question]="question.quizQuestion"
+                        [(submittedTexts)]="question.submittedTexts"
                         [fnOnSubmittedTextUpdate]=""
                         [clickDisabled]="true"
                         [showResult]="false"
@@ -86,11 +85,11 @@
             </div>
         </div>
         <!--programming exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'programming'">
-            <h6>Problem Statement //TODO insert</h6>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === PROGRAMMING">
+            <h6>{{ exercises[i].problemStatement }}</h6>
             <div class="d-flex align-items-center mb-1 mt-1">
                 <jhi-programming-assessment-repo-export
-                    [exerciseId]="programmingExercise.id"
+                    [exerciseId]="exercises[i].id"
                     [singleParticipantMode]="true"
                     [participationIdList]="submission?.id"
                 ></jhi-programming-assessment-repo-export>
@@ -105,10 +104,10 @@
             </div>
         </div>
         <!--file upload exercise TODO-->
-        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType == 'file-upload'">
-            <h6>Problem Statement //TODO insert</h6>
+        <div class="card-body question-card-body" [ngbCollapse]="submission.isCollapsed" *ngIf="submission.submissionExerciseType === FILE_UPLOAD">
+            <h6>{{ exercises[i].problemStatement }}</h6>
             <div>
-                <a (click)="downloadFile(fileUploadEx.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                <a (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
                 <span class="ml-2 badge badge-info">
                     {{ attachmentExtension(submission.filePath!) | uppercase }}
                 </span>
