@@ -26,6 +26,7 @@
             }
         },
         "examParticipation": {
+            "timer": "Restzeit: ",
             "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
