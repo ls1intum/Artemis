@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -15,10 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -42,6 +45,12 @@ public class ExerciseService {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final QuizScheduleService quizScheduleService;
+
+    private final ExamRepository examRepository;
+
+    private final StudentExamService studentExamService;
+
     private final ExampleSubmissionService exampleSubmissionService;
 
     private final AuditEventRepository auditEventRepository;
@@ -53,10 +62,12 @@ public class ExerciseService {
     private final TeamService teamService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamService studentExamService,
+            ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
+        this.examRepository = exampRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -67,6 +78,8 @@ public class ExerciseService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
+        this.quizScheduleService = quizScheduleService;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -94,7 +107,7 @@ public class ExerciseService {
      * Finds all Exercises for a given Course
      *
      * @param course corresponding course
-     * @param user the user entity
+     * @param user   the user entity
      * @return a List of all Exercises for the given course
      */
     public Set<Exercise> findAllForCourse(Course course, User user) {
@@ -135,6 +148,7 @@ public class ExerciseService {
 
     /**
      * Finds all team-based exercises for a course
+     *
      * @param course Course for which to return all team-based exercises
      * @return set of exercises
      */
@@ -160,7 +174,7 @@ public class ExerciseService {
     /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
-     *
+     * <p>
      * DEPRECATED: Please use findOne() or write a custom method
      *
      * @param exerciseId the exerciseId of the entity
@@ -201,8 +215,9 @@ public class ExerciseService {
 
     /**
      * Get one exercise with all exercise hints and all student questions + answers and with all categories
+     *
      * @param exerciseId the id of the exercise to find
-     * @param user the current user
+     * @param user       the current user
      * @return the exercise
      */
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
@@ -269,6 +284,13 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
+        if (exercise.hasExerciseGroup()) {
+            Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
+            for (StudentExam studentExam : exam.getStudentExams()) {
+                studentExamService.deleteStudentExam(studentExam.getId());
+            }
+        }
+
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
@@ -281,7 +303,7 @@ public class ExerciseService {
     /**
      * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      *
-     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
+     * @param exerciseId         programming exercise for which build plans in respective student participations are deleted
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
@@ -338,7 +360,7 @@ public class ExerciseService {
     /**
      * Check whether the exercise has either a course or an exerciseGroup.
      *
-     * @param exercise the Exercise to be validated
+     * @param exercise   the Exercise to be validated
      * @param entityName name of the entity
      * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
      */
@@ -352,8 +374,8 @@ public class ExerciseService {
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
      * @param updatedExercise the updated Exercise
-     * @param oldExercise the old Exercise
-     * @param entityName name of the entity
+     * @param oldExercise     the old Exercise
+     * @param entityName      name of the entity
      * @throws BadRequestAlertException if updated exercise was converted
      */
     public void checkForConversionBetweenExamAndCourseExercise(Exercise updatedExercise, Exercise oldExercise, String entityName) throws BadRequestAlertException {
@@ -363,10 +385,87 @@ public class ExerciseService {
     }
 
     /**
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
+     * result. Filter everything else that is not relevant
+     *
+     * @param exercise the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username used to get quiz submission for the user
+     * @param isStudent defines if the current user is a student
+     */
+    public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
+        // remove the unnecessary inner course attribute
+        exercise.setCourse(null);
+
+        // remove the problem statement, which is loaded in the exercise details call
+        exercise.setProblemStatement(null);
+
+        if (exercise instanceof ProgrammingExercise) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercise.setTestRepositoryUrl(null);
+        }
+
+        // get user's participation for the exercise
+        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && exercise instanceof QuizExercise) {
+            QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new StudentParticipation().exercise(exercise);
+                participation.initializationState(InitializationState.INITIALIZED);
+            }
+        }
+
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
+        if (participation != null) {
+            // find the latest submission with a rated result, otherwise the latest submission with
+            // an unrated result or alternatively the latest submission without a result
+            Set<Submission> submissions = participation.getSubmissions();
+
+            // only transmit the relevant result
+            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : exercise.findAppropriateSubmissionByResults(submissions);
+            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
+
+            Set<Result> results = Set.of();
+
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
+                results = Set.of(latestSubmissionWithRatedResult.getResult());
+                // remove inner participation from result
+                latestSubmissionWithRatedResult.getResult().setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
+                }
+            }
+
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getResult() != null) {
+                submission.getResult().filterSensitiveInformation();
+            }
+
+            // add submission to participation
+            if (submission != null) {
+                participation.setSubmissions(Set.of(submission));
+            }
+
+            participation.setResults(results);
+
+            // remove inner exercise from participation
+            participation.setExercise(null);
+
+            // add participation into an array
+            exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    /**
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute
-     * @param user the user for which to check to which team (or no team) he belongs to
+     * @param user     the user for which to check to which team (or no team) he belongs to
      */
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here

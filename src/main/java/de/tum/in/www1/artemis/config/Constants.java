@@ -137,6 +137,14 @@ public final class Constants {
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
 
+    public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
+
+    public static final String HAZELCAST_QUIZ_PREFIX = "quiz-";
+
+    public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
+
+    public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
+
     private Constants() {
     }
 }

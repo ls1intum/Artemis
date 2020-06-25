@@ -1,5 +1,4 @@
-import { Component, OnInit, QueryList, ViewChildren, Input } from '@angular/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Component, QueryList, ViewChildren, Input, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -14,15 +13,15 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
-    selector: 'jhi-exam-quiz',
-    templateUrl: './quiz-exam-participation.component.html',
-    providers: [ParticipationService],
-    styleUrls: ['./quiz-exam-participation.component.scss'],
+    selector: 'jhi-quiz-submission-exam',
+    templateUrl: './quiz-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
+    styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamParticipationComponent implements OnInit {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -39,21 +38,24 @@ export class QuizExamParticipationComponent implements OnInit {
     @ViewChildren(ShortAnswerQuestionComponent)
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
-    @Input() studentParticipation: StudentParticipation;
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
+    @Input()
+    studentSubmission: QuizSubmission;
 
-    quizExercise: QuizExercise;
+    @Input() exercise: QuizExercise;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-    submission = new QuizSubmission();
 
     constructor() {
+        super();
         smoothscroll.polyfill();
     }
 
     ngOnInit(): void {
-        this.quizExercise = this.studentParticipation.exercise as QuizExercise;
-        this.updateParticipation(this.studentParticipation);
+        this.initQuiz();
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     /**
@@ -65,8 +67,8 @@ export class QuizExamParticipationComponent implements OnInit {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizExercise.quizQuestions) {
-            this.quizExercise.quizQuestions.forEach((question) => {
+        if (this.exercise.quizQuestions) {
+            this.exercise.quizQuestions.forEach((question) => {
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = [];
@@ -93,29 +95,25 @@ export class QuizExamParticipationComponent implements OnInit {
         });
     }
 
-    onSelectionChanged() {
-        this.applySelection();
-    }
-
     /**
-     * applies the data from the model to the UI (reverse of applySelection):
+     * applies the data from the model to the UI (reverse of updateSubmissionFromView):
      *
      * Sets the checkmarks (selected answers) for all questions according to the submission data
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
-    applySubmission() {
+    updateViewFromSubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizExercise.quizQuestions) {
+        if (this.exercise.quizQuestions) {
             // iterate through all questions of this quiz
-            this.quizExercise.quizQuestions.forEach((question) => {
+            this.exercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find((answer) => {
+                const submittedAnswer = this.studentSubmission.submittedAnswers
+                    ? this.studentSubmission.submittedAnswers.find((answer) => {
                           return answer.quizQuestion.id === question.id;
                       })
                     : null;
@@ -155,22 +153,43 @@ export class QuizExamParticipationComponent implements OnInit {
     }
 
     /**
-     * updates the model according to UI state (reverse of applySubmission):
+     * return true if we have no submission yet and we have new answers
+     * returns false if all submittedAnswers in studentSubmission are similar to the ones we have in the respective maps in this components
+     */
+    hasUnsavedChanges(): boolean {
+        if (!this.studentSubmission.submittedAnswers) {
+            // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
+            return Object.keys(this.selectedAnswerOptions).length > 0 || Object.keys(this.dragAndDropMappings).length > 0 || Object.keys(this.shortAnswerSubmittedTexts).length > 0;
+        } else {
+            return !this.studentSubmission.submittedAnswers.every((answer) => {
+                if (answer instanceof MultipleChoiceSubmittedAnswer) {
+                    return this.selectedAnswerOptions[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof DragAndDropSubmittedAnswer) {
+                    return this.dragAndDropMappings[answer.quizQuestion.id] === answer;
+                } else if (answer instanceof ShortAnswerSubmittedAnswer) {
+                    return this.shortAnswerSubmittedTexts[answer.quizQuestion.id] === answer;
+                }
+            });
+        }
+    }
+
+    /**
+     * updates the model according to UI state (reverse of updateViewFromSubmission):
      *
      * Creates the submission from the user's selection
      * this needs to be done when we want to send the submission
      * either for saving (through websocket)
      * or for submitting (through REST call)
      */
-    applySelection() {
+    updateSubmissionFromView(): void {
         // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
         // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
-        this.submission.submittedAnswers = [];
+        this.studentSubmission.submittedAnswers = [];
 
         // for multiple-choice questions
         Object.keys(this.selectedAnswerOptions).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (selectedQuestion) {
+            const question = this.exercise.quizQuestions.find(function (selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -181,13 +200,13 @@ export class QuizExamParticipationComponent implements OnInit {
             const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
             mcSubmittedAnswer.quizQuestion = question;
             mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
-            this.submission.submittedAnswers.push(mcSubmittedAnswer);
+            this.studentSubmission.submittedAnswers.push(mcSubmittedAnswer);
         }, this);
 
         // for drag-and-drop questions
         Object.keys(this.dragAndDropMappings).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
+            const question = this.exercise.quizQuestions.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -198,12 +217,12 @@ export class QuizExamParticipationComponent implements OnInit {
             const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
             dndSubmittedAnswer.quizQuestion = question;
             dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
-            this.submission.submittedAnswers.push(dndSubmittedAnswer);
+            this.studentSubmission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
         Object.keys(this.shortAnswerSubmittedTexts).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
+            const question = this.exercise.quizQuestions.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -214,22 +233,8 @@ export class QuizExamParticipationComponent implements OnInit {
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
             shortAnswerSubmittedAnswer.quizQuestion = question;
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
-            this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
+            this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
-    }
-
-    /**
-     * Apply the data of the participation, replacing all old data
-     */
-    updateParticipation(participation: StudentParticipation) {
-        this.quizExercise = participation.exercise as QuizExercise;
-        this.initQuiz();
-        // apply submission if it exists
-        if (participation && participation.results.length) {
-            this.submission = participation.results[0].submission as QuizSubmission;
-
-            // show submission answers in UI
-            this.applySubmission();
-        }
+        this.studentSubmission.isSynced = false;
     }
 }
