@@ -1,0 +1,16 @@
+.exam-waiting-for-start-overlay {
+    position: fixed !important;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate3d(-50%, -50%, 0);
+    -moz-transform: translate3d(-50%, -50%, 0);
+    -ms-transform: translate3d(-50%, -50%, 0);
+    -o-transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, -50%, 0);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+    border-color: #3c763d;
+    z-index: 8;
+}

@@ -21,6 +21,8 @@
             "created": "New exam created",
             "updated": "Exam updated",
             "exercise": "Exercise {{nr}}",
+            "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
+            "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
@@ -30,7 +32,15 @@
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
-            "disconnected": "Not connected. Go online to save your changes to the server, but you can continue working!"
+            "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
+            "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
+            "timeUntilPlannedStart": "Time until planned start:",
+            "finishExam": "Finish exam",
+            "progress": "Exercise {{ current }} of {{ all }}",
+            "progressSmall": "{{ current }}/{{ all }}",
+            "noExam": "Exam could not be loaded. Please contact your instructor.",
+            "submitProgrammingExercise": "Continue",
+            "submitOtherExercise": "Submit & continue"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -122,7 +132,8 @@
                 "addFileUploadExercise": "Add file upload exercise",
                 "addQuizExercise": "Add quiz",
                 "addFileUploadExercise": "Add file upload exercise",
-                "addProgrammingExercise": "Add programming exercise"
+                "addProgrammingExercise": "Add programming exercise",
+                "orderCouldNotBeSaved": "The order could not be saved"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
@@ -130,7 +141,7 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Student exam ({{ courseTitle }})",
+            "studentExam": "Student exam ({{ examTitle }})",
             "exercises": "Exercises",
             "downloadPDF": " Download PDF",
             "student": "Student",

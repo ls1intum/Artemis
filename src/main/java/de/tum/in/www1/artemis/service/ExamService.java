@@ -94,15 +94,40 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with exercise groups and exercises.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NotNull
+    public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with exercise groups : {}", examId);
+        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one exam by id with registered users.
      *
      * @param examId the id of the entity
-     * @return the exam with registered user
+     * @return the exam with registered users
      */
     @NotNull
     public Exam findOneWithRegisteredUsers(Long examId) {
         log.debug("Request to get exam with registered users : {}", examId);
         return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
+     * Get one exam by id with registered users and exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with registered users and exercise groups
+     */
+    @NotNull
+    public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with registered users and registered students : {}", examId);
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 
     /**
@@ -282,6 +307,30 @@ public class ExamService {
         return notFoundStudentsDtos;
     }
 
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    public void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId())));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
+    }
+
     private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
         // Add all mandatory indices
         List<Integer> indices = new ArrayList<>(mandatoryIndices);
@@ -320,7 +369,7 @@ public class ExamService {
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
                     try {
-                        var participation = participationService.startExercise(exercise, student);
+                        var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {

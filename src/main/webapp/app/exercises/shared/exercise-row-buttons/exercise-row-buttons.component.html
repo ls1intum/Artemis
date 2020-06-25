@@ -38,9 +38,9 @@
         <fa-icon [icon]="'users'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
     </button>
-    <!-- TODO: display this button in exam mode when its functionality implemented -->
+
     <button
-        *ngIf="!examMode && exercise.isAtLeastInstructor"
+        *ngIf="exercise.type === exerciseType.TEXT"
         type="submit"
         [routerLink]="['/course-management', courseId, 'text-exercises', exercise.id]"
         class="btn btn-info btn-sm mr-1"
@@ -48,6 +48,34 @@
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
     </button>
+    <button
+        *ngIf="exercise.type === exerciseType.PROGRAMMING"
+        type="submit"
+        [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id]"
+        class="btn btn-info btn-sm mr-1"
+    >
+        <fa-icon [icon]="'eye'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+    </button>
+    <button
+        *ngIf="exercise.type === exerciseType.FILE_UPLOAD"
+        type="submit"
+        [routerLink]="['/course-management', courseId, 'file-upload-exercises', exercise.id]"
+        class="btn btn-info btn-sm mr-1"
+    >
+        <fa-icon [icon]="'eye'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+    </button>
+    <button
+        *ngIf="exercise.type === exerciseType.MODELING"
+        type="submit"
+        [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id]"
+        class="btn btn-info btn-sm mr-1"
+    >
+        <fa-icon [icon]="'eye'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+    </button>
+
     <button
         *ngIf="examMode && exercise.type === exerciseType.QUIZ"
         type="submit"
