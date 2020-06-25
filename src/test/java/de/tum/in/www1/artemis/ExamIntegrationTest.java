@@ -228,7 +228,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             var textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
             assertThat(textSubmission.getText()).isNull();
         }
-        System.out.println("Test");
 
         // Cleanup of Bidirectional Relationships
         for (StudentExam studentExam : createdStudentExams) {
