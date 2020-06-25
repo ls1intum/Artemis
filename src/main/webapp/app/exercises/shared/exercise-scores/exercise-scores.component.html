@@ -247,7 +247,16 @@
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
+                            *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.fileUploadSubmission.view' | translate }}
+                        </button>
+                        <button
+                            *ngIf="exercise.exerciseGroup"
+                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -259,7 +268,17 @@
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
+                            *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [queryParams]="{ optimal: false, hideBackButton: true }"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.modelingSubmission.view' | translate }}
+                        </button>
+                        <button
+                            *ngIf="exercise.exerciseGroup"
+                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -272,7 +291,16 @@
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
+                            *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.textSubmission.view' | translate }}
+                        </button>
+                        <button
+                            *ngIf="exercise.exerciseGroup"
+                            [routerLink]="['/course-management', exercise.exerciseGroup?.exam.course.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
