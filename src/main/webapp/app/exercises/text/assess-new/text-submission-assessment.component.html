@@ -26,7 +26,13 @@
         <jhi-resizeable-container class="col-12">
             <!--region Left Panel-->
             <jhi-score-display left-header [maxScore]="exercise?.maxScore" [score]="totalScore"></jhi-score-display>
-            <jhi-text-assessment-area left-body [submission]="submission" [(textBlockRefs)]="textBlockRefs" (textBlockRefsChange)="validateFeedback()"></jhi-text-assessment-area>
+            <jhi-text-assessment-area
+                left-body
+                [submission]="submission"
+                [(textBlockRefs)]="textBlockRefs"
+                (textBlockRefsChange)="validateFeedback()"
+                (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
+            ></jhi-text-assessment-area>
             <!--endregion-->
 
             <!--region Right Panel-->

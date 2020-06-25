@@ -50,7 +50,7 @@
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass du das Feedback löschen möchtest!",
                 "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein.."
             },
-            "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten."
+            "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten."
         }
     }
 }
