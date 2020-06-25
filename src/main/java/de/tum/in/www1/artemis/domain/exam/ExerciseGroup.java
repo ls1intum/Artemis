@@ -42,7 +42,7 @@ public class ExerciseGroup implements Serializable {
     @Column(name = "is_mandatory", nullable = false)
     private Boolean isMandatory = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
 

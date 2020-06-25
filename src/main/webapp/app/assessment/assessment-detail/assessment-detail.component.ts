@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, AfterViewInit } from '@angular/core';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -10,16 +10,26 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     templateUrl: './assessment-detail.component.html',
     styleUrls: ['./assessment-detail.component.scss'],
 })
-export class AssessmentDetailComponent {
+export class AssessmentDetailComponent implements AfterViewInit {
     @Input() public assessment: Feedback;
     @Input() public block: TextBlock | undefined;
     @Output() public assessmentChange = new EventEmitter<Feedback>();
     @Input() public highlightColor: HighlightColors.Color;
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
+    disableEditScore = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+
+    ngAfterViewInit(): void {
+        if (this.assessment.gradingInstruction && this.assessment.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
+        }
+    }
+
     /**
      * Emits assessment changes to parent component
      */
@@ -50,7 +60,12 @@ export class AssessmentDetailComponent {
     }
 
     updateAssessmentOnDrop(event: Event) {
-        this.assessmentChange.emit(this.assessment);
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.assessment, event);
+        if (this.assessment.gradingInstruction && this.assessment.gradingInstruction.usageCount !== 0) {
+            this.disableEditScore = true;
+        } else {
+            this.disableEditScore = false;
+        }
+        this.assessmentChange.emit(this.assessment);
     }
 }

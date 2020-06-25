@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { TextExercise } from '../../../../entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
@@ -25,6 +25,19 @@ export class TextExerciseService {
         const copy = this.exerciseService.convertDateFromClient(textExercise);
         return this.http
             .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+    }
+
+    /**
+     * Imports a text exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceTextExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceTextExercise: TextExercise) {
+        return this.http
+            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, adaptedSourceTextExercise, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 

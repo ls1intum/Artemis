@@ -313,7 +313,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -704,16 +704,25 @@ public class DatabaseUtilService {
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
+
+        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
+
         testCriterion.setExercise(exercise);
         var criteria = new ArrayList<GradingCriterion>();
         criteria.add(emptyCriterion);
         criteria.add(testCriterion);
+        criteria.add(testCriterion2);
         exercise.setGradingCriteria(criteria);
         return exercise.getGradingCriteria();
     }
@@ -750,6 +759,20 @@ public class DatabaseUtilService {
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return course;
+    }
+
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM");
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
@@ -878,8 +901,23 @@ public class DatabaseUtilService {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
-        programmingExercise.setShortName("TSTEXC");
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        populateProgrammingExercise(programmingExercise, "TSTEXC");
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        course.addExercises(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+
+        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+    }
+
+    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
@@ -897,16 +935,6 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
-        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
-
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        course.addExercises(programmingExercise);
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
     public Course addEmptyCourse() {
@@ -938,6 +966,12 @@ public class DatabaseUtilService {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
+        addTestCasesToProgrammingExercise(programmingExercise);
+
+        return courseRepo.findById(course.getId()).get();
+    }
+
+    private void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
         testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise).afterDueDate(false));
@@ -946,8 +980,6 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
-
-        return courseRepo.findById(course.getId()).get();
     }
 
     public Course addCourseWithModelingAndTextExercise() {
@@ -1471,6 +1503,17 @@ public class DatabaseUtilService {
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);
+        quizExercise.addQuestions(createMultipleChoiceQuestion());
+        quizExercise.addQuestions(createDragAndDropQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
+        return quizExercise;
+    }
+
+    @NotNull
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());

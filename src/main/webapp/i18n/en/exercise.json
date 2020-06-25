@@ -25,6 +25,18 @@
             "detail": {
                 "title": "Exercise"
             },
+            "import": {
+                "attention": "Attention! ",
+                "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "language": "Programming Language",
+                    "course": "Course",
+                    "examQuestion": "Exam Question",
+                    "doImport": "Import"
+                }
+            },
             "exercise": "Exercise",
             "results": "Results",
             "actions": "Actions",
@@ -75,8 +87,9 @@
             "type": "Type",
             "mcqType": "Multiple Choice Question",
             "dndType": "Drag and Drop Question",
-            "welcome": "<strong>Welcome to Artemis!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
-            "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
+            "welcome": "<strong>Welcome to Artemis!</strong> We have automatically created an account for you. Click the button <i>Start Exercise</i>!",
+            "personalRepositoryClone": "Your personal repository has been set up. Click the button <i>Clone repository</i>!",
+            "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "studentName": "Name",
             "studentId": "Login",
@@ -119,7 +132,7 @@
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
                 },
                 "shortName": {
-                    "pattern": "The short name must only consist of alphanumeric characters!",
+                    "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!"
                 },
                 "packageName": {
@@ -128,7 +141,8 @@
                 "maxScore": {
                     "pattern": "The maximum score must be between 1 and 9999!"
                 }
-            }
+            },
+            "exam": "Exam"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

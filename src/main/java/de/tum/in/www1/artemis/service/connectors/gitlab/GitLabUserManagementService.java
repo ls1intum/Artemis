@@ -78,7 +78,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             if (!addedGroups.isEmpty()) {
                 final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
                 for (final var exercise : exercisesWithAddedGroups) {
-                    final var accessLevel = addedGroups.contains(exercise.getCourse().getInstructorGroupName()) ? MAINTAINER : GUEST;
+                    final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
                     gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
                 }
             }
@@ -89,7 +89,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 for (final var exercise : exercisesWithOutdatedGroups) {
                     // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                     // then we have to add him as a member with the new access level
-                    final var course = exercise.getCourse();
+                    final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     if (user.getGroups().contains(course.getInstructorGroupName())) {
                         gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
                     }

@@ -52,15 +52,15 @@ public abstract class AssessmentResource {
     void checkAuthorization(Exercise exercise, User user) throws AccessForbiddenException, BadRequestAlertException {
         validateExercise(exercise);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            log.debug("Insufficient permission for course: " + exercise.getCourse().getTitle());
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
+            log.debug("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
 
     void validateExercise(Exercise exercise) throws BadRequestAlertException {
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null) {
-            throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
+            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", getEntityName(), "courseNotFound");
         }
     }
 

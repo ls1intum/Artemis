@@ -5,7 +5,8 @@
             "null": "",
             "JAVA": "Java",
             "PYTHON": "Python",
-            "C": "C"
+            "C": "C",
+            "HASKELL": "Haskell"
         }
     }
 }

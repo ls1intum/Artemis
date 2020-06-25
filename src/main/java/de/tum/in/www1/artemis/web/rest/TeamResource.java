@@ -103,7 +103,7 @@ public class TeamResource {
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
-        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourse().getId(), team.getShortName())) {
+        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), team.getShortName())) {
             throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
@@ -171,7 +171,7 @@ public class TeamResource {
 
         // Propagate team owner change to other instances of this team in the course
         if (ownerWasChanged) {
-            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourse().getId(), savedTeam.getShortName());
+            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), savedTeam.getShortName());
             teamInstances.forEach(teamInstance -> teamInstance.setOwner(savedTeam.getOwner()));
             teamRepository.saveAll(teamInstances);
         }

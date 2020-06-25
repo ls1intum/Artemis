@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,7 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -49,6 +48,8 @@ public class QuizExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final QuizScheduleService quizScheduleService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final AuthorizationCheckService authCheckService;
@@ -56,12 +57,13 @@ public class QuizExerciseResource {
     private final GroupNotificationService groupNotificationService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            ExerciseService exerciseService, UserService userService) {
+            QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
+        this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -84,24 +86,32 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
-
         // check if quiz is valid
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+
+        // Check that the user is authorized to create the exercise
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
+        // Only notify students and tutors if the exercise is created for a course
+        if (quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
+        }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -125,17 +135,27 @@ public class QuizExerciseResource {
             return createQuizExercise(quizExercise);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        // check if quiz is valid
+        if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 
-        // check if quiz is valid
-        if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
-        }
+        // Forbid conversion between normal course exercise and exam exercise
+        QuizExercise quizExerciseBeforeUpdate = quizExerciseService.findOne(quizExercise.getId());
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, quizExerciseBeforeUpdate, ENTITY_NAME);
 
         // check if quiz is has already started
         Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
@@ -152,11 +172,11 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-
-        // TODO: it does not really make sense to notify students here!
-        if (notificationText != null) {
+        // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
+        // Only notify students about changes if a regular exercise in a course was updated
+        if (notificationText != null && quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -192,9 +212,19 @@ public class QuizExerciseResource {
     @GetMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+
+        if (quizExercise.hasExerciseGroup()) {
+            // Get the course over the exercise group
+            Course course = quizExercise.getExerciseGroup().getExam().getCourse();
+
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+        else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
@@ -266,7 +296,7 @@ public class QuizExerciseResource {
         }
 
         // check permissions
-        Course course = quizExercise.getCourse();
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
@@ -320,7 +350,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        QuizScheduleService.updateQuizExercise(quizExercise);
+        quizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
@@ -337,20 +367,20 @@ public class QuizExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete QuizExercise : {}", quizExerciseId);
-        Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
-        if (quizExercise.isEmpty()) {
+        Optional<QuizExercise> quizExerciseOptional = quizExerciseService.findById(quizExerciseId);
+        if (quizExerciseOptional.isEmpty()) {
             return notFound();
         }
-        Course course = quizExercise.get().getCourse();
+        Course course = quizExerciseOptional.get().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(quizExercise.get(), course, user);
+        exerciseService.logDeletion(quizExerciseOptional.get(), course, user);
         exerciseService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExerciseOptional.get().getTitle())).build();
     }
 
     /**
