@@ -4,6 +4,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -27,7 +28,7 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService) {}
+    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -65,7 +66,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     get remainingTime(): string {
-        const timeDiff = moment.duration(this.endDate.diff(moment()));
+        const timeDiff = moment.duration(this.endDate.diff(this.serverDateService.now()));
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
         }

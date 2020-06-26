@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
-import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -18,6 +17,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -67,6 +67,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private textSubmissionService: TextSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     /**
@@ -146,7 +147,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         if (!this.exam) {
             return false;
         }
-        return this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
+        return this.exam.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -156,7 +157,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         if (!this.exam) {
             return false;
         }
-        return this.exam.visibleDate ? this.exam.visibleDate.isBefore(moment()) : false;
+        return this.exam.visibleDate ? this.exam.visibleDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -166,7 +167,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         if (!this.exam) {
             return false;
         }
-        return this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
+        return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     ngOnDestroy(): void {
