@@ -121,7 +121,9 @@ public abstract class RepositoryResource {
             var repoFile = new ProgrammingExerciseStudentParticipation.ProgrammingExerciseRepositoryFile();
             repoFile.setFilename(file.getKey());
             repoFile.setFileType(file.getValue());
-            repoFile.setFileContent(repositoryService.getFile(repository, repoFile.getFilename()));
+            if (repoFile.getFileType() == FileType.FILE) {
+                repoFile.setFileContent(repositoryService.getFile(repository, repoFile.getFilename()));
+            }
             repoFiles.add(repoFile);
         }
         return repoFiles;
