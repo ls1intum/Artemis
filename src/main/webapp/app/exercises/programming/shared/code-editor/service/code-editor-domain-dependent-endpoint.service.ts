@@ -4,6 +4,10 @@ import { HttpClient } from '@angular/common/http';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 /**
  * Service that can be extended to update rest endpoint urls with the received domain information.
@@ -14,6 +18,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     private websocketResourceUrlBase = '/topic';
     protected websocketResourceUrlSend: string | null;
     protected websocketResourceUrlReceive: string | null;
+    protected domainValue: StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExercise;
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
@@ -27,6 +32,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = this.domain;
+        this.domainValue = domainValue;
         switch (domainType) {
             case DomainType.PARTICIPATION:
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;

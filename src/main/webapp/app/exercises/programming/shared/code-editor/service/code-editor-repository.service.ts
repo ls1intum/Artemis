@@ -19,6 +19,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/ProgrammingExerciseRepositoryFile.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -69,6 +70,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         super(http, jhiWebsocketService, domainService);
     }
 
+    // TODO: Mock this call for offline code editor support
     getStatus = () => {
         return this.http.get<any>(this.restResourceUrl!).pipe(
             handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
@@ -147,6 +149,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     getRepositoryContent = () => {
+        // TODO: If offline retrieve cached repository content
+        const participation = this.getParticipation(this.domainValue.id);
+        const files = participation?.repositoryFiles;
+        if (files) {
+            return of(this.getFilenameAndType(files));
+        }
+        // TODO: If we use the server update the cached file list
         return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
@@ -232,5 +241,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     getParticipation(participationId: number): ProgrammingExerciseStudentParticipation | undefined {
         return this.participations.find((participation) => participation.id === participationId);
+    }
+
+    getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
+        const fileDict: { [filename: string]: FileType } = {};
+        files.forEach((file) => {
+            fileDict[file.filename] = file.fileType;
+        });
+        return fileDict;
     }
 }
