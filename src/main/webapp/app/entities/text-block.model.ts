@@ -1,12 +1,18 @@
 import { sha1Hex } from 'app/shared/util/crypto.utils';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
+export enum TextBlockType {
+    AUTOMATIC = 'AUTOMATIC',
+    MANUAL = 'MANUAL',
+}
+
 export class TextBlock {
     id: string;
     text: string;
     startIndex: number;
     endIndex: number;
     submission?: TextSubmission;
+    type: TextBlockType;
 
     /**
      * Identical with de.tum.in.www1.artemis.domain.TextBlock:computeId
