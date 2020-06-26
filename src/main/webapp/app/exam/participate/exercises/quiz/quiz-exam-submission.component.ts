@@ -181,7 +181,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * either for saving (through websocket)
      * or for submitting (through REST call)
      */
-    updateSubmissionFromView(): void {
+    updateSubmissionFromView(intervalSave: boolean): void {
         // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
         // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
         this.studentSubmission.submittedAnswers = [];

@@ -40,7 +40,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     /**
      * Updates the model of the submission with the current Apollon editor model state (view)
      */
-    public updateSubmissionFromView(): void {
+    public updateSubmissionFromView(intervalSave: boolean): void {
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
             return;
         }

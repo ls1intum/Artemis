@@ -53,7 +53,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.studentSubmission.text !== this.answer;
     }
 
-    public updateSubmissionFromView(): void {
+    public updateSubmissionFromView(intervalSave: boolean): void {
         this.studentSubmission.text = this.answer;
         this.studentSubmission.language = this.textService.predictLanguage(this.answer);
         this.studentSubmission.isSynced = false;
