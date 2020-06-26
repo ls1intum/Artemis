@@ -55,7 +55,11 @@
             "view": "Ansicht",
             "assessment": "Bewertung",
             "id": "ID",
-            "exam": "Klausur"
+            "exam": "Klausur",
+            "studentExamGenerationSuccess": "{{number}} individuelle Klausuren erfolgreich generiert!",
+            "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
+            "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
+            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",

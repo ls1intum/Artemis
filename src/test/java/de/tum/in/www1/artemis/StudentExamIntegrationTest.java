@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -123,10 +122,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamRepository.findAll()).hasSize(users.size() + 2); // we generate two additional student exams in the @Before method
 
         // start exercises
-        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Participation.class, HttpStatus.OK);
 
-        assertThat(participations).hasSize(users.size() * exam.getExerciseGroups().size());
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
         // TODO: also write a 2nd test where the submission already contains some content
 

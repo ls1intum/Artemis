@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -366,12 +365,15 @@ public class ExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return list of generated participations
+     * @return number of generated Participations
      */
-    @Transactional
-    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
-    public List<Participation> startExercises(Long examId) {
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+    public Integer startExercises(Long examId) {
+
+        var exam = examRepository.findWithStudentExamsExercisesParticipationsSubmissionsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        var studentExams = exam.getStudentExams();
+
         List<Participation> generatedParticipations = new ArrayList<>();
 
         for (StudentExam studentExam : studentExams) {
@@ -389,6 +391,6 @@ public class ExamService {
             }
         }
 
-        return generatedParticipations;
+        return generatedParticipations.size();
     }
 }
