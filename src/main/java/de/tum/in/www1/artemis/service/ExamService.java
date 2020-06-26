@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -187,6 +187,14 @@ public class ExamService {
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
 
+        // Check that the start and end date of the exam is set
+        if (exam.getStartDate() == null || exam.getEndDate() == null) {
+            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
+        }
+
+        // Determine the default working time by computing the duration between start and end date of the exam
+        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup.getExercises().isEmpty()) {
@@ -228,13 +236,14 @@ public class ExamService {
         for (User registeredUser : exam.getRegisteredUsers()) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
+            studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
             studentExam.setUser(registeredUser);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
-                // we get one random exercise from all preselected exercise groups
+                // We get one random exercise from all preselected exercise groups
                 studentExam.addExercise(selectRandomExercise(random, exerciseGroups.get(index)));
             }
 
@@ -356,12 +365,15 @@ public class ExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return list of generated participations
+     * @return number of generated Participations
      */
-    @Transactional
-    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
-    public List<Participation> startExercises(Long examId) {
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+    public Integer startExercises(Long examId) {
+
+        var exam = examRepository.findWithStudentExamsExercisesParticipationsSubmissionsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        var studentExams = exam.getStudentExams();
+
         List<Participation> generatedParticipations = new ArrayList<>();
 
         for (StudentExam studentExam : studentExams) {
@@ -379,6 +391,6 @@ public class ExamService {
             }
         }
 
-        return generatedParticipations;
+        return generatedParticipations.size();
     }
 }

@@ -25,6 +25,12 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The working time in seconds
+     */
+    @Column(name = "working_time")
+    private Integer workingTime;
+
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -50,6 +56,14 @@ public class StudentExam implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getWorkingTime() {
+        return workingTime;
+    }
+
+    public void setWorkingTime(Integer workingTime) {
+        this.workingTime = workingTime;
     }
 
     public Exam getExam() {

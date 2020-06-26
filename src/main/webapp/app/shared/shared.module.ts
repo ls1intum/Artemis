@@ -14,11 +14,13 @@ import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-to
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [
         ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
         HasAnyAuthorityDirective,
         SecuredImageComponent,
         DeleteDialogComponent,
@@ -31,6 +33,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     entryComponents: [DeleteDialogComponent],
     exports: [
         ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
         ArtemisSharedLibsModule,
         FindLanguageFromKeyPipe,
         AlertComponent,
