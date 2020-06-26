@@ -134,7 +134,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= 60) {
-                this.triggerSave();
+                this.triggerSave(true);
             }
         }, 1000);
     }
@@ -194,7 +194,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * @param {Exercise} exercise
      */
     onExerciseChange(exercise: Exercise): void {
-        this.triggerSave();
+        this.triggerSave(false);
         this.activeExercise = exercise;
         this.reloadSubmissionComponent();
     }
@@ -210,15 +210,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * 2) Click on Save & Continue
      * 3) The 60s timer was triggered
      *      --> in this case, we can even save all submissions with isSynced = true
+     *
+     * @param intervalSave is set to true, if the save was triggered from the interval timer
      */
-    triggerSave() {
+    triggerSave(intervalSave: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
         if (this.currentSubmissionComponent?.hasUnsavedChanges()) {
-            // TODO: add param which kind of save was triggered
-            this.currentSubmissionComponent.updateSubmissionFromView();
+            this.currentSubmissionComponent.updateSubmissionFromView(intervalSave);
         }
 
         // goes through all exercises and checks if there are unsynched submissions
