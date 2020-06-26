@@ -150,6 +150,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param fileName: Name of the file to be opened in the editor
      */
     loadFile(fileName: string) {
+        // TODO: 3) if examMode: check whether the file is available in the XXX service and then simply take this file. If the file does not exist, load it from the server as usual
+
         this.isLoading = true;
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService

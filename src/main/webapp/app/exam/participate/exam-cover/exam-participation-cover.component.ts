@@ -101,6 +101,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startExam() {
         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
+            // TODO: 2) in case of a programming exercises with a programming submission (and online editor enabled) save the files in the participation to the XXX service
             if (this.hasStarted()) {
                 this.onExamStarted.emit(studentExam);
             } else {

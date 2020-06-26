@@ -54,6 +54,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(): void {
         // Saves the changed files but does not commit the changes, as this would trigger a CI run
-        this.codeEditorComponent.actions.commit();
+        // TODO: if the user switches the exercise, we can actually commit, but the 60s auto save should only save and NOT commit the files
+        this.codeEditorComponent.actions.saveChangedFiles();
+        // TODO: 4) if online mode enabled: make sure that the code files in the XXX service are also updated.
     }
 }

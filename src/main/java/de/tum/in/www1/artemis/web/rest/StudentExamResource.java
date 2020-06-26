@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -193,6 +194,12 @@ public class StudentExamResource {
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+
+            // Note: special case for programming exercises with online editor enabled
+            if (exercise instanceof ProgrammingExercise && ((ProgrammingExercise) exercise).isAllowOnlineEditor()) {
+                ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+                // TODO: 1) load the current state of all necessary repository files and attach them to the programmingExerciseStudentParticipation.
+            }
         }
     }
 }

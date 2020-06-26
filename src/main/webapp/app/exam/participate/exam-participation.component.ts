@@ -217,6 +217,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.autoSaveTimer = 0;
 
         if (this.currentSubmissionComponent?.hasUnsavedChanges()) {
+            // TODO: add param which kind of save was triggered
             this.currentSubmissionComponent.updateSubmissionFromView();
         }
 
