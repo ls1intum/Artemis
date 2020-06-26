@@ -87,8 +87,6 @@ export class StudentExamsComponent implements OnInit {
                 this.onError(err.error);
                 this.isLoading = false;
             },
-            () => this.loadAll(),
-            (err) => this.handleError(err.error),
         );
     }
 
