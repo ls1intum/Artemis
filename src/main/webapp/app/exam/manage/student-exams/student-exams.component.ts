@@ -9,6 +9,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -83,15 +84,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'danger',
-                        msg: 'artemisApp.studentExams.studentExamGenerationError',
-                        params: { message: err.message },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.onError(err.error);
                 this.isLoading = false;
             },
         );
@@ -116,15 +109,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'danger',
-                        msg: 'artemisApp.studentExams.startExerciseFailure',
-                        params: { message: err.message },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.onError(err.error);
                 this.isLoading = false;
             },
         );
@@ -164,5 +149,9 @@ export class StudentExamsComponent implements OnInit {
         if (studentExams) {
             this.studentExams = studentExams;
         }
+    }
+
+    private onError(error: any) {
+        this.jhiAlertService.error(error.errorKey);
     }
 }
