@@ -19,6 +19,7 @@
             "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
+                "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
@@ -48,12 +49,17 @@
             "startExercises": "Prepare exercise start",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
+            "workingTime": "Working time",
             "result": "Result",
             "created": "Created",
             "view": "View",
             "assessment": "Assessment",
             "id": "ID",
-            "exam": "Exam"
+            "exam": "Exam",
+            "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
+            "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
+            "startExerciseSuccess": "{{number}} exercises successfully prepared!",
+            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",

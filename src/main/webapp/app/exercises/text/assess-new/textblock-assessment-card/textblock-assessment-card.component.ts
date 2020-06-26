@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TextBlockType } from 'app/entities/text-block.model';
 
 type OptionalTextBlockRef = TextBlockRef | null;
 
@@ -15,6 +16,7 @@ export class TextblockAssessmentCardComponent {
     @Input() selected = false;
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
+    @Output() didDelete = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
     disableEditScore = false;
 
@@ -39,6 +41,9 @@ export class TextblockAssessmentCardComponent {
     unselect(): void {
         this.didSelect.emit(null);
         delete this.textBlockRef.feedback;
+        if (this.textBlockRef.block.type === TextBlockType.MANUAL) {
+            this.didDelete.emit(this.textBlockRef);
+        }
         this.feedbackDidChange();
     }
 
