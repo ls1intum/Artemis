@@ -143,7 +143,11 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     }
 
     private setPermissions() {
-        this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+        if (this.exercise.course) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+        } else {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
+        }
     }
 
     public sortRows() {
