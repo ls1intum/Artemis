@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as moment from 'moment';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
@@ -64,12 +63,5 @@ export class StudentExamDetailComponent implements OnInit {
             default:
                 return 'font';
         }
-    }
-
-    /**
-     * Convert the working time to a humanreadable format
-     */
-    workingTime() {
-        return moment.utc(this.studentExam.workingTime * 1000).format('HH:mm:ss');
     }
 }

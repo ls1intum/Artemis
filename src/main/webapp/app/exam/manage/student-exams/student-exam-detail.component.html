@@ -36,8 +36,8 @@
     </div>
 
     <div class="mb-3">
-        <h5><span jhiTranslate="artemisApp.studentExamDetail.workingTime">Working time</span></h5>
-        {{ workingTime() }}
+        <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
+        {{ studentExam.workingTime | artemisDurationFromSeconds }}
     </div>
 
     <div class="mb-3">
