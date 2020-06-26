@@ -70,7 +70,7 @@ export class ExamNavigationBarComponent implements OnInit {
             this.criticalTime = true;
         }
         return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.minutes()) + ' min'
+            ? Math.round(timeDiff.asMinutes()) + ' min'
             : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0');
     }
 
