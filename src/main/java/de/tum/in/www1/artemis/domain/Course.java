@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -51,6 +52,9 @@ public class Course implements Serializable {
 
     @Transient
     private transient FileService fileService = new FileService();
+
+    @Transient
+    private transient FilePathService filePathService = new FilePathService();
 
     @Transient
     private String prevCourseIcon;
@@ -527,7 +531,7 @@ public class Course implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, filePathService.getCourseIconFilepath(), getId());
     }
 
     @PostPersist
@@ -541,13 +545,13 @@ public class Course implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, filePathService.getCourseIconFilepath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, Constants.COURSE_ICON_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, filePathService.getCourseIconFilepath(), getId());
     }
 
     @Override

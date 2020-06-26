@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -28,7 +29,10 @@ public class Attachment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private transient FileService fileService = new FileService(filePathService);
+
+    @Transient
+    private transient FilePathService filePathService = new FilePathService();
 
     @Transient
     private String prevLink;
@@ -91,7 +95,8 @@ public class Attachment implements Serializable {
     public void beforeCreate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+                    true);
         }
     }
 
@@ -107,7 +112,8 @@ public class Attachment implements Serializable {
     public void onUpdate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+                    true);
         }
     }
 
@@ -115,7 +121,7 @@ public class Attachment implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 
