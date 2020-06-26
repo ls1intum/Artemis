@@ -10,6 +10,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -110,6 +111,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         return participation;
     }
 
+    @JsonGetter(value = "repositoryFiles")
     public List<ProgrammingExerciseRepositoryFile> getRepositoryFiles() {
         return repositoryFiles;
     }

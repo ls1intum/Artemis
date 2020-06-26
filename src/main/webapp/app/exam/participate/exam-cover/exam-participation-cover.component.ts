@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
@@ -11,6 +11,10 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -46,6 +50,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private accountService: AccountService,
         private examParticipationService: ExamParticipationService,
+        private codeEditorRepositoryFileService: CodeEditorRepositoryFileService,
     ) {}
 
     /**
@@ -101,7 +106,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startExam() {
         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
-            // TODO: 2) in case of a programming exercises with a programming submission (and online editor enabled) save the files in the participation to the XXX service
+            // TODO: In case of programming exercises with a programming submission (and online editor enabled) save the
+            // files in the participation to the codeEditorRepositoryFileService
+            studentExam.exercises.forEach((exercise) => {
+                if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                    this.codeEditorRepositoryFileService.addParticipation(exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation);
+                }
+            });
             if (this.hasStarted()) {
                 this.onExamStarted.emit(studentExam);
             } else {

@@ -18,6 +18,7 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -115,6 +116,8 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
+
+    private participations: ProgrammingExerciseStudentParticipation[] = [];
 
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
@@ -221,4 +224,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
+
+    addParticipation(participation: ProgrammingExerciseStudentParticipation) {
+        // TODO: Handle the case when a participation with the same ID or for the same exercise already exists
+        this.participations.push(participation);
+    }
+
+    getParticipation(participationId: number): ProgrammingExerciseStudentParticipation | undefined {
+        return this.participations.find((participation) => participation.id === participationId);
+    }
 }
