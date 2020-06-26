@@ -169,10 +169,10 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findOne(examId));
         }
         if (withStudents && withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroups(examId));
+            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId));
         }
         if (withExerciseGroups) {
-            return ResponseEntity.ok(examService.findOneWithExerciseGroups(examId));
+            return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
@@ -379,6 +379,20 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/conduction : Get an exam for conduction.
+     *
+     * @param courseId  the id of the course
+     * @param examId    the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/conduction")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam {} for conduction", examId);
+        return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
+    }
+
+    /**
      * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *
@@ -419,5 +433,4 @@ public class ExamResource {
 
         return ResponseEntity.ok(exam.getExerciseGroups());
     }
-
 }

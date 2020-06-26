@@ -1,19 +1,68 @@
-<jhi-exam-participation-cover [startView]="true" [exam]="exam" *ngIf="isVisible() && !isOver()"></jhi-exam-participation-cover>
-<jhi-exam-participation-summary *ngIf="isVisible() && isOver()"></jhi-exam-participation-summary>
-<div *ngIf="!disconnected" class="exam-footer connected">
-    <div class="container">
-        <div class="exam-footer-content">
-            <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
-            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
-        </div>
-    </div>
-</div>
+<ng-container *ngIf="exam; else noExam">
+    <jhi-exam-participation-cover
+        [startView]="true"
+        [exam]="exam"
+        *ngIf="isVisible() && !isOver() && !examConfirmed"
+        (onExamStarted)="examStarted($event)"
+    ></jhi-exam-participation-cover>
+    <jhi-exam-participation-summary *ngIf="isOver()"></jhi-exam-participation-summary>
 
-<div *ngIf="disconnected" class="exam-footer disconnected">
-    <div class="container">
-        <div class="exam-footer-content">
-            <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
-            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+    <!-- exam participation -->
+    <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed && studentExam">
+        <!-- exam nav -->
+        <!-- exercises -->
+        <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
+            <ng-container [ngSwitch]="activeExercise.type">
+                <jhi-exam-navigation-bar
+                    id="exam-navigation-bar"
+                    [exercises]="studentExam.exercises"
+                    [endDate]="exam.endDate"
+                    (onExerciseChanged)="onExerciseChange($event)"
+                ></jhi-exam-navigation-bar>
+                <ng-container *ngIf="_reload">
+                    <jhi-quiz-submission-exam
+                        *ngSwitchCase="QUIZ"
+                        [exercise]="activeExercise"
+                        [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                    ></jhi-quiz-submission-exam>
+                    <jhi-text-editor-exam
+                        *ngSwitchCase="TEXT"
+                        [exercise]="activeExercise"
+                        [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                    ></jhi-text-editor-exam>
+                    <jhi-modeling-submission-exam
+                        *ngSwitchCase="MODELING"
+                        [exercise]="activeExercise"
+                        [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
+                    ></jhi-modeling-submission-exam>
+                    <jhi-programming-submission-exam
+                        *ngSwitchCase="PROGRAMMING"
+                        [exercise]="activeExercise"
+                        [studentParticipation]="activeExercise.studentParticipations[0]"
+                        [courseId]="courseId"
+                    ></jhi-programming-submission-exam>
+                </ng-container>
+            </ng-container>
+        </ng-container>
+        <!-- exam connection status footer bar -->
+        <div *ngIf="!disconnected" class="exam-footer connected">
+            <div class="container">
+                <div class="exam-footer-content">
+                    <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
+                    <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+        <div *ngIf="disconnected" class="exam-footer disconnected">
+            <div class="container">
+                <div class="exam-footer-content">
+                    <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
+                    <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</ng-container>
+<ng-template #noExam>
+    <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
+</ng-template>

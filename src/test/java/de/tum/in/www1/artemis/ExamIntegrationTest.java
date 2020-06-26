@@ -17,12 +17,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExamAccessService;
@@ -71,6 +73,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @SpyBean
     ExamAccessService examAccessService;
 
+    private List<User> users;
+
     private Course course1;
 
     private Course course2;
@@ -81,7 +85,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(4, 5, 1);
+        users = database.addUsers(4, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -171,6 +175,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).get();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -215,7 +222,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(participation.getExercise().equals(textExercise));
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
-            // TODO: check that submissions have been created to the participations of text exercises
+            assertThat(participation.getSubmissions()).hasSize(1);
+            var textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
+            assertThat(textSubmission.getText()).isNull();
         }
     }
 
@@ -260,7 +269,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(participation.getExercise().equals(modelingExercise));
             assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember() == null);
             assertThat(participation.getExercise().getExerciseGroup() == exam2.getExerciseGroups().get(0));
-            // TODO: check that submissions have been created to the participations of modeling exercises
+            assertThat(participation.getSubmissions()).hasSize(1);
+            var textSubmission = (ModelingSubmission) participation.getSubmissions().iterator().next();
+            assertThat(textSubmission.getModel()).isNull();
+            assertThat(textSubmission.getExplanationText()).isNull();
         }
     }
 
@@ -328,6 +340,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentExam.getExam()).isEqualTo(exam);
             // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     public Exam createExam() {
@@ -449,6 +464,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetExamForConduction() throws Exception {
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        Exam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/conduction", HttpStatus.OK, Exam.class);
+        assertThat(response).isEqualTo(exam);
+        verify(examAccessService, times(1)).checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
     }
 
     @Test

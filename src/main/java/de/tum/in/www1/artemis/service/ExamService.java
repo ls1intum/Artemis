@@ -94,6 +94,18 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with exercise groups and exercises.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NotNull
+    public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with exercise groups : {}", examId);
+        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one exam by id with registered users.
      *
      * @param examId the id of the entity
@@ -112,9 +124,9 @@ public class ExamService {
      * @return the exam with registered users and exercise groups
      */
     @NotNull
-    public Exam findOneWithRegisteredUsersAndExerciseGroups(Long examId) {
+    public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with registered users and registered students : {}", examId);
-        return examRepository.findWithRegisteredUsersAndExerciseGroupsById(examId)
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 
@@ -304,7 +316,7 @@ public class ExamService {
         List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
         List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
-        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId())));
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
     }
 
     /**
@@ -357,7 +369,7 @@ public class ExamService {
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
                     try {
-                        var participation = participationService.startExercise(exercise, student);
+                        var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {

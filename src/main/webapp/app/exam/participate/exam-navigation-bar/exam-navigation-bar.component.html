@@ -1,0 +1,57 @@
+<div class="row justify-content-between align-items-center exam-navigation sticky-top py-2">
+    <div class="col d-none d-md-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+        {{ 'artemisApp.examParticipation.progress' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+    </div>
+    <div class="col d-block d-md-none h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+        {{ 'artemisApp.examParticipation.progressSmall' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+    </div>
+    <div class="col">
+        <div class="d-flex justify-content-center">
+            <div class="navigation-item">
+                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                    <span class="sr-only">Previous</span>
+                </button>
+            </div>
+            <ng-container *ngFor="let exercise of exercises; let i = index">
+                <div
+                    class="navigation-item"
+                    *ngIf="
+                        i >=
+                            exerciseIndex -
+                                itemsVisiblePerSide -
+                                (exerciseIndex + 1 + itemsVisiblePerSide > exercises.length ? exerciseIndex + 1 + itemsVisiblePerSide - exercises.length : 0) &&
+                        i <= exerciseIndex + itemsVisiblePerSide - (exerciseIndex - itemsVisiblePerSide <= 0 ? exerciseIndex - itemsVisiblePerSide : 0)
+                    "
+                >
+                    <button class="btn w-100" [ngClass]="setExerciseButtonStatus(i)" (click)="changeExercise(i)">
+                        <fa-icon [icon]="icon"></fa-icon>
+                    </button>
+                </div>
+            </ng-container>
+            <div class="navigation-item">
+                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">Next</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row justify-content-end align-items-center flex-nowrap pr-2">
+            <div class="col-auto">
+                <button *ngIf="isProgrammingExercise(); else notAProgrammingExercise" class="btn btn-sm btn-primary px-3" (click)="submitExam()">
+                    {{ 'artemisApp.examParticipation.submitProgrammingExercise' | translate }}
+                </button>
+                <ng-template #notAProgrammingExercise>
+                    <button class="btn btn-sm btn-primary px-3" (click)="submitExam()">
+                        {{ 'artemisApp.examParticipation.submitOtherExercise' | translate }}
+                    </button>
+                </ng-template>
+            </div>
+            <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time" [class.critical]="criticalTime">
+                {{ remainingTime }}
+            </div>
+        </div>
+    </div>
+</div>

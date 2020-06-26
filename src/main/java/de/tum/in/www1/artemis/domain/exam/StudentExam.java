@@ -1,25 +1,14 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OrderColumn;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -49,6 +38,11 @@ public class StudentExam implements Serializable {
     @OrderColumn(name = "exercise_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
+
+    @OneToMany(mappedBy = "studentExam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("studentExam")
+    private Set<ExamSession> examSessions = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -92,6 +86,24 @@ public class StudentExam implements Serializable {
         return this;
     }
 
+    public Set<ExamSession> getExamSessions() {
+        return examSessions;
+    }
+
+    public void setExamSessions(Set<ExamSession> examSessions) {
+        this.examSessions = examSessions;
+    }
+
+    public StudentExam addExercise(ExamSession examSession) {
+        this.examSessions.add(examSession);
+        return this;
+    }
+
+    public StudentExam removeExercise(ExamSession examSession) {
+        this.examSessions.remove(examSession);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -106,5 +118,4 @@ public class StudentExam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
-
 }
