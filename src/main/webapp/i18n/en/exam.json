@@ -145,6 +145,7 @@
             "login": "Login: ",
             "email": "Email: ",
             "matriculationNumber": "Matriculation number: ",
+            "workingTime": "Working time",
             "id": "ID",
             "type": "Type",
             "title": "Title",

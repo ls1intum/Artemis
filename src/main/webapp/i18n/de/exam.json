@@ -145,6 +145,7 @@
             "login": "Login: ",
             "email": "Email: ",
             "matriculationNumber": "Matrikelnummer: ",
+            "workingTime": "Bearbeitungszeit",
             "id": "ID",
             "type": "Typ",
             "title": "Titel",
