@@ -141,6 +141,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.checkPermissions();
         this.computeTotalScore();
         this.isLoading = false;
+
+        // track feedback externally
+        this.assessmentsService.trackFeedback(this.result);
     }
 
     private updateUrlIfNeeded() {
@@ -166,6 +169,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
+        // track feedback externally
+        this.assessmentsService.trackFeedback(this.result!);
+
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -185,6 +191,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
+
+        // track feedback externally
+        this.assessmentsService.trackFeedback(this.result);
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(

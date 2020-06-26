@@ -38,6 +38,9 @@ export abstract class Participation implements BaseEntity {
     public exercise?: Exercise;
     public type: ParticipationType;
 
+    // needed for tracking with athene
+    public trackingToken: string | null;
+
     // transient
     public submissionCount?: number;
 

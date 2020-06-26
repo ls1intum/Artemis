@@ -3,6 +3,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -36,7 +37,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.feedback.credits < 0;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, private assessmentService: TextAssessmentsService) {}
 
     /**
      * Life cycle hook to indicate component initialization is done

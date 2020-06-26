@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -98,15 +98,21 @@ export class TextAssessmentsService {
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
     public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
-        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`).pipe(
-            // Wire up Result and Submission
-            tap((sp: StudentParticipation) => (sp.submissions[0].result = sp.results[0])),
-            tap((sp: StudentParticipation) => (sp.submissions[0].participation = sp)),
-            tap((sp: StudentParticipation) => (sp.results[0].submission = sp.submissions[0])),
-            tap((sp: StudentParticipation) => (sp.results[0].participation = sp)),
-            // Make sure Feedbacks Array is initialized
-            tap((sp: StudentParticipation) => (sp.results[0].feedbacks = sp.results[0].feedbacks || [])),
-        );
+        return this.http
+            .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response' })
+            .pipe(
+                // Wire up Result and Submission
+                tap((response) => (response.body!.submissions[0].result = response.body!.results[0])),
+                tap((response) => (response.body!.submissions[0].participation = response.body!)),
+                tap((response) => (response.body!.results[0].submission = response.body!.submissions[0])),
+                tap((response) => (response.body!.results[0].participation = response.body!)),
+                // Make sure Feedbacks Array is initialized
+                tap((response) => (response.body!.results[0].feedbacks = response.body!.results[0].feedbacks || [])),
+
+                // Make sure header for feedback is loaded
+                tap((response) => (response.body!.trackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                map((response) => response.body!),
+            );
     }
 
     /**
@@ -166,5 +172,16 @@ export class TextAssessmentsService {
                     feedbacks.find(({ reference }) => block.id === reference),
                 ),
         );
+    }
+
+    /**
+     * Track the change of the Feedback in Athene
+     *
+     * @param result - The result object that is tracked
+     */
+    public trackFeedback(result: Result) {
+        if (result.participation?.trackingToken) {
+            this.http.post(`${this.resourceUrl}/tracking`, result, { headers: { 'X-Athene-Tracking-Authorization': result.participation.trackingToken } });
+        }
     }
 }
