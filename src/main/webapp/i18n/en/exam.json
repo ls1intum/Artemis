@@ -26,6 +26,9 @@
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
             }
         },
+        "examScores": {
+            "title": "Exam Scores"
+        },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",

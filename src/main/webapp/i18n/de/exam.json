@@ -26,6 +26,9 @@
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
             }
         },
+        "examScores": {
+            "title": "Klausur Ergebnisse"
+        },
         "examParticipation": {
             "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
