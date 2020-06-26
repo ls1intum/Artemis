@@ -282,6 +282,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var exam = createExam();
         exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(true);
+        exam.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam.setEndDate(ZonedDateTime.now().plusHours(4));
         exam = examRepository.save(exam);
 
         // add exercise groups: 3 mandatory, 2 optional
@@ -334,6 +336,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(registeredUsers.size());
+        for (StudentExam studentExam : studentExams) {
+            assertThat(studentExam.getWorkingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
+        }
 
         for (var studentExam : studentExams) {
             assertThat(studentExam.getExercises()).hasSize(exam.getNumberOfExercisesInExam());

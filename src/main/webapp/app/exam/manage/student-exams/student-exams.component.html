@@ -84,6 +84,20 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <ngx-datatable-column prop="workingTime" [minWidth]="100" [width]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime">
+                                Working time
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
+                        </span>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value | artemisDurationFromSeconds }}</span>
+                        </ng-template>
+                    </ng-template>
+                </ngx-datatable-column>
+
                 <ngx-datatable-column prop="result" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('result')">
