@@ -6,10 +6,12 @@
             </h2>
         </div>
         <div class="ml-auto d-flex">
-            <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor">
+            <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
             </button>
-            <button class="btn btn-secondary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor">
+            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
             </button>
         </div>
@@ -81,6 +83,20 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value?.name }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="workingTime" [minWidth]="100" [width]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime">
+                                Working time
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
+                        </span>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value | artemisDurationFromSeconds }}</span>
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
