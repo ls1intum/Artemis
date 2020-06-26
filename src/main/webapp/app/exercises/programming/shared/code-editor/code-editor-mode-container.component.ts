@@ -1,4 +1,4 @@
-import { HostListener, ViewChild } from '@angular/core';
+import { HostListener, ViewChild, Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -21,7 +21,8 @@ import {
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/alert/alert.service';
 
-export abstract class CodeEditorContainer implements ComponentCanDeactivate {
+@Component({ template: '' })
+export abstract class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;

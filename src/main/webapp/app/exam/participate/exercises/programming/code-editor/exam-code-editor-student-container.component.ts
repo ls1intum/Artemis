@@ -10,7 +10,7 @@ import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/cod
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { CodeEditorContainer } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -21,7 +21,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
