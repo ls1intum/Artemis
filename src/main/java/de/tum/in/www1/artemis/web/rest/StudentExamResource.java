@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryProgrammingExerciseParticipationResource;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -46,9 +48,11 @@ public class StudentExamResource {
 
     private final ParticipationService participationService;
 
+    private final RepositoryResource repositoryResource;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService) {
+            QuizExerciseService quizExerciseService, RepositoryProgrammingExerciseParticipationResource repositoryResource) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -57,6 +61,7 @@ public class StudentExamResource {
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
+        this.repositoryResource = repositoryResource;
     }
 
     /**
@@ -198,8 +203,20 @@ public class StudentExamResource {
             // Note: special case for programming exercises with online editor enabled
             if (exercise instanceof ProgrammingExercise && ((ProgrammingExercise) exercise).isAllowOnlineEditor()) {
                 ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                // TODO: 1) load the current state of all necessary repository files and attach them to the programmingExerciseStudentParticipation.
+                // Load the current state of all necessary repository files and attach them to the programmingExerciseStudentParticipation
+                loadRepositoryFiles(programmingExerciseStudentParticipation);
             }
+        }
+    }
+
+    private void loadRepositoryFiles(ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+        // Catch any thrown Exception. This additional offline feature should never compromise the start of the exam
+        try {
+            programmingExerciseStudentParticipation.setRepositoryFiles(repositoryResource.loadRepositoryFiles(programmingExerciseStudentParticipation.getId()));
+        }
+        catch (Exception e) {
+            log.debug("Error occurred retrieving repository files for participation with id " + programmingExerciseStudentParticipation.getId()
+                    + ". Student exam will be served without repository files. Error message: " + e.getMessage());
         }
     }
 }

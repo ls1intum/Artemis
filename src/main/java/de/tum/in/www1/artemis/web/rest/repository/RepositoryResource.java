@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -62,7 +63,7 @@ public abstract class RepositoryResource {
 
     /**
      * Override this method to define how a repository can be retrieved.
-     * 
+     *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
      * @throws IOException if the repository folder can't be accessed.
@@ -103,6 +104,27 @@ public abstract class RepositoryResource {
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
+    }
+
+    /**
+     * Get all files of a repository with file contents.
+     *
+     * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @return List of ProgrammingExerciseRepositoryFile containing the filename, type and content.
+     */
+    public List<ProgrammingExerciseStudentParticipation.ProgrammingExerciseRepositoryFile> loadRepositoryFiles(Long domainId)
+            throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException {
+        List<ProgrammingExerciseStudentParticipation.ProgrammingExerciseRepositoryFile> repoFiles = new ArrayList<>();
+        Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+        Map<String, FileType> fileList = repositoryService.getFiles(repository);
+        for (Map.Entry<String, FileType> file : fileList.entrySet()) {
+            var repoFile = new ProgrammingExerciseStudentParticipation.ProgrammingExerciseRepositoryFile();
+            repoFile.setFilename(file.getKey());
+            repoFile.setFileType(file.getValue());
+            repoFile.setFileContent(repositoryService.getFile(repository, repoFile.getFilename()));
+            repoFiles.add(repoFile);
+        }
+        return repoFiles;
     }
 
     /**
@@ -277,7 +299,7 @@ public abstract class RepositoryResource {
 
     /**
      * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
-     * 
+     *
      * @param executor lambda function to execute.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
