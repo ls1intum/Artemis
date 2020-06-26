@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing TextSubmission.
@@ -168,8 +167,21 @@ public class TextSubmissionResource {
     @GetMapping("/text-submissions/{id}")
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(textSubmission);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findById(id);
+
+        if (optionalTextSubmission.isEmpty()) {
+            return notFound();
+        }
+        final TextSubmission textSubmission = optionalTextSubmission.get();
+
+        // set up tracking header
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        if (textSubmission.getResult() != null) {
+            this.atheneTrackingTokenProvider
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+        }
+
+        return bodyBuilder.body(textSubmission);
     }
 
     /**
