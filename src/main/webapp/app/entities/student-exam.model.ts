@@ -6,6 +6,7 @@ import { ExamSession } from 'app/entities/exam-session.model';
 
 export class StudentExam implements BaseEntity {
     public id: number;
+    public workingTime: number;
     public user: User;
     public exam: Exam;
     public exercises: Exercise[];
