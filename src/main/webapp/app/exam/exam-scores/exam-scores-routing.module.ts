@@ -8,7 +8,7 @@ const routes: Routes = [
         path: ':examId/scores',
         component: ExamScoresComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
             pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
