@@ -33,10 +33,13 @@ public class ExamSubmissionService {
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
         // Only apply the additional check if it is an exam submission
         if (isExamSubmission(exercise)) {
-            // TODO: Check that the current user is allowed to submit to this exercise
-            // exercise -> exerciseGroup -> exam => studentExam -> has exercise
+            // Check that the current user is allowed to submit to this exercise
             Exam exam = exercise.getExerciseGroup().getExam();
             StudentExam studentExam = studentExamService.findOneByUserIdAndExamId(user.getId(), exam.getId());
+            if (studentExam.getExercises().contains(exercise)) {
+                // TODO: improve the error message sent to the client
+                return Optional.of(forbidden());
+            }
 
             if (!isSubmissionInTime(exercise, studentExam)) {
                 // TODO: improve the error message sent to the client
@@ -51,7 +54,8 @@ public class ExamSubmissionService {
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {
-        // TODO: we might want to add a grace period here
+        // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
+        // services (e.g. in TextSubmissionService::handleTextSubmission())
         Exam exam = exercise.getExerciseGroup().getExam();
         ZonedDateTime calculatedEndDate = exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
