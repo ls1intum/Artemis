@@ -51,6 +51,7 @@ public class SubmissionService {
      * Check that the user is allowed to make the submission
      *
      * @param exercise      the exercise for which a submission should be saved
+     * @param submission    the submission that should be saved
      * @param currentUser   the current user with groups and authorities
      * @param <T>           The type of the return type of the requesting route so that the
      *                      response can be returned there

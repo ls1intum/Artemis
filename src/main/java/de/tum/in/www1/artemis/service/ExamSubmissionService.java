@@ -26,6 +26,7 @@ public class ExamSubmissionService {
      * Check if the submission is a exam submission and if so, check that the current user is allowed to submit.
      *
      * @param exercise  the exercise for which a submission should be saved
+     * @param user      the user that wants to submit
      * @param <T>       The type of the return type of the requesting route so that the
      *                  response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
