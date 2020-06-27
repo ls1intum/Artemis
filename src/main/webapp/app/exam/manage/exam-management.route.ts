@@ -26,6 +26,7 @@ import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
+import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -346,6 +347,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/tutor-exam-dashboard',
+        component: TutorCourseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.tutorCourseDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
