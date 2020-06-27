@@ -28,7 +28,10 @@
         </div>
         <!--text exercise-->
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(getSubmissionForExercise(exercise).id)">
-            <h6>{{ exercise.problemStatement }}</h6>
+            <h5>{{ exercise.title }}</h5>
+            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement">
+                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
+            </h6>
             <!-- Text Exercise -->
             <ng-container *ngIf="exercise.type === TEXT">
                 <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
@@ -48,6 +51,9 @@
             <!-- File Upload Exercise -->
             <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                 <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+            </ng-container>
+            <ng-container>
+                <!-- ng if submission empty -->
             </ng-container>
         </div>
     </div>

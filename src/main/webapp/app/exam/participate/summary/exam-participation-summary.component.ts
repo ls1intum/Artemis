@@ -22,13 +22,6 @@ export class ExamParticipationSummaryComponent {
 
     collapsedSubmissionIds: number[] = [];
 
-    /**
-     *  Submission is of Form: studentExam, Exam
-     *
-     *  studentExam: { exercises: [{studentParticipations: [] Submissions}], exam: {}}
-     *  exam:
-     */
-
     constructor() {}
 
     getIcon(exerciseType: ExerciseType) {
