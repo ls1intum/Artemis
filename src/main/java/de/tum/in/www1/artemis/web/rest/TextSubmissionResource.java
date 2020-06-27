@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -137,15 +136,10 @@ public class TextSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
-        // fetch course from database to make sure client didn't change groups --> TODO: move to SubmissionService and test
-        final Course course = courseService.findOne(textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
+        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
         }
-
-        // TODO: move to SubmissionService and test
-        // TODO: add one additional check: fetch textSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise);
