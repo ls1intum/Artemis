@@ -53,6 +53,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseForGuidedTour: Exercise | null;
 
+    isExamMode: boolean;
+
     constructor(
         private courseService: CourseManagementService,
         private jhiAlertService: AlertService,
@@ -85,6 +87,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      */
     loadAll() {
         const examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.isExamMode = !!examId;
         this.courseService.getForTutors(this.courseId, examId).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = Course.from(res.body!);
@@ -164,7 +167,11 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * Navigate back to the course management page.
      */
     back() {
-        this.router.navigate(['course-management']);
+        if (this.isExamMode) {
+            this.router.navigate(['course-management', this.course.id, 'exams']);
+        } else {
+            this.router.navigate(['course-management']);
+        }
     }
 
     sortRows() {
