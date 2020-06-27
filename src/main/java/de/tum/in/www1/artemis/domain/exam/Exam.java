@@ -99,7 +99,7 @@ public class Exam implements Serializable {
     private Set<User> registeredUsers = new HashSet<>();
 
     @Transient
-    private long numberOfRegisteredUsersTransient;
+    private Long numberOfRegisteredUsersTransient;
 
     public Long getId() {
         return id;
@@ -263,11 +263,11 @@ public class Exam implements Serializable {
         return this;
     }
 
-    public long getNumberOfRegisteredUsers() {
+    public Long getNumberOfRegisteredUsers() {
         return this.numberOfRegisteredUsersTransient;
     }
 
-    public void setNumberOfRegisteredUsers(long numberOfRegisteredUsers) {
+    public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 

@@ -25,6 +25,12 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The working time in seconds
+     */
+    @Column(name = "working_time")
+    private Integer workingTime;
+
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -39,7 +45,7 @@ public class StudentExam implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
 
-    @OneToMany(mappedBy = "studentExam", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "studentExam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
@@ -50,6 +56,14 @@ public class StudentExam implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getWorkingTime() {
+        return workingTime;
+    }
+
+    public void setWorkingTime(Integer workingTime) {
+        this.workingTime = workingTime;
     }
 
     public Exam getExam() {
