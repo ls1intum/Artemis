@@ -74,14 +74,16 @@ public class SubmissionService {
             }
 
             StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
-            Optional<User> user = participation.getStudent();
-            if (user.isPresent() && !user.get().equals(currentUser)) {
-                return Optional.of(forbidden());
-            }
+            if (participation != null) {
+                Optional<User> user = participation.getStudent();
+                if (user.isPresent() && !user.get().equals(currentUser)) {
+                    return Optional.of(forbidden());
+                }
 
-            Optional<Team> team = participation.getTeam();
-            if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                return Optional.of(forbidden());
+                Optional<Team> team = participation.getTeam();
+                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
+                    return Optional.of(forbidden());
+                }
             }
         }
 
