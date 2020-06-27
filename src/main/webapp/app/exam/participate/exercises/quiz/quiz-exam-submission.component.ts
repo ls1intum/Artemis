@@ -14,6 +14,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { cloneDeep, isEmpty } from 'lodash';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -122,7 +123,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        this.selectedAnswerOptions[question.id] = selectedOptions ? selectedOptions : [];
+                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        this.selectedAnswerOptions[question.id] = selectedOptions ? cloneDeep(selectedOptions) : [];
                     } else {
                         // not found, set to empty array
                         this.selectedAnswerOptions[question.id] = [];
@@ -131,7 +133,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        this.dragAndDropMappings[question.id] = mappings ? mappings : [];
+                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        this.dragAndDropMappings[question.id] = mappings ? cloneDeep(mappings) : [];
                     } else {
                         // not found, set to empty array
                         this.dragAndDropMappings[question.id] = [];
@@ -140,7 +143,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? submittedTexts : [];
+                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? cloneDeep(submittedTexts) : [];
                     } else {
                         // not found, set to empty array
                         this.shortAnswerSubmittedTexts[question.id] = [];
@@ -159,15 +163,46 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     hasUnsavedChanges(): boolean {
         if (!this.studentSubmission.submittedAnswers) {
             // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
-            return Object.keys(this.selectedAnswerOptions).length > 0 || Object.keys(this.dragAndDropMappings).length > 0 || Object.keys(this.shortAnswerSubmittedTexts).length > 0;
+            // need to check the answers, because they are initialized with empty array in updateViewFromSubmission
+            return (
+                Object.values(this.selectedAnswerOptions).some((mcAnswer) => mcAnswer.length > 0) ||
+                Object.values(this.dragAndDropMappings).some((dndAnswer) => dndAnswer.length > 0) ||
+                Object.values(this.shortAnswerSubmittedTexts).some((shortAnswer) => shortAnswer.length > 0)
+            );
         } else {
-            return !this.studentSubmission.submittedAnswers.every((answer) => {
-                if (answer instanceof MultipleChoiceSubmittedAnswer) {
-                    return this.selectedAnswerOptions[answer.quizQuestion.id] === answer;
-                } else if (answer instanceof DragAndDropSubmittedAnswer) {
-                    return this.dragAndDropMappings[answer.quizQuestion.id] === answer;
-                } else if (answer instanceof ShortAnswerSubmittedAnswer) {
-                    return this.shortAnswerSubmittedTexts[answer.quizQuestion.id] === answer;
+            // be aware of !
+            return !this.studentSubmission.submittedAnswers.every((lastSubmittedAnswer) => {
+                // checks if there are no changes for each question type
+                if (lastSubmittedAnswer.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                    const lastSubmittedSelectedOptions = (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                        ? (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                        : [];
+                    const changedOptions: AnswerOption[] = this.selectedAnswerOptions[lastSubmittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every selectedOption can be found in the lastSubmittedAnswer
+                    return (
+                        lastSubmittedSelectedOptions.length === changedOptions.length &&
+                        changedOptions.every((changedOption) => lastSubmittedSelectedOptions.findIndex((lastSubmittedOptions) => lastSubmittedOptions.id === changedOption.id) >= 0)
+                    );
+                } else if (lastSubmittedAnswer.type === QuizQuestionType.DRAG_AND_DROP) {
+                    const lastSubmittedDnDMapping = (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
+                        ? (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
+                        : [];
+                    const changedMappings: DragAndDropMapping[] = this.dragAndDropMappings[lastSubmittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every dragAndDrop can be found in the lastSubmittedAnswer
+                    return (
+                        lastSubmittedDnDMapping.length === changedMappings.length &&
+                        changedMappings.every((changedMapping) => lastSubmittedDnDMapping.findIndex((lastSubmittedMapping) => lastSubmittedMapping.id === changedMapping.id) >= 0)
+                    );
+                } else if (lastSubmittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
+                    const lastSubmittedSATexts = (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
+                        ? (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
+                        : [];
+                    const changedTexts: ShortAnswerSubmittedText[] = this.shortAnswerSubmittedTexts[lastSubmittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every submittedText can be found in the lastSubmittedAnswer
+                    return (
+                        lastSubmittedSATexts.length === changedTexts.length &&
+                        changedTexts.every((changedText) => lastSubmittedSATexts.findIndex((lastSubmittedText) => lastSubmittedText.id === changedText.id) >= 0)
+                    );
                 }
             });
         }
@@ -232,7 +267,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             // generate the submittedAnswer object
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
             shortAnswerSubmittedAnswer.quizQuestion = question;
-            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
+            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID].filter(
+                (shortAnswerText: ShortAnswerSubmittedText) => shortAnswerText && !isEmpty(shortAnswerText.text),
+            );
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
         this.studentSubmission.isSynced = false;
