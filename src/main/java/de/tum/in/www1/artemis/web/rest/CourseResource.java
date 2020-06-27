@@ -562,6 +562,7 @@ public class CourseResource {
      * GET /courses/:courseId/for-exam-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard")
