@@ -46,7 +46,7 @@ public class StudentExamService {
      * @return the student exam with exercises
      */
     @NotNull
-    public StudentExam findOneByUserIdAndExamId(Long userId, Long examId) {
+    public StudentExam findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
         log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
         return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId)
                 .orElseThrow(() -> new EntityNotFoundException("Student exam with for userId \"" + userId + "\" and examId \"" + examId + "\" does not exist"));

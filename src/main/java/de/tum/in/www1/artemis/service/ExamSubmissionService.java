@@ -18,8 +18,11 @@ public class ExamSubmissionService {
 
     private final StudentExamService studentExamService;
 
-    public ExamSubmissionService(StudentExamService studentExamService) {
+    private final ExamService examService;
+
+    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService) {
         this.studentExamService = studentExamService;
+        this.examService = examService;
     }
 
     /**
@@ -57,7 +60,8 @@ public class ExamSubmissionService {
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {
         // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
         // services (e.g. in TextSubmissionService::handleTextSubmission())
-        Exam exam = exercise.getExerciseGroup().getExam();
+        // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it again.
+        Exam exam = examService.findOne(exercise.getExerciseGroup().getExam().getId());
         ZonedDateTime calculatedEndDate = exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
             calculatedEndDate = exam.getStartDate().plusSeconds(studentExam.getWorkingTime());
