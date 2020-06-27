@@ -6,10 +6,12 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
+@Service
 public class ExamSubmissionService {
 
     private final StudentExamService studentExamService;
@@ -33,6 +35,9 @@ public class ExamSubmissionService {
                 // TODO: improve the error message sent to the client
                 return Optional.of(forbidden());
             }
+
+            // TODO: check that the current user is allowed to submit to this exercise
+            // exercise -> exerciseGroup -> exam => studentExam -> has exercise
         }
         return Optional.empty();
     }
