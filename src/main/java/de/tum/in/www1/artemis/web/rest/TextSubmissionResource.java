@@ -33,14 +33,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -80,9 +73,12 @@ public class TextSubmissionResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
+            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
+            ExamSubmissionService examSubmissionService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -93,6 +89,7 @@ public class TextSubmissionResource {
         this.gradingCriterionService = gradingCriterionService;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.textAssessmentService = textAssessmentService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -131,6 +128,7 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
+
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
@@ -139,14 +137,21 @@ public class TextSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
-        // fetch course from database to make sure client didn't change groups
+        // fetch course from database to make sure client didn't change groups --> TODO: move to SubmissionService and test
         final Course course = courseService.findOne(textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
 
+        // TODO: move to SubmissionService and test
         // TODO: add one additional check: fetch textSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
         // same as the user who executes this call. This prevents injecting submissions to other users
+
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
+        }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
