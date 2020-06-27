@@ -29,20 +29,32 @@ export class ExamParticipationSummaryComponent {
     }
 
     /**
-     * exportPDF Button
+     * called for exportPDF Button
      */
     printPDF() {
         window.print();
     }
 
+    /**
+     * @param exercise
+     * returns the students submission for the specific exercise
+     */
     getSubmissionForExercise(exercise: Exercise): Submission {
         return exercise.studentParticipations[0].submissions[0];
     }
 
+    /**
+     * @param submissionId
+     * checks collapse control of exercise cards depending on submissionId
+     */
     isCollapsed(submissionId: number): boolean {
         return this.collapsedSubmissionIds.includes(submissionId);
     }
 
+    /**
+     * @param submissionId
+     * adds collapse control of exercise cards depending on submissionId
+     */
     toggleCollapseSubmission(submissionId: number): void {
         const collapsed = this.isCollapsed(submissionId);
         if (collapsed) {
