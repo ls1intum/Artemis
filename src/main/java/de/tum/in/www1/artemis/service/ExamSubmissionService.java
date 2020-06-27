@@ -39,8 +39,8 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Check that the current user is allowed to submit to this exercise
             Exam exam = exercise.getExerciseGroup().getExam();
-            StudentExam studentExam = studentExamService.findOneByUserIdAndExamId(user.getId(), exam.getId());
-            if (studentExam.getExercises().contains(exercise)) {
+            StudentExam studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            if (!studentExam.getExercises().contains(exercise)) {
                 // TODO: improve the error message sent to the client
                 return Optional.of(forbidden());
             }
@@ -60,7 +60,7 @@ public class ExamSubmissionService {
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {
         // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
         // services (e.g. in TextSubmissionService::handleTextSubmission())
-        // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it again.
+        // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
         Exam exam = examService.findOne(exercise.getExerciseGroup().getExam().getId());
         ZonedDateTime calculatedEndDate = exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
