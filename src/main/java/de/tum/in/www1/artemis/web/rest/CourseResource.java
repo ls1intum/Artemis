@@ -559,6 +559,66 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/for-exam-tutor-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/for-exam-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId) {
+        log.debug("REST request /courses/{courseId}/for-exam-tutor-dashboard");
+        Course course = courseService.findOneWithExamExercises(courseId);
+        if (course == null) {
+            return notFound();
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
+            return forbidden();
+        }
+
+        // Set<Exercise> examExercises = course.getExams().
+        // course.setExercises(examExercises);
+
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+
+        for (Exercise exercise : course.getExercises()) {
+
+            DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
+            if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+            }
+            else {
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            }
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+
+            exerciseService.calculateNrOfOpenComplaints(exercise);
+
+            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+            // Do not provide example submissions without any assessment
+            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
+            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
+                    .findFirst().orElseGet(() -> {
+                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                        return emptyTutorParticipation;
+                    });
+            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
      * GET /courses/:courseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
