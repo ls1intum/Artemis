@@ -158,11 +158,18 @@ export class CourseManagementService {
     /**
      * returns the course with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
+     * @param examId - Id of the exam when it is in exam mode, otherwise undefined
      */
-    getForTutors(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    getForTutors(courseId: number, examId: number): Observable<EntityResponseType> {
+        if (examId) {
+            return this.http
+                .get<Course>(`${this.resourceUrl}/${courseId}/exam/${examId}/for-exam-tutor-dashboard`, { observe: 'response' })
+                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        } else {
+            return this.http
+                .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
+                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        }
     }
 
     /**

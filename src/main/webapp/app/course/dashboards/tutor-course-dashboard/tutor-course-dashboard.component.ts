@@ -84,7 +84,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
-        this.courseService.getForTutors(this.courseId).subscribe(
+        const examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.courseService.getForTutors(this.courseId, examId).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = Course.from(res.body!);
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
