@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
+import { of, pipe, empty, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import {
@@ -74,15 +74,18 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         super(http, jhiWebsocketService, domainService);
     }
 
-    // TODO: Mock this call for offline code editor support
     getStatus = () => {
-        return this.http.get<any>(this.restResourceUrl!).pipe(
-            handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
-            tap(({ repositoryStatus }) => {
-                if (repositoryStatus !== CommitState.CONFLICT) {
-                    this.conflictService.notifyConflictState(GitConflictState.OK);
-                }
-            }),
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http.get<any>(this.restResourceUrl!).pipe(
+                    handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
+                    tap(({ repositoryStatus }) => {
+                        if (repositoryStatus !== CommitState.CONFLICT) {
+                            this.conflictService.notifyConflictState(GitConflictState.OK);
+                        }
+                    }),
+                ),
+            () => of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }), // TODO track change status when offline
         );
     };
 
@@ -123,8 +126,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
 
-    private participations: ProgrammingExerciseStudentParticipation[] = [];
-
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -152,57 +153,57 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
 
-    /**
-     * Fetches the content of the repository from the participation.
-     * Offline alternative to {@link getRepositoryContent}
-     */
-    getParticipationContent() {
-        const files = this.getParticipation(this.domainValue.id)?.repositoryFiles;
-        if (files) {
-            return of(this.getFilenameAndType(files));
-        }
-    }
-
     getRepositoryContent = () => {
-        // TODO: If offline retrieve cached repository content
-        // TODO: If we use the server update the cached file list
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
-    };
-
-    getFileFromRepository = (fileName: string) => {
-        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
-            map((data) => ({ fileContent: data })),
-            handleErrorResponse<{ fileContent: string }>(this.conflictService),
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService)),
+            ({ repositoryFiles }) => of(this.getFilenameAndType(repositoryFiles)),
         );
     };
 
-    getFileFromParticipation = (fileName: string) => {
-        const files = this.getParticipation(this.domainValue.id)?.repositoryFiles;
-        if (files) {
-            files.filter((file) => {
-                return file.filename === fileName;
-            });
-        }
+    getFileFromRepository = (fileName: string) => {
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+                    map((data) => ({ fileContent: data })),
+                    handleErrorResponse<{ fileContent: string }>(this.conflictService),
+                ),
+            ({ repositoryFiles }) => of(repositoryFiles.find((file) => file.filename === fileName)!), // TODO: what if file is missing
+        );
     };
 
     createFile = (fileName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        this.getParticipation()?.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
+
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http
+                    .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
+                    .pipe(handleErrorResponse(this.conflictService)),
+            (_) => empty(),
+        );
     };
 
     createFolder = (folderName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        this.getParticipation()?.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
+
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http
+                    .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
+                    .pipe(handleErrorResponse(this.conflictService)),
+            (_) => empty(),
+        );
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
-        return this.http
-            .put(`${this.restResourceUrl}/file`, fileContent, {
-                params: new HttpParams().set('file', fileName),
-            })
-            .pipe(handleErrorResponse(this.conflictService));
+        let file = this.getParticipation()?.repositoryFiles.find((f) => f.filename == fileName);
+        if (file) file.fileContent = fileContent;
+
+        return this.fallbackWhenOfflineOrUnavailable(
+            () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
+            (_) => empty(),
+        );
     };
 
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
@@ -242,25 +243,29 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
-            .pipe(handleErrorResponse(this.conflictService));
+        let file = this.getParticipation()?.repositoryFiles.find((f) => f.filename == currentFilePath);
+        if (file) file.filename = newFilename;
+
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http
+                    .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
+                    .pipe(handleErrorResponse(this.conflictService)),
+            (_) => empty(),
+        );
     };
 
     deleteFile = (fileName: string) => {
-        return this.http
-            .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        this.getParticipation()?.repositoryFiles.filter((f) => f.filename != fileName);
+
+        return this.fallbackWhenOfflineOrUnavailable(
+            () =>
+                this.http
+                    .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
+                    .pipe(handleErrorResponse(this.conflictService)),
+            (_) => empty(),
+        );
     };
-
-    addParticipation(participation: ProgrammingExerciseStudentParticipation) {
-        // TODO: Handle the case when a participation with the same ID or for the same exercise already exists
-        this.participations.push(participation);
-    }
-
-    getParticipation(participationId: number): ProgrammingExerciseStudentParticipation | undefined {
-        return this.participations.find((participation) => participation.id === participationId);
-    }
 
     getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
         const fileDict: { [filename: string]: FileType } = {};

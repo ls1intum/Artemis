@@ -122,17 +122,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     ) {}
 
     ngOnInit(): void {
-        if (!this.disconnected) {
-            this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
-                // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
-                if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
-                    this.selectedFile = undefined;
-                }
-                this.gitConflictState = gitConflictState;
-            });
-        } else {
-            this.gitConflictState = GitConflictState.OK;
-        }
+        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
+            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
+            if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
+                this.selectedFile = undefined;
+            }
+            this.gitConflictState = gitConflictState;
+        });
     }
 
     /**
@@ -163,43 +159,35 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     initializeComponent = () => {
         this.isLoadingFiles = true;
-        if (!this.disconnected) {
-            // We need to make sure to not trigger multiple requests on the git repo at the same time.
-            // This is why we first wait until the repository state was checked and then load the files.
-            this.checkIfRepositoryIsClean()
-                .pipe(
-                    tap((commitState) => {
-                        this.commitState = commitState;
-                    }),
-                    switchMap(() => {
-                        if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                            return throwError('couldNotBeRetrieved');
-                        } else if (this.commitState === CommitState.CONFLICT) {
-                            this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                            return throwError('repositoryInConflict');
-                        }
-                        return this.loadFiles();
-                    }),
-                    tap((files) => {
-                        this.isLoadingFiles = false;
-                        this.repositoryFiles = files;
-                        this.setupTreeview();
-                    }),
-                )
-                .subscribe(
-                    () => {},
-                    (error) => {
-                        this.isLoadingFiles = false;
-                        this.onError.emit(error);
-                    },
-                );
-        } else {
-            this.loadFilesFromParticipation().subscribe((files) => {
-                this.isLoadingFiles = false;
-                this.repositoryFiles = files;
-                this.setupTreeview();
-            });
-        }
+        // We need to make sure to not trigger multiple requests on the git repo at the same time.
+        // This is why we first wait until the repository state was checked and then load the files.
+        this.checkIfRepositoryIsClean()
+            .pipe(
+                tap((commitState) => {
+                    this.commitState = commitState;
+                }),
+                switchMap(() => {
+                    if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
+                        return throwError('couldNotBeRetrieved');
+                    } else if (this.commitState === CommitState.CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                        return throwError('repositoryInConflict');
+                    }
+                    return this.loadFiles();
+                }),
+                tap((files) => {
+                    this.isLoadingFiles = false;
+                    this.repositoryFiles = files;
+                    this.setupTreeview();
+                }),
+            )
+            .subscribe(
+                () => {},
+                (error) => {
+                    this.isLoadingFiles = false;
+                    this.onError.emit(error);
+                },
+            );
     };
 
     /**
@@ -489,32 +477,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
         return this.repositoryFileService.getRepositoryContent().pipe(
-            rxMap((files) =>
-                compose(
-                    fromPairs,
-                    // Filter root folder
-                    filter(([value]) => value),
-                    // Filter Readme file that was historically in the student's assignment repo
-                    filter(([value]) => !value.includes('README.md')),
-                    // Remove binary files as they can't be displayed in an editor
-                    filter(([filename]) => {
-                        const fileSplit = filename.split('.');
-                        // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop()!);
-                    }),
-                    toPairs,
-                )(files),
-            ),
-            catchError(() => throwError('couldNotBeRetrieved')),
-        );
-    };
-
-    /**
-     * Load files from the participation.
-     * Files that are not relevant for the conduction of the exercise are removed from result.
-     */
-    loadFilesFromParticipation = (): Observable<{ [fileName: string]: FileType }> => {
-        return this.repositoryFileService.getParticipationContent()!.pipe(
             rxMap((files) =>
                 compose(
                     fromPairs,
