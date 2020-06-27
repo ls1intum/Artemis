@@ -564,11 +564,11 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/for-exam-tutor-dashboard")
+    @GetMapping("/courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId) {
+    public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/for-exam-tutor-dashboard");
-        Course course = courseService.findOneWithExamExercises(courseId);
+        Course course = courseService.findOneWithExamExercises(courseId, examId);
         if (course == null) {
             return notFound();
         }

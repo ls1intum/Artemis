@@ -192,24 +192,20 @@ public class CourseService {
      * @param courseId - The id of the entity
      * @return the entity
      */
-    public Course findOneWithExamExercises(long courseId) {
+    public Course findOneWithExamExercises(long courseId, long examId) {
         log.debug("Request to get Course : {}", courseId);
-        Optional<Course> optionalCourse = courseRepository.findWithEagerLecturesAndExamsById(courseId);
-        Set<Exercise> exercises = new HashSet<>();
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
 
         if (optionalCourse.isPresent()) {
             Course course = optionalCourse.get();
+            Set<Exercise> exercises = new HashSet<>();
 
-            Set<Exam> exams = course.getExams();
+            // extract all exercises for all the exam
+            Exam exam = this.examService.findOneWithExerciseGroupsAndExercises(examId);
+            List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
 
-            // extract all exercises for all exams
-            for (Exam exam : exams) {
-                exam = this.examService.findOneWithExerciseGroupsAndExercises(exam.getId());
-                List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-
-                for (ExerciseGroup exerciseGroup : exerciseGroups) {
-                    exercises.addAll(exerciseGroup.getExercises());
-                }
+            for (ExerciseGroup exerciseGroup : exerciseGroups) {
+                exercises.addAll(exerciseGroup.getExercises());
             }
             // set all exam exercises
             course.setExercises(exercises);
