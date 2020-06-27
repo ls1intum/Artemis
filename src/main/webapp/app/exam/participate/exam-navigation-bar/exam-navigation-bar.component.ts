@@ -26,7 +26,7 @@ export class ExamNavigationBarComponent implements OnInit {
     exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    displayTime$ = timer(0, 500).pipe(
+    displayTime$ = timer(0, 100).pipe(
         map(() => this.updateDisplayTime()),
         distinctUntilChanged(),
     );
