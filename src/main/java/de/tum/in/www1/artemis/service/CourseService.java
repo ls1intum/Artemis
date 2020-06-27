@@ -190,6 +190,7 @@ public class CourseService {
     /**
      * Get one course by id with all exercises for all exams
      * @param courseId - The id of the entity
+     * @param examId - Id of the exam that contains the exercises
      * @return the entity
      */
     public Course findOneWithExamExercises(long courseId, long examId) {
