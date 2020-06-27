@@ -27,7 +27,22 @@
             }
         },
         "examScores": {
-            "title": "Exam Scores"
+            "title": "Exam Scores",
+            "showAll": "Show All",
+            "showSuccessful": "Show Successful",
+            "showUnsuccessful": "Show Unsuccessful",
+            "resultCount": "{{ resultsLength }} results",
+            "exportNames": "Export Names",
+            "exportResults": "Export Results",
+            "refresh": "Refresh",
+            "searchForStudents": "Search for students by login or name (comma separated)",
+            "name": "Name",
+            "login": "Login",
+            "completionDate": "Completion Date",
+            "result": "Result",
+            "submissions": "Submissions",
+            "duration": "Duration",
+            "viewStudentExam": "View Student Exam"
         },
         "examParticipation": {
             "connected": "Connected. Your answers will be saved every 60s.",
