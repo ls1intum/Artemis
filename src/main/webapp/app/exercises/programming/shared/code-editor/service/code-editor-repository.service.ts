@@ -23,7 +23,7 @@ import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/Pr
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
-    getFile: (fileName: string) => Observable<{ fileContent: string }>;
+    getFileFromRepository: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
@@ -59,6 +59,10 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
         catchError((err: HttpErrorResponse) => {
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+            }
+            // If we receive a timeout error, return ok and sync later
+            if (err.status === 504) {
+                conflictService.notifyConflictState(GitConflictState.OK);
             }
             return throwError(err);
         }),
@@ -148,22 +152,37 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
 
-    getRepositoryContent = () => {
-        // TODO: If offline retrieve cached repository content
-        const participation = this.getParticipation(this.domainValue.id);
-        const files = participation?.repositoryFiles;
+    /**
+     * Fetches the content of the repository from the participation.
+     * Offline alternative to {@link getRepositoryContent}
+     */
+    getParticipationContent() {
+        const files = this.getParticipation(this.domainValue.id)?.repositoryFiles;
         if (files) {
             return of(this.getFilenameAndType(files));
         }
+    }
+
+    getRepositoryContent = () => {
+        // TODO: If offline retrieve cached repository content
         // TODO: If we use the server update the cached file list
         return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
-    getFile = (fileName: string) => {
+    getFileFromRepository = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),
             handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
+    };
+
+    getFileFromParticipation = (fileName: string) => {
+        const files = this.getParticipation(this.domainValue.id)?.repositoryFiles;
+        if (files) {
+            files.filter((file) => {
+                return file.filename === fileName;
+            });
+        }
     };
 
     createFile = (fileName: string) => {
