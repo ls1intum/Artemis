@@ -9,7 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 @Service
 public class ExamSubmissionService {
@@ -28,16 +30,18 @@ public class ExamSubmissionService {
      *                  response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise) {
+    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
         // Only apply the additional check if it is an exam submission
         if (isExamSubmission(exercise)) {
-            if (!isSubmissionInTime(exercise)) {
+            // TODO: Check that the current user is allowed to submit to this exercise
+            // exercise -> exerciseGroup -> exam => studentExam -> has exercise
+            Exam exam = exercise.getExerciseGroup().getExam();
+            StudentExam studentExam = studentExamService.findOneByUserIdAndExamId(user.getId(), exam.getId());
+
+            if (!isSubmissionInTime(exercise, studentExam)) {
                 // TODO: improve the error message sent to the client
                 return Optional.of(forbidden());
             }
-
-            // TODO: check that the current user is allowed to submit to this exercise
-            // exercise -> exerciseGroup -> exam => studentExam -> has exercise
         }
         return Optional.empty();
     }
@@ -46,10 +50,13 @@ public class ExamSubmissionService {
         return exercise.hasExerciseGroup();
     }
 
-    private boolean isSubmissionInTime(Exercise exercise) {
-        // TODO: use the students working time
+    private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {
         // TODO: we might want to add a grace period here
         Exam exam = exercise.getExerciseGroup().getExam();
-        return exam.getStartDate().isBefore(ZonedDateTime.now()) && exam.getEndDate().isAfter(ZonedDateTime.now());
+        ZonedDateTime calculatedEndDate = exam.getEndDate();
+        if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
+            calculatedEndDate = exam.getStartDate().plusSeconds(studentExam.getWorkingTime());
+        }
+        return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }
 }

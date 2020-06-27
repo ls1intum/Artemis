@@ -142,7 +142,7 @@ public class TextSubmissionResource {
         }
 
         // Apply further checks if it is an exam submission
-        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise);
+        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
         if (examSubmissionAllowanceFailure.isPresent()) {
             return examSubmissionAllowanceFailure.get();
         }
