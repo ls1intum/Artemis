@@ -4,10 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -84,7 +81,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users) {
+    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
@@ -94,7 +91,7 @@ public class GitLabService extends AbstractVersionControlService {
                     gitLabUserManagementService.importUser(user);
                 }
             }
-            if (!Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
                 addMemberToRepository(repositoryUrl, user);
