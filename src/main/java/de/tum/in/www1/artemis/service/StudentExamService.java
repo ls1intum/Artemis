@@ -99,4 +99,17 @@ public class StudentExamService {
         studentExamRepository.deleteById(studentExamId);
     }
 
+    /**
+     * Get one student exam by exercise and user
+     *
+     * @param exerciseId the id of an exam exercise
+     * @param userId the id of the student taking the exam
+     * @return the student exam without associated entities 
+     */
+    @NotNull
+    public StudentExam findOneByExerciseIdAndUserId(Long exerciseId, Long userId) {
+        log.debug("Request to get student exam with exercise {} for user {}", exerciseId, userId);
+        return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
+    }
 }

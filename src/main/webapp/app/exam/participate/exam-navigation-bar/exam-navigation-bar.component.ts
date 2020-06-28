@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { timer } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
@@ -34,7 +35,7 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService) {}
+    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -59,10 +60,12 @@ export class ExamNavigationBarComponent implements OnInit {
         // set index and emit event
         this.exerciseIndex = i;
         this.onExerciseChanged.emit(this.exercises[i]);
+        this.setExerciseButtonStatus(i);
     }
 
     submitExam() {
         const newIndex = this.exerciseIndex + 1;
+        this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {
             // if out of range "change" active exercise to current in order to trigger a save
             this.changeExercise(this.exerciseIndex);
@@ -72,13 +75,13 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     updateDisplayTime() {
-        const timeDiff = moment.duration(this.endDate.diff(moment()));
+        const timeDiff = moment.duration(this.endDate.diff(this.serverDateService.now()));
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
         }
         return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.minutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0');
+            ? Math.round(timeDiff.asMinutes()) + ' min'
+            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
     }
 
     isProgrammingExercise() {
@@ -86,8 +89,11 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     setExerciseButtonStatus(i: number): string {
-        let status = '';
+        let status: string;
         this.icon = 'edit';
+        if (this.exercises[i].studentParticipations[0].submissions[0].submitted) {
+            this.icon = 'check';
+        }
         if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
             // make button blue
             status = 'synced';
