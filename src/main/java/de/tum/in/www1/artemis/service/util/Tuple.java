@@ -42,7 +42,7 @@ public final class Tuple<X, Y> {
     public X getX() {
         return x;
     }
-    
+
     public Y getY() {
         return y;
     }
