@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
@@ -77,8 +77,8 @@ export class ExamNavigationBarComponent implements OnInit {
             this.criticalTime = true;
         }
         return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.minutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0');
+            ? Math.round(timeDiff.asMinutes()) + ' min'
+            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
     }
 
     isProgrammingExercise() {
@@ -86,7 +86,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     setExerciseButtonStatus(i: number): string {
-        let status = '';
+        let status: string;
         this.icon = 'edit';
         if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
             // make button blue
