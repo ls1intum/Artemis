@@ -138,20 +138,20 @@ public class FileService {
 
         // check for known path to convert
         if (publicPath.contains("files/temp")) {
-            return Constants.TEMP_FILEPATH + filename;
+            return FilePathService.getTempFilepath() + filename;
         }
         if (publicPath.contains("files/drag-and-drop/backgrounds")) {
-            return Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename;
+            return FilePathService.getDragAndDropBackgroundFilepath() + filename;
         }
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
-            return Constants.DRAG_ITEM_FILEPATH + filename;
+            return FilePathService.getDragItemFilepath() + filename;
         }
         if (publicPath.contains("files/course/icons")) {
-            return Constants.COURSE_ICON_FILEPATH + filename;
+            return FilePathService.getCourseIconFilepath() + filename;
         }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
-            return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
+            return FilePathService.getLectureAttachmentFilepath() + lectureId + filename;
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubpath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -184,26 +184,27 @@ public class FileService {
         String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
 
         // check for known path to convert
-        if (actualPath.contains(Constants.TEMP_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getTempFilepath())) {
             return "/api/files/temp/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilepath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_ITEM_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getDragItemFilepath())) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.COURSE_ICON_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getCourseIconFilepath())) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getLectureAttachmentFilepath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.FILE_UPLOAD_EXERCISES_FILEPATH)) {
+        if (actualPath.contains(FilePathService.getFileUploadExercisesFilepath())) {
             final var path = Paths.get(actualPath);
             final long exerciseId;
             try {
-                final var shouldBeExerciseId = path.getName(2).toString();
+                // The last name is the file name, the one one before that is the submissionId and the one before that is the exerciseId, in which we are interested
+                final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
@@ -227,16 +228,16 @@ public class FileService {
     private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
-        if (targetFolder.equals(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
+        if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilepath())) {
             filenameBase = "DragAndDropBackground_";
         }
-        if (targetFolder.equals(Constants.DRAG_ITEM_FILEPATH)) {
+        if (targetFolder.equals(FilePathService.getDragItemFilepath())) {
             filenameBase = "DragItem_";
         }
-        if (targetFolder.equals(Constants.COURSE_ICON_FILEPATH)) {
+        if (targetFolder.equals(FilePathService.getCourseIconFilepath())) {
             filenameBase = "CourseIcon_";
         }
-        if (targetFolder.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+        if (targetFolder.contains(FilePathService.getLectureAttachmentFilepath())) {
             filenameBase = "LectureAttachment_";
         }
 
