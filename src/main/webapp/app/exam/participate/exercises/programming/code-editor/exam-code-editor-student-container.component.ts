@@ -66,7 +66,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         const participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
-        if ((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles.length > 0) {
+        if ((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles?.length > 0) {
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.unsavedFiles = this.getFileDict((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles);
         }
