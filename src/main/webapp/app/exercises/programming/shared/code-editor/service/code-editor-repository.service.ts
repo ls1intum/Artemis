@@ -305,7 +305,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     renameFile = (currentFilePath: string, newFilename: string) => {
         const file = this.getParticipation()?.repositoryFiles.find((f) => f.filename === currentFilePath);
         if (file) {
-            file.filename = newFilename;
+            file.filename = currentFilePath.substring(0, currentFilePath.lastIndexOf('/') + 1) + newFilename;
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
