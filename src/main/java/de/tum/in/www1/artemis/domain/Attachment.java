@@ -29,10 +29,7 @@ public class Attachment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private transient FileService fileService = new FileService(filePathService);
-
-    @Transient
-    private transient FilePathService filePathService = new FilePathService();
+    private transient FileService fileService = new FileService();
 
     @Transient
     private String prevLink;
@@ -95,7 +92,7 @@ public class Attachment implements Serializable {
     public void beforeCreate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
                     true);
         }
     }
@@ -112,7 +109,7 @@ public class Attachment implements Serializable {
     public void onUpdate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
                     true);
         }
     }
@@ -121,7 +118,7 @@ public class Attachment implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, filePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 
