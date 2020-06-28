@@ -23,8 +23,6 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
