@@ -63,7 +63,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
                 this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
                 this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
-                this.participation = this.domainValue as ProgrammingExerciseStudentParticipation || null;
+                this.participation = Object.assign(new ProgrammingExerciseStudentParticipation(), this.domainValue);
                 break;
             case DomainType.TEST_REPOSITORY:
                 this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
@@ -111,5 +111,4 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
             return throwError(new Error('Cannot find participation for current domain.'));
         }
     }
-
 }
