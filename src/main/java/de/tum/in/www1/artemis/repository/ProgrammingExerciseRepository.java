@@ -92,6 +92,16 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
+     * Returns the programming exercises that are part of an exam with an end date after than the provided date.
+     * This method also fetches the exercise group and exam.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe left join fetch pe.exerciseGroup eg left join fetch eg.exam e where e.endDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllWithEagerExamAllByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
      *
