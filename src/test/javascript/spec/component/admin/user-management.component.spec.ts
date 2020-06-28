@@ -4,7 +4,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
-import { MockUserService } from '../../helpers/mocks/service/mock-user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute, MockRouter } from '../../helpers/mocks/service/mock-route.service';

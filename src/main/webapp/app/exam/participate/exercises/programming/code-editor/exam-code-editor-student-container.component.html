@@ -1,3 +1,4 @@
+<jhi-alert></jhi-alert>
 <jhi-code-editor-grid #grid [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
@@ -33,6 +34,7 @@
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
+        [disconnected]="disconnected"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"

@@ -38,7 +38,6 @@ describe('Audit Component Tests', () => {
         let comp: AuditsComponent;
         let fixture: ComponentFixture<AuditsComponent>;
         let service: AuditsService;
-        let mockRouter: MockRouter;
         let mockActivatedRoute: MockActivatedRoute;
 
         beforeEach(async(() => {
@@ -65,7 +64,6 @@ describe('Audit Component Tests', () => {
             fixture = TestBed.createComponent(AuditsComponent);
             comp = fixture.componentInstance;
             service = fixture.debugElement.injector.get(AuditsService);
-            mockRouter = TestBed.get(Router);
             mockActivatedRoute = TestBed.get(ActivatedRoute);
             mockActivatedRoute.setParameters({
                 sort: 'id,desc',

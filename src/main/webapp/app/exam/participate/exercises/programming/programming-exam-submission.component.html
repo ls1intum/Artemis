@@ -1,17 +1,15 @@
-<!-- nGif codeeditor start-->
-<div *ngIf="isOnlyCodeEditorMode()">
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+<!-- ngIf code-editor -->
+<div *ngIf="exercise.allowOnlineEditor && !exercise.allowOfflineIde">
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation" [disconnected]="disconnected"></jhi-exam-code-editor-student>
 </div>
-<!-- nGif codeeditor end -->
-<!-- nGif codeeditorwith clone button start -->
-<div *ngIf="!isOnlyCodeEditorMode() && !isNotOfflineIdeMode()">
+<!-- ngIf code-editor with clone button start -->
+<div *ngIf="exercise.allowOnlineEditor && exercise.allowOfflineIde">
     <jhi-exercise-details-student-actions jhiOrionFilter [examMode]="true" [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation" [disconnected]="disconnected"></jhi-exam-code-editor-student>
 </div>
-<!-- nGif codeeditorwith clone button end-->
-<!-- nGif Offline IDE clone button start -->
-<div *ngIf="isNotOfflineIdeMode()">
+<!-- ngIf Offline IDE clone button start -->
+<div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end;">
@@ -34,4 +32,3 @@
         [personalParticipation]="true"
     ></jhi-programming-exercise-instructions>
 </div>
-<!-- nGif Offline IDE clone button end-->
