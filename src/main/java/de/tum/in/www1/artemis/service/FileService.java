@@ -203,7 +203,8 @@ public class FileService {
             final var path = Paths.get(actualPath);
             final long exerciseId;
             try {
-                final var shouldBeExerciseId = path.getName(2).toString();
+                // The last name is the file name, the one one before that is the submissionId and the one before that is the exerciseId, in which we are interested
+                final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
