@@ -236,7 +236,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-
+        // First store the newest changes in the participation
         const participation = this.getParticipation();
         if (participation) {
             fileUpdates.forEach((update) => {
@@ -249,7 +249,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
         if (!this.isOnline) {
             this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
-            throwError(new Error("Saved locally."));
+            return throwError(new Error('Saved locally.'));
         }
 
         if (this.fileUpdateUrl) {
