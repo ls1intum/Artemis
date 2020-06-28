@@ -61,8 +61,7 @@ public class ExerciseLifecycleService {
             var future = scheduler.schedule(task.y, task.x.toInstant());
             futures.add(future);
         }
-        log.debug("Scheduled " + tasks.size() + " Tasks for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on different " + lifecycle.toString()
-                + ".");
+        log.debug("Scheduled " + tasks.size() + " Tasks for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
         return futures;
     }
 }
