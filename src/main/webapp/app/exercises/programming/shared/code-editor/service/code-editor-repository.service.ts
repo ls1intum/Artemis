@@ -18,12 +18,11 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/ProgrammingExerciseRepositoryFile.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
-    getFileFromRepository: (fileName: string) => Observable<{ fileContent: string }>;
+    getFile: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
@@ -161,7 +160,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
-    getFileFromRepository = (fileName: string) => {
+    getFile = (fileName: string) => {
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(

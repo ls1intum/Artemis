@@ -72,7 +72,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         } else {
             return executeRequest().pipe(
                 catchError((err: HttpErrorResponse) => {
-                    if (err.status == 0) {
+                    if (err.status == 0 || err.status == 504) { // TODO use correct status codes
                         return fallback();
                     } else {
                         throw err;
