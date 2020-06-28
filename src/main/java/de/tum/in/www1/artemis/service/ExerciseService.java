@@ -247,6 +247,18 @@ public class ExerciseService {
     }
 
     /**
+     * Find exercise by id with student participations and submissions.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exercise with student participations and submissions
+     */
+    public Exercise findOneWithStudentParticipationsAndSubmissions(Long exerciseId) {
+        log.debug("Request to find Exercise with student participations and submissions: {}", exerciseId);
+        return exerciseRepository.findWithEagerStudentParticipationsAndSubmissionsAndById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Exercise with id \"" + exerciseId + "\" does not exist"));
+    }
+
+    /**
      * Resets an Exercise by deleting all its participations
      *
      * @param exercise which should be resetted
