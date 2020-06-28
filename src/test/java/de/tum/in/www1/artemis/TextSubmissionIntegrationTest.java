@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -23,8 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.TeamService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -57,6 +59,15 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     TeamService teamService;
+
+    @SpyBean
+    TextSubmissionService textSubmissionService;
+
+    @SpyBean
+    ExamSubmissionService examSubmissionService;
+
+    @SpyBean
+    ExerciseService exerciseService;
 
     private TextExercise finishedTextExercise;
 
@@ -357,6 +368,19 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void submitExercise_noExercise_badRequest() throws Exception {
         var fakeExerciseId = releasedTextExercise.getId() + 100L;
         request.post("/api/exercises/" + fakeExerciseId + "/text-submissions", textSubmission, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void saveExercise_shouldCallCheckMethods() throws Exception {
+        request.post("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        verify(exerciseService, times(1)).findOneWithStudentParticipationsAndSubmissions(releasedTextExercise.getId());
+        verify(textSubmissionService, times(1)).checkSubmissionAllowance(releasedTextExercise, textSubmission, student);
+        verify(examSubmissionService, times(1)).checkSubmissionAllowance(releasedTextExercise, student);
+        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        verify(exerciseService, times(2)).findOneWithStudentParticipationsAndSubmissions(releasedTextExercise.getId());
+        verify(textSubmissionService, times(2)).checkSubmissionAllowance(releasedTextExercise, textSubmission, student);
+        verify(examSubmissionService, times(2)).checkSubmissionAllowance(releasedTextExercise, student);
     }
 
     @Test
