@@ -7,9 +7,6 @@
         </button>
     </h2>
 </div>
-<!--TODO add message if not participated in an exercise/ submission empty / similar?-->
-<!--adjust object extraction-->
-<!--TODO add exercise title?-->
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
@@ -51,9 +48,6 @@
             <!-- File Upload Exercise -->
             <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                 <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
-            </ng-container>
-            <ng-container>
-                <!-- ng if submission empty -->
             </ng-container>
         </div>
     </div>
