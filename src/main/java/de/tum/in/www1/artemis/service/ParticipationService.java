@@ -586,7 +586,7 @@ public class ParticipationService {
         }
         return examStartDate;
     }
-    
+
     /**
      * Return the individual due date for the exercise of the participation's user
      * <p>
