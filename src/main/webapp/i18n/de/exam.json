@@ -36,7 +36,8 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weitere"
+            "submitOtherExercise": "Speichern & Weitere",
+            "greeting": "Hallo {{ username }}, willkommen zur Klausur \"{{ title}}\""
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
