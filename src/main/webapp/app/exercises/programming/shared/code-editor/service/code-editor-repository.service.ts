@@ -156,7 +156,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService)),
-            ({ repositoryFiles }) => of(this.getFilenameAndType(repositoryFiles)),
+            () => this.participation().map(({ repositoryFiles }) => this.getFilenameAndType(repositoryFiles)),
         );
     };
 
@@ -167,7 +167,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     map((data) => ({ fileContent: data })),
                     handleErrorResponse<{ fileContent: string }>(this.conflictService),
                 ),
-            ({ repositoryFiles }) => of(repositoryFiles.find((file) => file.filename === fileName)!), // TODO: what if file is missing
+            () => this.participation().map(({ repositoryFiles }) => repositoryFiles.find((file) => file.filename === fileName)!), // TODO: what if file is missing
         );
     };
 
@@ -179,7 +179,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            (_) => empty(),
+            () => empty(),
         );
     };
 
@@ -191,7 +191,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            (_) => empty(),
+            () => empty(),
         );
     };
 
@@ -201,7 +201,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
         return this.fallbackWhenOfflineOrUnavailable(
             () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
-            (_) => empty(),
+            () => empty(),
         );
     };
 
@@ -250,7 +250,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
                     .pipe(handleErrorResponse(this.conflictService)),
-            (_) => empty(),
+            () => empty(),
         );
     };
 
@@ -262,7 +262,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            (_) => empty(),
+            () => empty(),
         );
     };
 

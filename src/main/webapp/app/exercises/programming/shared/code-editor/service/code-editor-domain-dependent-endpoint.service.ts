@@ -9,7 +9,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 /**
@@ -61,20 +61,15 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         }
     }
 
-    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: (participation: ProgrammingExerciseStudentParticipation) => Observable<T>) {
-        let fallback = () => {
-            const participation = this.getParticipation();
-            if (participation) return executeFallback(participation);
-            else return throwError(new Error('Cannot find participation for current domain.'));
-        };
+    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T>) {
 
         if (!this.isOnline) {
-            return fallback();
+            return executeFallback();
         } else {
             return executeRequest().pipe(
                 catchError((err: HttpErrorResponse) => {
                     if (err.status == 0 || err.status == 504) { // TODO use correct status codes
-                        return fallback();
+                        return executeFallback();
                     } else {
                         throw err;
                     }
