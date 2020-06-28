@@ -7,8 +7,8 @@ import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -61,7 +61,7 @@ public class FileUploadSubmission extends Submission implements Serializable {
      * @return path where submission for file upload exercise is stored
      */
     public static String buildFilePath(Long exerciseId, Long submissionId) {
-        return Constants.FILE_UPLOAD_EXERCISES_FILEPATH + exerciseId + File.separator + submissionId + File.separator;
+        return FilePathService.getFileUploadExercisesFilepath() + exerciseId + File.separator + submissionId + File.separator;
     }
 
     public void setFilePath(String filePath) {
