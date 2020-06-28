@@ -112,6 +112,11 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return List of ProgrammingExerciseRepositoryFile containing the filename, type and content.
+     * @throws IOException Inherited from getRepository
+     * @throws IllegalAccessException Inherited from getRepository
+     * @throws IllegalArgumentException Inherited from getRepository
+     * @throws InterruptedException Inherited from getRepository
+     * @throws GitAPIException Inherited from getRepository
      */
     public List<ProgrammingExerciseStudentParticipation.ProgrammingExerciseRepositoryFile> loadRepositoryFiles(Long domainId)
             throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException {
