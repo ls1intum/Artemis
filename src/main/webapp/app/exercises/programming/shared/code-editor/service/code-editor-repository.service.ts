@@ -250,6 +250,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
 
         if (!this.isOnline) {
+            this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
             return throwError(savedLocallyError);
         }
 
