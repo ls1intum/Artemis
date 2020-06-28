@@ -68,7 +68,6 @@ public class SubmissionService {
         // user of the participation is the same as the user who executes this call (or student in the team).
         // This prevents injecting submissions to other users.
         if (submission.getId() != null) {
-            // TODO: we might not need this database call if the exercise has at least a participation with a submission
             Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
             if (existingSubmission.isEmpty()) {
                 return Optional.of(forbidden());
