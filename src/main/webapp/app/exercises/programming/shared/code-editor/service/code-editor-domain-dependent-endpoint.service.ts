@@ -9,8 +9,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, of, from } from 'rxjs';
+import { catchError, concatMap } from 'rxjs/operators';
 
 /**
  * Service that can be extended to update rest endpoint urls with the received domain information.
@@ -27,6 +27,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
 
     protected isOnline: boolean;
     protected onGotOnline: () => void;
+    private scheduledRequests: Array<() => Observable<any>> = [];
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
@@ -35,7 +36,15 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         jhiWebsocketService.bind('connect', () => {
             if (!this.isOnline) {
                 this.isOnline = true;
-                this.onGotOnline?.();
+                const requests = this.scheduledRequests;
+                this.scheduledRequests = [];
+                from(requests)
+                    .pipe(concatMap((req) => req()))
+                    .subscribe(() => {
+                        if (this.onGotOnline) {
+                            this.onGotOnline();
+                        }
+                    });
             }
         });
         jhiWebsocketService.bind('disconnect', () => (this.isOnline = false));
@@ -67,15 +76,21 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         }
     }
 
-    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T>) {
+    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T>, retryWhenOnline = false) {
+        const fallback = retryWhenOnline
+            ? () => {
+                  this.scheduleRetry(executeRequest);
+                  return executeFallback();
+              }
+            : executeFallback;
+
         if (!this.isOnline) {
-            return executeFallback();
+            return fallback();
         } else {
             return executeRequest().pipe(
                 catchError((err: HttpErrorResponse) => {
-                    if (err.status == 0 || err.status == 504) {
-                        // TODO use correct status codes
-                        return executeFallback();
+                    if (err.status === 0 || err.status === 504) {
+                        return fallback();
                     } else {
                         throw err;
                     }
@@ -84,14 +99,21 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         }
     }
 
+    scheduleRetry<T>(request: () => Observable<T>) {
+        this.scheduledRequests.push(request);
+    }
+
     addParticipation(participation: ProgrammingExerciseStudentParticipation) {
-        this.participations = this.participations.filter((p) => p.exercise.id == participation.exercise.id && p.id == participation.id).concat([participation]);
+        this.participations = this.participations.filter((p) => p.exercise.id === participation.exercise.id && p.id === participation.id).concat([participation]);
     }
 
     participation(): Observable<ProgrammingExerciseStudentParticipation> {
-        let participation = this.getParticipation();
-        if (participation) return of(participation);
-        else return throwError(new Error('Cannot find participation for current domain.'));
+        const participation = this.getParticipation();
+        if (participation) {
+            return of(participation);
+        } else {
+            return throwError(new Error('Cannot find participation for current domain.'));
+        }
     }
 
     getParticipation(): ProgrammingExerciseStudentParticipation | undefined {
