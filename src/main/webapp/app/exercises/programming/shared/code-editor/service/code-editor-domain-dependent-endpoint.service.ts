@@ -104,7 +104,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     }
 
     addParticipation(participation: ProgrammingExerciseStudentParticipation) {
-        this.participations = this.participations.filter((p) => p.exercise.id === participation.exercise.id && p.id === participation.id).concat([participation]);
+        this.participations = this.participations.filter((p) => p.id !== participation.id).concat([participation]);
     }
 
     participation(): Observable<ProgrammingExerciseStudentParticipation> {
