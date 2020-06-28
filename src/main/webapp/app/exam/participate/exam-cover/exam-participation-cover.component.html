@@ -1,6 +1,6 @@
 <div class="container">
     <h2 style="text-align: center;">
-        <span>{{ exam.title }}</span>
+        <span>{{ 'artemisApp.examParticipation.greeting' | translate: { title: exam.title, fullName: accountName } }}</span>
     </h2>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div style="text-align: center;">
@@ -16,12 +16,12 @@
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
-                    <input type="text" class="form-control" name="fullname" id="fullname" placeholder="Name" [(ngModel)]="enteredName" [ngModelOptions]="{ updateOn: 'blur' }" />
+                    <input type="text" class="form-control" name="fullname" id="fullname" placeholder="Name" [(ngModel)]="enteredName" [ngModelOptions]="{ updateOn: 'change' }" />
                 </div>
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
-                    <div class="alert alert-danger mt-1" *ngIf="falseName">
+                    <div class="alert alert-danger mt-1" *ngIf="falseName && inserted">
                         <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
                     </div>
                 </div>

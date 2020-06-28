@@ -12,7 +12,7 @@ import io.github.jhipster.config.locale.AngularCookieLocaleResolver;
 @Configuration
 public class LocaleConfiguration implements WebMvcConfigurer {
 
-    @Bean(name = "localeResolver")
+    @Bean
     public LocaleResolver localeResolver() {
         AngularCookieLocaleResolver cookieLocaleResolver = new AngularCookieLocaleResolver();
         cookieLocaleResolver.setCookieName("NG_TRANSLATE_LANG_KEY");

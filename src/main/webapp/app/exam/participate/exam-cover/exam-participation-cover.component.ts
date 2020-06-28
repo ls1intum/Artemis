@@ -38,7 +38,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     formattedStartDate = '';
 
     accountName = '';
-    enteredName?: string;
+    enteredName = '';
 
     constructor(
         private courseService: CourseManagementService,
@@ -170,5 +170,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get falseName(): boolean {
         return this.enteredName !== this.accountName;
+    }
+
+    get inserted(): boolean {
+        return this.enteredName !== '';
     }
 }
