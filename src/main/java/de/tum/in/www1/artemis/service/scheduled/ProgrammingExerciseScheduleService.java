@@ -128,8 +128,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositoriesForExam(exercise))));
         }
         else {
-            // This is normally done at the end of the release task, so this is only a backup (e.g. a crash of this node and restart during the exam)
-            scheduleIndividualRepositoryLockTasks(exercise);
+            // This is only a backup (e.g. a crash of this node and restart during the exam)
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE,
+                    Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositoriesForExam(exercise))));
         }
 
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
