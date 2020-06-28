@@ -237,22 +237,19 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.fileUpdateSubject.complete();
         }
 
-        if (!this.isOnline || true) {
-            const participation = this.getParticipation();
-            if (participation) {
-                fileUpdates.forEach((update) => {
-                    const fileToUpdate = participation.repositoryFiles.find((file) => file.filename === update.fileName);
-                    if (fileToUpdate) {
-                        fileToUpdate.fileContent = update.fileContent;
-                    }
-                });
-            }
+        const participation = this.getParticipation();
+        if (participation) {
+            fileUpdates.forEach((update) => {
+                const fileToUpdate = participation.repositoryFiles.find((file) => file.filename === update.fileName);
+                if (fileToUpdate) {
+                    fileToUpdate.fileContent = update.fileContent;
+                }
+            });
+        }
 
-            // this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
-            // this.fileUpdateSubject = new Subject<FileSubmission>();
-            // setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
-            this.fileUpdateSubject = new Subject<FileSubmission>();
-            return this.fileUpdateSubject.asObservable();
+        if (!this.isOnline) {
+            this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
+            throwError(new Error("Saved locally."));
         }
 
         if (this.fileUpdateUrl) {
@@ -327,14 +324,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             true,
         );
     };
-
-    getUnsynchedFileSubmission(): FileSubmission {
-        const submission: FileSubmission = {};
-        this.unsynchedFiles.forEach((file) => {
-            submission[file.fileName] = file.fileContent;
-        });
-        return submission;
-    }
 
     getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
         const fileDict: { [filename: string]: FileType } = {};
