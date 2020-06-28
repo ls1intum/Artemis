@@ -25,7 +25,7 @@ export interface ICodeEditorRepositoryFileService {
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void | null>;
     createFolder: (folderName: string) => Observable<void | null>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<Object | null>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
     renameFile: (filePath: string, newFileName: string) => Observable<void | null>;
     deleteFile: (filePath: string) => Observable<void | null>;
@@ -225,7 +225,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 if (syncFile) {
                     syncFile.fileContent = fileContent;
                 }
-                return of({});
+                return of(null);
             },
             true,
         );
