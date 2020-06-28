@@ -69,10 +69,12 @@ public class ProgrammingSubmissionResource {
 
     private final UserService userService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
-            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExamSubmissionService examSubmissionService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -83,6 +85,7 @@ public class ProgrammingSubmissionResource {
         this.versionControlService = versionControlService;
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -155,6 +158,14 @@ public class ProgrammingSubmissionResource {
                 || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
         }
+
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<Void>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(participation.getExercise(),
+                userService.getUserWithGroupsAndAuthorities());
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
+        }
+
         ProgrammingSubmission submission;
         try {
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
