@@ -501,7 +501,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         return this.repositoryFileService.renameFile(filePath, fileName);
     };
 
-    createFile = (fileName: string): Observable<void> => {
+    createFile = (fileName: string): Observable<void | {}> => {
         return this.repositoryFileService.createFile(fileName);
     };
 
