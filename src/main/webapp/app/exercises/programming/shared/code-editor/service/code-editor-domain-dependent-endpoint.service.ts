@@ -67,7 +67,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         }
     }
 
-    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T>) {
+    fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T | {}>) {
         if (!this.isOnline) {
             return executeFallback();
         } else {

@@ -185,7 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            (_) => of(null),
+            () => of({}),
         );
     };
 
@@ -197,7 +197,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => empty(),
+            () => of({}),
         );
     };
 
@@ -210,7 +210,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             () => {
                 let file = this.unsynchedFiles.find((f) => f.fileName == fileName);
                 if (file) file.fileContent = fileContent;
-                return empty();
+                return of({});
             },
         );
     };
@@ -268,7 +268,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => empty(),
+            () => of({}),
         );
     };
 
