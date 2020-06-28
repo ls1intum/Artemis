@@ -159,7 +159,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (unsynchedFiles && unsynchedFiles?.length > 0) {
             return this.updateFiles(unsynchedFiles)
                 .first()
-                .subscribe((_) => this.participation?.setUnsynchedFiles([]));
+                .subscribe((_) => this.participation.unsynchedFiles.splice(0, this.participation.unsynchedFiles.length));
         }
     };
 
@@ -201,7 +201,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 if (this.participation?.unsynchedFiles) {
                     this.participation.unsynchedFiles.push({ fileName, fileContent: '' });
                 } else if (this.participation) {
-                    this.participation.setUnsynchedFiles([{ fileName, fileContent: '' }]);
+                    this.participation.unsynchedFiles = [{ fileName, fileContent: '' }];
                 }
                 return of(null);
             },
@@ -260,9 +260,16 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
         if (!this.isOnline) {
             if (this.participation) {
-                this.participation.setUnsynchedFiles(
-                    (this.participation.unsynchedFiles || []).filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates),
-                );
+                if (!this.participation.unsynchedFiles)
+                    this.participation.unsynchedFiles = [];
+                for (const file of fileUpdates) {
+                    const index = this.participation.unsynchedFiles.findIndex(f => f.fileName === file.fileName);
+                    if (index >= 0) {
+                        this.participation.unsynchedFiles[index].fileContent = file.fileContent;
+                    } else {
+                        this.participation.unsynchedFiles.push(file);
+                    }
+                }
             }
             return throwError(savedLocallyError);
         }
@@ -333,8 +340,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                if (this.participation?.unsynchedFiles) {
-                    this.participation.setUnsynchedFiles(this.participation.unsynchedFiles.filter((file) => file.fileName !== fileName));
+                const index = this.participation?.unsynchedFiles?.findIndex(f => f.fileName === fileName);
+                if (index != null && index >= 0) {
+                    this.participation.unsynchedFiles.splice(index, 1)
                 }
                 return of(null);
             },
