@@ -25,9 +25,14 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
 
     private participations: ProgrammingExerciseStudentParticipation[] = [];
 
+    protected isOnline: boolean;
+
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
         this.initDomainSubscription();
+
+        jhiWebsocketService.bind("connect", () => this.isOnline = true);
+        jhiWebsocketService.bind("disconnect", () => this.isOnline = false);
     }
 
     /**
@@ -56,10 +61,6 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         }
     }
 
-    isOnline() {
-        return navigator.onLine; // TODO change to more robust method
-    }
-
     fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: (participation: ProgrammingExerciseStudentParticipation) => Observable<T>) {
         let fallback = () => {
             const participation = this.getParticipation();
@@ -67,7 +68,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
             else return throwError(new Error('Cannot find participation for current domain.'));
         };
 
-        if (!this.isOnline()) {
+        if (!this.isOnline) {
             return fallback();
         } else {
             return executeRequest().pipe(
