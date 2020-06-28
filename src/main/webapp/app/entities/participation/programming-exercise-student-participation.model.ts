@@ -6,6 +6,11 @@ export class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     public repositoryUrl: string;
     public buildPlanId: string;
     public repositoryFiles: ProgrammingExerciseRepositoryFile[];
+    public unsynchedFiles: Array<{ fileName: string; fileContent: string }> = [];
+
+    public setUnsynchedFiles(unsynchedFiles: Array<{ fileName: string; fileContent: string }> = []) {
+        this.unsynchedFiles = unsynchedFiles;
+    }
 
     constructor() {
         super(ParticipationType.PROGRAMMING);

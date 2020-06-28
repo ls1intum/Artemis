@@ -127,8 +127,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
 
-    private unsynchedFiles: Array<{ fileName: string; fileContent: string }> = [];
-
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -157,7 +155,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     onGotOnline = () => {
-        return this.updateFiles(this.unsynchedFiles).pipe(tap((_) => (this.unsynchedFiles = [])));
+        return this.updateFiles(this.getParticipation()!.unsynchedFiles).pipe(tap((_) => this.getParticipation()?.setUnsynchedFiles([])));
     };
 
     getRepositoryContent = () => {
@@ -191,7 +189,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                this.unsynchedFiles.push({ fileName, fileContent: '' });
+                this.getParticipation()?.unsynchedFiles.push({ fileName, fileContent: '' });
                 return of(null);
             },
             true,
@@ -224,7 +222,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         return this.fallbackWhenOfflineOrUnavailable(
             () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
             () => {
-                const syncFile = this.unsynchedFiles.find((f) => f.fileName === fileName);
+                const syncFile = this.getParticipation()?.unsynchedFiles.find((f) => f.fileName === fileName);
                 if (syncFile) {
                     syncFile.fileContent = fileContent;
                 }
@@ -250,7 +248,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
 
         if (!this.isOnline) {
-            this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
+            if (!!this.getParticipation()) {
+                this.getParticipation()?.setUnsynchedFiles(
+                    this.getParticipation()
+                        ?.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName))
+                        .concat(fileUpdates),
+                );
+            }
             return throwError(savedLocallyError);
         }
 
@@ -298,7 +302,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                const syncFile = this.unsynchedFiles.find((f) => f.fileName === currentFilePath);
+                const syncFile = this.getParticipation()?.unsynchedFiles.find((f) => f.fileName === currentFilePath);
                 if (syncFile) {
                     syncFile.fileName = newFilename;
                 }
@@ -320,7 +324,8 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                this.unsynchedFiles = this.unsynchedFiles.filter((file) => file.fileName !== fileName);
+                // We will need to trigger a delete operation here
+                this.getParticipation()?.setUnsynchedFiles(this.getParticipation()?.unsynchedFiles.filter((file) => file.fileName !== fileName));
                 return of(null);
             },
             true,
@@ -329,7 +334,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     getUnsynchedFileSubmission(): FileSubmission {
         const submission: FileSubmission = {};
-        this.unsynchedFiles.forEach((file) => {
+        this.getParticipation()?.unsynchedFiles.forEach((file) => {
             submission[file.fileName] = file.fileContent;
         });
         return submission;
