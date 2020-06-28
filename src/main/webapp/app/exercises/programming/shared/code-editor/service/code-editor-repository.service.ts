@@ -212,6 +212,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
+    // This method is never called
     updateFileContent = (fileName: string, fileContent: string) => {
         const file = this.getParticipation()?.repositoryFiles.find((f) => f.filename === fileName);
         if (file) {
@@ -236,10 +237,21 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.fileUpdateSubject.complete();
         }
 
-        if (!this.isOnline) {
-            this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
+        if (!this.isOnline || true) {
+            const participation = this.getParticipation();
+            if (participation) {
+                fileUpdates.forEach((update) => {
+                    const fileToUpdate = participation.repositoryFiles.find((file) => file.filename === update.fileName);
+                    if (fileToUpdate) {
+                        fileToUpdate.fileContent = update.fileContent;
+                    }
+                });
+            }
+
+            //this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
+            //this.fileUpdateSubject = new Subject<FileSubmission>();
+            //setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
             this.fileUpdateSubject = new Subject<FileSubmission>();
-            setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
             return this.fileUpdateSubject.asObservable();
         }
 
