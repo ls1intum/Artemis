@@ -37,7 +37,7 @@
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Submit & continue",
-            "greeting": "Hello {{ username }}, welcome to the exam\"{{ title }}\""
+            "greeting": "Hello {{ username }}, welcome to \"{{ title }}\""
         },
         "exerciseGroup": {
             "created": "New exercise group created",
