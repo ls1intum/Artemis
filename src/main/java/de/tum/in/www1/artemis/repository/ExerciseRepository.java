@@ -51,5 +51,5 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions" })
-    Optional<Exercise> findWithEagerStudentParticipationsAndSubmissionsAndById(Long id);
+    Optional<Exercise> findWithEagerStudentParticipationsAndSubmissionsById(Long exerciseId);
 }

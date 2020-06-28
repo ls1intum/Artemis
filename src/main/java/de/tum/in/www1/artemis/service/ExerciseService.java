@@ -254,7 +254,7 @@ public class ExerciseService {
      */
     public Exercise findOneWithStudentParticipationsAndSubmissions(Long exerciseId) {
         log.debug("Request to find Exercise with student participations and submissions: {}", exerciseId);
-        return exerciseRepository.findWithEagerStudentParticipationsAndSubmissionsAndById(exerciseId)
+        return exerciseRepository.findWithEagerStudentParticipationsAndSubmissionsById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Exercise with id \"" + exerciseId + "\" does not exist"));
     }
 
