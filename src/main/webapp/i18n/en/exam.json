@@ -6,6 +6,10 @@
                 "duration": "Duration: {{duration}} min",
                 "maxPoints": "max. Points: {{points}}"
             },
+            "examSummary": {
+                "summaryCapital": "SUMMARY",
+                "exportPDF": "Export PDF"
+            },
             "title": "Exam",
             "startExam": "Start Exam",
             "summary": "Summary",
@@ -16,6 +20,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "exercise": "Exercise {{nr}}",
             "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
@@ -27,6 +32,7 @@
             }
         },
         "examParticipation": {
+            "timer": "Time Left: ",
             "connected": "Connected. Your answers will be saved every 60s.",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",

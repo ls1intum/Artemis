@@ -59,10 +59,12 @@ export class ExamNavigationBarComponent implements OnInit {
         // set index and emit event
         this.exerciseIndex = i;
         this.onExerciseChanged.emit(this.exercises[i]);
+        this.setExerciseButtonStatus(i);
     }
 
     submitExam() {
         const newIndex = this.exerciseIndex + 1;
+        this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {
             // if out of range "change" active exercise to current in order to trigger a save
             this.changeExercise(this.exerciseIndex);
@@ -88,6 +90,9 @@ export class ExamNavigationBarComponent implements OnInit {
     setExerciseButtonStatus(i: number): string {
         let status: string;
         this.icon = 'edit';
+        if (this.exercises[i].studentParticipations[0].submissions[0].submitted) {
+            this.icon = 'check';
+        }
         if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
             // make button blue
             status = 'synced';

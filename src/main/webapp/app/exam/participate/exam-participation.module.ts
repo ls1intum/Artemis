@@ -13,6 +13,12 @@ import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
+import { ProgrammingExamSummaryComponent } from './summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { ModelingExamSummaryComponent } from './summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
+import { FileUploadExamSummaryComponent } from './summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
+import { TextExamSummaryComponent } from './summary/exercises/text-exam-summary/text-exam-summary.component';
+import { QuizExamSummaryComponent } from './summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { ExamNavigationBarComponent } from './exam-navigation-bar/exam-navigation-bar.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
@@ -33,8 +39,8 @@ const ENTITY_STATES = [...examParticipationState];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedCommonModule,
         ArtemisSharedModule,
-        ArtemisQuizQuestionTypesModule,
         ArtemisModelingEditorModule,
+        ArtemisQuizQuestionTypesModule,
         ArtemisFullscreenModule,
         ArtemisSharedComponentModule,
         ArtemisProgrammingParticipationModule,
@@ -45,11 +51,17 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisCoursesModule,
         OrionModule,
+        ArtemisProgrammingAssessmentModule,
     ],
     declarations: [
         ExamParticipationComponent,
         ExamParticipationCoverComponent,
         ExamParticipationSummaryComponent,
+        ProgrammingExamSummaryComponent,
+        ModelingExamSummaryComponent,
+        FileUploadExamSummaryComponent,
+        TextExamSummaryComponent,
+        QuizExamSummaryComponent,
         QuizExamSubmissionComponent,
         ProgrammingExamSubmissionComponent,
         TextExamSubmissionComponent,
