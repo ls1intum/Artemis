@@ -368,16 +368,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.post("/api/exercises/" + fakeExerciseId + "/text-submissions", textSubmission, HttpStatus.NOT_FOUND);
     }
 
-    /*
-     * TODO: fix test case
-     * @Test
-     * @WithMockUser(value = "student1", roles = "USER") public void saveExercise_shouldCallCheckMethods() throws Exception { request.post("/api/exercises/" +
-     * releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK); verify(textSubmissionService, times(1)).checkSubmissionAllowance(releasedTextExercise,
-     * textSubmission, student); verify(examSubmissionService, times(1)).checkSubmissionAllowance(releasedTextExercise, student); request.put("/api/exercises/" +
-     * releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK); verify(textSubmissionService, times(2)).checkSubmissionAllowance(releasedTextExercise,
-     * textSubmission, student); verify(examSubmissionService, times(2)).checkSubmissionAllowance(releasedTextExercise, student); }
-     */
-
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextSubmissionWithTextBlocks() throws Exception {
