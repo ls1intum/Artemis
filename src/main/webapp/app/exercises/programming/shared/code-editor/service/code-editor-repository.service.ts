@@ -159,7 +159,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (unsynchedFiles && unsynchedFiles?.length > 0) {
             return this.updateFiles(unsynchedFiles)
                 .first()
-                .subscribe((_) => this.participation.unsynchedFiles.splice(0, this.participation.unsynchedFiles.length));
+                .subscribe(() => this.participation.unsynchedFiles.splice(0, this.participation.unsynchedFiles.length));
         }
     };
 

@@ -9,12 +9,11 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType, EditorState, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 

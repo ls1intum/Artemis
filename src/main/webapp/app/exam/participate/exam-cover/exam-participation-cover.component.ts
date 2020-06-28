@@ -1,22 +1,20 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -53,6 +51,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private examParticipationService: ExamParticipationService,
         private codeEditorRepositoryFileService: CodeEditorRepositoryFileService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     /**
@@ -99,7 +98,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check if exam already started
      */
     hasStarted(): boolean {
-        return this.exam?.startDate ? this.exam.startDate.isBefore(moment()) : false;
+        return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -138,7 +137,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 this.onExamStarted.emit(studentExam);
             } else {
-                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(moment(), 'seconds'));
+                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(this.serverDateService.now(), 'seconds'));
             }
         } else {
             this.timeUntilStart = '';
@@ -180,7 +179,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get startButtonEnabled(): boolean {
-        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(moment()));
+        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
     }
 
     get falseName(): boolean {
