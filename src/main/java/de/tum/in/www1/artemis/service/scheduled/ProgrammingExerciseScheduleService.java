@@ -267,7 +267,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private static ZonedDateTime getExamProgrammingExerciseReleaseDate(ProgrammingExercise exercise) {
         // Should we take the exercise's own release date more into account?
-        var releaseDate = exercise.getExerciseGroup().getExam().getStartDate();
+        // using visible date here because unlocking will take some time, see delay below.
+        var releaseDate = exercise.getExerciseGroup().getExam().getVisibleDate();
         if (releaseDate == null) {
             releaseDate = exercise.getReleaseDate();
         }
@@ -370,6 +371,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents());
+        versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
     }
 }
