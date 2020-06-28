@@ -41,7 +41,8 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Submit & continue"
+            "submitOtherExercise": "Submit & continue",
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
         },
         "exerciseGroup": {
             "created": "New exercise group created",
