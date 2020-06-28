@@ -126,7 +126,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
         private FileType fileType;
 
-        private byte[] fileContent;
+        private String fileContent;
 
         public String getFilename() {
             return filename;
@@ -144,11 +144,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
             this.fileType = fileType;
         }
 
-        public byte[] getFileContent() {
+        public String getFileContent() {
             return fileContent;
         }
 
-        public void setFileContent(byte[] fileContent) {
+        public void setFileContent(String fileContent) {
             this.fileContent = fileContent;
         }
     }

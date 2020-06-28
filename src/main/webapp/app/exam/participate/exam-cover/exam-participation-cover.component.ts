@@ -113,23 +113,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             studentExam.exercises.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
                     this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
-                    (exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation).repositoryFiles.forEach((file) => {
-                        if (file.fileType === FileType.FILE) {
-                            // This is a redundant call actually and needs to be refactored. We are using it because the initial content is sent as a bytecode and not converted to a string.
-                            this.codeEditorRepositoryFileService
-                                .getFile(file.filename)
-                                .pipe(
-                                    tap((fileObj) => {
-                                        file.fileContent = fileObj.fileContent;
-                                    }),
-                                    catchError((err) => {
-                                        console.log('There was an error while getting the content of the file', file, err);
-                                        return of(null);
-                                    }),
-                                )
-                                .subscribe();
-                        }
-                    });
                     this.codeEditorRepositoryFileService.addParticipation(exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation);
                 }
             });

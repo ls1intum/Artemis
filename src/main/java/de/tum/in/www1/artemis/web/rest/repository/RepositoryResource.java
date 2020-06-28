@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.*;
 
@@ -122,7 +123,7 @@ public abstract class RepositoryResource {
             repoFile.setFilename(file.getKey());
             repoFile.setFileType(file.getValue());
             if (repoFile.getFileType() == FileType.FILE) {
-                repoFile.setFileContent(repositoryService.getFile(repository, repoFile.getFilename()));
+                repoFile.setFileContent(new String(repositoryService.getFile(repository, repoFile.getFilename()), StandardCharsets.UTF_8));
             }
             repoFiles.add(repoFile);
         }
