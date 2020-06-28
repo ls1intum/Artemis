@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { of, pipe, empty, Subject, throwError, UnaryFunction } from 'rxjs';
+import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import {
@@ -248,9 +248,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 });
             }
 
-            //this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
-            //this.fileUpdateSubject = new Subject<FileSubmission>();
-            //setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
+            // this.unsynchedFiles = this.unsynchedFiles.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates);
+            // this.fileUpdateSubject = new Subject<FileSubmission>();
+            // setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
             this.fileUpdateSubject = new Subject<FileSubmission>();
             return this.fileUpdateSubject.asObservable();
         }
