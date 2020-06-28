@@ -14,7 +14,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -191,7 +191,16 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // check if they have the same length and every dragAndDrop can be found in the lastSubmittedAnswer
                     return (
                         lastSubmittedDnDMapping.length === changedMappings.length &&
-                        changedMappings.every((changedMapping) => lastSubmittedDnDMapping.findIndex((lastSubmittedMapping) => lastSubmittedMapping.id === changedMapping.id) >= 0)
+                        // work with dragItem.id and dropLocation.id, because id might not be available
+                        // check if drag item is in the same drop location as in last submission
+                        changedMappings.every(
+                            (changedMapping) =>
+                                lastSubmittedDnDMapping.findIndex(
+                                    (lastSubmittedMapping) =>
+                                        lastSubmittedMapping.dragItem?.id === changedMapping.dragItem?.id &&
+                                        lastSubmittedMapping.dropLocation?.id === changedMapping.dropLocation?.id,
+                                ) >= 0,
+                        )
                     );
                 } else if (lastSubmittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
                     const lastSubmittedSATexts = (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
@@ -201,7 +210,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // check if they have the same length and every submittedText can be found in the lastSubmittedAnswer
                     return (
                         lastSubmittedSATexts.length === changedTexts.length &&
-                        changedTexts.every((changedText) => lastSubmittedSATexts.findIndex((lastSubmittedText) => lastSubmittedText.id === changedText.id) >= 0)
+                        changedTexts.every(
+                            (changedText) =>
+                                lastSubmittedSATexts.findIndex(
+                                    // work with spot id and text id, because lastSubmittedText does not necessarily have a id
+                                    // check if text of last submission is the same for the same spot
+                                    (lastSubmittedText) => lastSubmittedText.text === changedText.text && lastSubmittedText.spot.id === changedText.spot.id,
+                                ) >= 0,
+                        )
                     );
                 }
             });
@@ -267,9 +283,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             // generate the submittedAnswer object
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
             shortAnswerSubmittedAnswer.quizQuestion = question;
-            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID].filter(
-                (shortAnswerText: ShortAnswerSubmittedText) => shortAnswerText && !isEmpty(shortAnswerText.text),
-            );
+            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
         this.studentSubmission.isSynced = false;
