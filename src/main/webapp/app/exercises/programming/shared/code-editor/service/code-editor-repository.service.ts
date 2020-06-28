@@ -23,12 +23,12 @@ import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/Pr
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
-    createFile: (fileName: string) => Observable<void>;
-    createFolder: (folderName: string) => Observable<void | {}>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    createFile: (fileName: string) => Observable<void | null>;
+    createFolder: (folderName: string) => Observable<void | null>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<Object | null>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
-    renameFile: (filePath: string, newFileName: string) => Observable<void>;
-    deleteFile: (filePath: string) => Observable<void>;
+    renameFile: (filePath: string, newFileName: string) => Observable<void | null>;
+    deleteFile: (filePath: string) => Observable<void | null>;
 }
 
 export interface ICodeEditorRepositoryService {
@@ -185,7 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => of({}),
+            () => of(null),
         );
     };
 
@@ -197,7 +197,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => of({}),
+            () => of(null),
         );
     };
 
@@ -210,7 +210,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             () => {
                 let file = this.unsynchedFiles.find((f) => f.fileName == fileName);
                 if (file) file.fileContent = fileContent;
-                return of({});
+                return of(null);
             },
         );
     };
@@ -268,7 +268,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => of({}),
+            () => of(null),
         );
     };
 
@@ -280,7 +280,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => empty(),
+            () => of(null),
         );
     };
 

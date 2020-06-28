@@ -495,15 +495,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         );
     };
 
-    renameFile = (filePath: string, fileName: string): Observable<void> => {
+    renameFile = (filePath: string, fileName: string): Observable<void | null> => {
         return this.repositoryFileService.renameFile(filePath, fileName);
     };
 
-    createFile = (fileName: string): Observable<void | {}> => {
+    createFile = (fileName: string): Observable<void | null> => {
         return this.repositoryFileService.createFile(fileName);
     };
 
-    createFolder = (folderName: string): Observable<void> => {
+    createFolder = (folderName: string): Observable<void | null> => {
         return this.repositoryFileService.createFolder(folderName);
     };
 
