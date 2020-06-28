@@ -20,9 +20,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,6 +43,9 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     StudentExamRepository studentExamRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     private User user;
 
@@ -133,7 +139,12 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testPreventMultipleSubmissions() {
-
+        StudentParticipation participation = database.addParticipationForExercise(exercise, "student1");
+        Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
+        existingSubmission = database.addSubmission(participation, existingSubmission, "student1");
+        Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
+        receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, user);
+        assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
     }
 
 }
