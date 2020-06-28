@@ -21,7 +21,7 @@
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
-                    <div class="alert alert-danger mt-1" *ngIf="falseName">
+                    <div class="alert alert-danger mt-1" *ngIf="falseName && inserted">
                         <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
                     </div>
                 </div>
