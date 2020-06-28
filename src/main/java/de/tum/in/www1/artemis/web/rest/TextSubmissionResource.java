@@ -134,7 +134,7 @@ public class TextSubmissionResource {
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
         final User user = userService.getUserWithGroupsAndAuthorities();
-        final TextExercise textExercise = (TextExercise) exerciseService.findOneWithStudentParticipationsAndSubmissions(exerciseId);
+        final TextExercise textExercise = (TextExercise) exerciseService.findOne(exerciseId);
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);

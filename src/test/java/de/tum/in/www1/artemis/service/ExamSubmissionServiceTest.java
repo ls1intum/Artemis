@@ -121,10 +121,6 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         assertThrows(EntityNotFoundException.class, () -> {
             examSubmissionService.checkSubmissionAllowance(exercise, user);
         });
-        /*
-         * Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user); assertThat(result.isPresent()).isTrue();
-         * assertThat(result.get()).isEqualTo(forbidden());
-         */
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);
@@ -132,6 +128,12 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testPreventMultipleSubmissions() {
+
     }
 
 }
