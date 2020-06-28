@@ -50,7 +50,7 @@
                 </ng-template>
             </div>
             <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time" [class.critical]="criticalTime">
-                {{ remainingTime }}
+                {{ displayTime$ | async }}
             </div>
         </div>
     </div>
