@@ -238,7 +238,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService
-                            .update(submissionToSync.submission as TextSubmission, this.activeExercise.id)
+                            .update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id)
                             .subscribe(() => (submissionToSync.submission.isSynced = true));
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -247,7 +247,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService
-                            .update(submissionToSync.submission as ModelingSubmission, this.activeExercise.id)
+                            .update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id)
                             .subscribe(() => (submissionToSync.submission.isSynced = true));
                         break;
                     case ExerciseType.PROGRAMMING:
