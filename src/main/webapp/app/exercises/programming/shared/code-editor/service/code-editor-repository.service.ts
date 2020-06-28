@@ -260,10 +260,11 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
         if (!this.isOnline) {
             if (this.participation) {
-                if (!this.participation.unsynchedFiles)
+                if (!this.participation.unsynchedFiles) {
                     this.participation.unsynchedFiles = [];
+                }
                 for (const file of fileUpdates) {
-                    const index = this.participation.unsynchedFiles.findIndex(f => f.fileName === file.fileName);
+                    const index = this.participation.unsynchedFiles.findIndex((f) => f.fileName === file.fileName);
                     if (index >= 0) {
                         this.participation.unsynchedFiles[index].fileContent = file.fileContent;
                     } else {
@@ -329,9 +330,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     deleteFile(fileName: string) {
-        const index = this.participation?.repositoryFiles.findIndex((f) => f.filename === fileName);
-        if (index != null && index >= 0) {
-            this.participation.repositoryFiles.splice(index, 1);
+        const fileIndex = this.participation?.repositoryFiles.findIndex((f) => f.filename === fileName);
+        if (fileIndex != null && fileIndex >= 0) {
+            this.participation.repositoryFiles.splice(fileIndex, 1);
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
@@ -340,9 +341,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                const index = this.participation?.unsynchedFiles?.findIndex(f => f.fileName === fileName);
+                const index = this.participation?.unsynchedFiles?.findIndex((f) => f.fileName === fileName);
                 if (index != null && index >= 0) {
-                    this.participation.unsynchedFiles.splice(index, 1)
+                    this.participation.unsynchedFiles.splice(index, 1);
                 }
                 return of(null);
             },
