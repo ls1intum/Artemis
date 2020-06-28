@@ -112,8 +112,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             // files in the participation to the codeEditorRepositoryFileService
             studentExam.exercises.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                    this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
-                    this.codeEditorRepositoryFileService.addParticipation(Object.assign(new ProgrammingExerciseStudentParticipation(), exercise.studentParticipations[0]));
+                    this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, Object.assign(new ProgrammingExerciseStudentParticipation(), exercise.studentParticipations[0])]);
                 }
             });
             if (this.hasStarted()) {

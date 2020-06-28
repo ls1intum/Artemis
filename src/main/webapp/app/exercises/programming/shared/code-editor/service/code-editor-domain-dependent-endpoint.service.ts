@@ -23,7 +23,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     protected websocketResourceUrlReceive: string | null;
     protected domainValue: StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExercise;
 
-    private participations: ProgrammingExerciseStudentParticipation[] = [];
+    protected participation: ProgrammingExerciseStudentParticipation;
 
     protected isOnline: boolean;
     protected onGotOnline: () => void;
@@ -63,6 +63,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
                 this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
                 this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
+                this.participation = this.domainValue as ProgrammingExerciseStudentParticipation || null;
                 break;
             case DomainType.TEST_REPOSITORY:
                 this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
@@ -103,20 +104,12 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         this.scheduledRequests.push(request);
     }
 
-    addParticipation(participation: ProgrammingExerciseStudentParticipation) {
-        this.participations = this.participations.filter((p) => p.id !== participation.id).concat([participation]);
-    }
-
-    participation(): Observable<ProgrammingExerciseStudentParticipation> {
-        const participation = this.getParticipation();
-        if (participation) {
-            return of(participation);
+    participationObservable(): Observable<ProgrammingExerciseStudentParticipation> {
+        if (this.participation) {
+            return of(this.participation);
         } else {
             return throwError(new Error('Cannot find participation for current domain.'));
         }
     }
 
-    getParticipation(): ProgrammingExerciseStudentParticipation | undefined {
-        return this.participations.find((participation) => participation.id === this.domainValue.id);
-    }
 }
