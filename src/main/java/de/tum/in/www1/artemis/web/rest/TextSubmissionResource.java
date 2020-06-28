@@ -145,6 +145,7 @@ public class TextSubmissionResource {
         // Prevent multiple submissions (currently only for exam submissions)
         textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
 
+        // Check if the user is allowed to submit
         Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
         if (submissionAllowanceFailure.isPresent()) {
             return submissionAllowanceFailure.get();
