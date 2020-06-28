@@ -23,12 +23,12 @@ import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/Pr
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
-    createFile: (fileName: string) => Observable<void>;
-    createFolder: (folderName: string) => Observable<void>;
+    createFile: (fileName: string) => Observable<void | null>;
+    createFolder: (folderName: string) => Observable<void | null>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
-    renameFile: (filePath: string, newFileName: string) => Observable<void>;
-    deleteFile: (filePath: string) => Observable<void>;
+    renameFile: (filePath: string, newFileName: string) => Observable<void | null>;
+    deleteFile: (filePath: string) => Observable<void | null>;
 }
 
 export interface ICodeEditorRepositoryService {
@@ -190,7 +190,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 this.unsynchedFiles.push({ fileName, fileContent: '' });
-                return of({});
+                return of(null);
             },
             true,
         );
@@ -207,7 +207,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => of({}),
+            () => of(null),
             true,
         );
     };
@@ -291,7 +291,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 if (syncFile) {
                     syncFile.fileName = newFilename;
                 }
-                return of({});
+                return of(null);
             },
             true,
         );
@@ -310,7 +310,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 this.unsynchedFiles = this.unsynchedFiles.filter((file) => file.fileName !== fileName);
-                return of({});
+                return of(null);
             },
             true,
         );

@@ -115,7 +115,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                     this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
                     (exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation).repositoryFiles.forEach((file) => {
                         if (file.fileType === FileType.FILE) {
-                            // This is a redundant call actually and needs to be refactored. We are using it because the initial content is sent as a bytecode and not converted to a string.
+                            // This is a redundant call actually and needs to be refactored.
+                            // We are using it because the initial content is sent as a bytecode and not converted to a string.
                             this.codeEditorRepositoryFileService
                                 .getFile(file.filename)
                                 .pipe(
