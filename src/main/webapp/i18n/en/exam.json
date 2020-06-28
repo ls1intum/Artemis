@@ -32,6 +32,7 @@
             }
         },
         "examParticipation": {
+            "timer": "Time Left: ",
             "connected": "Connected. Your answers will be saved every 60s.",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
