@@ -64,9 +64,9 @@ public class SubmissionService {
             return Optional.of(forbidden());
         }
 
-        // Fetch the submission with the corresponding participation if the id is set (update) and check that the user
-        // of the participation is the same as the user who executes this call (or student in the team).
-        // This prevents injecting submissions to other users
+        // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
+        // user of the participation is the same as the user who executes this call (or student in the team).
+        // This prevents injecting submissions to other users.
         if (submission.getId() != null) {
             Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
             if (existingSubmission.isEmpty()) {
