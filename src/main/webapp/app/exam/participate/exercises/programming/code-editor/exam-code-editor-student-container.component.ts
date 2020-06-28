@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -14,14 +14,16 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, EditorState, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/ProgrammingExerciseRepositoryFile.model';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnChanges, OnDestroy {
+export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
@@ -52,12 +54,6 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.disconnected.currentValue === false && changes.disconnected.previousValue === true) {
-            // TODO sync cached file changes
-        }
-    }
-
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
@@ -75,6 +71,22 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      * If a subscription exists for paramSub, unsubscribe
      */
     ngOnDestroy() {}
+
+    initializeProperties() {
+        super.initializeProperties();
+        if ((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles.length > 0) {
+            this.editorState = EditorState.UNSAVED_CHANGES;
+            this.unsavedFiles = this.getFileDict((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles);
+        }
+    }
+
+    getFileDict(files: Array<{ fileName: string; fileContent: string }>) {
+        const fileDict: { [fileName: string]: string } = {};
+        files.forEach((file) => {
+            fileDict[file.fileName] = file.fileContent;
+        });
+        return fileDict;
+    }
 
     /**
      * Fetches details for the result (if we received one) and attach them to the result.

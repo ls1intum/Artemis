@@ -74,14 +74,14 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
      * When a new variable is added, it needs to be added to this method!
      * Initializing in variable declaration is not allowed.
      */
-    initializeProperties = () => {
+    initializeProperties() {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
         this.buildLogErrors = { errors: {}, timestamp: 0 };
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
         this.fileChange = undefined;
-    };
+    }
 
     /**
      * @function onFileChange

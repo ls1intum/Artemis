@@ -4,6 +4,8 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { timer } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -23,6 +25,11 @@ export class ExamNavigationBarComponent implements OnInit {
 
     exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
+
+    displayTime$ = timer(0, 100).pipe(
+        map(() => this.updateDisplayTime()),
+        distinctUntilChanged(),
+    );
 
     criticalTime = false;
     icon: string;
@@ -64,7 +71,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
-    get remainingTime(): string {
+    updateDisplayTime() {
         const timeDiff = moment.duration(this.endDate.diff(moment()));
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
