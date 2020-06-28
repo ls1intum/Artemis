@@ -123,7 +123,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         assert exercise.getExerciseGroup().getExam() != null : "Exam null";
 
         var releaseDate = getExamProgrammingExerciseReleaseDate(exercise);
-        if (releaseDate.isBefore(ZonedDateTime.now())) {
+        if (releaseDate.isAfter(ZonedDateTime.now())) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositoriesForExam(exercise))));
         }
