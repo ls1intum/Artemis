@@ -17,7 +17,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType, EditorState, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/ProgrammingExerciseRepositoryFile.model';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
@@ -34,7 +33,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     exercise: ProgrammingExercise;
 
     @Input()
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
 
     @Input()
     disconnected: boolean;
@@ -66,9 +65,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         const participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
-        if ((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles?.length > 0) {
+        if (this.participation.unsynchedFiles?.length > 0) {
             this.editorState = EditorState.UNSAVED_CHANGES;
-            this.unsavedFiles = this.getFileDict((this.participation as ProgrammingExerciseStudentParticipation).unsynchedFiles);
+            this.unsavedFiles = this.getFileDict(this.participation.unsynchedFiles);
         }
     }
 

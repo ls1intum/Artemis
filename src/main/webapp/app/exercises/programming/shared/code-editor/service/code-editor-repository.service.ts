@@ -156,27 +156,25 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     onGotOnline = () => {
         const unsynchedFiles = this.getParticipation()?.unsynchedFiles;
-        if (unsynchedFiles && unsynchedFiles?.length > 0)
+        if (unsynchedFiles && unsynchedFiles?.length > 0) {
             return this.updateFiles(unsynchedFiles)
                 .first()
                 .subscribe((_) => this.getParticipation()?.setUnsynchedFiles([]));
+        }
     };
 
-    getRepositoryContent = () => {
+    getRepositoryContent() {
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService)),
             () => this.participation().map(({ repositoryFiles }) => this.getFilenameAndType(repositoryFiles)),
         );
-    };
+    }
 
-    getFile = (fileName: string) => {
-        const participation = this.getParticipation();
-        if (participation) {
-            const file = participation.unsynchedFiles?.find((file) => file.fileName == fileName);
-            if (file) {
-                return of(file);
-            }
+    getFile(fileName: string) {
+        const file = this.getParticipation()?.unsynchedFiles?.find((f) => f.fileName === fileName);
+        if (file) {
+            return of(file);
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
@@ -185,11 +183,11 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     map((data) => ({ fileContent: data })),
                     handleErrorResponse<{ fileContent: string }>(this.conflictService),
                 ),
-            () => this.participation().map(({ repositoryFiles }) => repositoryFiles.find((file) => file.filename === fileName) || { fileContent: '' }),
+            () => this.participation().map(({ repositoryFiles }) => repositoryFiles.find((f) => f.filename === fileName) || { fileContent: '' }),
         );
-    };
+    }
 
-    createFile = (fileName: string) => {
+    createFile(fileName: string) {
         const participation = this.getParticipation();
         if (participation) {
             participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
@@ -201,14 +199,18 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                this.getParticipation()?.unsynchedFiles?.push({ fileName, fileContent: '' });
+                if (participation && participation.unsynchedFiles) {
+                    participation.unsynchedFiles.push({ fileName, fileContent: '' });
+                } else if (participation) {
+                    participation.setUnsynchedFiles([{ fileName, fileContent: '' }]);
+                }
                 return of(null);
             },
             true,
         );
-    };
+    }
 
-    createFolder = (folderName: string) => {
+    createFolder(folderName: string) {
         const participation = this.getParticipation();
         if (participation) {
             participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
@@ -222,10 +224,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             () => of(null),
             true,
         );
-    };
+    }
 
     // This method is never called
-    updateFileContent = (fileName: string, fileContent: string) => {
+    updateFileContent(fileName: string, fileContent: string) {
         const file = this.getParticipation()?.repositoryFiles.find((f) => f.filename === fileName);
         if (file) {
             file.fileContent = fileContent;
@@ -242,9 +244,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             },
             true,
         );
-    };
+    }
 
-    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
@@ -260,11 +262,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
 
         if (!this.isOnline) {
-            if (!!this.getParticipation()) {
-                this.getParticipation()?.setUnsynchedFiles(
-                    this.getParticipation()
-                        ?.unsynchedFiles?.filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName))
-                        .concat(fileUpdates),
+            if (participation) {
+                participation.setUnsynchedFiles(
+                    (participation.unsynchedFiles || []).filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates),
                 );
             }
             return throwError(savedLocallyError);
@@ -300,7 +300,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         });
         return this.fileUpdateSubject.asObservable();
-    };
+    }
 
     renameFile(currentFilePath: string, newFilename: string) {
         const file = this.getParticipation()?.repositoryFiles.find((f) => f.filename === currentFilePath);
@@ -336,8 +336,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
-                // We will need to trigger a delete operation here
-                this.getParticipation()?.setUnsynchedFiles(this.getParticipation()?.unsynchedFiles?.filter((file) => file.fileName !== fileName));
+                if (participation && participation.unsynchedFiles) {
+                    participation.setUnsynchedFiles(participation.unsynchedFiles.filter((file) => file.fileName !== fileName));
+                }
                 return of(null);
             },
             true,
