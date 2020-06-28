@@ -344,14 +344,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
-    getUnsynchedFileSubmission(): FileSubmission {
-        const submission: FileSubmission = {};
-        this.getParticipation()?.unsynchedFiles.forEach((file) => {
-            submission[file.fileName] = file.fileContent;
-        });
-        return submission;
-    }
-
     getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
         const fileDict: { [filename: string]: FileType } = {};
         files.forEach((file) => {
