@@ -185,7 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 this.http
                     .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
-            () => empty(),
+            (_) => of(null),
         );
     };
 
