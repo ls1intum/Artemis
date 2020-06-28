@@ -125,6 +125,8 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
 
+    private unsynchedFiles: Array<{ fileName: string; fileContent: string }> = [];
+
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -151,6 +153,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
         this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
+
+    onGotOnline = () => {
+        return this.updateFiles(this.unsynchedFiles).pipe(tap((_) => (this.unsynchedFiles = [])));
+    };
 
     getRepositoryContent = () => {
         return this.fallbackWhenOfflineOrUnavailable(
@@ -201,7 +207,11 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
         return this.fallbackWhenOfflineOrUnavailable(
             () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
-            () => empty(),
+            () => {
+                let file = this.unsynchedFiles.find((f) => f.fileName == fileName);
+                if (file) file.fileContent = fileContent;
+                return empty();
+            },
         );
     };
 
@@ -209,6 +219,14 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
+
+        if (!this.isOnline) {
+            this.unsynchedFiles = this.unsynchedFiles.filter((f) => fileUpdates.every((fu) => fu.fileName != f.fileName)).concat(fileUpdates);
+            this.fileUpdateSubject = new Subject<FileSubmission>();
+            setTimeout(() => this.fileUpdateSubject.next(this.getUnsynchedFileSubmission()));
+            return this.fileUpdateSubject.asObservable();
+        }
+
         if (this.fileUpdateUrl) {
             this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
         }
@@ -265,6 +283,14 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             () => empty(),
         );
     };
+
+    getUnsynchedFileSubmission(): FileSubmission {
+        const submission: FileSubmission = {};
+        this.unsynchedFiles.forEach((file) => {
+            submission[file.fileName] = file.fileContent;
+        });
+        return submission;
+    }
 
     getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
         const fileDict: { [filename: string]: FileType } = {};

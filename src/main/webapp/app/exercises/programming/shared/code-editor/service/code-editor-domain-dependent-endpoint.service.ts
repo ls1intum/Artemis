@@ -26,13 +26,19 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     private participations: ProgrammingExerciseStudentParticipation[] = [];
 
     protected isOnline: boolean;
+    protected onGotOnline: () => void;
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
         this.initDomainSubscription();
 
-        jhiWebsocketService.bind("connect", () => this.isOnline = true);
-        jhiWebsocketService.bind("disconnect", () => this.isOnline = false);
+        jhiWebsocketService.bind('connect', () => {
+            if (!this.isOnline) {
+                this.isOnline = true;
+                this.onGotOnline?.();
+            }
+        });
+        jhiWebsocketService.bind('disconnect', () => (this.isOnline = false));
     }
 
     /**
@@ -62,13 +68,13 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
     }
 
     fallbackWhenOfflineOrUnavailable<T>(executeRequest: () => Observable<T>, executeFallback: () => Observable<T>) {
-
         if (!this.isOnline) {
             return executeFallback();
         } else {
             return executeRequest().pipe(
                 catchError((err: HttpErrorResponse) => {
-                    if (err.status == 0 || err.status == 504) { // TODO use correct status codes
+                    if (err.status == 0 || err.status == 504) {
+                        // TODO use correct status codes
                         return executeFallback();
                     } else {
                         throw err;
@@ -80,6 +86,12 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
 
     addParticipation(participation: ProgrammingExerciseStudentParticipation) {
         this.participations = this.participations.filter((p) => p.exercise.id == participation.exercise.id && p.id == participation.id).concat([participation]);
+    }
+
+    participation(): Observable<ProgrammingExerciseStudentParticipation> {
+        let participation = this.getParticipation();
+        if (participation) return of(participation);
+        else return throwError(new Error('Cannot find participation for current domain.'));
     }
 
     getParticipation(): ProgrammingExerciseStudentParticipation | undefined {
