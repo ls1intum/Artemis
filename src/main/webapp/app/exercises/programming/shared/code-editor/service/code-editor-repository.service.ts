@@ -46,6 +46,8 @@ const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissio
     return !!(toBeDetermined as FileSubmissionError).error;
 };
 
+export const savedLocallyError: Error = new Error('Your changes could only be stored locally because you are disconnected.');
+
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
 /**
  * Check a HttpErrorResponse for specific status codes that are relevant for the code-editor.
@@ -248,7 +250,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
 
         if (!this.isOnline) {
-            return throwError(new Error('Saved Locally'));
+            return throwError(savedLocallyError);
         }
 
         if (this.fileUpdateUrl) {

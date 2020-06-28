@@ -7,7 +7,11 @@ import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/co
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+    savedLocallyError,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
@@ -111,9 +115,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
                 tap((res) => this.onSavedFiles.emit(res)),
                 catchError((err) => {
-                    if (err.error == new Error('Saved Locally')) {
-                        this.editorState = EditorState.SAVED_LOCALLY;
-                    }
                     this.onError.emit(err.error);
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     return throwError('saving failed');

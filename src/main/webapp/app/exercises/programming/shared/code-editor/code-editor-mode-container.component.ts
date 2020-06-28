@@ -1,4 +1,4 @@
-import { HostListener, ViewChild, Component } from '@angular/core';
+import { Component, HostListener, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
