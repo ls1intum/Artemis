@@ -5,7 +5,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,6 +16,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -110,6 +112,24 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             // files in the participation to the codeEditorRepositoryFileService
             studentExam.exercises.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                    this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
+                    (exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation).repositoryFiles.forEach((file) => {
+                        if (file.fileType === FileType.FILE) {
+                            // This is a redundant call actually and needs to be refactored. We are using it because the initial content is sent as a bytecode and not converted to a string.
+                            this.codeEditorRepositoryFileService
+                                .getFile(file.filename)
+                                .pipe(
+                                    tap((fileObj) => {
+                                        file.fileContent = fileObj.fileContent;
+                                    }),
+                                    catchError((err) => {
+                                        console.log('There was an error while getting the content of the file', file, err);
+                                        return of(null);
+                                    }),
+                                )
+                                .subscribe();
+                        }
+                    });
                     this.codeEditorRepositoryFileService.addParticipation(exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation);
                 }
             });
