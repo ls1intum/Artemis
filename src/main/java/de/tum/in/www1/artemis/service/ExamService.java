@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -45,11 +46,15 @@ public class ExamService {
 
     private final ParticipationService participationService;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService) {
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     @Autowired
@@ -381,6 +386,11 @@ public class ExamService {
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
                     try {
+                        if (exercise instanceof ProgrammingExercise) {
+                            // Load lazy property
+                            final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+                            ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                        }
                         var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
