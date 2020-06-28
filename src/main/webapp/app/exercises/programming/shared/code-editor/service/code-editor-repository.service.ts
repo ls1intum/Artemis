@@ -188,7 +188,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     createFile(fileName: string) {
-        this.participation?.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
+        if (this.participation) {
+            this.participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
+        }
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
@@ -198,8 +200,8 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             () => {
                 if (this.participation?.unsynchedFiles) {
                     this.participation.unsynchedFiles.push({ fileName, fileContent: '' });
-                } else {
-                    this.participation?.setUnsynchedFiles([{ fileName, fileContent: '' }]);
+                } else if (this.participation) {
+                    this.participation.setUnsynchedFiles([{ fileName, fileContent: '' }]);
                 }
                 return of(null);
             },
@@ -208,7 +210,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     createFolder(folderName: string) {
-        this.participation?.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
+        if (this.participation) {
+            this.participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
+        }
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
@@ -255,9 +259,11 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
 
         if (!this.isOnline) {
-            this.participation?.setUnsynchedFiles(
-                (this.participation?.unsynchedFiles || []).filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates),
-            );
+            if (this.participation) {
+                this.participation.setUnsynchedFiles(
+                    (this.participation.unsynchedFiles || []).filter((file) => fileUpdates.every((fileUpdate) => fileUpdate.fileName !== file.fileName)).concat(fileUpdates),
+                );
+            }
             return throwError(savedLocallyError);
         }
 
@@ -316,8 +322,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     deleteFile(fileName: string) {
-        if (this.participation) {
-            this.participation.repositoryFiles = this.participation.repositoryFiles.filter((f) => f.filename !== fileName);
+        const index = this.participation?.repositoryFiles.findIndex((f) => f.filename === fileName);
+        if (index != null && index >= 0) {
+            this.participation.repositoryFiles.splice(index, 1);
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
@@ -327,8 +334,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 if (this.participation?.unsynchedFiles) {
-                    this.participation.setUnsynchedFiles(this.participation.unsynchedFiles
-                        .filter((file) => file.fileName !== fileName));
+                    this.participation.setUnsynchedFiles(this.participation.unsynchedFiles.filter((file) => file.fileName !== fileName));
                 }
                 return of(null);
             },
