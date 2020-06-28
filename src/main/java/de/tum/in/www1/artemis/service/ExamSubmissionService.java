@@ -69,6 +69,8 @@ public class ExamSubmissionService {
      *   deviates from the one we've got from the database.
      * - If no submission exists (on creation) we allow adding one (implicitly via repository.save()).
      *
+     * TODO: we might want to move this to the SubmissionService
+     *
      * @param exercise      the exercise for which the submission should be saved
      * @param submission    the submission
      * @param user          the current user
@@ -80,7 +82,7 @@ public class ExamSubmissionService {
             return submission;
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
         if (!participations.isEmpty()) {
             Set<Submission> submissions = participations.get(0).getSubmissions();
             if (!submissions.isEmpty()) {
