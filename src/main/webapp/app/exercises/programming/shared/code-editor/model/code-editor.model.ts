@@ -66,6 +66,7 @@ export enum CommitState {
  * Enumeration defining the state of the editor.
  */
 export enum EditorState {
+    SAVED_LOCALLY = 'SAVED_LOCALLY',
     CLEAN = 'CLEAN',
     UNSAVED_CHANGES = 'UNSAVED_CHANGES',
     SAVING = 'SAVING',

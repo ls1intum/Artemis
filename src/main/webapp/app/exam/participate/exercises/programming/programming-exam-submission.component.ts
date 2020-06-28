@@ -48,10 +48,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(intervalSave: boolean): void {
         if (this.exercise.allowOnlineEditor) {
-            // TODO: 4) if online mode enabled: make sure that the code files in the XXX service are also updated.
             if (intervalSave) {
                 // The 60s auto save should only save and NOT commit the files, as this would trigger a CI run. Just save the files
-                this.codeEditorComponent.actions.saveChangedFiles();
+                this.codeEditorComponent.actions.onSave();
             } else {
                 // If the user switches the exercise, we can actually commit
                 this.codeEditorComponent.actions.commit();

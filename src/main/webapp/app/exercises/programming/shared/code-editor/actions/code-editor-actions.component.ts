@@ -111,6 +111,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
                 tap((res) => this.onSavedFiles.emit(res)),
                 catchError((err) => {
+                    if (err.error == new Error('Saved Locally')) {
+                        this.editorState = EditorState.SAVED_LOCALLY;
+                    }
                     this.onError.emit(err.error);
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     return throwError('saving failed');
