@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -173,7 +174,7 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilepath(), getId());
     }
 
     @PostPersist
@@ -187,13 +188,13 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilepath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, FilePathService.getDragAndDropBackgroundFilepath(), getId());
     }
 
     /**

@@ -213,6 +213,7 @@ public class SubmissionService {
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+
         boolean hasInTimeSubmissions = submissions.stream().anyMatch(s -> s.getSubmissionDate().isBefore(dueDate));
         if (hasInTimeSubmissions) {
             return submissions.stream().filter(s -> s.getSubmissionDate().isBefore(dueDate)).collect(Collectors.toList());
