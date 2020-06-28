@@ -155,7 +155,11 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     onGotOnline = () => {
-        return this.updateFiles(this.getParticipation()!.unsynchedFiles).pipe(tap((_) => this.getParticipation()?.setUnsynchedFiles([])));
+        const unsynchedFiles = this.getParticipation()?.unsynchedFiles;
+        if (unsynchedFiles && unsynchedFiles.length > 0)
+            return this.updateFiles(unsynchedFiles)
+                .first()
+                .subscribe((_) => this.getParticipation()?.setUnsynchedFiles([]));
     };
 
     getRepositoryContent = () => {
@@ -167,13 +171,21 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     };
 
     getFile = (fileName: string) => {
+        const participation = this.getParticipation();
+        if (participation) {
+            const file = participation.unsynchedFiles.find((file) => file.fileName == fileName);
+            if (file) {
+                return of(file);
+            }
+        }
+
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
                     map((data) => ({ fileContent: data })),
                     handleErrorResponse<{ fileContent: string }>(this.conflictService),
                 ),
-            () => this.participation().map(({ repositoryFiles }) => repositoryFiles.find((file) => file.filename === fileName)!), // TODO: what if file is missing
+            () => this.participation().map(({ repositoryFiles }) => repositoryFiles.find((file) => file.filename === fileName) || { fileContent: '' }),
         );
     };
 
