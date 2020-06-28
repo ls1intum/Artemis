@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -21,7 +21,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
+export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
@@ -33,6 +33,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
     @Input()
     participation: StudentParticipation;
+
+    @Input()
+    disconnected: boolean;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -47,6 +50,12 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         fileService: CodeEditorFileService,
     ) {
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.disconnected.currentValue === false && changes.disconnected.previousValue === true) {
+            // TODO sync cached file changes
+        }
     }
 
     /**

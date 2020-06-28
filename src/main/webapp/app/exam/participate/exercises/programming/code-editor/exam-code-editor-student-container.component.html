@@ -33,7 +33,7 @@
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
-        [disconnected]="true"
+        [disconnected]="disconnected"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
@@ -43,7 +43,7 @@
     <jhi-code-editor-ace
         editorCenter
         [selectedFile]="selectedFile"
-        [disconnected]="true"
+        [disconnected]="disconnected"
         [fileChange]="fileChange"
         [commitState]="commitState"
         [(buildLogErrors)]="buildLogErrors"

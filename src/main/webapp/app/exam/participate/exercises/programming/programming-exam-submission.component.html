@@ -1,12 +1,12 @@
 <!-- ngIf code-editor -->
 <div *ngIf="exercise.allowOnlineEditor && !exercise.allowOfflineIde">
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation" [disconnected]="disconnected"></jhi-exam-code-editor-student>
 </div>
 <!-- ngIf code-editor with clone button start -->
 <div *ngIf="exercise.allowOnlineEditor && exercise.allowOfflineIde">
     <jhi-exercise-details-student-actions jhiOrionFilter [examMode]="true" [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation" [disconnected]="disconnected"></jhi-exam-code-editor-student>
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
