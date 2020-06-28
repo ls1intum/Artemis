@@ -322,8 +322,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     deleteFile(fileName: string) {
-        if (this.participation) {
-            this.participation.repositoryFiles = this.participation.repositoryFiles.filter((f) => f.filename !== fileName);
+        const index = this.participation?.repositoryFiles.findIndex((f) => f.filename === fileName);
+        if (index != null && index >= 0) {
+            this.participation.repositoryFiles.splice(index, 1);
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
