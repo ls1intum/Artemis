@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,9 +25,12 @@ public class ExamSubmissionService {
 
     private final ExamService examService;
 
-    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService) {
+    private final ParticipationService participationService;
+
+    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService) {
         this.studentExamService = studentExamService;
         this.examService = examService;
+        this.participationService = participationService;
     }
 
     /**
@@ -65,21 +69,20 @@ public class ExamSubmissionService {
      *   deviates from the one we've got from the database.
      * - If no submission exists (on creation) we allow adding one (implicitly via repository.save()).
      *
-     * NOTE: this method requires that student participations and submissions are part of the exercise
-     *
      * @param exercise      the exercise for which the submission should be saved
      * @param submission    the submission
+     * @param user          the current user
      * @return the submission. If a submission already exists for the exercise we will set the id
      */
-    public Submission preventMultipleSubmissions(Exercise exercise, Submission submission) {
+    public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not a exam submissions or if it is a programming exercise
         if (!isExamSubmission(exercise) || exercise.getClass() == ProgrammingExercise.class) {
             return submission;
         }
 
-        Set<StudentParticipation> participations = exercise.getStudentParticipations();
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
         if (!participations.isEmpty()) {
-            Set<Submission> submissions = participations.iterator().next().getSubmissions();
+            Set<Submission> submissions = participations.get(0).getSubmissions();
             if (!submissions.isEmpty()) {
                 Submission existingSubmission = submissions.iterator().next();
                 submission.setId(existingSubmission.getId());
