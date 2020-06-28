@@ -136,15 +136,18 @@ public class TextSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = (TextExercise) exerciseService.findOneWithStudentParticipationsAndSubmissions(exerciseId);
 
-        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
-        if (submissionAllowanceFailure.isPresent()) {
-            return submissionAllowanceFailure.get();
-        }
-
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
         if (examSubmissionAllowanceFailure.isPresent()) {
             return examSubmissionAllowanceFailure.get();
+        }
+
+        // Prevent multiple submissions (currently only for exam submissions)
+        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission);
+
+        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
