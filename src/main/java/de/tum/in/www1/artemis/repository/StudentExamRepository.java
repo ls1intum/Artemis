@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -28,4 +29,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithEagerExercisesById(Long id);
+    
+    @Query("select distinct se from StudentExam se left join se.exercises e where e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
+    Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 }
