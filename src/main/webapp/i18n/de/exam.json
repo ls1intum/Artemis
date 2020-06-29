@@ -6,6 +6,10 @@
                 "duration": "Dauer: {{duration}} min",
                 "maxPoints": "max. Punkte: {{points}}"
             },
+            "examSummary": {
+                "summaryCapital": "ZUSAMMENFASSUNG",
+                "exportPDF": "Als PDF exportieren"
+            },
             "title": "Klausur",
             "startExam": "Klausur starten",
             "summary": "Zusammenfassung",
@@ -16,6 +20,7 @@
             "nrOfStudents": "Anzahl der registrierten Studenten",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "exercise": "Aufgabe {{nr}}",
             "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "validation": {
@@ -30,6 +35,7 @@
             "title": "Klausur Ergebnisse"
         },
         "examParticipation": {
+            "timer": "Restzeit: ",
             "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
@@ -39,7 +45,8 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weitere"
+            "submitOtherExercise": "Speichern & Weitere",
+            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\""
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

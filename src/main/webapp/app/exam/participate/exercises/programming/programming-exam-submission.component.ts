@@ -20,6 +20,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     exercise: ProgrammingExercise;
     @Input()
     courseId: number;
+    @Input()
+    disconnected: number;
 
     @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
     codeEditorComponent: ExamCodeEditorStudentContainerComponent;
@@ -29,7 +31,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonSize = ButtonSize;
 
     hasUnsavedChanges(): boolean {
-        if (this.isNotOfflineIdeMode()) {
+        if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
             return false;
         }
         return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
@@ -37,23 +39,22 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ngOnChanges(changes: SimpleChanges): void {
-        if (!this.isNotOfflineIdeMode()) {
+        if (this.exercise.allowOnlineEditor) {
             // show submission answers in UI
         }
     }
 
     ngOnInit(): void {}
 
-    isNotOfflineIdeMode(): boolean {
-        return this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor;
-    }
-
-    isOnlyCodeEditorMode(): boolean {
-        return !this.exercise.allowOfflineIde && this.exercise.allowOnlineEditor;
-    }
-
-    updateSubmissionFromView(): void {
-        // Saves the changed files but does not commit the changes, as this would trigger a CI run
-        this.codeEditorComponent.actions.commit();
+    updateSubmissionFromView(intervalSave: boolean): void {
+        if (this.exercise.allowOnlineEditor) {
+            if (intervalSave) {
+                // The 60s auto save should only save and NOT commit the files, as this would trigger a CI run. Just save the files
+                this.codeEditorComponent.actions.onSave();
+            } else {
+                // If the user switches the exercise, we can actually commit
+                this.codeEditorComponent.actions.commit();
+            }
+        }
     }
 }

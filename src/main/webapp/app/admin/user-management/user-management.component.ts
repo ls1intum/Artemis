@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, Data, ParamMap } from '@angular/router';
 import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject } from 'rxjs';
+import { Subject, combineLatest } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -21,23 +21,20 @@ import { FormControl, AbstractControl, FormGroup } from '@angular/forms';
 export class UserManagementComponent implements OnInit, OnDestroy {
     search = new Subject<string>();
     loadingSearchResult = false;
-    currentAccount: User;
-    users: User[];
-    error: string | null;
-    success: string | null;
-    routeData: Subscription;
-    links: any;
-    totalItems: number;
-    itemsPerPage: number;
-    page: number;
-    predicate: string;
-    previousPage: number;
-    reverse: boolean;
-    searchTermString: string;
+    currentAccount: User | null = null;
+    users: User[] | null = null;
+    userListSubscription?: Subscription;
+    totalItems = 0;
+    itemsPerPage = ITEMS_PER_PAGE;
+    page!: number;
+    predicate!: string;
+    ascending!: boolean;
+    searchTermString = '';
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     userSearchForm: FormGroup;
+
     constructor(
         private userService: UserService,
         private alertService: AlertService,
@@ -47,14 +44,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.searchTermString = '';
-        this.routeData = this.activatedRoute.data.subscribe((data) => {
-            this.page = data['pagingParams'].page;
-            this.previousPage = data['pagingParams'].page;
-            this.reverse = data['pagingParams'].ascending;
-            this.predicate = data['pagingParams'].predicate;
-        });
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
@@ -64,7 +53,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                         page: this.page - 1,
                         pageSize: this.itemsPerPage,
                         searchTerm: this.searchTermString,
-                        sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                         sortedColumn: this.predicate,
                     }),
                 ),
@@ -72,7 +61,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe(
                 (res: HttpResponse<User[]>) => {
                     this.loadingSearchResult = false;
-                    this.onSuccess(res.body!, res.headers);
+                    this.onSuccess(res.body, res.headers);
                 },
                 (res: HttpErrorResponse) => {
                     this.loadingSearchResult = false;
@@ -84,30 +73,25 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
-    ngOnInit() {
+    ngOnInit(): void {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
         this.accountService.identity().then((user) => {
             this.currentAccount = user!;
-            this.loadAll();
-            this.registerChangeInUsers();
+            this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
+            this.handleNavigation();
         });
     }
 
     /**
-     * Unsubscribe from routeData
+     * clean up the subscriptions
      */
-    ngOnDestroy() {
-        this.routeData.unsubscribe();
+    ngOnDestroy(): void {
+        if (this.userListSubscription) {
+            this.eventManager.destroy(this.userListSubscription);
+        }
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Subscribe to event 'userListModification' and call {@link loadAll} on event broadcast
-     */
-    registerChangeInUsers() {
-        this.eventManager.subscribe('userListModification', () => this.loadAll());
     }
 
     /**
@@ -117,16 +101,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
-
-        this.userService.update(user).subscribe((response) => {
-            if (response.status === 200) {
-                this.error = null;
-                this.success = 'OK';
-                this.loadAll();
-            } else {
-                this.success = null;
-                this.error = 'ERROR';
-            }
+        this.userService.update(user).subscribe(() => {
+            this.loadAll();
         });
     }
 
@@ -149,28 +125,27 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads specified page, if it is not the same as previous one
-     * @param page number of the page that will be loaded
-     */
-    loadPage(page: number) {
-        if (page !== this.previousPage) {
-            this.previousPage = page;
-            this.transition();
-        }
-    }
-
-    /**
      * Transitions to another page and/or sorting order
      */
-    transition() {
+    transition(): void {
         this.router.navigate(['/admin/user-management'], {
+            relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page,
-                sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                sortedColumn: this.predicate,
+                sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
             },
         });
-        this.loadAll();
+    }
+
+    private handleNavigation(): void {
+        combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
+            const page = params.get('page');
+            this.page = page !== null ? +page : 1;
+            const sort = (params.get('sort') ?? data['defaultSort']).split(',');
+            this.predicate = sort[0];
+            this.ascending = sort[1] === 'asc';
+            this.loadAll();
+        }).subscribe();
     }
 
     /**
@@ -190,10 +165,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         );
     }
 
-    private onSuccess(data: User[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link')!);
-        this.totalItems = +headers.get('X-Total-Count')!;
-        this.users = data;
+    private onSuccess(users: User[] | null, headers: HttpHeaders) {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.users = users;
     }
 
     set searchTerm(searchTerm: string) {

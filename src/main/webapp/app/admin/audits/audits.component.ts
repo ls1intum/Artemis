@@ -1,90 +1,110 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
-import { JhiParseLinks } from 'ng-jhipster';
-import { Audit } from 'app/admin/audits/audit.model';
+import { ActivatedRoute, ParamMap, Router, Data } from '@angular/router';
+import { combineLatest } from 'rxjs';
+
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { AuditsService } from 'app/admin/audits/audits.service';
+import { Audit } from './audit.model';
+import { AuditsService } from './audits.service';
 
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
 })
 export class AuditsComponent implements OnInit {
-    audits: Audit[];
-    fromDate: string;
-    itemsPerPage: number;
-    links: any;
-    page: number;
-    orderProp: string;
-    reverse: boolean;
-    toDate: string;
-    totalItems: number;
-    datePipe: DatePipe;
+    audits?: Audit[];
+    fromDate = '';
+    itemsPerPage = ITEMS_PER_PAGE;
+    page!: number;
+    predicate!: string;
+    ascending!: boolean;
+    toDate = '';
+    totalItems = 0;
 
-    constructor(private auditsService: AuditsService, private parseLinks: JhiParseLinks) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 1;
-        this.reverse = false;
-        this.orderProp = 'timestamp';
-        this.datePipe = new DatePipe('en');
+    private dateFormat = 'yyyy-MM-dd';
+
+    constructor(private auditsService: AuditsService, private activatedRoute: ActivatedRoute, private datePipe: DatePipe, private router: Router) {}
+
+    ngOnInit(): void {
+        this.toDate = this.today();
+        this.fromDate = this.previousMonth();
+        this.handleNavigation();
     }
 
-    getAudits() {
-        return this.sortAudits(this.audits);
+    canLoad(): boolean {
+        return this.fromDate !== '' && this.toDate !== '';
     }
 
-    loadPage(page: number) {
-        this.page = page;
-        this.onChangeDate();
-    }
-
-    ngOnInit() {
-        this.today();
-        this.previousMonth();
-        this.onChangeDate();
-    }
-
-    onChangeDate() {
-        this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe((res) => {
-            this.audits = res.body!;
-            this.links = this.parseLinks.parse(res.headers.get('link')!);
-            this.totalItems = +res.headers.get('X-Total-Count')!;
-        });
-    }
-
-    previousMonth() {
-        const dateFormat = 'yyyy-MM-dd';
-        let fromDate: Date = new Date();
-
-        if (fromDate.getMonth() === 0) {
-            fromDate = new Date(fromDate.getFullYear() - 1, 11, fromDate.getDate());
-        } else {
-            fromDate = new Date(fromDate.getFullYear(), fromDate.getMonth() - 1, fromDate.getDate());
+    transition(): void {
+        if (this.canLoad()) {
+            this.router.navigate(['/admin/audits'], {
+                queryParams: {
+                    page: this.page,
+                    sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
+                    from: this.fromDate,
+                    to: this.toDate,
+                },
+            });
         }
-
-        this.fromDate = this.datePipe.transform(fromDate, dateFormat)!;
     }
 
-    today() {
-        const dateFormat = 'yyyy-MM-dd';
+    private previousMonth(): string {
+        let date = new Date();
+        if (date.getMonth() === 0) {
+            date = new Date(date.getFullYear() - 1, 11, date.getDate());
+        } else {
+            date = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
+        }
+        return this.datePipe.transform(date, this.dateFormat)!;
+    }
+
+    private today(): string {
         // Today + 1 day - needed if the current day must be included
-        const today: Date = new Date();
-        today.setDate(today.getDate() + 1);
-        const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        this.toDate = this.datePipe.transform(date, dateFormat)!;
+        const date = new Date();
+        date.setDate(date.getDate() + 1);
+        return this.datePipe.transform(date, this.dateFormat)!;
     }
 
-    private sortAudits(audits: Audit[]) {
-        audits = audits.slice(0).sort((a, b) => {
-            if (a[this.orderProp] < b[this.orderProp]) {
-                return -1;
-            } else if ([b[this.orderProp] < a[this.orderProp]]) {
-                return 1;
-            } else {
-                return 0;
+    private handleNavigation(): void {
+        combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
+            const page = params.get('page');
+            this.page = page !== null ? +page : 1;
+            const sort = (params.get('sort') ?? data['defaultSort']).split(',');
+            this.predicate = sort[0];
+            this.ascending = sort[1] === 'asc';
+            if (params.get('from')) {
+                this.fromDate = this.datePipe.transform(params.get('from'), this.dateFormat)!;
             }
-        });
+            if (params.get('to')) {
+                this.toDate = this.datePipe.transform(params.get('to'), this.dateFormat)!;
+            }
+            this.loadData();
+        }).subscribe();
+    }
 
-        return this.reverse ? audits.reverse() : audits;
+    private loadData(): void {
+        this.auditsService
+            .query({
+                page: this.page - 1,
+                size: this.itemsPerPage,
+                sort: this.sort(),
+                fromDate: this.fromDate,
+                toDate: this.toDate,
+            })
+            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+    }
+
+    private sort(): string[] {
+        const result = [this.predicate + ',' + (this.ascending ? 'asc' : 'desc')];
+        if (this.predicate !== 'id') {
+            result.push('id');
+        }
+        return result;
+    }
+
+    private onSuccess(audits: Audit[] | null, headers: HttpHeaders): void {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.audits = audits || [];
     }
 }
