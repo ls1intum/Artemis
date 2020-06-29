@@ -151,7 +151,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultTimerSubscriptions[participationId] = timer(time)
             .pipe(
                 tap(() => {
-                    this.resultTimerSubjects.get(participationId)!.next(null);
+                    const resultTimerSubject = this.resultTimerSubjects.get(participationId);
+                    if (resultTimerSubject) {
+                        resultTimerSubject.next(null);
+                    }
                 }),
             )
             .subscribe();
@@ -285,7 +288,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private notifySubscribers = (participationId: number, exerciseId: number, newSubmissionState: ProgrammingSubmissionStateObj) => {
         // Inform participation subscribers.
-        this.submissionSubjects[participationId].next(newSubmissionState);
+        const submissionSubject = this.submissionSubjects[participationId];
+        if (submissionSubject) {
+            submissionSubject.next(newSubmissionState);
+        }
         // Inform exercise subscribers.
         this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
