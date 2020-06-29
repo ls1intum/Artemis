@@ -8,8 +8,7 @@
             },
             "examSummary": {
                 "summaryCapital": "SUMMARY",
-                "exportPDF": "Export PDF",
-                "repositoryLink": "Repository Link"
+                "exportPDF": "Export PDF"
             },
             "title": "Exam",
             "startExam": "Start Exam",
