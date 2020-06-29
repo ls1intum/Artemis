@@ -21,9 +21,8 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 
 public class TextSimilarityClusteringServiceTest {
 
-    private static String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
-
     private static String EMBEDDING_ENDPOINT = "http://localhost:8001/embed";
+    private static String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
 
     @Test
     public void clusterTextBlocks() throws NetworkingError {
