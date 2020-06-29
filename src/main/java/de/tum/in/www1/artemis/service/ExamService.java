@@ -432,4 +432,32 @@ public class ExamService {
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
     }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     * 
+     * @param examId the id of the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Long examId) {
+        return getAllIndiviudalExamEndDates(findOne(examId));
+    }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     * 
+     * @param exam the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
+        if (exam.getStartDate() == null)
+            return null;
+        var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
+        return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
+    }
 }

@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,4 +36,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Query("select max(se.workingTime) from StudentExam se where se.exam.id = :#{#examId}")
     Optional<Integer> findMaxWorkingTimeByExamId(@Param("examId") Long examId);
+
+    @Query("select distinct se.workingTime from StudentExam se where se.exam.id = :#{#examId}")
+    Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
 }
