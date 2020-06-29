@@ -63,13 +63,35 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testStartExamSession_asStudent() {
-
-        String newSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
-        String newerSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
-        String currentSessionToken = examSessionService.startExamSession(studentExam1).getSessionToken();
+        String newSessionToken = examSessionService.startExamSession(studentExam1, "", "").getSessionToken();
+        String newerSessionToken = examSessionService.startExamSession(studentExam1, "", "").getSessionToken();
+        String currentSessionToken = examSessionService.startExamSession(studentExam1, "", "").getSessionToken();
 
         assertThat(currentSessionToken).isNotEqualTo(newSessionToken);
         assertThat(currentSessionToken).isNotEqualTo(newerSessionToken);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void storeFingerprintOnStartExamSession_asStudent() {
+        final Long id = examSessionService.startExamSession(studentExam1, "5b2cc274f6eaf3a71647e1f85358ce32", "").getId();
+
+        final var examSessionById = examSessionRepository.findById(id);
+        assertThat(examSessionById).isPresent();
+        assertThat(examSessionById.get().getBrowserFingerprintHash()).isEqualTo("5b2cc274f6eaf3a71647e1f85358ce32");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void storeUserAgentOnStartExamSession_asStudent() {
+        final Long id = examSessionService
+                .startExamSession(studentExam1, "", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15")
+                .getId();
+
+        final var examSessionById = examSessionRepository.findById(id);
+        assertThat(examSessionById).isPresent();
+        assertThat(examSessionById.get().getUserAgent())
+                .isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15");
     }
 
 }
