@@ -6,7 +6,7 @@
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
-    <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
+    <jhi-exam-participation-summary *ngIf="isOver()" [courseId]="courseId" [examId]="examId" [studentExam]="studentExam"></jhi-exam-participation-summary>
     <ng-container *ngIf="studentExam">
         <!-- exam participation -->
         <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed">
