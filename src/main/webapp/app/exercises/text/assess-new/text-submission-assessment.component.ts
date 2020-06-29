@@ -133,7 +133,13 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course!);
+
+        // case distinction for exam mode
+        if (this.exercise!.course) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course);
+        } else {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.exerciseGroup!.exam!.course!);
+        }
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
