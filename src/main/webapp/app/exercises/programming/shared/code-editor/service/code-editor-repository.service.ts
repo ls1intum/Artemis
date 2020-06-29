@@ -204,12 +204,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             )
             .subscribe();
         // TODO: This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
-        this.wait(1000);
+        this.magicWait(1000);
         this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         return this.fileUpdateSubject.asObservable();
     };
 
-    wait(ms: number) {
+    magicWait(ms: number) {
         const start = new Date().getTime();
         let end = start;
         while (end < start + ms) {
