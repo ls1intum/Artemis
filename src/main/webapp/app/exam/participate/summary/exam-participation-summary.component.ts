@@ -3,6 +3,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { getIcon } from 'app/entities/exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -41,6 +42,14 @@ export class ExamParticipationSummaryComponent {
      */
     getSubmissionForExercise(exercise: Exercise): Submission {
         return exercise.studentParticipations[0].submissions[0];
+    }
+
+    /**
+     * @param exercise
+     * returns the students submission for the specific exercise
+     */
+    getParticipationForProgrammingExercise(exercise: Exercise): Participation {
+        return exercise.studentParticipations[0];
     }
 
     /**
