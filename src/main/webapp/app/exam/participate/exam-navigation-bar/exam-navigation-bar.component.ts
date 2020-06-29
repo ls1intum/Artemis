@@ -91,8 +91,14 @@ export class ExamNavigationBarComponent implements OnInit {
     setExerciseButtonStatus(i: number): string {
         let status: string;
         this.icon = 'edit';
-        const submission = this.exercises[i].studentParticipations[0]?.submissions[0];
-        if (submission) {
+        if (
+            this.exercises[i] &&
+            this.exercises[i].studentParticipations &&
+            this.exercises[i].studentParticipations[0] &&
+            this.exercises[i].studentParticipations[0].submissions &&
+            this.exercises[i].studentParticipations[0].submissions[0]
+        ) {
+            const submission = this.exercises[i].studentParticipations[0].submissions[0];
             if (submission.submitted) {
                 this.icon = 'check';
             }
@@ -110,6 +116,7 @@ export class ExamNavigationBarComponent implements OnInit {
                 return status;
             }
         } else {
+            // in case no participation yet exists -> display synched
             return 'synced';
         }
     }
