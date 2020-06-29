@@ -295,6 +295,6 @@ public class Exam implements Serializable {
         if (visibleDate == null) {  // no visible date means the exercise is visible to students
             return Boolean.TRUE;
         }
-        return visibleDate.isBefore(ZonedDateTime.now());
+        return visibleDate.isAfter(ZonedDateTime.now());
     }
 }

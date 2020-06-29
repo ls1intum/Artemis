@@ -2,15 +2,20 @@ package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -27,6 +32,9 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Column(name = "build_plan_id")
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
+
+    @Transient
+    private List<ProgrammingExerciseRepositoryFile> repositoryFiles = new ArrayList<>();
 
     public String getRepositoryUrl() {
         return repositoryUrl;
@@ -101,5 +109,47 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         var participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(getId());
         return participation;
+    }
+
+    @JsonGetter(value = "repositoryFiles")
+    public List<ProgrammingExerciseRepositoryFile> getRepositoryFiles() {
+        return repositoryFiles;
+    }
+
+    public void setRepositoryFiles(List<ProgrammingExerciseRepositoryFile> repositoryFiles) {
+        this.repositoryFiles = repositoryFiles;
+    }
+
+    public static class ProgrammingExerciseRepositoryFile {
+
+        private String filename;
+
+        private FileType fileType;
+
+        private String fileContent;
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+        public FileType getFileType() {
+            return fileType;
+        }
+
+        public void setFileType(FileType fileType) {
+            this.fileType = fileType;
+        }
+
+        public String getFileContent() {
+            return fileContent;
+        }
+
+        public void setFileContent(String fileContent) {
+            this.fileContent = fileContent;
+        }
     }
 }
