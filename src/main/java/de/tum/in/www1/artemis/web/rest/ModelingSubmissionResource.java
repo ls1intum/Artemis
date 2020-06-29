@@ -95,10 +95,14 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
+        long start = System.currentTimeMillis();
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        long end = System.currentTimeMillis();
+        log.info("createModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal);
+        return response;
     }
 
     /**
@@ -114,8 +118,12 @@ public class ModelingSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
-        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        long end = System.currentTimeMillis();
+        log.info("updateModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal);
+        return response;
     }
 
     @NotNull

@@ -202,7 +202,8 @@ public class QuizSubmissionResource {
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizSubmission> submitForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer
@@ -227,6 +228,8 @@ public class QuizSubmissionResource {
         quizSubmission = (QuizSubmission) examSubmissionService.preventMultipleSubmissions(quizExercise, quizSubmission, user);
 
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
+        long end = System.currentTimeMillis();
+        log.info("submitQuizForExam took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 }
