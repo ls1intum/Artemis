@@ -53,7 +53,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 const examRoute = new RegExp('exams/[0-9]');
-                if (examRoute.test(this.router.url)) {
+                if (examRoute.test(this.router.url) && !this.router.url.includes('management')) {
                     this.examMode = true;
                 } else {
                     this.examMode = false;
