@@ -52,6 +52,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
                 this.codeEditorComponent.actions.onSave();
             } else {
                 // If the user switches the exercise, we can actually commit
+                this.codeEditorComponent.actions.onSave();
                 this.codeEditorComponent.actions.commit();
             }
         }
