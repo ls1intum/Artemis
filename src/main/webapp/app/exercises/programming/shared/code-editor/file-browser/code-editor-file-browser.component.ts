@@ -40,8 +40,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     @Input()
     exerciseTitle: string;
     @Input()
-    disconnected: boolean;
-    @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
@@ -495,15 +493,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         );
     };
 
-    renameFile = (filePath: string, fileName: string): Observable<void | null> => {
+    renameFile = (filePath: string, fileName: string): Observable<void> => {
         return this.repositoryFileService.renameFile(filePath, fileName);
     };
 
-    createFile = (fileName: string): Observable<void | null> => {
+    createFile = (fileName: string): Observable<void> => {
         return this.repositoryFileService.createFile(fileName);
     };
 
-    createFolder = (folderName: string): Observable<void | null> => {
+    createFolder = (folderName: string): Observable<void> => {
         return this.repositoryFileService.createFolder(folderName);
     };
 
