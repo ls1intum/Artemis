@@ -356,7 +356,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (Exception e) {
                 log.error("'" + operationName + "' failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId() + ": " + e.getMessage());
+                        + studentParticipation.getId() + ": " + e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
             index++;
