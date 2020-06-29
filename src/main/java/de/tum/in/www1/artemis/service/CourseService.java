@@ -201,13 +201,18 @@ public class CourseService {
             Course course = optionalCourse.get();
             Set<Exercise> exercises = new HashSet<>();
 
-            // extract all exercises for all the exam
             Exam exam = this.examService.findOneWithExerciseGroupsAndExercises(examId);
-            List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
 
-            for (ExerciseGroup exerciseGroup : exerciseGroups) {
-                exercises.addAll(exerciseGroup.getExercises());
+            // check that exam is over
+            if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
+                log.debug("Got into exam List");
+                // extract all exercises for all the exam
+                List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+                for (ExerciseGroup exerciseGroup : exerciseGroups) {
+                    exercises.addAll(exerciseGroup.getExercises());
+                }
             }
+
             // set all exam exercises
             course.setExercises(exercises);
 

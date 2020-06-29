@@ -578,8 +578,8 @@ public class CourseResource {
             return forbidden();
         }
 
-        // Set<Exercise> examExercises = course.getExams().
-        // course.setExercises(examExercises);
+        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
