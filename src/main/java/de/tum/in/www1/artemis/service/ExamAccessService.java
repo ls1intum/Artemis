@@ -78,7 +78,7 @@ public class ExamAccessService {
         }
 
         // Check that the exam is visible
-        if (exam.get().getVisibleDate() != null && exam.get().getVisibleDate().isAfter(ZonedDateTime.now())) {
+        if (exam.get().getVisibleDate() != null && exam.get().getVisibleDate().isBefore(ZonedDateTime.now())) {
             return forbidden();
         }
 
