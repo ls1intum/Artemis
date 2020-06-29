@@ -355,7 +355,7 @@ export const examManagementRoute: Routes = [
         component: TutorCourseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'artemisApp.tutorCourseDashboard.home.title',
+            pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],
     },
