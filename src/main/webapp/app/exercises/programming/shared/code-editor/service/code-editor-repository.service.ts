@@ -191,11 +191,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.participation) {
             this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
         }
+        const resourceUrl = this.restResourceUrl;
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http
-                    .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
+                    .post<void>(`${resourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 if (this.participation?.unsynchedFiles) {
@@ -213,11 +214,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.participation) {
             this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
         }
+        const resourceUrl = this.restResourceUrl;
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http
-                    .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
+                    .post<void>(`${resourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => of(null),
             true,
@@ -230,9 +232,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (file) {
             file.fileContent = fileContent;
         }
+        const resourceUrl = this.restResourceUrl;
 
         return this.fallbackWhenOfflineOrUnavailable(
-            () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
+            () => this.http.put(`${resourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
             () => {
                 const syncFile = this.participation?.unsynchedFiles?.find((f) => f.fileName === fileName);
                 if (syncFile) {
@@ -312,11 +315,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (file) {
             file.filename = currentFilePath.substring(0, currentFilePath.lastIndexOf('/') + 1) + newFilename;
         }
+        const resourceUrl = this.restResourceUrl;
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http
-                    .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
+                    .post<void>(`${resourceUrl}/rename-file`, { currentFilePath, newFilename })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 const syncFile = this.participation?.unsynchedFiles?.find((f) => f.fileName === currentFilePath);
@@ -334,11 +338,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (fileIndex != null && fileIndex >= 0) {
             this.participation.repositoryFiles.splice(fileIndex, 1);
         }
+        const resourceUrl = this.restResourceUrl;
 
         return this.fallbackWhenOfflineOrUnavailable(
             () =>
                 this.http
-                    .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
+                    .delete<void>(`${resourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
                     .pipe(handleErrorResponse(this.conflictService)),
             () => {
                 const index = this.participation?.unsynchedFiles?.findIndex((f) => f.fileName === fileName);
