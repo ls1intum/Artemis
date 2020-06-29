@@ -45,14 +45,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     unsavedChanges = false;
     disconnected = false;
 
-    private isProgrammingExercise() {
+    isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
 
-    private isProgrammingExerciseWithCodeEditor(): boolean {
+    isProgrammingExerciseWithCodeEditor(): boolean {
         return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOnlineEditor;
     }
-    private isProgrammingExerciseWithOfflineIDE(): boolean {
+
+    isProgrammingExerciseWithOfflineIDE(): boolean {
         return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde;
     }
 
