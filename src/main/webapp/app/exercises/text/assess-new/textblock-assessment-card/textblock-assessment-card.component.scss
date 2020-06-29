@@ -1,7 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 span {
-    white-space: pre;
+    white-space: pre-wrap;
 
     &:hover {
         background: $gray-300;
