@@ -1,11 +1,9 @@
 <!-- ngIf code-editor -->
 <div *ngIf="exercise.allowOnlineEditor && !exercise.allowOfflineIde">
-    <h1>Online Code Editor</h1>
     <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
 </div>
 <!-- ngIf code-editor with clone button start -->
 <div *ngIf="exercise.allowOnlineEditor && exercise.allowOfflineIde">
-    <h1>Online Code Editor</h1>
     <jhi-exercise-details-student-actions jhiOrionFilter [examMode]="true" [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
