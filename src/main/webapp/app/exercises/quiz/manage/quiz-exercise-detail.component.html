@@ -188,7 +188,7 @@
         <div class="edit-quiz-footer">
             <div class="container">
                 <div class="edit-quiz-footer-content">
-                    <div class="form-group">
+                    <div class="form-group" *ngIf="!isExamMode">
                         <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
                         <select
                             *ngIf="showDropdown === 'isOpenForPractice'"
