@@ -9,11 +9,9 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     private showAlert = new Subject();
-    private serverDate = new Subject();
 
-    constructor(alertService: AlertService, serverDateService: ArtemisServerDateService) {
+    constructor(alertService: AlertService, private serverDateService: ArtemisServerDateService) {
         this.showAlert.pipe(throttleTime(10000)).subscribe(() => alertService.addAlert({ type: 'info', msg: 'artemisApp.outdatedAlert', timeout: 30000 }, []));
-        this.serverDate.subscribe((date: string) => serverDateService.setServerDate(date));
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -24,9 +22,9 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     if (VERSION && serverVersion && VERSION !== serverVersion) {
                         this.showAlert.next();
                     }
-                    const serverDate = response.headers.get(ARTEMIS_SERVER_DATE_HEADER);
-                    if (serverDate) {
-                        this.serverDate.next(serverDate);
+                    // only invoke the time call if the call was not already the time call to prevent recursion here
+                    if (!req.url.includes('time')) {
+                        this.serverDateService.updateTime();
                     }
                 }
             }),
