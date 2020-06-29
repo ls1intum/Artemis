@@ -205,7 +205,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetMaxWorkingTimeNoStudentExams() throws Exception {
+    public void testGetWorkingTimesNoStudentExams() throws Exception {
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
@@ -225,11 +225,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
          */
 
         assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).isEmpty();
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetMaxWorkingTimeDifferent() throws Exception {
+    public void testGetWorkingTimesDifferentStudentExams() throws Exception {
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
@@ -248,14 +249,23 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
 
+        // Modify working times
+
+        var expectedWorkingTimes = new HashSet<Integer>();
         int maxWorkingTime = (int) Duration.between(examStartDate, examEndDate).getSeconds();
-        for (var studentExam : studentExams) {
-            maxWorkingTime += 30;
+
+        for (int i = 0; i < studentExams.size(); i++) {
+            if (i % 2 == 0)
+                maxWorkingTime += 35;
+            expectedWorkingTimes.add(maxWorkingTime);
+
+            var studentExam = studentExams.get(i);
             studentExam.setWorkingTime(maxWorkingTime);
             studentExamRepository.save(studentExam);
         }
 
         SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).contains(maxWorkingTime);
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).containsExactlyInAnyOrderElementsOf(expectedWorkingTimes);
     }
 }
