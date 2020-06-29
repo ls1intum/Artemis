@@ -12,12 +12,16 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+
+type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -58,6 +62,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     _reload = true;
 
+    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -68,6 +74,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         private textSubmissionService: TextSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
+        private courseExerciseService: CourseExerciseService,
     ) {}
 
     /**
@@ -90,6 +97,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
+            if (this.activeExercise.studentParticipations && this.activeExercise.studentParticipations.length === 0) {
+                // subscribe to execute
+                this.createParticipationForExercise(this.activeExercise).subscribe();
+            }
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
                 exercise.studentParticipations.forEach((participation) => {
@@ -97,28 +108,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
                         });
-                    } else {
-                        // create empty fallback submission
-                        let submission;
-                        switch (exercise.type) {
-                            case ExerciseType.TEXT:
-                                submission = new TextSubmission();
-                                break;
-                            case ExerciseType.FILE_UPLOAD:
-                                submission = new FileUploadSubmission();
-                                break;
-                            case ExerciseType.MODELING:
-                                submission = new ModelingSubmission();
-                                break;
-                            case ExerciseType.PROGRAMMING:
-                                submission = new ProgrammingSubmission();
-                                break;
-                            case ExerciseType.QUIZ:
-                                submission = new QuizSubmission();
-                                break;
-                        }
-                        submission.isSynced = true;
-                        participation.submissions = [submission];
                     }
                 });
             });
@@ -195,9 +184,41 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * @param {Exercise} exercise
      */
     onExerciseChange(exercise: Exercise): void {
+        // save exercise on change
         this.triggerSave(false);
         this.activeExercise = exercise;
-        this.reloadSubmissionComponent();
+        // if we do not have a participation for the exercise -> generate participation
+        if (exercise.studentParticipations && exercise.studentParticipations.length === 0) {
+            this.createParticipationForExercise(exercise).subscribe((participation) => {
+                if (participation !== null) {
+                    this.reloadSubmissionComponent();
+                }
+            });
+        } else {
+            this.reloadSubmissionComponent();
+        }
+    }
+
+    /**
+     * creates a participation for the exercise, if it did not exist already
+     * @param exercise
+     */
+    createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | null> {
+        this.generateParticipationStatus.next('generating');
+        return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
+            tap((createdParticipation: StudentParticipation) => {
+                // if the same participations is not yet present in the exercise -> add it
+                if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
+                    createdParticipation.submissions[0].isSynced = true;
+                    exercise.studentParticipations.push(createdParticipation);
+                }
+                this.generateParticipationStatus.next('success');
+            }),
+            catchError(() => {
+                this.generateParticipationStatus.next('failed');
+                return Observable.of(null);
+            }),
+        );
     }
 
     private reloadSubmissionComponent() {

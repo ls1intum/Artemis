@@ -43,7 +43,10 @@
             "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weitere",
-            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\""
+            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
+            "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
+            "generateParticipationRetry": "Erneut versuchen"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -139,7 +142,6 @@
                 "addTextExercise": "Textaufgabe hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
-                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },

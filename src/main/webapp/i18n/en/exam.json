@@ -43,7 +43,10 @@
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Submit & continue",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "preparingParticipation": "Preparing exercise. This may take a few seconds.",
+            "generateParticipationFailed": "The preparation of the exercise failed.",
+            "generateParticipationRetry": "Retry"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -139,7 +142,6 @@
                 "addTextExercise": "Add text exercise",
                 "addFileUploadExercise": "Add file upload exercise",
                 "addQuizExercise": "Add quiz",
-                "addFileUploadExercise": "Add file upload exercise",
                 "addProgrammingExercise": "Add programming exercise",
                 "orderCouldNotBeSaved": "The order could not be saved"
             },
