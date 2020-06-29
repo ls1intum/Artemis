@@ -189,6 +189,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     createFile(fileName: string) {
         if (this.participation) {
+            // eslint-disable-next-line chai-friendly/no-unused-expressions
             this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
         }
 
@@ -211,6 +212,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     createFolder(folderName: string) {
         if (this.participation) {
+            // eslint-disable-next-line chai-friendly/no-unused-expressions
             this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
         }
 
