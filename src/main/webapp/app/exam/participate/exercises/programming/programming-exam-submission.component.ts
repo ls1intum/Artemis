@@ -5,6 +5,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
 import { EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -12,7 +13,7 @@ import { EditorState } from 'app/exercises/programming/shared/code-editor/model/
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges, ComponentCanDeactivate {
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
     studentParticipation: ProgrammingExerciseStudentParticipation;
@@ -54,5 +55,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
                 this.codeEditorComponent.actions.commit();
             }
         }
+    }
+
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
+    canDeactivate() {
+        return !this.hasUnsavedChanges();
     }
 }
