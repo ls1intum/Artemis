@@ -141,6 +141,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Evaluate all the exercises belonging to the exam
+     * @param courseId id of the course to which the exam belongs
+     * @param examId id of the exam for which the exercises should be evaluated
+     * @returns number of evaluated exercises
+     */
+    evaluateExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
      * Save the exercise groups of an exam in the given order.
      * @param courseId The course id.
      * @param examId The exam id.

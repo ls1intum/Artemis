@@ -115,6 +115,31 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
+     * Evaluates all the exercises that belong to the exam
+     */
+    evaluateExercises() {
+        this.isLoading = true;
+        this.examManagementService.evaluateExercises(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.evaluateExerciseSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
      * Update the number of filtered participations
      *
      * @param filteredStudentExamsSize Total number of participations after filters have been applied

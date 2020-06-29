@@ -55,6 +55,7 @@
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
+            "evaluateExercises": "Aufgaben auswerten",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
@@ -67,7 +68,9 @@
             "studentExamGenerationSuccess": "{{number}} individuelle Klausuren erfolgreich generiert!",
             "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
             "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
-            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}"
+            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
+            "evaluateExerciseSuccess": "{{number}} Aufgaben erfolgreich ausgewertet!",
+            "evaluateExerciseFailure": "Es gab einen Fehler bei der Auswertung der Aufgaben:\n {{message}}"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",

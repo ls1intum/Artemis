@@ -406,10 +406,24 @@ public class ExamService {
     }
 
     /**
+     * Evaluates all the exercises of an exam
+     *
+     * @param examId id of the exam for which the exercises should be evaluated
+     * @return number of evaluated exercises
+     */
+    public Integer evaluateExercises(Long examId) {
+        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        // TODO: Implement logic
+        return 0;
+    }
+
+    /**
      * Returns the latest individual exam end date as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, the exam end date is returned.
-     * 
+     *
      * @param examId the id of the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      * @throws EntityNotFoundException if no exam with the given examId can be found
@@ -422,7 +436,7 @@ public class ExamService {
      * Returns the latest individual exam end date as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, the exam end date is returned.
-     * 
+     *
      * @param exam the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
@@ -437,7 +451,7 @@ public class ExamService {
      * Returns all individual exam end dates as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, an empty set returned.
-     * 
+     *
      * @param examId the id of the exam
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      * @throws EntityNotFoundException if no exam with the given examId can be found
@@ -450,7 +464,7 @@ public class ExamService {
      * Returns all individual exam end dates as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, an empty set returned.
-     * 
+     *
      * @param exam the exam
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
