@@ -406,12 +406,12 @@ public class ExamService {
     }
 
     /**
-     * Evaluates all the exercises of an exam
+     * Evaluates all the quiz exercises of an exam
      *
-     * @param examId id of the exam for which the exercises should be evaluated
+     * @param examId id of the exam for which the quiz exercises should be evaluated
      * @return number of evaluated exercises
      */
-    public Integer evaluateExercises(Long examId) {
+    public Integer evaluateQuizExercises(Long examId) {
         var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 

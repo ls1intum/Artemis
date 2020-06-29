@@ -6,17 +6,17 @@
             </h2>
         </div>
         <div class="ml-auto d-flex">
-            <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+            <button class="btn btn-primary" style="height: 40px;" (click)="generateStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
                 <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
             </button>
-            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
                 <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
             </button>
-            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="evaluateExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="evaluateQuizExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || !isExamOver">
                 <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.evaluateExercises">Evaluate Exercises</span>
+                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
             </button>
         </div>
     </div>

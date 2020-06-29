@@ -321,24 +321,24 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-exercises : Evaluate the exercises for all the exercises of the exam
+     * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises : Evaluate the quiz exercises of the exam
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the id of the exam
-     * @return ResponsEntity containing the list of generated participations
+     * @return ResponsEntity the number of evaluated quiz exercises
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-exercises")
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> evaluateExercises(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.info("REST request to evaluate exercises of exam {}", examId);
+    public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to evaluate quiz exercises of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer numOfEvaluatedExercises = examService.evaluateExercises(examId);
+        Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
 
-        log.info("Evaluated {} exercises of exam {}", numOfEvaluatedExercises, examId);
+        log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
 
         return ResponseEntity.ok().body(numOfEvaluatedExercises);
     }
