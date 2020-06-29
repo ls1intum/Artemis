@@ -57,7 +57,28 @@
             <div *ngIf="disconnected" class="exam-footer disconnected">
                 <div class="container">
                     <div class="exam-footer-content">
-                        <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
+                        <ng-container *ngIf="isProgrammingExercise(); else noProgrammingExercise">
+                            <ng-container *ngIf="isProgrammingExerciseWithCodeEditor(); else noCodeEditor">
+                                <p
+                                    *ngIf="isProgrammingExerciseWithOfflineIDE(); else noOfflineIDE"
+                                    jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorNoOfflineIDE"
+                                    class="mb-0"
+                                ></p>
+                                <ng-template #noOfflineIDE>
+                                    <p
+                                        *ngIf="isProgrammingExerciseWithOfflineIDE(); else noOfflineIDE"
+                                        jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorAndOfflineIDE"
+                                        class="mb-0"
+                                    ></p>
+                                </ng-template>
+                            </ng-container>
+                            <ng-template #noCodeEditor>
+                                <p jhiTranslate="artemisApp.examParticipation.disconnectedNoCodeEditor" class="mb-0"></p>
+                            </ng-template>
+                        </ng-container>
+                        <ng-template #noProgrammingExercise>
+                            <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
+                        </ng-template>
                         <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
                     </div>
                 </div>
