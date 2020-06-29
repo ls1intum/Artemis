@@ -133,6 +133,7 @@ public class TextSubmissionResource {
 
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        long start = System.currentTimeMillis();
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
@@ -154,6 +155,9 @@ public class TextSubmissionResource {
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         this.textSubmissionService.hideDetails(textSubmission, user);
+        long end = System.currentTimeMillis();
+        log.info("handleTextSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal);
+
         return ResponseEntity.ok(textSubmission);
     }
 
