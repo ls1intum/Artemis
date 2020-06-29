@@ -15,6 +15,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
+import { Router, NavigationEnd } from '@angular/router';
 
 @Component({
     selector: 'jhi-navbar',
@@ -33,6 +34,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     currAccount: User | null;
 
     private authStateSubscription: Subscription;
+    public examMode = false;
 
     constructor(
         private loginService: LoginService,
@@ -43,9 +45,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
+        private router: Router,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
+
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                const examRoute = new RegExp('exams/[0-9]');
+                if (examRoute.test(this.router.url)) {
+                    this.examMode = true;
+                } else {
+                    this.examMode = false;
+                }
+            }
+        });
     }
 
     ngOnInit() {
