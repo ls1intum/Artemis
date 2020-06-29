@@ -1,12 +1,15 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { advanceTo } from 'jest-date-mock';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { ArtemisTestModule } from '../../test.module';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { MockRouter, MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
 
 function build2DigitsDatePart(datePart: number) {
     return `0${datePart}`.slice(-2);
@@ -30,72 +33,155 @@ function getDate(isToday = true) {
     return `${date.getFullYear()}-${monthString}-${dateString}`;
 }
 
-describe('AuditsComponent', () => {
-    let comp: AuditsComponent;
-    let fixture: ComponentFixture<AuditsComponent>;
-    let service: AuditsService;
+describe('Audit Component Tests', () => {
+    describe('AuditsComponent', () => {
+        let comp: AuditsComponent;
+        let fixture: ComponentFixture<AuditsComponent>;
+        let service: AuditsService;
+        let mockActivatedRoute: MockActivatedRoute;
 
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [AuditsComponent],
-            providers: [AuditsService],
-        })
-            .overrideTemplate(AuditsComponent, '')
-            .compileComponents();
-    }));
+        beforeEach(async(() => {
+            TestBed.configureTestingModule({
+                providers: [
+                    {
+                        provide: ActivatedRoute,
+                        useValue: new MockActivatedRoute({ courseId: 123 }),
+                    },
+                    {
+                        provide: Router,
+                        useValue: MockRouter,
+                    },
+                    AuditsService,
+                ],
+                imports: [ArtemisTestModule],
+                declarations: [AuditsComponent],
+            })
+                .overrideTemplate(AuditsComponent, '')
+                .compileComponents();
+        }));
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(AuditsComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(AuditsService);
-    });
-
-    describe('today function ', () => {
-        it('should set toDate to current date', () => {
-            comp.today();
-            expect(comp.toDate).toBe(getDate());
+        beforeEach(() => {
+            fixture = TestBed.createComponent(AuditsComponent);
+            comp = fixture.componentInstance;
+            service = fixture.debugElement.injector.get(AuditsService);
+            mockActivatedRoute = TestBed.get(ActivatedRoute);
+            mockActivatedRoute.setParameters({
+                sort: 'id,desc',
+            });
         });
-    });
 
-    describe('previousMonth function ', () => {
-        it('should set fromDate to current date', () => {
-            comp.previousMonth();
-            expect(comp.fromDate).toBe(getDate(false));
+        describe('today function', () => {
+            it('should set toDate to current date', () => {
+                comp.ngOnInit();
+                expect(comp.toDate).toBe(getDate());
+            });
+
+            it('if current day is last day of month then should set toDate to first day of next month', () => {
+                advanceTo(new Date(2019, 0, 31, 0, 0, 0));
+                comp.ngOnInit();
+                expect(comp.toDate).toBe('2019-02-01');
+            });
+
+            it('if current day is not last day of month then should set toDate to next day of current month', () => {
+                advanceTo(new Date(2019, 0, 27, 0, 0, 0));
+                comp.ngOnInit();
+                expect(comp.toDate).toBe('2019-01-28');
+            });
         });
-    });
 
-    describe('By default, on init', () => {
-        it('should set all default values correctly', () => {
-            fixture.detectChanges();
-            expect(comp.toDate).toBe(getDate());
-            expect(comp.fromDate).toBe(getDate(false));
-            expect(comp.itemsPerPage).toBe(ITEMS_PER_PAGE);
-            expect(comp.page).toBe(1);
-            expect(comp.reverse).toBeFalsy();
+        describe('previousMonth function', () => {
+            it('should set fromDate to previous month', () => {
+                comp.ngOnInit();
+                expect(comp.fromDate).toBe(getDate(false));
+            });
+
+            it('if current month is January then should set fromDate to previous year last month', () => {
+                advanceTo(new Date(2019, 0, 20, 0, 0, 0));
+                comp.ngOnInit();
+                expect(comp.fromDate).toBe('2018-12-20');
+            });
+
+            it('if current month is not January then should set fromDate to current year previous month', () => {
+                advanceTo(new Date(2019, 1, 20, 0, 0, 0));
+                comp.ngOnInit();
+                expect(comp.fromDate).toBe('2019-01-20');
+            });
         });
-    });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
-            // GIVEN
-            const headers = new HttpHeaders().append('link', 'link;link');
-            const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
-            spyOn(service, 'query').and.returnValue(
-                of(
-                    new HttpResponse({
-                        body: [audit],
-                        headers,
+        describe('By default, on init', () => {
+            it('should set all default values correctly', () => {
+                fixture.detectChanges();
+                expect(comp.toDate).toBe(getDate());
+                expect(comp.fromDate).toBe(getDate(false));
+                expect(comp.itemsPerPage).toBe(ITEMS_PER_PAGE);
+                expect(comp.page).toBe(1);
+                expect(comp.ascending).toBe(false);
+                expect(comp.predicate).toBe('id');
+            });
+        });
+
+        describe('OnInit', () => {
+            it('Should call load all on init', () => {
+                // GIVEN
+                const headers = new HttpHeaders().append('X-Total-Count', '1');
+                const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
+                spyOn(service, 'query').and.returnValue(
+                    of(
+                        new HttpResponse({
+                            body: [audit],
+                            headers,
+                        }),
+                    ),
+                );
+
+                // WHEN
+                comp.ngOnInit();
+
+                // THEN
+                expect(service.query).toHaveBeenCalled();
+                expect(comp.audits && comp.audits[0]).toEqual(jasmine.objectContaining(audit));
+                expect(comp.totalItems).toBe(1);
+            });
+        });
+
+        describe('Create sort object', () => {
+            beforeEach(() => {
+                spyOn(service, 'query').and.returnValue(of(new HttpResponse({ body: null })));
+            });
+
+            it('Should sort only by id asc', () => {
+                // GIVEN
+                mockActivatedRoute.setParameters({
+                    sort: 'id,desc',
+                });
+
+                // WHEN
+                comp.ngOnInit();
+
+                // THEN
+                expect(service.query).toBeCalledWith(
+                    expect.objectContaining({
+                        sort: ['id,desc'],
                     }),
-                ),
-            );
+                );
+            });
 
-            // WHEN
-            comp.ngOnInit();
+            it('Should sort by timestamp asc then by id', () => {
+                // GIVEN
+                mockActivatedRoute.setParameters({
+                    sort: 'timestamp,asc',
+                });
 
-            // THEN
-            expect(service.query).toHaveBeenCalled();
-            expect(comp.audits[0]).toEqual(jasmine.objectContaining(audit));
+                // WHEN
+                comp.ngOnInit();
+
+                // THEN
+                expect(service.query).toBeCalledWith(
+                    expect.objectContaining({
+                        sort: ['timestamp,asc', 'id'],
+                    }),
+                );
+            });
         });
     });
 });

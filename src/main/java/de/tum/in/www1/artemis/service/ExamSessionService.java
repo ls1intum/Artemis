@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,14 +31,17 @@ public class ExamSessionService {
      * Creates and saves an exam session for given student exam
      *
      * @param studentExam student exam for which an exam session shall be created
+     * @param fingerprint the browser fingerprint reported by the client, can be null
+     * @param userAgent the user agent of the client, can be null
      * @return the newly create exam session
      */
-    public ExamSession startExamSession(StudentExam studentExam) {
+    public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent) {
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
         examSession.setStudentExam(studentExam);
-        // TODO set other attributes like fingerprint and user agent
+        examSession.setBrowserFingerprintHash(fingerprint);
+        examSession.setUserAgent(userAgent);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }

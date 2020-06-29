@@ -99,7 +99,7 @@ public class Exam implements Serializable {
     private Set<User> registeredUsers = new HashSet<>();
 
     @Transient
-    private long numberOfRegisteredUsersTransient;
+    private Long numberOfRegisteredUsersTransient;
 
     public Long getId() {
         return id;
@@ -263,11 +263,11 @@ public class Exam implements Serializable {
         return this;
     }
 
-    public long getNumberOfRegisteredUsers() {
+    public Long getNumberOfRegisteredUsers() {
         return this.numberOfRegisteredUsersTransient;
     }
 
-    public void setNumberOfRegisteredUsers(long numberOfRegisteredUsers) {
+    public void setNumberOfRegisteredUsers(Long numberOfRegisteredUsers) {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 
@@ -295,6 +295,6 @@ public class Exam implements Serializable {
         if (visibleDate == null) {  // no visible date means the exercise is visible to students
             return Boolean.TRUE;
         }
-        return visibleDate.isBefore(ZonedDateTime.now());
+        return visibleDate.isAfter(ZonedDateTime.now());
     }
 }

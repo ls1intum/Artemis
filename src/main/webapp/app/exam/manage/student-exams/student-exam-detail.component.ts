@@ -26,6 +26,9 @@ export class StudentExamDetailComponent implements OnInit {
         this.loadAll();
     }
 
+    /**
+     * Load the course and the student exam
+     */
     loadAll() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ studentExam }) => (this.studentExam = studentExam));
@@ -36,6 +39,9 @@ export class StudentExamDetailComponent implements OnInit {
         this.student = this.studentExam.user;
     }
 
+    /**
+     * Link to download the exported PDF of the students participation
+     */
     downloadPdf() {
         // TODO
     }

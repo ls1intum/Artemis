@@ -23,6 +23,7 @@ logging:
 
 artemis:
     version: #project.version#
+    file-upload-path: uploads
 
 management:
     endpoints:

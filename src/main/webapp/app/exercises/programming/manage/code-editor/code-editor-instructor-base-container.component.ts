@@ -1,5 +1,5 @@
-import { CodeEditorContainer } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { OnDestroy, OnInit } from '@angular/core';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
+import { OnDestroy, OnInit, Component } from '@angular/core';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
@@ -42,7 +42,8 @@ export enum LOADING_STATE {
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
-export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+@Component({ template: '' })
+export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;

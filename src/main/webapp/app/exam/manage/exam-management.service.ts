@@ -10,7 +10,6 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Participation } from 'app/entities/participation/participation.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -135,9 +134,9 @@ export class ExamManagementService {
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
-     * @returns a list of the generated participations
+     * @returns number of generated participations
      */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<Participation[]>> {
+    startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
     }
 

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -19,7 +20,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -38,6 +38,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     StudentExamRepository studentExamRepository;
+
+    @Autowired
+    ExamSessionRepository examSessionRepository;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -123,17 +126,20 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamRepository.findAll()).hasSize(users.size() + 2); // we generate two additional student exams in the @Before method
 
         // start exercises
-        List<Participation> participations = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Participation.class, HttpStatus.OK);
 
-        assertThat(participations).hasSize(users.size() * exam.getExerciseGroups().size());
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
         // TODO: also write a 2nd test where the submission already contains some content
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+            final HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "foo");
+            headers.set("X-Artemis-Client-Fingerprint", "bar");
+            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.getExercises().size()).isEqualTo(2);
             var textExercise = (TextExercise) response.getExercises().get(0);
@@ -176,10 +182,22 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             assertThat(response.getExamSessions()).hasSize(1);
             var examSession = response.getExamSessions().iterator().next();
+            final var optionalExamSession = examSessionRepository.findById(examSession.getId());
+            assertThat(optionalExamSession).isPresent();
+
             assertThat(examSession.getSessionToken()).isNotNull();
+            assertThat(examSession.getUserAgent()).isNull();
+            assertThat(examSession.getBrowserFingerprintHash()).isNull();
+            assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
+            assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
 
             // TODO: add other exercises, programming, modeling and file upload
 
         }
+
+        // change back to instructor user
+        database.changeUser("instructor1");
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 }
