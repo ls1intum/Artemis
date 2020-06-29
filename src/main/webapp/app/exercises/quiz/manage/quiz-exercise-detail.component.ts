@@ -1038,10 +1038,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {
-        quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
-        quizExercise.duration = Number(quizExercise.duration);
-        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
-        quizExercise.dueDate = quizExercise.dueDate ? moment(quizExercise.releaseDate) : quizExercise.releaseDate.add(quizExercise.duration, 's');
+        if (this.isExamMode) {
+            quizExercise.releaseDate = moment(quizExercise.releaseDate);
+        } else {
+            quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
+            quizExercise.duration = Number(quizExercise.duration);
+            quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        }
     }
 
     /**
