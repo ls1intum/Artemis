@@ -126,7 +126,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
      */
     hasVisibleExams(): boolean {
         for (const exam of this.course?.exams!) {
-            if (moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
+            if (moment(exam.visibleDate).isBefore(moment())) {
                 return true;
             }
         }
