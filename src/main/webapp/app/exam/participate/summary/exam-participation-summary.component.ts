@@ -1,19 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, Input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { getIcon } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Exam } from 'app/entities/exam.model';
-
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-participation-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
 })
-export class ExamParticipationSummaryComponent implements OnInit {
+export class ExamParticipationSummaryComponent {
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
