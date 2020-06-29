@@ -33,21 +33,16 @@
         },
         "examScores": {
             "title": "Exam Scores",
-            "showAll": "Show All",
-            "showSuccessful": "Show Successful",
-            "showUnsuccessful": "Show Unsuccessful",
-            "resultCount": "{{ resultsLength }} results",
-            "exportNames": "Export Names",
-            "exportResults": "Export Results",
             "refresh": "Refresh",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "name": "Name",
             "login": "Login",
-            "completionDate": "Completion Date",
-            "result": "Result",
-            "submissions": "Submissions",
-            "duration": "Duration",
-            "viewStudentExam": "View Student Exam"
+            "registrationNumber": "Registration Number",
+            "max": "Max",
+            "average": "Average",
+            "overallPoints": "Overall Points (%)",
+            "exportCSV": " Export Results as CSV",
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} students with results"
         },
         "examParticipation": {
             "timer": "Time Left: ",
