@@ -39,12 +39,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     @Override
@@ -61,6 +64,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Error case 3: The user's participation repository is locked.
         if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
+            throw new IllegalAccessException();
+        }
+        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise
+        // TODO: user should be cached but we might want to combine it with canAccessParticipation()
+        User user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: we might want to prevent this check for getFiles(), getFile() and pullChanges()
+        if (!examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
