@@ -31,12 +31,13 @@ public class ExamSessionService {
      * @param studentExam student exam for which an exam session shall be created
      * @return the newly create exam session
      */
-    public ExamSession startExamSession(StudentExam studentExam) {
+    public ExamSession startExamSession(StudentExam studentExam, String fingerprint, String userAgent) {
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
         examSession.setStudentExam(studentExam);
-        // TODO set other attributes like fingerprint and user agent
+        examSession.setBrowserFingerprintHash(fingerprint);
+        examSession.setUserAgent(userAgent);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }
