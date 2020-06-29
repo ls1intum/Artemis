@@ -78,6 +78,11 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
         this.browserFingerprintHash = browserFingerprintHash;
     }
 
+    public void hideDetails() {
+        setUserAgent(null);
+        setBrowserFingerprintHash(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
