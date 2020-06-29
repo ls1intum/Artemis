@@ -189,7 +189,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     createFile(fileName: string) {
         if (this.participation) {
-            this.participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
+            this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
@@ -211,7 +211,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     createFolder(folderName: string) {
         if (this.participation) {
-            this.participation.repositoryFiles.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
+            this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
         }
 
         return this.fallbackWhenOfflineOrUnavailable(
@@ -226,7 +226,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     // This method is never called
     updateFileContent(fileName: string, fileContent: string) {
-        const file = this.participation?.repositoryFiles.find((f) => f.filename === fileName);
+        const file = this.participation?.repositoryFiles?.find((f) => f.filename === fileName);
         if (file) {
             file.fileContent = fileContent;
         }
@@ -249,7 +249,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.fileUpdateSubject.complete();
         }
         // First store the newest changes in the participation
-        if (this.participation) {
+        if (this.participation && this.participation.repositoryFiles) {
             fileUpdates.forEach((update) => {
                 const fileToUpdate = this.participation.repositoryFiles.find((file) => file.filename === update.fileName);
                 if (fileToUpdate) {
@@ -308,7 +308,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     renameFile(currentFilePath: string, newFilename: string) {
-        const file = this.participation?.repositoryFiles.find((f) => f.filename === currentFilePath);
+        const file = this.participation?.repositoryFiles?.find((f) => f.filename === currentFilePath);
         if (file) {
             file.filename = currentFilePath.substring(0, currentFilePath.lastIndexOf('/') + 1) + newFilename;
         }
@@ -330,7 +330,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     deleteFile(fileName: string) {
-        const fileIndex = this.participation?.repositoryFiles.findIndex((f) => f.filename === fileName);
+        const fileIndex = this.participation?.repositoryFiles?.findIndex((f) => f.filename === fileName);
         if (fileIndex != null && fileIndex >= 0) {
             this.participation.repositoryFiles.splice(fileIndex, 1);
         }
