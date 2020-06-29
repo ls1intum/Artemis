@@ -14,7 +14,7 @@ export class ArtemisServerDateService {
     setServerDate(date: string): void {
         const serverDate = moment(date);
         const clientDate = moment(new Date());
-        const offset = serverDate.diff(clientDate, 'ms') / 2;
+        const offset = serverDate.diff(clientDate, 'ms');
         this.recentOffsets.push(offset);
         // remove oldest offset if more than 5
         if (this.recentOffsets.length > 5) {
