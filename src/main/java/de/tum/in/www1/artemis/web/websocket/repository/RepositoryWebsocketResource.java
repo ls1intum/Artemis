@@ -60,9 +60,12 @@ public class RepositoryWebsocketResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, SimpMessageSendingOperations messagingTemplate,
             RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -72,6 +75,7 @@ public class RepositoryWebsocketResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -127,6 +131,16 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
+
+        // Apply checks for exam (submission is in time & user's student exam has the exercise)
+        // TODO: user should be cached but we might want to combine it with canAccessParticipation()
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
+            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
+            return;
+        }
+
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
         messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
@@ -168,6 +182,16 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
+
+        // Apply checks for exam (submission is in time & user's student exam has the exercise)
+        // TODO: is the check necessary in this method?
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        if (!examSubmissionService.isAllowedToSubmit(exercise, user)) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "notAllowedExam");
+            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
+            return;
+        }
+
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
         messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
