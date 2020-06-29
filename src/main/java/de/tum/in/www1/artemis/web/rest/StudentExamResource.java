@@ -102,6 +102,8 @@ public class StudentExamResource {
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
+     * @param browserFingerprint the browser fingerprint reported by the client, can be null
+     * @param userAgent the user agent of the client, can be null
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
