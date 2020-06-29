@@ -117,7 +117,8 @@ public class StudentExamService {
      * Get the maximal working time of all student exams for the exam with the given id.
      *
      * @param examId the id of the exam
-     * @return the list of all student exams
+     * @return the maximum of all student exam working times for the given exam
+     * @throws EntityNotFoundException if no student exams could be found
      */
     @NotNull
     public Integer findOneByExerciseIdAndUserId(Long examId) {
