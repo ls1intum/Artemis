@@ -87,6 +87,9 @@ public class ExamSubmissionService {
             Set<Submission> submissions = participations.get(0).getSubmissions();
             if (!submissions.isEmpty()) {
                 Submission existingSubmission = submissions.iterator().next();
+                // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
+                // we set the id of the received submission to the id of the existing submission. When repository.save()
+                // is invoked the existing submission will be updated.
                 submission.setId(existingSubmission.getId());
             }
         }
