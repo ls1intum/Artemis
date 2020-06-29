@@ -484,6 +484,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard() throws Exception {
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
+                Course.class);
+
+        // Test that the received course has two exercises
+        assertThat(receivedCourse.getExercises().size()).as("Two exercises are returned").isEqualTo(2);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllCoursesWithUserStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
