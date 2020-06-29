@@ -216,10 +216,6 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
-            return ResponseEntity.status(403)
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
-        }
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<QuizSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(quizExercise, user);
