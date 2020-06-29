@@ -11,15 +11,15 @@
         <!-- exam participation -->
         <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed">
             <!-- exam nav -->
+            <jhi-exam-navigation-bar
+                id="exam-navigation-bar"
+                [exercises]="studentExam.exercises"
+                [endDate]="exam.endDate"
+                (onExerciseChanged)="onExerciseChange($event)"
+            ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
                 <ng-container [ngSwitch]="activeExercise.type">
-                    <jhi-exam-navigation-bar
-                        id="exam-navigation-bar"
-                        [exercises]="studentExam.exercises"
-                        [endDate]="exam.endDate"
-                        (onExerciseChanged)="onExerciseChange($event)"
-                    ></jhi-exam-navigation-bar>
                     <ng-container *ngIf="_reload">
                         <jhi-quiz-submission-exam
                             *ngSwitchCase="QUIZ"
