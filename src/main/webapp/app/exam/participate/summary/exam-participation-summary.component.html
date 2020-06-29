@@ -23,10 +23,9 @@
                 <fa-icon size="2x" [icon]="isCollapsed(getSubmissionForExercise(exercise).id) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
-        <!--text exercise-->
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(getSubmissionForExercise(exercise).id)">
             <h5>{{ exercise.title }}</h5>
-            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement">
+            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
             <!-- Text Exercise -->
@@ -43,7 +42,11 @@
             </ng-container>
             <!-- Programming Exercise -->
             <ng-container *ngIf="exercise.type === PROGRAMMING">
-                <jhi-programming-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-programming-exam-summary>
+                <jhi-programming-exam-summary
+                    [exercise]="exercise"
+                    [submission]="getSubmissionForExercise(exercise)"
+                    [participation]="getParticipationForProgrammingExercise(exercise)"
+                ></jhi-programming-exam-summary>
             </ng-container>
             <!-- File Upload Exercise -->
             <ng-container *ngIf="exercise.type === FILE_UPLOAD">
