@@ -271,6 +271,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
                 catch (EntityNotFoundException e) {
                     // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
+                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal.getName(), destination, e.getMessage());
                     return null;
                 }
             }
