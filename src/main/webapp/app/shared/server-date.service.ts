@@ -3,20 +3,23 @@ import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisServerDateService {
-    // offset of the last synchronization in ms
-    private offset: number;
+    // offsets of the last synchronizations in ms (max. 5)
+    private recentOffsets: number[];
 
     /**
-     * sets the current server date as unix
+     * adds the latest offset
      *
      * @param {string} date
      */
     setServerDate(date: string): void {
         const serverDate = moment(date);
         const clientDate = moment(new Date());
-        this.offset = serverDate.diff(clientDate, 'ms');
-        // TODO: to improve the offset calculation, we should take the diff between request_date and response_date and divide it by 2
-        // TODO: to eliminate noise, we should store the 5 last offsets, remove the smallest and highest value and take the average of the remaining 3
+        const offset = serverDate.diff(clientDate, 'ms') / 2;
+        this.recentOffsets.push(offset);
+        // remove oldest offset if more than 5
+        if (this.recentOffsets.length > 5) {
+            this.recentOffsets.shift();
+        }
         // TODO: it might make sense to invoke one very fast explicit REST/websocket calls (e.g. "/time") without access control and database access.
         // This would be faster and more reliable than using an interceptor with arbitrary REST calls
     }
@@ -26,7 +29,18 @@ export class ArtemisServerDateService {
      */
     now(): moment.Moment {
         const clientDate = moment(new Date());
+        // take first offset if there are less than 5
+        let offset = this.recentOffsets[0];
+        if (this.recentOffsets.length === 5) {
+            const offsetsSorted = this.recentOffsets.sort((a, b) => b - a);
+            // remove lowest
+            offsetsSorted.shift();
+            // remove highest
+            offsetsSorted.pop();
+            // calculate avg
+            offset = offsetsSorted.reduce((a, b) => a + b) / offsetsSorted.length;
+        }
         // adjust with previously calculated offset
-        return clientDate.add(this.offset, 'ms');
+        return clientDate.add(offset, 'ms');
     }
 }
