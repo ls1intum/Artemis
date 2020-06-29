@@ -27,6 +27,7 @@
                     <button class="btn w-100" [ngClass]="setExerciseButtonStatus(i)" (click)="changeExercise(i)">
                         <fa-icon [icon]="icon"></fa-icon>
                     </button>
+                    <p class="exerciseIndex">{{ i }}</p>
                 </div>
             </ng-container>
             <div class="navigation-item">
@@ -45,12 +46,13 @@
                 </button>
                 <ng-template #notAProgrammingExercise>
                     <button class="btn btn-sm btn-primary px-3" (click)="submitExam()">
-                        {{ 'artemisApp.examParticipation.submitOtherExercise' | translate }}
+                        {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                     </button>
                 </ng-template>
             </div>
+            <p class="timer" jhiTranslate="artemisApp.examParticipation.timer">Time Left:</p>
             <div class="col-auto h5 m-0 text-overflow px-3 py-2 remaining-time" [class.critical]="criticalTime">
-                {{ remainingTime }}
+                {{ displayTime$ | async }}
             </div>
         </div>
     </div>

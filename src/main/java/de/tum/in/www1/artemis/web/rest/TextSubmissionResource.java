@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -80,12 +80,14 @@ public class TextSubmissionResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
-            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
+            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -96,6 +98,7 @@ public class TextSubmissionResource {
         this.gradingCriterionService = gradingCriterionService;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.textAssessmentService = textAssessmentService;
+        this.examSubmissionService = examSubmissionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
@@ -135,26 +138,37 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
+
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        long start = System.currentTimeMillis();
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
-        // fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
         }
 
-        // TODO: add one additional check: fetch textSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // Prevent multiple submissions (currently only for exam submissions)
+        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
+
+        // Check if the user is allowed to submit
+        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
+        }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         this.textSubmissionService.hideDetails(textSubmission, user);
+        long end = System.currentTimeMillis();
+        log.info("handleTextSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal);
+
         return ResponseEntity.ok(textSubmission);
     }
 

@@ -39,6 +39,20 @@ public class StudentExamService {
     }
 
     /**
+     * Get one student exam by exam id and user.
+     *
+     * @param examId    the id of the exam
+     * @param userId    the id of the user
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
+        log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
+        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with for userId \"" + userId + "\" and examId \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one student exam by id with exercises.
      *
      * @param studentExamId the id of the student exam
@@ -85,4 +99,17 @@ public class StudentExamService {
         studentExamRepository.deleteById(studentExamId);
     }
 
+    /**
+     * Get one student exam by exercise and user
+     *
+     * @param exerciseId the id of an exam exercise
+     * @param userId the id of the student taking the exam
+     * @return the student exam without associated entities 
+     */
+    @NotNull
+    public StudentExam findOneByExerciseIdAndUserId(Long exerciseId, Long userId) {
+        log.debug("Request to get student exam with exercise {} for user {}", exerciseId, userId);
+        return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
+    }
 }

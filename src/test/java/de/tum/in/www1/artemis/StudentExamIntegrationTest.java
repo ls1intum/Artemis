@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -37,6 +38,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     StudentExamRepository studentExamRepository;
+
+    @Autowired
+    ExamSessionRepository examSessionRepository;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -132,7 +136,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+            final HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "foo");
+            headers.set("X-Artemis-Client-Fingerprint", "bar");
+            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.getExercises().size()).isEqualTo(2);
             var textExercise = (TextExercise) response.getExercises().get(0);
@@ -175,7 +182,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             assertThat(response.getExamSessions()).hasSize(1);
             var examSession = response.getExamSessions().iterator().next();
+            final var optionalExamSession = examSessionRepository.findById(examSession.getId());
+            assertThat(optionalExamSession).isPresent();
+
             assertThat(examSession.getSessionToken()).isNotNull();
+            assertThat(examSession.getUserAgent()).isNull();
+            assertThat(examSession.getBrowserFingerprintHash()).isNull();
+            assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
+            assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
 
             // TODO: add other exercises, programming, modeling and file upload
 
