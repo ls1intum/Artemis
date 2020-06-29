@@ -209,8 +209,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             tap((createdParticipation: StudentParticipation) => {
                 // if the same participations is not yet present in the exercise -> add it
                 if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
-                    createdParticipation.submissions[0].isSynced = true;
                     exercise.studentParticipations.push(createdParticipation);
+                    if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
+                        createdParticipation.submissions[0].isSynced = true;
+                    }
                 }
                 this.generateParticipationStatus.next('success');
             }),
