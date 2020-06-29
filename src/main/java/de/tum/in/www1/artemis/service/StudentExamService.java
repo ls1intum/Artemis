@@ -122,7 +122,7 @@ public class StudentExamService {
      * @throws EntityNotFoundException if no student exams could be found
      */
     @NotNull
-    public Integer findOneByExerciseIdAndUserId(Long examId) {
+    public Integer findMaxWorkingTimeByExamId(Long examId) {
         log.debug("Request to get the maximum working time of all student exams for Exam : {}", examId);
         return studentExamRepository.findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
     }
