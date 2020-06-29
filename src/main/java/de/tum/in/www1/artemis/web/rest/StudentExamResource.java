@@ -106,7 +106,9 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestHeader(name = "X-Artemis-Client-Fingerprint", required = false) String browserFingerprint,
+            @RequestHeader(name = "User-Agent", required = false) String userAgent) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
@@ -153,7 +155,8 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam);
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent);
+        examSession.hideDetails();
         studentExam.setExamSessions(Set.of(examSession));
 
         // not needed
