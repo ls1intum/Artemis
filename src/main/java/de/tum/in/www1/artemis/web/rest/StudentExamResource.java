@@ -15,13 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.repository.RepositoryProgrammingExerciseParticipationResource;
-import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -48,11 +45,9 @@ public class StudentExamResource {
 
     private final ParticipationService participationService;
 
-    private final RepositoryResource repositoryResource;
-
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, RepositoryProgrammingExerciseParticipationResource repositoryResource) {
+            QuizExerciseService quizExerciseService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -61,7 +56,6 @@ public class StudentExamResource {
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
-        this.repositoryResource = repositoryResource;
     }
 
     /**
@@ -104,13 +98,14 @@ public class StudentExamResource {
      * @param examId    the exam to which the student exam belongs to
      * @param browserFingerprint the browser fingerprint reported by the client, can be null
      * @param userAgent the user agent of the client, can be null
+     * @param instanceId the instance of the client
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestHeader(name = "X-Artemis-Client-Fingerprint", required = false) String browserFingerprint,
-            @RequestHeader(name = "User-Agent", required = false) String userAgent) {
+            @RequestHeader(name = "User-Agent", required = false) String userAgent, @RequestHeader(name = "X-Artemis-Client-Instance-ID", required = false) String instanceId) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
@@ -157,7 +152,7 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent);
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId);
         examSession.hideDetails();
         studentExam.setExamSessions(Set.of(examSession));
 
@@ -204,24 +199,6 @@ public class StudentExamResource {
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
-
-            // Note: special case for programming exercises with online editor enabled
-            if (exercise instanceof ProgrammingExercise && ((ProgrammingExercise) exercise).isAllowOnlineEditor()) {
-                ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                // Load the current state of all necessary repository files and attach them to the programmingExerciseStudentParticipation
-                loadRepositoryFiles(programmingExerciseStudentParticipation);
-            }
-        }
-    }
-
-    private void loadRepositoryFiles(ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-        // Catch any thrown Exception. This additional offline feature should never compromise the start of the exam
-        try {
-            programmingExerciseStudentParticipation.setRepositoryFiles(repositoryResource.loadRepositoryFiles(programmingExerciseStudentParticipation.getId()));
-        }
-        catch (Exception e) {
-            log.debug("Error occurred retrieving repository files for participation with id " + programmingExerciseStudentParticipation.getId()
-                    + ". Student exam will be served without repository files. Error message: " + e.getMessage());
         }
     }
 }
