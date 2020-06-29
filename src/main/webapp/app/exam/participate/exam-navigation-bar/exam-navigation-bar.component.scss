@@ -1,7 +1,7 @@
 .exam-navigation {
-    background: #e1e1e1;
+    background: #c4c4c4;
     margin: -1.25rem -1.25rem 1.25rem -1.25rem;
-    z-index: 0;
+    z-index: 50;
 
     .remaining-time {
         background: white;
@@ -39,16 +39,12 @@
     background-color: #276091;
 }
 .exerciseIndex {
-    color: #6c757d;
-    align-content: center;
+    color: black;
+    text-align: center;
     font-size: 18px;
     font-weight: bold;
-    margin-left: 20px;
 }
 .timer {
     color: #212529;
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 20px;
-    margin-right: 5px;
+    margin-right: 2px;
 }
