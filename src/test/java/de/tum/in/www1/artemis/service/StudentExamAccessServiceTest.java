@@ -121,10 +121,10 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         // Exam has ended.
         Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
         Optional<ResponseEntity<Void>> accessFailure2_1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examEnded.getId(), users.get(0));
-        assertThat(accessFailure2_1.isPresent()).isTrue();
+        assertThat(accessFailure2_1.isPresent()).isFalse();
         assertThat(accessFailure2_1.get()).isEqualTo(forbidden());
         Optional<ResponseEntity<Void>> accessFailure2_2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examEnded.getId(), studentExam1.getId());
-        assertThat(accessFailure2_2.isPresent()).isTrue();
+        assertThat(accessFailure2_2.isPresent()).isFalse();
         assertThat(accessFailure2_2.get()).isEqualTo(forbidden());
     }
 
