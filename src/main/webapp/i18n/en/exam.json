@@ -46,6 +46,7 @@
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Submit & continue",
+            "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
         },
         "exerciseGroup": {
@@ -140,7 +141,6 @@
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add text exercise",
-                "addFileUploadExercise": "Add file upload exercise",
                 "addQuizExercise": "Add quiz",
                 "addFileUploadExercise": "Add file upload exercise",
                 "addProgrammingExercise": "Add programming exercise",
