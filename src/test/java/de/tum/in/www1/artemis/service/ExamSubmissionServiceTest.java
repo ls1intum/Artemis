@@ -83,6 +83,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         Exercise nonExamExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(nonExamExercise, user);
         assertThat(result.isEmpty()).isTrue();
+        boolean result2 = examSubmissionService.isAllowedToSubmit(nonExamExercise, user);
+        assertThat(result2).isTrue();
     }
 
     @Test
@@ -94,17 +96,23 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
+        boolean result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
+        assertThat(result2).isFalse();
         // Should fail when submission is made after (start date + working time)
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         examService.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
+        result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
+        assertThat(result2).isFalse();
         // Should pass if submission is made in time
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examService.save(exam);
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isEmpty()).isTrue();
+        result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
+        assertThat(result2).isTrue();
         // Should fail when submission is made after end date (if no working time is set)
         studentExam.setWorkingTime(0);
         studentExamRepository.save(studentExam);
@@ -114,6 +122,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
+        result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
+        assertThat(result2).isFalse();
     }
 
     @Test
@@ -127,6 +137,9 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         assertThrows(EntityNotFoundException.class, () -> {
             examSubmissionService.checkSubmissionAllowance(exercise, user);
         });
+        assertThrows(EntityNotFoundException.class, () -> {
+            examSubmissionService.isAllowedToSubmit(exercise, user);
+        });
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);
@@ -134,6 +147,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         Optional<ResponseEntity<Submission>> result = examSubmissionService.checkSubmissionAllowance(exercise, user);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(forbidden());
+        boolean result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
+        assertThat(result2).isFalse();
     }
 
     @Test
