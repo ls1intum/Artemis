@@ -55,9 +55,11 @@ public class FileUploadSubmissionResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -66,6 +68,7 @@ public class FileUploadSubmissionResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -90,13 +93,25 @@ public class FileUploadSubmissionResource {
             return forbidden();
         }
 
-        // TODO: add one additional check: fetch fileUploadSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // Make sure that the exercise exists
+        if (exercise == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
 
-        // Check if the course hasn't been changed
-        final var validityExceptionResponse = this.checkExerciseValidity(exercise);
-        if (validityExceptionResponse != null) {
-            return validityExceptionResponse;
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<FileUploadSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(exercise, user);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
+        }
+
+        // Prevent multiple submissions (currently only for exam submissions)
+        fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+
+        // Check if the user is allowed to submit
+        Optional<ResponseEntity<FileUploadSubmission>> submissionAllowanceFailure = fileUploadSubmissionService.checkSubmissionAllowance(exercise, fileUploadSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
         }
 
         // Check the file size
@@ -327,20 +342,5 @@ public class FileUploadSubmissionResource {
         }
 
         return ResponseEntity.ok(fileUploadSubmission);
-    }
-
-    private ResponseEntity<FileUploadSubmission> checkExerciseValidity(FileUploadExercise fileUploadExercise) {
-        if (fileUploadExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 }
