@@ -134,6 +134,8 @@ public class RepositoryWebsocketResource {
 
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // TODO: user should be cached but we might want to combine it with canAccessParticipation()
+        // TODO: We might need to extend the ExamSubmissionService to support team exercises. Nevertheless this is not
+        // relevant at the moment as we don't support teams in the exam mode.
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
