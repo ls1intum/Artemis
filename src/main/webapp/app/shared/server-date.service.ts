@@ -1,20 +1,10 @@
 import { Injectable } from '@angular/core';
-import { interval } from 'rxjs/observable/interval';
 import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisServerDateService {
-    // date from the server saved in unix for easier calculation
-    private serverDate: number;
-    // interval firing every second to increment the server date
-    private interval = interval(1000);
-
-    constructor() {
-        this.interval.subscribe(() => {
-            // increment the server date by a second every second
-            this.serverDate++;
-        });
-    }
+    // offset of the last synchronization in ms
+    private offset: number;
 
     /**
      * sets the current server date as unix
@@ -22,13 +12,17 @@ export class ArtemisServerDateService {
      * @param {string} date
      */
     setServerDate(date: string): void {
-        this.serverDate = moment(date).unix();
+        const serverDate = moment(date);
+        const clientDate = moment(new Date());
+        this.offset = serverDate.diff(clientDate, 'ms');
     }
 
     /**
      * returns the calculated current server date as moment
      */
-    now(): any {
-        return moment.unix(this.serverDate);
+    now(): moment.Moment {
+        const clientDate = moment(new Date());
+        // adjust with previously calculated offset
+        return clientDate.add(this.offset, 'ms');
     }
 }
