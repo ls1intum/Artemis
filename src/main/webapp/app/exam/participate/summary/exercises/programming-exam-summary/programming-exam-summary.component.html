@@ -1,15 +1,4 @@
-<div class="d-flex align-items-center mb-1 mt-1">
-    <jhi-programming-assessment-repo-export
-        [exerciseId]="exercise.id"
-        [singleParticipantMode]="true"
-        [participationIdList]="submission?.id"
-    ></jhi-programming-assessment-repo-export>
-    <a
-        class="ml-2"
-        href="{{ this.participation?.repositoryUrl }}"
-        target="_blank"
-        rel="noopener noreferrer"
-        jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
-        >Go to repository</a
-    >
+<h6 jhiTranslate="artemisApp.exam.summary.repositoryLink"></h6>
+<div>
+    <a class="ml-2" href="{{ this.participation?.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ this.participation?.repositoryUrl }}</a>
 </div>

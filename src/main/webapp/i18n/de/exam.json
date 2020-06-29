@@ -8,7 +8,8 @@
             },
             "examSummary": {
                 "summaryCapital": "ZUSAMMENFASSUNG",
-                "exportPDF": "Als PDF exportieren"
+                "exportPDF": "Als PDF exportieren",
+                "repositoryLink": "Repository Link"
             },
             "title": "Klausur",
             "startExam": "Klausur starten",
