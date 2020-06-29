@@ -112,4 +112,16 @@ public class StudentExamService {
         return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
     }
+
+    /**
+     * Get the maximal working time of all student exams for the exam with the given id.
+     *
+     * @param examId the id of the exam
+     * @return the list of all student exams
+     */
+    @NotNull
+    public Integer findOneByExerciseIdAndUserId(Long examId) {
+        log.debug("Request to get the maximum working time of all student exams for Exam : {}", examId);
+        return studentExamRepository.findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+    }
 }
