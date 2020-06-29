@@ -1,4 +1,4 @@
-import { Component, HostListener, ViewChild } from '@angular/core';
+import { HostListener, ViewChild, Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -74,14 +74,14 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
      * When a new variable is added, it needs to be added to this method!
      * Initializing in variable declaration is not allowed.
      */
-    initializeProperties() {
+    initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
         this.buildLogErrors = { errors: {}, timestamp: 0 };
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
         this.fileChange = undefined;
-    }
+    };
 
     /**
      * @function onFileChange
