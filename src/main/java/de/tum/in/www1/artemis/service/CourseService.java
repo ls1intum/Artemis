@@ -205,7 +205,6 @@ public class CourseService {
 
             // check that exam is over
             if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
-                log.debug("Got into exam List");
                 // extract all exercises for all the exam
                 List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
                 for (ExerciseGroup exerciseGroup : exerciseGroups) {
