@@ -94,7 +94,7 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        // Check that the exam is live
+        // Check that the exam is already visible. After the exam, we directly show the summary!
         if (exam.get().getVisibleDate() != null && (exam.get().getVisibleDate().isAfter(ZonedDateTime.now()))) {
             return Optional.of(forbidden());
         }
