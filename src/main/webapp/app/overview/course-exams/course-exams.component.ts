@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -19,12 +18,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseManagementService: CourseManagementService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
+    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private courseManagementService: CourseManagementService) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -55,6 +49,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @param {Exam} exam
      */
     isVisible(exam: Exam): boolean {
-        return exam.visibleDate ? moment(exam.visibleDate).isBefore(this.serverDateService.now()) : false;
+        return exam.visibleDate ? moment(exam.visibleDate).isBefore(moment()) : false;
     }
 }
