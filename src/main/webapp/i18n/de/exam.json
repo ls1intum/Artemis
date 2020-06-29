@@ -34,6 +34,7 @@
         "examParticipation": {
             "timer": "Restzeit: ",
             "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
+            "ideConnected": "Verbunden.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
             "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du die Repository klonst.",
             "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Code-Editor weiterarbeiten zu können.",
