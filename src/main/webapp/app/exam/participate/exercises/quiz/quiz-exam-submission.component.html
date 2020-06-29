@@ -1,4 +1,7 @@
 <div class="quiz-content container" *ngIf="exercise">
+    <h2>
+        {{ exercise.title }}
+    </h2>
     <div *ngFor="let question of exercise.quizQuestions; let i = index">
         <jhi-multiple-choice-question
             id="question{{ i }}"
