@@ -15,7 +15,10 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { Exam } from 'app/entities/exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -35,6 +38,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     public examMode = false;
+    public examId: number;
+    public courseId: number;
+    public exam: Exam;
 
     constructor(
         private loginService: LoginService,
@@ -46,20 +52,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
         private router: Router,
+        private route: ActivatedRoute,
+        private examParticipationService: ExamParticipationService,
+        private serverDateService: ArtemisServerDateService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                const examRoute = new RegExp('exams/[0-9]');
-                if (examRoute.test(this.router.url) && !this.router.url.includes('management')) {
-                    this.examMode = true;
-                } else {
-                    this.examMode = false;
-                }
-            }
-        });
     }
 
     ngOnInit() {
@@ -78,6 +76,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
+
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                this.route.queryParams.subscribe((params) => {
+                    this.examId = params['examId'];
+                    this.courseId = params['courseId'];
+                });
+
+                if (this.examId !== undefined && this.courseId !== undefined) {
+                    this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((loadedExam) => (this.exam = loadedExam));
+                }
+
+                const examRoute = new RegExp('exams/[0-9]');
+                if (examRoute.test(this.router.url) && !this.router.url.includes('management') && this.examHasStarted(this.exam)) {
+                    this.examMode = true;
+                } else {
+                    this.examMode = false;
+                }
+            }
+        });
     }
 
     ngOnDestroy(): void {
@@ -139,5 +157,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 return 'global.menu.continueTutorial';
             }
         }
+    }
+
+    /**
+     * check if exam already started
+     */
+    examHasStarted(exam: Exam): boolean {
+        return exam?.startDate ? exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 }
