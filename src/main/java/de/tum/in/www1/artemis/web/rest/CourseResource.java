@@ -568,7 +568,7 @@ public class CourseResource {
     @GetMapping("/courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request /courses/{courseId}/for-exam-tutor-dashboard");
+        log.debug("REST request /courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard");
         Course course = courseService.findOneWithExamExercises(courseId, examId);
         if (course == null) {
             return notFound();
