@@ -26,6 +26,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: v${{ github.ref }}
+        draft: true
     - name: Use Node.js 14
       uses: actions/setup-node@v1
       with:
@@ -58,6 +68,16 @@ jobs:
       with:
         name: Artemis.war
         path: build/libs/Artemis.war
+    - name: Upload Release Artifact
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/libs/Artemis.war
+        asset_name: Artemis.war
+        asset_content_type: application/x-webarchive
 
   server-tests:
     runs-on: ubuntu-latest
