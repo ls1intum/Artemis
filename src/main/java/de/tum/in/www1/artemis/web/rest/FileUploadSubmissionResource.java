@@ -86,6 +86,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
+        long start = System.currentTimeMillis();
 
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -145,6 +146,8 @@ public class FileUploadSubmissionResource {
         }
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
+        long end = System.currentTimeMillis();
+        log.info("submitFileUploadExercise took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
         return ResponseEntity.ok(submission);
     }
 
