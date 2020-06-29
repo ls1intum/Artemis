@@ -865,6 +865,21 @@ public class ParticipationService {
     }
 
     /**
+     * Get all exercise participations belonging to exercise and student with eager submissions.
+     *
+     * @param exercise  the exercise
+     * @param studentId the id of student
+     * @return the list of exercise participations belonging to exercise and student
+     */
+    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerSubmissions(Exercise exercise, Long studentId) {
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerSubmissions(exercise.getId(), team.getId())).orElse(List.of());
+        }
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(exercise.getId(), studentId);
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
      * @param exercise  the exercise
