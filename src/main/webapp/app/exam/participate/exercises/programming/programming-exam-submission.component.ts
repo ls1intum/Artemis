@@ -20,8 +20,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     exercise: ProgrammingExercise;
     @Input()
     courseId: number;
-    @Input()
-    disconnected: number;
 
     @ViewChild(ExamCodeEditorStudentContainerComponent, { static: false })
     codeEditorComponent: ExamCodeEditorStudentContainerComponent;

@@ -42,7 +42,8 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weitere",
+            "submitOtherExercise": "Speichern & Weiter",
+            "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\""
         },
         "exerciseGroup": {
@@ -137,7 +138,6 @@
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
-                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
