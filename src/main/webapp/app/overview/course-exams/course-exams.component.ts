@@ -19,7 +19,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 
-    constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private courseManagementService: CourseManagementService, private serverDateService: ArtemisServerDateService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private courseCalculationService: CourseScoreCalculationService,
+        private courseManagementService: CourseManagementService,
+        private serverDateService: ArtemisServerDateService,
+    ) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
