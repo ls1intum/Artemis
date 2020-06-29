@@ -34,6 +34,7 @@ export class ManualTextblockSelectionComponent {
      * @param group TextBlockRefGroup of text blocks allowed to select text in.
      */
     handleTextSelection($text: string, group: TextBlockRefGroup): void {
+        $text = $text.replace(/<br>/g, '\n');
         // create new Text Block for text
         const textBlockRef = TextBlockRef.new();
         const textBlock = textBlockRef.block;

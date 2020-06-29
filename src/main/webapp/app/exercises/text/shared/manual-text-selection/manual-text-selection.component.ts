@@ -28,7 +28,7 @@ export class ManualTextSelectionComponent {
         // exist. Or, if a selection is being removed, the rectangles will be null.
         if ($event.hostRectangle) {
             this.hostRectangle = $event.hostRectangle;
-            this.selectedText = convertToHtmlLinebreaks($event.text.trim());
+            this.selectedText = convertToHtmlLinebreaks($event.text);
         } else {
             this.hostRectangle = null;
             this.selectedText = null;
