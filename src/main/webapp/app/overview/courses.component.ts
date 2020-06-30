@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -13,6 +13,10 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as moment from 'moment';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-overview',
@@ -29,6 +33,8 @@ import * as moment from 'moment';
 export class CoursesComponent implements OnInit, OnDestroy {
     public courses: Course[];
     public nextRelevantCourse: Course;
+    nextRelevantCourseForExam: Course;
+    nextRelevantExams: Exam[] | undefined;
 
     courseForGuidedTour: Course | null;
     quizExercisesChannels: string[];
@@ -46,6 +52,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
+        private examService: ExamManagementService,
+        private router: Router,
     ) {}
 
     async ngOnInit() {
@@ -71,6 +79,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 // TODO: Stephan Krusche: this is deactivate at the moment, I think we need a more generic solution in more components, e.g. using the the existing notification
                 // sent to the client, when a quiz starts. This should slide in from the side.
                 // this.subscribeForQuizStartForCourses();
+                this.loadExamsForCourses();
             },
             (response: string) => this.onError(response),
         );
@@ -109,6 +118,48 @@ export class CoursesComponent implements OnInit, OnDestroy {
             this.nextRelevantCourse = relevantExercise.course!;
             return relevantExercise;
         }
+    }
+
+    loadExamsForCourses() {
+        this.nextRelevantExams = [];
+        if (this.courses) {
+            this.courses.forEach((course) => {
+                this.examService.findAllExamsForCourse(course.id).subscribe(
+                    (res: HttpResponse<Exam[]>) => {
+                        res.body!.forEach((exam) => this.nextRelevantExams!.push(exam));
+                    },
+                    (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                );
+            });
+        }
+    }
+
+    get nextRelevantExam(): Exam | undefined {
+        let relevantExam: Exam | undefined = undefined;
+        if (this.nextRelevantExams) {
+            if (this.nextRelevantExams.length === 0) {
+                return undefined;
+            } else if (this.nextRelevantExams.length === 1) {
+                relevantExam = this.nextRelevantExams[0];
+            } else {
+                relevantExam = this.nextRelevantExams.sort((a, b) => {
+                    return moment(a.visibleDate).valueOf() - moment(b.visibleDate).valueOf();
+                })[0];
+            }
+            this.nextRelevantCourseForExam = relevantExam!.course!;
+            return relevantExam;
+        }
+    }
+
+    /**
+     * navigate to /courses/:courseid/exams/:examId
+     */
+    openExam(): void {
+        this.router.navigate(['courses', this.nextRelevantCourseForExam.id, 'exams', this.nextRelevantExam!.id], {
+            state: {
+                exam: this.nextRelevantExam,
+            },
+        });
     }
 
     /**

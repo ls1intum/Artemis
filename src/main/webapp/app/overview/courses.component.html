@@ -1,3 +1,19 @@
+<div *ngIf="nextRelevantExam">
+    <h3>
+        <span> Current Exam of "{{ nextRelevantCourseForExam.title }}" </span>
+    </h3>
+    <div class="row mb-4 pr-4 pl-4 bg-light align-items-center" (click)="openExam()">
+        <div class="col-10">
+            <fa-icon [icon]="'pen-alt'" size="2x"></fa-icon>
+            <h4 class="ml-1 d-inline">{{ nextRelevantExam.title }}</h4>
+        </div>
+        <div class="col-2 align-text-end">
+            <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | translate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
+            <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | translate: { points: nextRelevantExam.maxPoints } }}</div>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-1" *ngIf="nextRelevantExercise">
     <div class="col">
         <h3>
