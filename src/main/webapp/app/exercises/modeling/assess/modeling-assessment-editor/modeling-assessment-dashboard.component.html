@@ -5,8 +5,8 @@
     <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
     <div>
-        <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div class="button-toolbar float-right" *ngIf="modelingExercise.automaticAssessmentSupported">
+        <!-- These buttons only make sense when semi automatic assessment is possible -->
+        <div class="button-toolbar float-right" *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
             <button
                 [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)"
                 class="btn btn-success btn-sm mr-1"
@@ -22,13 +22,13 @@
     </div>
     <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && { color: '#5cb85c' }">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }}% </strong>({{ assessedSubmissions }} out of
+            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
             {{ submissions.length }} submitted models assessed)
         </small>
     </h4>
     <jhi-alert></jhi-alert>
     <!-- These statements only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-    <div *ngIf="modelingExercise.automaticAssessmentSupported">
+    <div *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
         <h4>
             <span *ngIf="busy" style="color: grey;"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
         </h4>
@@ -91,45 +91,57 @@
             <p style="color: #5cb85c;"><strong>Congratulation all models have been assessed</strong></p>
         </div>
         <!-- This statement only makes sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div *ngIf="modelingExercise.automaticAssessmentSupported && assessedSubmissions !== submissions.length">
+        <div *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && assessedSubmissions !== submissions.length">
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px;">Other submissions:</h5>
-    <p *ngIf="modelingExercise.automaticAssessmentSupported && !allSubmissionsVisible && otherSubmissions.length > 0">
+    <h5 *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && otherSubmissions.length > 0" style="padding-top: 5px;">
+        Other submissions:
+    </h5>
+    <p *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
         >
     </p>
-    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (!modelingExercise.automaticAssessmentSupported || allSubmissionsVisible)">
+    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (modelingExercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th>
                         <a class="th-link">#</a>
                     </th>
                     <th *ngIf="modelingExercise.teamMode" jhiSortBy="participation.team.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="!modelingExercise.teamMode" jhiSortBy="participation.student.name">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="successful" jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a></th>
+                    <th jhiSortBy="participation.submissions.length">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="duration">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="result.score">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="durationInMinutes">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="result.assessmentType">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.name">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
@@ -138,7 +150,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions | sortBy: predicate:reverse; let i = index">
+                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.participation.participantName }}</td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
@@ -147,15 +159,10 @@
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }}%</span>
+                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
-                        {{
-                            durationString(
-                                submission.submissionDate,
-                                submission.participation.initializationDate ? submission.participation.initializationDate : modelingExercise.releaseDate
-                            )
-                        }}
+                        {{ submission.durationInMinutes }}
                         minutes
                     </td>
                     <td>{{ submission.result && submission.result.assessmentType }}</td>
@@ -165,7 +172,7 @@
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
-                                *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
+                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !submission.result && modelingExercise.course"
                                 [routerLink]="[
                                     '/course-management',
                                     modelingExercise.course?.id,
@@ -181,12 +188,46 @@
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                             </button>
+                            <button
+                                *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && !submission.result && modelingExercise.exerciseGroup"
+                                [routerLink]="[
+                                    '/course-management',
+                                    modelingExercise.exerciseGroup?.exam.course.id,
+                                    'modeling-exercises',
+                                    modelingExercise.id,
+                                    'submissions',
+                                    submission.id,
+                                    'assessment'
+                                ]"
+                                [disabled]="busy"
+                                [queryParams]="{ optimal: false, hideBackButton: true }"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                            </button>
                         </span>
                         <button
-                            *ngIf="modelingExercise.type === MODELING && submission && submission.result"
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.result && modelingExercise.course"
                             [routerLink]="[
                                 '/course-management',
                                 modelingExercise.course?.id,
+                                'modeling-exercises',
+                                modelingExercise.id,
+                                'submissions',
+                                submission.id,
+                                'assessment'
+                            ]"
+                            [disabled]="busy"
+                            [queryParams]="{ optimal: false, hideBackButton: true }"
+                            class="btn btn-outline-secondary btn-sm mb-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                        </button>
+                        <button
+                            *ngIf="modelingExercise.type === ExerciseType.MODELING && submission && submission.result && modelingExercise.exerciseGroup"
+                            [routerLink]="[
+                                '/course-management',
+                                modelingExercise.exerciseGroup?.exam.course.id,
                                 'modeling-exercises',
                                 modelingExercise.id,
                                 'submissions',

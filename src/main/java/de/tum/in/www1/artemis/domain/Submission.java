@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +86,26 @@ public abstract class Submission implements Serializable {
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
+    }
+
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Long durationInMinutes;
+
+    /**
+     * Calculates the duration of a submission in minutes
+     *
+     * @return duration in minutes or null if it can not be determined
+     */
+    public Long getDurationInMinutes() {
+        if (this.participation == null || this.participation.getInitializationDate() == null || this.submissionDate == null) {
+            return null;
+        }
+
+        ZonedDateTime initilizationDate = this.participation.getInitializationDate();
+        ZonedDateTime submissionDate = this.getSubmissionDate();
+
+        return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
     public Result getResult() {

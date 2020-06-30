@@ -74,19 +74,19 @@ module.exports = (options) => ({
                 SERVER_API_URL: `''`
             }
         }),
-        new CopyWebpackPlugin([
-            { from: './src/main/webapp/content/', to: 'content' },
-            { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
-            { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
-            // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
-            { from: './src/main/webapp/robots.txt', to: 'robots.txt' }
-        ]),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: './src/main/webapp/content/', to: 'content' },
+                { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
+                { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
+                { from: './src/main/webapp/robots.txt', to: 'robots.txt' },
+            ],
+        }),
         new MergeJsonWebpackPlugin({
             output: {
                 groupBy: [
                     { pattern: "./src/main/webapp/i18n/en/*.json", fileName: "./i18n/en.json" },
                     { pattern: "./src/main/webapp/i18n/de/*.json", fileName: "./i18n/de.json" }
-                    // jhipster-needle-i18n-language-webpack - JHipster will add/remove languages in this array
                 ]
             }
         }),

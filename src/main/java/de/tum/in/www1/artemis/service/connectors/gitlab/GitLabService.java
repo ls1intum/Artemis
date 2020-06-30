@@ -4,10 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -57,9 +54,6 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.lti.user-prefix-u4i}")
     private String USER_PREFIX_U4I = "";
 
-    @Value("${artemis.version-control.secret}")
-    private String GITLAB_PRIVATE_TOKEN;
-
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
@@ -87,7 +81,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, Set<User> users) {
+    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
@@ -97,8 +91,11 @@ public class GitLabService extends AbstractVersionControlService {
                     gitLabUserManagementService.importUser(user);
                 }
             }
-
-            addMemberToRepository(repositoryUrl, user);
+            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+                // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
+                // NOTE: null values are interpreted as offline IDE is allowed
+                addMemberToRepository(repositoryUrl, user);
+            }
         }
 
         try {
@@ -280,8 +277,8 @@ public class GitLabService extends AbstractVersionControlService {
         try {
             gitlab.getGroupApi().addGroup(group);
 
-            final var instructors = userService.getInstructors(programmingExercise.getCourse());
-            final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
+            final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+            final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
             for (final var instructor : instructors) {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
                 gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);

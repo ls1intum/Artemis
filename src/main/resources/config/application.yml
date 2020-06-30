@@ -23,6 +23,7 @@ logging:
 
 artemis:
     version: #project.version#
+    file-upload-path: uploads
 
 management:
     endpoints:
@@ -132,6 +133,15 @@ spring:
             max-request-size: 10MB
     lifecycle:
         timeout-per-shutdown-phase: 10
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
+    hazelcast:
+        interface: "" # The interface to bind to, if non is set, all interfaces will be bound
+        port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
+        localInstances: false # Whether the other instances are expected locally (in dev mode) or external
 
 server:
     servlet:
@@ -178,7 +188,7 @@ jhipster:
 # Eureka configuration
 eureka:
     client:
-        enabled: true
+        enabled: false
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
         healthcheck:

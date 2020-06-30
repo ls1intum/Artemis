@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -32,13 +34,60 @@ public class SubmissionService {
 
     private UserService userService;
 
+    private CourseService courseService;
+
     protected AuthorizationCheckService authCheckService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
+            ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
+        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Check that the user is allowed to make the submission
+     *
+     * @param exercise      the exercise for which a submission should be saved
+     * @param submission    the submission that should be saved
+     * @param currentUser   the current user with groups and authorities
+     * @param <T>           The type of the return type of the requesting route so that the
+     *                      response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
+        // Fetch course from database to make sure client didn't change groups
+        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+            return Optional.of(forbidden());
+        }
+
+        // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
+        // user of the participation is the same as the user who executes this call (or student in the team).
+        // This prevents injecting submissions to other users.
+        if (submission.getId() != null) {
+            Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
+            if (existingSubmission.isEmpty()) {
+                return Optional.of(forbidden());
+            }
+
+            StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
+            if (participation != null) {
+                Optional<User> user = participation.getStudent();
+                if (user.isPresent() && !user.get().equals(currentUser)) {
+                    return Optional.of(forbidden());
+                }
+
+                Optional<Team> team = participation.getTeam();
+                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
+                    return Optional.of(forbidden());
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -213,6 +262,7 @@ public class SubmissionService {
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+
         boolean hasInTimeSubmissions = submissions.stream().anyMatch(s -> s.getSubmissionDate().isBefore(dueDate));
         if (hasInTimeSubmissions) {
             return submissions.stream().filter(s -> s.getSubmissionDate().isBefore(dueDate)).collect(Collectors.toList());

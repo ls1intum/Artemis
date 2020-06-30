@@ -96,7 +96,7 @@ public class TextBlockService {
                 if (startIndex == endIndex)
                     continue; // Do *not* define a text block for an empty line.
 
-                final TextBlock textBlock = new TextBlock().text(lineOrSentence).startIndex(startIndex).endIndex(endIndex).submission(submission);
+                final TextBlock textBlock = new TextBlock().text(lineOrSentence).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
                 textBlock.computeId();
                 blocks.add(textBlock);
             }

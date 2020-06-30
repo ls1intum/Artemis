@@ -77,7 +77,7 @@ public class GroupNotificationFactory {
             text = notificationText;
         }
 
-        GroupNotification notification = new GroupNotification(exercise.getCourse(), title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType);
 
         if (notificationType == NotificationType.EXERCISE_CREATED) {
             notification.setTarget(notification.getExerciseCreatedTarget(exercise));
@@ -106,7 +106,7 @@ public class GroupNotificationFactory {
                 Exercise exercise = question.getExercise();
                 title = "New Question";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
-                course = exercise.getCourse();
+                course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 break;
             case NEW_QUESTION_FOR_LECTURE:
                 Lecture lecture = question.getLecture();
@@ -147,7 +147,7 @@ public class GroupNotificationFactory {
                 Exercise exercise = answer.getQuestion().getExercise();
                 title = "New Answer";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
-                course = exercise.getCourse();
+                course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 break;
             case NEW_ANSWER_FOR_LECTURE:
                 Lecture lecture = answer.getQuestion().getLecture();

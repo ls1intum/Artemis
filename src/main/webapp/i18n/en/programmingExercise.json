@@ -40,6 +40,10 @@
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
+            "onlineEditor": "Online Editor",
+            "allowOfflineIde": "Allow Offline IDE",
+            "offlineIde": "Offline IDE",
+            "participationMode": "Participation Mode",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
@@ -153,17 +157,6 @@
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The after due date has been set to the release date!",
                 "notSet": "not set"
-            },
-            "import": {
-                "attention": "Attention! ",
-                "markdownWarning": "You can edit the problem statement after importing the exercise.",
-                "loading": "Loading...",
-                "table": {
-                    "title": "Title",
-                    "language": "Programming Language",
-                    "course": "Course",
-                    "doImport": "Import"
-                }
             },
             "repositoryIsLocked": {
                 "title": "Your Repository is locked.",

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,13 +17,17 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText" })
+@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @SpyBean
+    protected LdapUserService ldapUserService;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
@@ -56,6 +61,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @SpyBean
     protected ProgrammingSubmissionService programmingSubmissionService;
+
+    @BeforeEach
+    public void mockLdap() {
+
+    }
 
     @AfterEach
     public void resetSpyBeans() {

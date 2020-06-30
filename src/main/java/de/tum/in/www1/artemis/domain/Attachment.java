@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -29,7 +30,7 @@ public class Attachment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private FileService fileService = new FileService();
+    private transient FileService fileService = new FileService();
 
     @Transient
     private String prevLink;
@@ -92,11 +93,16 @@ public class Attachment implements Serializable {
         prevLink = link; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
+    /**
+     * Will be called before the entity is persisted (saved).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PrePersist
     public void beforeCreate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+                    true);
         }
     }
 
@@ -108,11 +114,16 @@ public class Attachment implements Serializable {
         }
     }
 
+    /**
+     * Will be called before the entity is flushed.
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PreUpdate
     public void onUpdate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
+                    true);
         }
     }
 
@@ -120,7 +131,7 @@ public class Attachment implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 

@@ -17,9 +17,10 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -35,6 +36,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     result: Result | null;
     generalFeedback: Feedback;
     textBlockRefs: TextBlockRef[];
+    unusedTextBlockRefs: TextBlockRef[] = [];
     complaint: Complaint | null;
     totalScore: number;
 
@@ -65,7 +67,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private get textBlocksWithFeedback(): TextBlock[] {
-        return this.textBlockRefs.filter(({ feedback }) => feedback !== undefined).map(({ block }) => block);
+        return [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback).map(({ block }) => block);
     }
 
     constructor(
@@ -77,6 +79,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         private assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,
         translateService: TranslateService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
@@ -250,8 +253,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private computeTotalScore() {
-        const credits = this.assessments.map((feedback) => feedback.credits);
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     /**
@@ -281,15 +283,50 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.generalFeedback = new Feedback();
         }
 
-        const sortedRefs = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks).sort((a, b) => a.block.startIndex - b.block.startIndex);
+        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks);
+    }
+
+    /**
+     * Sorts text block refs by there appearance and cheecks for overlaps or gaps.
+     * Prevent dupliace text when manual and automatic text blocks are present.
+     *
+     * @param matchBlocksWithFeedbacks
+     */
+    private sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[]) {
+        // Sort by start index to process all refs in order
+        const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block.startIndex - b.block.startIndex);
 
         let previousIndex = 0;
         const lastIndex = this.submission?.text?.length || 0;
         for (let i = 0; i <= sortedRefs.length; i++) {
-            const ref: TextBlockRef | undefined = sortedRefs[i];
+            let ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
+
+            // new text block starts before previous one ended (overlap)
             if (previousIndex > nextIndex) {
-                console.error('Overlapping Text Blocks!', ref, previousIndex, nextIndex, sortedRefs);
+                const previousRef = this.textBlockRefs.pop();
+                if (!previousRef) {
+                    console.log('Overlapping Text Blocks with nothing?', previousRef, ref);
+                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.AUTOMATIC)) {
+                    console.log('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
+                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.MANUAL)) {
+                    console.log('Overlapping MANUAL Text Blocks!', previousRef, ref);
+                } else {
+                    // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
+                    switch (TextBlockType.MANUAL) {
+                        case previousRef.block.type:
+                            this.unusedTextBlockRefs.push(ref);
+                            ref = previousRef;
+                            break;
+                        case ref.block.type:
+                            this.unusedTextBlockRefs.push(previousRef);
+                            this.addTextBlockByIndices(previousRef.block.startIndex, nextIndex);
+                            break;
+                    }
+                }
+
+                // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
             } else if (previousIndex < nextIndex) {
                 // There is a gap. We need to add a Text Block in between
                 this.addTextBlockByIndices(previousIndex, nextIndex);
@@ -301,6 +338,20 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 previousIndex = ref.block.endIndex;
             }
         }
+    }
+
+    /**
+     * Invoked by Child @Output when adding/removing text blocks. Recalculating refs to keep order and prevent duplicate text displayed.
+     */
+    public recalculateTextBlockRefs(): void {
+        // This is racing with another @Output, so we wait one loop
+        setTimeout(() => {
+            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback);
+            this.textBlockRefs = [];
+            this.unusedTextBlockRefs = [];
+
+            this.sortAndSetTextBlockRefs(refs);
+        });
     }
 
     private addTextBlockByIndices(startIndex: number, endIndex: number): void {

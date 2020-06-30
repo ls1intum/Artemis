@@ -25,6 +25,18 @@
             "detail": {
                 "title": "Übung"
             },
+            "import": {
+                "attention": "Achtung! ",
+                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "language": "Programmiersprache",
+                    "course": "Kurs",
+                    "examQuestion": "Klausuraufgabe",
+                    "doImport": "Import"
+                }
+            },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",
             "actions": "Aktionen",
@@ -75,8 +87,9 @@
             "type": "Typ",
             "mcqType": "Multiple Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den <i>Aufgabe starten</i> Button um zu starten!",
-            "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
+            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den Button <i>Aufgabe starten</i>!",
+            "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Repository klonen</i>!",
+            "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmier Editor öffnen</i>!",
             "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
             "studentName": "Name",
             "studentId": "Login",
@@ -119,7 +132,7 @@
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
                 },
                 "shortName": {
-                    "pattern": "Der Kurzname darf nur aus Buchstaben und Zahlen bestehen!",
+                    "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
@@ -128,7 +141,8 @@
                 "maxScore": {
                     "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"
                 }
-            }
+            },
+            "exam": "Klausur"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

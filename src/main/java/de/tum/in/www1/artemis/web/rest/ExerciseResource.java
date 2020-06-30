@@ -100,20 +100,29 @@ public class ExerciseResource {
     @GetMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+
+        if (exercise.hasExerciseGroup()) {
+            // Exam Exercise
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                return forbidden();
+            }
+        }
+        else {
+            // Normal Exercise
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                return forbidden();
+            }
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                exercise.filterSensitiveInformation();
+            }
+        }
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            exercise.filterSensitiveInformation();
-        }
-
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
@@ -307,6 +316,13 @@ public class ExerciseResource {
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+
+        // TODO: Create alternative route so that instructors and admins can access the exercise details
+        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();

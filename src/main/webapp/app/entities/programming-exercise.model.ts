@@ -4,10 +4,11 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 
-export const enum ProgrammingLanguage {
+export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
     C = 'C',
+    HASKELL = 'HASKELL',
 }
 
 export class ProgrammingExercise extends Exercise {
@@ -17,6 +18,7 @@ export class ProgrammingExercise extends Exercise {
     public testRepositoryUrl: string;
     public publishBuildPlanUrl = false; // default value
     public allowOnlineEditor = false; // default value
+    public allowOfflineIde = true; // default value
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;
     public problemStatement: string;
