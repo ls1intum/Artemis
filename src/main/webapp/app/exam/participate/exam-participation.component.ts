@@ -128,7 +128,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
             // set endDate with workingTime
-            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.endDate;
+            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             this.submissionComponentVisited[0] = true;
