@@ -288,11 +288,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises.forEach((exercise: Exercise) => {
             exercise.studentParticipations.forEach((participation) => {
-                participation.submissions
-                    .filter((submission) => !submission.isSynced)
-                    .forEach((unsynchedSubmission) => {
-                        submissionsToSync.push({ exercise, submission: unsynchedSubmission });
-                    });
+                if (participation.submissions) {
+                    participation.submissions
+                        .filter((submission) => !submission.isSynced)
+                        .forEach((unsynchedSubmission) => {
+                            submissionsToSync.push({ exercise, submission: unsynchedSubmission });
+                        });
+                }
             });
         });
 
