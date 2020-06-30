@@ -21,14 +21,7 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
-    styles: [
-        `
-            .liveQuiz-modal {
-                display: block;
-                opacity: 1;
-            }
-        `,
-    ],
+    styleUrls: ['./courses.component.scss'],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
     public courses: Course[];
@@ -137,6 +130,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     get nextRelevantExam(): Exam | undefined {
         let relevantExam: Exam | undefined = undefined;
         if (this.nextRelevantExams) {
+            this.nextRelevantExams = this.nextRelevantExams.filter((exam) => exam.startDate!.isAfter(moment()));
             if (this.nextRelevantExams.length === 0) {
                 return undefined;
             } else if (this.nextRelevantExams.length === 1) {
@@ -155,11 +149,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
      * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        this.router.navigate(['courses', this.nextRelevantCourseForExam.id, 'exams', this.nextRelevantExam!.id], {
-            state: {
-                exam: this.nextRelevantExam,
-            },
-        });
+        this.router.navigate(['courses', this.nextRelevantCourseForExam.id, 'exams', this.nextRelevantExam!.id]);
     }
 
     /**
