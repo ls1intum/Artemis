@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -452,6 +452,10 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      * Navigates back to the tutor dashboard
      */
     back() {
-        this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        if (this.exercise?.course) {
+            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        } else {
+            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+        }
     }
 }
