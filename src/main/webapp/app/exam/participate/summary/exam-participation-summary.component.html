@@ -1,6 +1,7 @@
 <div>
     <h2>
         <span jhiTranslate="artemisApp.exam.examSummary.summaryCapital">SUMMARY</span>
+        {{ studentExam.exam.title }}
         <button class="btn btn-primary float-right" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
