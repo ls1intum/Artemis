@@ -3,6 +3,7 @@
     <nav class="editor-statusbar">
         <!-- Exercise title -->
         <span class="editor-statusbar__title">{{ exerciseTitle }}</span>
+        <span class="text-muted" *ngIf="exerciseMaxScore"> [{{ exerciseMaxScore }} {{ 'artemisApp.examParticipation.points' | translate }}] </span>
         <ng-content select="[editorNavbar]"> </ng-content>
     </nav>
 

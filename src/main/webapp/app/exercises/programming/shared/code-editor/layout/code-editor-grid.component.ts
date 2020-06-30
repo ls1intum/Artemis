@@ -21,6 +21,8 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     @Input()
     exerciseTitle: string;
+    @Input()
+    exerciseMaxScore: number;
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
