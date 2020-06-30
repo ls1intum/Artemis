@@ -34,6 +34,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     exerciseValue: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
+    exerciseHints: ExerciseHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
@@ -67,8 +68,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     get participation() {
         return this.participationValue;
     }
-    @Input()
-    exerciseHints: ExerciseHint[];
 
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
@@ -106,7 +105,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
-            if (this.exerciseHints) {
+            if (this.exercise.exerciseHints) {
+                this.exerciseHints = this.exercise.exerciseHints;
                 this.prepareTaskHints();
             } else {
                 if (this.exercise.id) {
