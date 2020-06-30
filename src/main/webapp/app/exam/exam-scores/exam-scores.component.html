@@ -14,15 +14,15 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th></th>
-                    <th jhiSortBy="result.username">
+                    <th jhiSortBy="student.name">
                         <span jhiTranslate="artemisApp.examScores.name">Name</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="user.login">
+                    <th jhiSortBy="student.login">
                         <span jhiTranslate="artemisApp.examScores.login">Login</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.registrationNumber">
+                    <th jhiSortBy="student.registrationNumber">
                         <span jhiTranslate="artemisApp.examScores.registrationNumber">Registration Number</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -62,13 +62,13 @@
             <tbody>
                 <tr *ngFor="let row of rows">
                     <td></td>
-                    <td>{{ row.username }}</td>
-                    <td>{{ row.username }}</td>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.login }}</td>
                     <td>{{ row.registrationNumber }}</td>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <td>{{ row.result[exerciseGroup.id] ? row.result[exerciseGroup.id] : '-' }}</td>
+                        <td>{{ row.exerciseGroupToExerciseResult[exerciseGroup.id] ? calculatePoints(row, exerciseGroup) : '-' }}</td>
                     </ng-container>
-                    <td>{{ row.overallPoints }}</td>
+                    <td>{{ calculateOverallPoints(row) }}</td>
                 </tr>
             </tbody>
         </table>

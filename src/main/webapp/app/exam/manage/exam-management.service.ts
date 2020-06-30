@@ -58,6 +58,12 @@ export class ExamManagementService {
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
+    getExamScore(courseId: number, examId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/scores`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
     /**
      * Query exams of the given course via get request.
      * @param courseId The course id.

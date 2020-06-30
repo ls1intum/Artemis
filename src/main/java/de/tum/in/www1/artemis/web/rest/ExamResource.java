@@ -179,7 +179,7 @@ public class ExamResource {
         return ResponseEntity.ok(exam);
     }
 
-    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @GetMapping("/courses/{courseId}/exams/{examId}/scores")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get score for exam : {}", examId);

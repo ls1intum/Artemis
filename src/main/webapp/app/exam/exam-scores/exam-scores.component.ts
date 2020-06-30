@@ -30,40 +30,34 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.examService.find(params['courseId'], params['examId']).subscribe((examResponse) => {
                 this.exam = examResponse.body!;
             });
+            this.examService.getExamScore(params['courseId'], params['examId']).subscribe((examResponse) => {
+                this.examScoreDTO = examResponse.body!;
+                if (this.examScoreDTO) {
+                    this.rows = this.examScoreDTO.students;
+                    this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                }
+            });
         });
+    }
 
-        this.examScoreDTO = {
-            exerciseGroups: [
-                {
-                    id: 1,
-                    title: 'Text Exercises',
-                    maxPoints: 15,
-                },
-                {
-                    id: 2,
-                    title: 'Modelling Exercises',
-                    maxPoints: 10,
-                },
-            ],
-            results: [
-                {
-                    username: 'student1',
-                    registrationNumber: '1234',
-                    overallPoints: 20,
-                    result: {
-                        1: 12,
-                    },
-                },
-            ],
-        };
-        this.rows = this.examScoreDTO.results;
-        this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+    calculatePoints(row: any, exerciseGroup: any) {
+        return (row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseAchievedScore * row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseMaxScore) / 100;
+    }
+
+    calculateOverallPoints(row: any) {
+        let overall = 0;
+        for (let i = 0; i < this.exerciseGroups.length; i++) {
+            if (row.exerciseGroupToExerciseResult[this.exerciseGroups[i].id]) {
+                overall += this.calculatePoints(row, this.exerciseGroups[i]);
+            }
+        }
+        return overall;
     }
 
     calculateTotalAverage() {
         let sum = 0;
         for (let i = 0; i < this.rows.length; i++) {
-            sum += this.rows[i].overallPoints;
+            sum += this.calculateOverallPoints(this.rows[i]);
         }
 
         return sum / this.rows.length;
