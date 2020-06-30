@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, flatMap, map, tap } from 'rxjs/operators';
+import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +27,8 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -56,6 +58,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
+        private exerciseHintService: ExerciseHintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -85,9 +88,13 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
                         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
                     }),
+                    switchMap(() => {
+                        return this.loadExerciseHints();
+                    }),
                 )
                 .subscribe(
-                    () => {
+                    (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
@@ -106,6 +113,16 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+    }
+
+    /**
+     * Load exercise hints. Take them from the exercise if available.
+     */
+    private loadExerciseHints() {
+        if (!this.exercise.exerciseHints) {
+            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+        }
+        return of(this.exercise.exerciseHints);
     }
 
     /**

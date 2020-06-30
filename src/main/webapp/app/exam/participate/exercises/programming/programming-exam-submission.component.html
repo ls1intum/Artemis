@@ -28,6 +28,7 @@
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
         [exercise]="exercise"
+        [exerciseHints]="exercise.exerciseHints"
         [participation]="studentParticipation"
         [personalParticipation]="true"
     ></jhi-programming-exercise-instructions>

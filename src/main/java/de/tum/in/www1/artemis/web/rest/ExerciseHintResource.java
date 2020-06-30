@@ -14,14 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseHintService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.service.*;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -46,12 +40,15 @@ public class ExerciseHintResource {
 
     private final UserService userService;
 
+    private final ExerciseService exerciseService;
+
     public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
-            UserService userService) {
+            UserService userService, ExerciseService exerciseService) {
         this.exerciseHintService = exerciseHintService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
         this.userService = userService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -68,7 +65,14 @@ public class ExerciseHintResource {
         if (exerciseHint.getExercise() == null) {
             return badRequest();
         }
-        Course course = exerciseHint.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+
+        // Hints for exam exercises are not supported at the moment
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
@@ -97,8 +101,14 @@ public class ExerciseHintResource {
         if (!hintBeforeSaving.isPresent()) {
             return notFound();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())
-                || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+
+        // Hints for exam exercises are not supported at the moment
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
             return forbidden();
         }
         ExerciseHint result = exerciseHintService.save(exerciseHint);
