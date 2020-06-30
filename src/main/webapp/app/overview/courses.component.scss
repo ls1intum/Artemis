@@ -1,0 +1,17 @@
+@import './_overview-vars.scss';
+
+.exam-container {
+    cursor: pointer;
+    transition: box-shadow 0.1s linear;
+    border: 1px solid $blue-border-color;
+    background-color: $light-background-color;
+    border-radius: 3px;
+}
+.exam-container:hover {
+    box-shadow: 0 2px 4px 0 #3e8acc;
+}
+
+.liveQuiz-modal {
+    display: block;
+    opacity: 1;
+}
