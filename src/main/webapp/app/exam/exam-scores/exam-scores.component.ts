@@ -63,6 +63,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return sum / this.rows.length;
     }
 
+    calculateExerciseGroupAverage(exerciseGroup: any) {
+        let sum = 0;
+        let hasResult = false;
+        for (let i = 0; i < this.rows.length; i++) {
+            if (this.rows[i].exerciseGroupToExerciseResult[exerciseGroup.id]) {
+                sum += this.calculatePoints(this.rows[i], exerciseGroup);
+                hasResult = true;
+            }
+        }
+
+        if (hasResult) {
+            return sum / this.rows.length;
+        } else {
+            return '-';
+        }
+    }
+
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.results, this.predicate, this.reverse);
     }

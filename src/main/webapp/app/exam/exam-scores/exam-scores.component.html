@@ -54,7 +54,7 @@
                     <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                         <!-- TODO average von groups berechnen -->
-                        <th></th>
+                        <th>{{ calculateExerciseGroupAverage(exerciseGroup) }}</th>
                     </ng-container>
                     <th>{{ calculateTotalAverage() }}</th>
                 </tr>
