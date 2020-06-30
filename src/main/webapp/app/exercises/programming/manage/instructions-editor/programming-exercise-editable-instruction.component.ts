@@ -34,7 +34,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     exerciseValue: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
-    exerciseHints: ExerciseHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
@@ -68,6 +67,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     get participation() {
         return this.participationValue;
     }
+    @Input()
+    exerciseHints: ExerciseHint[];
+
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
@@ -104,10 +106,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
-            if (this.exercise.id) {
-                this.loadExerciseHints(this.exercise.id);
+            if (this.exerciseHints) {
+                this.prepareTaskHints();
             } else {
-                this.exerciseHints = [];
+                if (this.exercise.id) {
+                    this.loadExerciseHints(this.exercise.id);
+                } else {
+                    this.exerciseHints = [];
+                }
             }
         }
     }
@@ -169,8 +175,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .pipe(rxMap(({ body }) => body || []))
             .subscribe((exerciseHints: ExerciseHint[]) => {
                 this.exerciseHints = exerciseHints;
-                this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id.toString(10), value: title })));
+                this.prepareTaskHints();
             });
+    }
+
+    /**
+     * Prepares the task hints using exerciseHints
+     */
+    private prepareTaskHints() {
+        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id.toString(10), value: title })));
     }
 
     /** Save the problem statement on the server.
