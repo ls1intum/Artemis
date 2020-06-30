@@ -41,11 +41,12 @@
     <div class="col-auto">
         <div class="row justify-content-end align-items-start pr-2">
             <div class="col-auto">
-                <button *ngIf="isProgrammingExercise(); else notAProgrammingExercise" class="btn btn-primary px-3 mb-2" (click)="submitExam()">
-                    {{ 'artemisApp.examParticipation.submitProgrammingExercise' | translate }}
+                <button *ngIf="isProgrammingExercise(); else notAProgrammingExercise" class="btn btn-primary px-3 mb-2" (click)="saveExercise()">
+                    {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
+                    <!-- TODO: do not show a "Save" button for offline only programming exercises, show continue -->
                 </button>
                 <ng-template #notAProgrammingExercise>
-                    <button class="btn btn-primary px-3 mb-2" (click)="submitExam()">
+                    <button class="btn btn-primary px-3 mb-2" (click)="saveExercise()">
                         {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                     </button>
                 </ng-template>
