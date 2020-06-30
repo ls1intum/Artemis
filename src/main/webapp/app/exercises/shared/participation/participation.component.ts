@@ -16,6 +16,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -63,6 +64,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private accountService: AccountService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -108,8 +110,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+                this.hasAccessRights();
             });
         });
+    }
+
+    hasAccessRights() {
+        if (this.exercise.course) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+        } else if (this.exercise.exerciseGroup) {
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
+        }
     }
 
     updateParticipationFilter(newValue: FilterProp) {
