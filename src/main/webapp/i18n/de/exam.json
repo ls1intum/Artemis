@@ -44,7 +44,7 @@
             "finishExam": "Klausur abgeben",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
+            "noExam": "Die Klausur konnte nicht geladen werden. Es scheint als wärst du nicht für die Klausur angemeldet. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
