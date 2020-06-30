@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -21,7 +21,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
+export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
@@ -60,18 +60,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
         const participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
-    }
 
-    /**
-     * If a subscription exists for paramSub, unsubscribe
-     */
-    ngOnDestroy() {}
-
-    /**
-     * Fetches details for the result (if we received one) and attach them to the result.
-     * Mutates the input parameter result.
-    loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
+        // Do not load exercise hints for exam mode. Hint requests won't be send
+        this.exercise.exerciseHints = [];
     }
-     */
 }
