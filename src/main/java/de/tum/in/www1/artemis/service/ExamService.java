@@ -179,6 +179,12 @@ public class ExamService {
         return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
     }
 
+    /**
+     * Prepares student participations for the exam score calculation
+     *
+     * @param studentParticipations a list of studentParticipations
+     * @return returns a list of studentParticipations
+     */
     private List<StudentParticipation> prepareStudentParticipationsForScoreCalculation(List<StudentParticipation> studentParticipations) {
         return studentParticipations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             List<Result> relevantResults = new ArrayList<Result>();
@@ -205,6 +211,12 @@ public class ExamService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Puts students, result and exerciseGroups together for ExamScoresDTO
+     *
+     * @param examId the id of the exam
+     * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
+     */
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
