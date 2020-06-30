@@ -10,8 +10,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
