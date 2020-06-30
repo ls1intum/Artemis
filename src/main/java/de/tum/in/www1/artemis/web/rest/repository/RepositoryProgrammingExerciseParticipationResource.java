@@ -66,9 +66,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
             throw new IllegalAccessException();
         }
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise
+        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise()) && !examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
