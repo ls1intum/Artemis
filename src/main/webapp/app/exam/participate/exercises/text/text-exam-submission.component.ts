@@ -41,6 +41,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
+    onActivate(): void {}
+
     updateViewFromSubmission(): void {
         if (this.studentSubmission.text) {
             this.answer = this.studentSubmission.text;
