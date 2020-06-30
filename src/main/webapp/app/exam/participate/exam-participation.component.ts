@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, HostListener } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -110,8 +110,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.isOver()) {
             return true;
         }
-        const warning = this.translateService.instant('examPendingChanges'); // are you sure you want to reload the exam, all unsaved changes will be lost!
+        const warning = this.translateService.instant('artemisApp.examParticipation.pendingChanges');
         return confirm(warning);
+    }
+
+    // displays the alert for confirming leaving the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any): void {
+        if (!this.isOver()) {
+            $event.returnValue = this.translateService.instant('artemisApp.examParticipation.pendingChanges');
+        }
     }
 
     /**

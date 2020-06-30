@@ -48,7 +48,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure to continue?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
