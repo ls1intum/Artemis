@@ -738,8 +738,7 @@ ngb-tooltip-window {
 }
 
 @media print {
-    body,
-    div {
-        display: block !important;
+    .container {
+        min-width: 0 !important;
     }
 }
