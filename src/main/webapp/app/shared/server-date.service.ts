@@ -29,6 +29,8 @@ export class ArtemisServerDateService {
      * returns the calculated current server date as moment
      */
     now(): any {
-        return moment.unix(this.serverDate);
+        // return moment.unix(this.serverDate);
+        // NOTE: quick fix which basically deactivates the calculation here until a better approach is implemented and tested
+        return moment();
     }
 }
