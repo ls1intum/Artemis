@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { OnInit, AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Subscription } from 'rxjs';
+import { map as rxMap } from 'rxjs/operators';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -10,13 +11,15 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
+export class CodeEditorInstructionsComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
@@ -26,6 +29,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     @Input() templateParticipation: Participation;
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+    exerciseHints: ExerciseHint[];
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
@@ -35,7 +39,16 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     resizeSubscription: Subscription;
 
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(
+        private $window: WindowRef,
+        public artemisMarkdown: ArtemisMarkdownService,
+        private codeEditorGridService: CodeEditorGridService,
+        private exerciseHintService: ExerciseHintService,
+    ) {}
+
+    ngOnInit() {
+        this.loadExerciseHints();
+    }
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -60,6 +73,24 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     ngOnDestroy(): void {
         if (this.resizeSubscription) {
             this.resizeSubscription.unsubscribe();
+        }
+    }
+
+    /**
+     * Load exercise hints. Take them from the exercise if possible.
+     */
+    private loadExerciseHints() {
+        if (this.exercise) {
+            if (this.exercise.exerciseHints) {
+                this.exerciseHints = this.exercise.exerciseHints;
+            } else {
+                this.exerciseHintService
+                    .findByExerciseId(this.exercise.id)
+                    .pipe(rxMap(({ body }) => body || []))
+                    .subscribe((exerciseHints: ExerciseHint[]) => {
+                        this.exerciseHints = exerciseHints;
+                    });
+            }
         }
     }
 
