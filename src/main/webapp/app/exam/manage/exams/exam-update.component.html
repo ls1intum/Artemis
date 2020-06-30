@@ -74,7 +74,7 @@
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.endText">End Text</label>
-                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="endText" class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText">Confirmation Start Text</label>
@@ -88,7 +88,7 @@
                 <button type="button" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                 </button>
-                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button type="submit" [disabled]="editForm.form.invalid || !exam.visibleDate || !exam.startDate || !exam.visibleDate || isSaving" class="btn btn-primary">
                     <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>
