@@ -221,7 +221,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <div class="btn-group">
-                                <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && (exercise.isAtLeastInstructor || exercise.exerciseGroup)">
+                                <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"
@@ -234,7 +234,7 @@
                                     </ng-template>
                                 </ng-container>
                                 <button
-                                    *ngIf="exercise.isAtLeastInstructor || exercise.exerciseGroup"
+                                    *ngIf="exercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
@@ -251,7 +251,7 @@
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
-                                    *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && (exercise.isAtLeastInstructor || exercise.exerciseGroup)"
+                                    *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Cleanup"
