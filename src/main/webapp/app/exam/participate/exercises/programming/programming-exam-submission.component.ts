@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -12,7 +12,7 @@ import { EditorState } from 'app/exercises/programming/shared/code-editor/model/
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent {
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
     studentParticipation: ProgrammingExerciseStudentParticipation;
@@ -34,8 +34,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         }
         return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
     }
-
-    ngOnInit(): void {}
 
     onActivate(): void {
         if (this.codeEditorComponent) {

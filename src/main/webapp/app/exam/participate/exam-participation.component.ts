@@ -38,7 +38,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     examId: number;
 
     // determines if component was once drawn visited
-    submissionComponentVisisted: boolean[];
+    submissionComponentVisited: boolean[];
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
@@ -123,8 +123,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
             // initializes array which manages submission component initialization
-            this.submissionComponentVisisted = new Array(studentExam.exercises.length).fill(false);
-            this.submissionComponentVisisted[0] = true;
+            this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
+            this.submissionComponentVisited[0] = true;
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
                 exercise.studentParticipations.forEach((participation) => {
@@ -235,7 +235,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     onExerciseChange(exercise: Exercise): void {
         this.triggerSave(false);
         this.activeExercise = exercise;
-        this.submissionComponentVisisted[this.activeExerciseIndex] = true;
+        this.submissionComponentVisited[this.activeExerciseIndex] = true;
         if (this.activeSubmissionComponent) {
             this.activeSubmissionComponent.onActivate();
         }

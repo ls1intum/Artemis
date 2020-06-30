@@ -20,7 +20,7 @@
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
                 <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
-                    <ng-container *ngIf="submissionComponentVisisted[i]">
+                    <ng-container *ngIf="submissionComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
                             <div [hidden]="i !== activeExerciseIndex">
                                 <jhi-quiz-submission-exam
