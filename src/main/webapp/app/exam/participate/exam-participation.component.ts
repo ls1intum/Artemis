@@ -39,6 +39,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
+    examTitle = '';
     studentExam: StudentExam;
 
     activeExercise: Exercise;
@@ -90,6 +91,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
+            this.examTitle = window.history.state.exam.title;
             this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => {
                 this.exam = exam;
                 if (this.isOver()) {
