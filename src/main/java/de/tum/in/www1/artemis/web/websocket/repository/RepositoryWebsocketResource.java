@@ -155,18 +155,20 @@ public class RepositoryWebsocketResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     // TODO: this should rather be a REST call so that security checks are easier to implement
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
-        String topic = "/topic/test-repository/" + exerciseId + "/files";
+        String principalName = principal.getName();
 
-        User user = userService.getUserByLogin(principal.getName()).get();
+        // Without this, custom jpa repository methods don't work in websocket channel.
+        SecurityUtils.setAuthorizationObject();
+
+        // Check that principal has permission to change the test repository
+        String topic = "/topic/test-repository/" + exerciseId + "/files";
+        User user = userService.getUserByLogin(principalName).get();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
-
-        // Without this, custom jpa repository methods don't work in websocket channel.
-        SecurityUtils.setAuthorizationObject();
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         String testRepoName = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
