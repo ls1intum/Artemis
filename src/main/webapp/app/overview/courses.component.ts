@@ -83,7 +83,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         });
                     }
                 });
-                this.nextRelevantExams = this.exams.filter((exam) => moment(exam.startDate!).isAfter(moment()));
+                this.nextRelevantExams = this.exams.filter((exam) => moment(exam.endDate!).isAfter(moment()));
             },
             (response: string) => this.onError(response),
         );
@@ -136,7 +136,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 relevantExam = this.nextRelevantExams[0];
             } else {
                 relevantExam = this.nextRelevantExams.sort((a, b) => {
-                    return moment(a.visibleDate).valueOf() - moment(b.visibleDate).valueOf();
+                    return moment(a.startDate).valueOf() - moment(b.startDate).valueOf();
                 })[0];
             }
             this.nextRelevantCourseForExam = relevantExam.course;
