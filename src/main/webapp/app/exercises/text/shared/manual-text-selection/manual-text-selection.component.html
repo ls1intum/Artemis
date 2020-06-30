@@ -1,5 +1,6 @@
 <div (jhiTextSelect)="didSelectSolutionText($event)">
-    <ng-content></ng-content>
+    <!-- DO NOT ADD LINEBREAKS INSIDE div.manual-text-selection-area -->
+    <div class="manual-text-selection-area"><ng-content></ng-content></div>
 
     <div
         *ngIf="hostRectangle"
