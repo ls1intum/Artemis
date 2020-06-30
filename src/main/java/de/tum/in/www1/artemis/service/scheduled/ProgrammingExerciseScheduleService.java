@@ -280,6 +280,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // using visible date here because unlocking will take some time, see delay below.
         var releaseDate = exercise.getExerciseGroup().getExam().getVisibleDate();
         if (releaseDate == null) {
+            releaseDate = exercise.getExerciseGroup().getExam().getStartDate();
+        }
+        if (releaseDate == null) {
             releaseDate = exercise.getReleaseDate();
         }
         return releaseDate;
