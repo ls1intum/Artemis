@@ -69,21 +69,27 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @PostConstruct
     @Override
     public void scheduleRunningExercisesOnStartup() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            // only execute this on production server, i.e. when the prod profile is active
-            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-            return;
+        try {
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
+            SecurityUtils.setAuthorizationObject();
+            // TODO: also take exercises with manual assessments into account here
+            List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
+                    .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
+            // for exams (TODO take info account that the individual due dates can be after the exam end date)
+            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithExam.forEach(this::scheduleExamExercise);
+            log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size()
+                    + " programming exercises with a buildAndTestAfterDueDate.");
         }
-        SecurityUtils.setAuthorizationObject();
-        // TODO: also take exercises with manual assessments into account here
-        List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
-                .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-        programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
-        // for exams (TODO take info account that the individual due dates can be after the exam end date)
-        List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
-        programmingExercisesWithExam.forEach(this::scheduleExamExercise);
-        log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
+        catch (Exception e) {
+            log.error("Failed to start ProgrammingExerciseScheduleService", e);
+        }
     }
 
     /**
@@ -104,11 +110,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
-        if (isExamExercise(exercise)) {
-            scheduleExamExercise(exercise);
+        try {
+            if (isExamExercise(exercise)) {
+                scheduleExamExercise(exercise);
+            }
+            else {
+                scheduleRegularExercise(exercise);
+            }
         }
-        else {
-            scheduleRegularExercise(exercise);
+        catch (Exception e) {
+            log.error("Failed to schedule exercise " + exercise.getId(), e);
         }
     }
 
