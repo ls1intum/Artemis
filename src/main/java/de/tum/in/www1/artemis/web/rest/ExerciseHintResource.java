@@ -101,7 +101,14 @@ public class ExerciseHintResource {
         if (!hintBeforeSaving.isPresent()) {
             return notFound();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseService.findOne(exerciseHint.getExercise().getId());
+
+        // Hints for exam exercises are not supported at the moment
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)
                 || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
             return forbidden();
         }
