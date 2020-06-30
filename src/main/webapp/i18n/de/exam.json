@@ -48,7 +48,8 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\""
+            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal."
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

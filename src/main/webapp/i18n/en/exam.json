@@ -48,7 +48,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again."
         },
         "exerciseGroup": {
             "created": "New exercise group created",

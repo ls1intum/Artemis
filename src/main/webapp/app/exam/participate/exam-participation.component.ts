@@ -21,6 +21,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -84,6 +85,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -276,10 +278,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id).subscribe(
                             () => (submissionToSync.submission.isSynced = true),
-                            () => {
-                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
-                                // bist und speichere nochmal."
-                            },
+                            (error) => this.onSaveSubmissionError(error),
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -288,10 +287,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id).subscribe(
                             () => (submissionToSync.submission.isSynced = true),
-                            () => {
-                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
-                                // bist und speichere nochmal."
-                            },
+                            (error) => this.onSaveSubmissionError(error),
                         );
                         break;
                     case ExerciseType.PROGRAMMING:
@@ -300,10 +296,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission).subscribe(
                             () => (submissionToSync.submission.isSynced = true),
-                            () => {
-                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
-                                // bist und speichere nochmal."
-                            },
+                            (error) => this.onSaveSubmissionError(error),
                         );
                         break;
                 }
@@ -312,5 +305,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private onSaveSubmissionError(error: string) {
+        this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+        console.error(error);
     }
 }

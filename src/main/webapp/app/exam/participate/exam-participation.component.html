@@ -6,6 +6,10 @@
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
+    <div class="d-flex my-2">
+        <jhi-alert></jhi-alert>
+    </div>
+
     <ng-container *ngIf="studentExam">
         <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
         <!-- exam participation -->
