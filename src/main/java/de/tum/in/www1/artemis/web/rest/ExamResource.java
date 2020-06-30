@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -178,10 +179,22 @@ public class ExamResource {
         return ResponseEntity.ok(exam);
     }
 
+    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get score for exam : {}", examId);
+        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        ExamScoresDTO examScoresDTO = examService.getExamScore(examId);
+        return ResponseEntity.ok(examScoresDTO);
+    }
+
     /**
      * GET /courses/{courseId}/exams : Find all exams for the given course.
      *
-     * @param courseId  the course to which the exam belongs
+     * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams")

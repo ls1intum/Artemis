@@ -17,14 +17,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -176,10 +179,81 @@ public class ExamService {
         return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
     }
 
+    private List<StudentParticipation> prepareStudentParticipationsForScoreCalculation(List<StudentParticipation> studentParticipations) {
+        return studentParticipations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+            List<Result> relevantResults = new ArrayList<Result>();
+
+            for (Result result : participation.getResults()) {
+                if (Boolean.FALSE.equals(result.isRated())) {
+                    continue;
+                }
+                if (result.getCompletionDate() == null || result.getScore() == null) {
+                    // we are only interested in results with completion date and with score
+                    continue;
+                }
+                relevantResults.add(result);
+            }
+            // we take the last rated result
+            if (!relevantResults.isEmpty()) {
+                // make sure to take the latest result
+                relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                Result correctResult = relevantResults.get(0);
+                relevantResults.clear();
+                relevantResults.add(correctResult);
+            }
+            participation.setResults(new HashSet<>(relevantResults));
+        }).collect(Collectors.toList());
+    }
+
+    public ExamScoresDTO getExamScore(Long examId) {
+        Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        ExamScoresDTO scores = new ExamScoresDTO();
+
+        scores.examId = exam.getId();
+        scores.examTitle = exam.getTitle();
+
+        // adding exercise group information to DTO
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle()));
+        }
+
+        // Adding all registered user information to DTO
+        for (User user : exam.getRegisteredUsers()) {
+            String registrationNumber = "";
+            if (user.getRegistrationNumber() != null) {
+                registrationNumber = user.getRegistrationNumber().trim();
+            }
+            scores.students.add(new ExamScoresDTO.Student(user.getId(), user.getName(), user.getLogin(), registrationNumber));
+        }
+
+        List<Exercise> exercises = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
+
+        List<StudentParticipation> relevantStudentParticipations = prepareStudentParticipationsForScoreCalculation(
+                exercises.stream().map(Exercise::getStudentParticipations).flatMap(Collection::stream).collect(Collectors.toList()));
+
+        // For each registered student we look up if he has relevant participations and add them to DTO
+        for (ExamScoresDTO.Student student : scores.students) {
+            List<StudentParticipation> participationsOfStudent = relevantStudentParticipations.stream().filter(
+                    // ToDo Support Team Exercises?
+                    studentParticipation -> studentParticipation.getStudent().get().getId() == student.studentId).collect(Collectors.toList());
+
+            for (StudentParticipation studentParticipation : participationsOfStudent) {
+                Exercise exercise = studentParticipation.getExercise();
+                // there should only be one after we prepared the student participations
+                Result result = studentParticipation.getResults().iterator().next();
+
+                student.exerciseGroupToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                        new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore()));
+            }
+        }
+        return scores;
+    }
+
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param examId        the id of the exam
+     * @param examId the id of the exam
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(Long examId) {
