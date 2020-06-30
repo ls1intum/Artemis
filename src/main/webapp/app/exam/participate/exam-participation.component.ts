@@ -72,8 +72,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
-    _reload = true;
-
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -110,6 +108,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             return 0;
         }
         return this.studentExam.exercises.findIndex((examExercise) => examExercise.id === this.activeExercise.id);
+    }
+
+    get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
+        return this.currentSubmissionComponents.find((submissionComponent, index) => index === this.activeExerciseIndex);
     }
 
     /**
@@ -155,6 +157,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                     }
                 });
             });
+            if (this.activeSubmissionComponent) {
+                this.activeSubmissionComponent.onActivate();
+            }
         }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
@@ -231,6 +236,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.triggerSave(false);
         this.activeExercise = exercise;
         this.submissionComponentVisisted[this.activeExerciseIndex] = true;
+        if (this.activeSubmissionComponent) {
+            this.activeSubmissionComponent.onActivate();
+        }
     }
 
     /**
@@ -247,12 +255,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        const activeSubmissionComponent: ExamSubmissionComponent | undefined = this.currentSubmissionComponents.find(
-            (submissionComponent, index) => index === this.activeExerciseIndex,
-        );
-
-        if (activeSubmissionComponent?.hasUnsavedChanges()) {
-            activeSubmissionComponent.updateSubmissionFromView(intervalSave);
+        if (this.activeSubmissionComponent?.hasUnsavedChanges()) {
+            this.activeSubmissionComponent.updateSubmissionFromView(intervalSave);
         }
 
         // goes through all exercises and checks if there are unsynched submissions
