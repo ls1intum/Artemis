@@ -19,8 +19,8 @@
                         [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                         [ngClass]="{ 'changed-question': selectedAnswerOptions[question.id]?.length }"
                     >
-                    <b class="fa">MC</b>
-                </span>
+                        <b class="fa">MC</b>
+                    </span>
                     <span
                         *ngIf="question.type === SHORT_ANSWER"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
@@ -28,8 +28,8 @@
                         [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                         [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts[question.id]?.length }"
                     >
-                    <b class="fa">SA</b>
-                </span>
+                        <b class="fa">SA</b>
+                    </span>
                     <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
                     <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
                 </div>
@@ -66,5 +66,3 @@
         </div>
     </div>
 </div>
-
-
