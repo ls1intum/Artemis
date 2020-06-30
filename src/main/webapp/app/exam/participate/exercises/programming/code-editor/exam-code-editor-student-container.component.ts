@@ -60,8 +60,5 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
         const participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
-
-        // Do not load exercise hints for exam mode. Hint requests won't be send
-        this.exercise.exerciseHints = [];
     }
 }
