@@ -104,6 +104,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             if (submission.isSynced) {
                 // make button blue
+                this.icon = 'check';
                 status = 'synced';
                 if (i === this.exerciseIndex) {
                     status = status + ' active';
