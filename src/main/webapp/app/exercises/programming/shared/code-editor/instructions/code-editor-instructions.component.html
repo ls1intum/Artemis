@@ -12,7 +12,7 @@
         [exercise]="exercise"
         [participation]="participation"
         [personalParticipation]="true"
-        [exerciseHints]="exerciseHints"
+        [exerciseHints]="exercise.exerciseHints"
         class="instructions-wrapper__content card-body p-0"
     >
     </jhi-programming-exercise-instructions>
@@ -21,7 +21,7 @@
             [(exercise)]="exercise"
             [(participation)]="participation"
             [templateParticipation]="templateParticipation"
-            [exerciseHints]="exerciseHints"
+            [exerciseHints]="exercise.exerciseHints"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
         >
