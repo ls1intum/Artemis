@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -55,8 +59,10 @@ public class ExamResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -64,6 +70,7 @@ public class ExamResource {
         this.examAccessService = examAccessService;
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -145,9 +152,12 @@ public class ExamResource {
 
         Exam result = examService.save(updatedExam);
 
-        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate())) {
-            // TODO: we now have to fetch all programming exercises related to this exam and invoke the following code
-            // instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
+        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) || !Objects.equals(originalExam.getStartDate(), updatedExam.getStartDate())) {
+            // get all exercises
+            Exam examWithExercises = examService.findOneWithExerciseGroupsAndExercises(result.getId());
+            // for all programming exercises in the exam, send their ids for scheduling
+            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
+                    .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
