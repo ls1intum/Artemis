@@ -259,7 +259,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
         // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
-        var participationsGroupedByDueDate = individualDueDates.stream().collect(Collectors.groupingBy(Tuple::getX, Collectors.mapping(Tuple::getY, Collectors.toSet())));
+        var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.getX() != null)
+                .collect(Collectors.groupingBy(Tuple::getX, Collectors.mapping(Tuple::getY, Collectors.toSet())));
         // 2. Transform those groups into lock-repository tasks with times
         var tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
             Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation);
