@@ -7,7 +7,7 @@
                 "maxPoints": "max. Punkte: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "ZUSAMMENFASSUNG",
+                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren"
             },
             "title": "Klausur",
