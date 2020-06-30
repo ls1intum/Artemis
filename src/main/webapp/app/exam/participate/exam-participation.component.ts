@@ -97,7 +97,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.examId = parseInt(params['examId'], 10);
             this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => {
                 this.exam = exam;
-                this.endDate = exam.endDate ? exam.endDate : moment();
+                this.endDate = exam.endDate ? exam.endDate : this.serverDateService.now();
                 if (this.isOver()) {
                     this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
                         this.studentExam = studentExam;
