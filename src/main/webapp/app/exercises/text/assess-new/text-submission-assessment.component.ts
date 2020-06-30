@@ -114,7 +114,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity ? identity.id : null;
-        this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -135,6 +134,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
+        this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
         // case distinction for exam mode
         if (this.exercise!.course) {
