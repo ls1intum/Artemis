@@ -90,6 +90,11 @@ public class ExamResource {
             return conflict();
         }
 
+        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || !exam.getVisibleDate().isBefore(exam.getStartDate())
+                || !exam.getStartDate().isBefore(exam.getEndDate())) {
+            return conflict();
+        }
+
         // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
         if (!exam.getExerciseGroups().isEmpty()) {
             return forbidden();
@@ -127,6 +132,11 @@ public class ExamResource {
         }
 
         if (!updatedExam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
+        if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null
+                || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate()) || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
             return conflict();
         }
 
