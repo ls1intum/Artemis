@@ -1038,19 +1038,30 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {
-        quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
-        quizExercise.duration = Number(quizExercise.duration);
-        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        if (this.isExamMode) {
+            quizExercise.releaseDate = moment(quizExercise.releaseDate);
+        } else {
+            quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
+            quizExercise.duration = Number(quizExercise.duration);
+            quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        }
     }
 
     /**
      * Reach to changes of duration inputs by updating model and ui
      */
     onDurationChange(): void {
-        const duration = moment.duration(this.duration);
-        this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
-        this.updateDuration();
-        this.cacheValidation();
+        if (!this.isExamMode) {
+            const duration = moment.duration(this.duration);
+            this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
+            this.updateDuration();
+            this.cacheValidation();
+        } else if (this.quizExercise.releaseDate && this.quizExercise.dueDate) {
+            const duration = moment(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
+            this.quizExercise.duration = Math.round(duration);
+            this.updateDuration();
+            this.cacheValidation();
+        }
     }
 
     /**
