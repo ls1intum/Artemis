@@ -137,12 +137,19 @@ public class ExamResource {
 
         // Make sure that the original references are preserved.
         Exam originalExam = examService.findOne(updatedExam.getId());
+
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
         Exam result = examService.save(updatedExam);
+
+        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate())) {
+            // TODO: we now have to fetch all programming exercises related to this exam and invoke the following code
+            // instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
