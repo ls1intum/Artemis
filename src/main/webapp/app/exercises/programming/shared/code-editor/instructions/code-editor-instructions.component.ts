@@ -37,12 +37,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     resizeSubscription: Subscription;
 
-    constructor(
-        private $window: WindowRef,
-        public artemisMarkdown: ArtemisMarkdownService,
-        private codeEditorGridService: CodeEditorGridService,
-        private exerciseHintService: ExerciseHintService,
-    ) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
