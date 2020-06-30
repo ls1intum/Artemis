@@ -1,6 +1,7 @@
 <div class="quiz-content container" *ngIf="exercise">
     <h2>
         {{ exercise.title }}
+        <span class="text-muted">[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
     </h2>
     <div *ngFor="let question of exercise.quizQuestions; let i = index">
         <jhi-multiple-choice-question
