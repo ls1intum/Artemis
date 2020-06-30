@@ -108,8 +108,7 @@ public class ExerciseHintResource {
         if (exercise.hasExerciseGroup()) {
             return forbidden();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)
-                || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
             return forbidden();
         }
         ExerciseHint result = exerciseHintService.save(exerciseHint);
