@@ -1,5 +1,7 @@
 <div *ngIf="nextRelevantExam" class="row">
-    <h3 class="col mb-3">Current Exam of "{{ nextRelevantCourseForExam.title }}"</h3>
+    <h3 class="col mb-3">
+        {{ 'artemisApp.studentDashboard.examTitle' | translate: { course: nextRelevantCourseForExam.title } }}
+    </h3>
     <div class="col-12 pl-4 pr-4 mb-5">
         <div class="row justify-content-between align-items-center exam-container pl-3 pr-3" (click)="openExam()">
             <div class="mb-4 mt-4 d-flex">
