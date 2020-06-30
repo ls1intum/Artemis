@@ -46,7 +46,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     exam: Exam;
     studentExam: StudentExam;
 
-    endDate: Moment;
+    individualStudentEndDate: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
