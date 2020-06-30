@@ -67,9 +67,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise
-        // TODO: user should be cached but we might want to combine it with canAccessParticipation()
         User user = userService.getUserWithGroupsAndAuthorities();
-        // TODO: we might want to prevent this check for getFiles(), getFile() and pullChanges()
         if (!examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
             throw new IllegalAccessException();
         }
