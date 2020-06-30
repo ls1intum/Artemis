@@ -90,7 +90,7 @@ public class ExamResource {
             return conflict();
         }
 
-        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null) {
+        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || !exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
             return conflict();
         }
 
@@ -134,7 +134,7 @@ public class ExamResource {
             return conflict();
         }
 
-        if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null) {
+        if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate()) || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
             return conflict();
         }
 
