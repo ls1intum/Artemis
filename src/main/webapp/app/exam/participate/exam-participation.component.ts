@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -18,8 +18,9 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -97,8 +98,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
-            if (this.activeExercise.studentParticipations && this.activeExercise.studentParticipations.length === 0) {
-                // subscribe to execute
+            if (!this.isExerciseParticipationValid(this.activeExercise)) {
+                // invalid participation, make server call to fix
+                // call startExercise on server - subscribe to execute
                 this.createParticipationForExercise(this.activeExercise).subscribe();
             }
             // initialize all submissions as synced
@@ -114,6 +116,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
+    }
+
+    /**
+     * checks if there is a participation for the given exercise and if it was initialized properly
+     * @param exercise to check
+     * @returns true if valid, false otherwise
+     */
+    private isExerciseParticipationValid(exercise: Exercise): boolean {
+        // check if there is at least one participation with state === Initialized
+        return (
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length !== 0 &&
+            exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED
+        );
     }
 
     /**
@@ -187,8 +203,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // save exercise on change
         this.triggerSave(false);
         this.activeExercise = exercise;
-        // if we do not have a participation for the exercise -> generate participation
-        if (exercise.studentParticipations && exercise.studentParticipations.length === 0) {
+        // if we do not have a valid participation for the exercise -> initialize it
+        if (!this.isExerciseParticipationValid(exercise)) {
             this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation !== null) {
                     this.reloadSubmissionComponent();
