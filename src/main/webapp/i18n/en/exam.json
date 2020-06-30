@@ -46,7 +46,7 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Submit & continue",
+            "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
         },
