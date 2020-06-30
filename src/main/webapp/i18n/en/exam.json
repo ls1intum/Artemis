@@ -48,7 +48,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\""
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "points": "points"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

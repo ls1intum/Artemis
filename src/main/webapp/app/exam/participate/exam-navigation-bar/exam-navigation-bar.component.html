@@ -1,9 +1,11 @@
 <div class="row justify-content-between align-items-start exam-navigation sticky-top pt-2">
     <div class="col-auto d-none d-md-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
         {{ 'artemisApp.examParticipation.progress' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+        <span class="text-muted">[{{ exercises[exerciseIndex].maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
     </div>
     <div class="col-auto d-block d-md-none h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
         {{ 'artemisApp.examParticipation.progressSmall' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+        <span class="text-muted">[{{ exercises[exerciseIndex].maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
     </div>
     <div class="col">
         <div class="d-flex justify-content-center">
