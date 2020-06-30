@@ -10,7 +10,7 @@
 }
 
 .quiz-navigation {
-    width: 60px;
+    width: 45px;
     height: 100%;
     position: absolute;
     padding: 0 10px;
@@ -107,6 +107,8 @@
     flex-wrap: wrap;
     overflow: hidden;
     position: fixed;
+    height: 90vh;
+    top: 30%;
 
     &__step {
         display: inline-block;
