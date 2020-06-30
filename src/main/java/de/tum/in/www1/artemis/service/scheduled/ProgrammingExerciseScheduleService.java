@@ -53,15 +53,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ParticipationService participationService;
 
+    private final ExamService examService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, Optional<VersionControlService> versionControlService,
-            ParticipationService participationService) {
+            ParticipationService participationService, ExamService examService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.versionControlService = versionControlService;
         this.participationService = participationService;
+        this.examService = examService;
         this.env = env;
     }
 
