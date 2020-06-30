@@ -18,6 +18,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -43,6 +44,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     activeExercise: Exercise;
     unsavedChanges = false;
     disconnected = false;
+
+    isProgrammingExercise() {
+        return this.activeExercise.type === ExerciseType.PROGRAMMING;
+    }
+
+    isProgrammingExerciseWithCodeEditor(): boolean {
+        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOnlineEditor;
+    }
+
+    isProgrammingExerciseWithOfflineIDE(): boolean {
+        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde;
+    }
 
     examConfirmed = false;
 
