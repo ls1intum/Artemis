@@ -179,6 +179,13 @@ public class ExamResource {
         return ResponseEntity.ok(exam);
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId}/scores : Find scores for an exam by id.
+     *
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
+     */
     @GetMapping("/courses/{courseId}/exams/{examId}/scores")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
