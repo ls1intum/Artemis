@@ -112,6 +112,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.activeExercise = studentExam.exercises[0];
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
+                // We do not support hints at the moment. Setting an empty array here disables the hint requests
+                exercise.exerciseHints = [];
                 exercise.studentParticipations.forEach((participation) => {
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {

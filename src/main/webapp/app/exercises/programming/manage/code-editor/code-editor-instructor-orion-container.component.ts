@@ -13,6 +13,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -30,6 +31,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
         courseExerciseService: CourseExerciseService,
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        exerciseHintService: ExerciseHintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -43,6 +45,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
             courseExerciseService,
             domainService,
             programmingExerciseParticipationService,
+            exerciseHintService,
             participationService,
             translateService,
             route,
