@@ -129,6 +129,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (visibleDate == null || startDate == null) {
             log.error("Programming exercise {} for exam {} cannot be scheduled properly, visible date is {}, start date is {}", exercise.getId(), exam.getId(), visibleDate,
                     startDate);
+            return;
         }
         var releaseDate = getExamProgrammingExerciseReleaseDate(exercise);
         if (releaseDate.isAfter(ZonedDateTime.now())) {
