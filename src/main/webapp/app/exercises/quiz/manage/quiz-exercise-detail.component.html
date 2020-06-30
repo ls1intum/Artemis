@@ -42,32 +42,55 @@
             </div>
             <div class="col-12 col-md-6">
                 <div class="form-group-narrow">
-                    <label jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
-                    <div class="d-flex align-items-center">
-                        <input
-                            id="quiz-duration-minutes"
-                            style="width: 70px;"
-                            class="form-control mb-2 mr-2"
-                            title="Duration"
-                            type="number"
-                            min="0"
-                            max="600"
-                            [(ngModel)]="duration.minutes"
-                            (ngModelChange)="onDurationChange()"
-                        />
-                        <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
-                        <input
-                            id="quiz-duration-seconds"
-                            style="width: 70px;"
-                            class="form-control mb-2 mr-2 ml-2"
-                            title="Duration"
-                            type="number"
-                            max="60"
-                            min="-1"
-                            [(ngModel)]="duration.seconds"
-                            (ngModelChange)="onDurationChange()"
-                        />
-                        <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
+                    <ng-container *ngIf="!isExamMode">
+                        <label jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
+                        <div class="d-flex align-items-center">
+                            <input
+                                id="quiz-duration-minutes"
+                                style="width: 70px;"
+                                class="form-control mb-2 mr-2"
+                                title="Duration"
+                                type="number"
+                                min="0"
+                                max="600"
+                                [(ngModel)]="duration.minutes"
+                                (ngModelChange)="onDurationChange()"
+                            />
+                            <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                            <input
+                                id="quiz-duration-seconds"
+                                style="width: 70px;"
+                                class="form-control mb-2 mr-2 ml-2"
+                                title="Duration"
+                                type="number"
+                                max="60"
+                                min="-1"
+                                [(ngModel)]="duration.seconds"
+                                (ngModelChange)="onDurationChange()"
+                            />
+                            <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
+                        </div>
+                    </ng-container>
+                    <div *ngIf="isExamMode" class="d-flex">
+                        <div class="form-group flex-grow-1">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
+                                [(ngModel)]="quizExercise.releaseDate"
+                                (ngModelChange)="onDurationChange()"
+                                [error]="false"
+                                name="releaseDate"
+                            ></jhi-date-time-picker>
+                        </div>
+                        <div class="form-group flex-grow-1 ml-3">
+                            <jhi-date-time-picker
+                                name="dueDate"
+                                [error]="quizExercise.dueDateError"
+                                labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
+                                (ngModelChange)="onDurationChange()"
+                                [(ngModel)]="quizExercise.dueDate"
+                            ></jhi-date-time-picker>
+                            <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
+                        </div>
                     </div>
                     <div class="form-group-narrow">
                         <label jhiTranslate="artemisApp.quizExercise.options">Options</label>
@@ -81,26 +104,28 @@
                             />
                             <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input
-                                type="checkbox"
-                                id="cbPlannedToStart"
-                                class="form-check-input custom-control-input"
-                                [(ngModel)]="quizExercise.isPlannedToStart"
-                                (ngModelChange)="cacheValidation()"
-                            />
-                            <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
-                        </div>
-                        <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
-                            <div class="flex-grow-1">
-                                <jhi-date-time-picker
-                                    [disabled]="!quizExercise.isPlannedToStart"
-                                    [(ngModel)]="quizExercise.releaseDate"
+                        <ng-container *ngIf="!isExamMode">
+                            <div class="form-check custom-control custom-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="cbPlannedToStart"
+                                    class="form-check-input custom-control-input"
+                                    [(ngModel)]="quizExercise.isPlannedToStart"
                                     (ngModelChange)="cacheValidation()"
-                                    name="releaseDate"
-                                ></jhi-date-time-picker>
+                                />
+                                <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
                             </div>
-                        </div>
+                            <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
+                                <div class="flex-grow-1">
+                                    <jhi-date-time-picker
+                                        [disabled]="!quizExercise.isPlannedToStart"
+                                        [(ngModel)]="quizExercise.releaseDate"
+                                        (ngModelChange)="cacheValidation()"
+                                        name="releaseDate"
+                                    ></jhi-date-time-picker>
+                                </div>
+                            </div>
+                        </ng-container>
                     </div>
                 </div>
             </div>
@@ -188,7 +213,7 @@
         <div class="edit-quiz-footer">
             <div class="container">
                 <div class="edit-quiz-footer-content">
-                    <div class="form-group">
+                    <div class="form-group" *ngIf="!isExamMode">
                         <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
                         <select
                             *ngIf="showDropdown === 'isOpenForPractice'"
@@ -220,7 +245,7 @@
                             </option>
                         </select>
                     </div>
-                    <div class="form-group flex-fill ml-5">
+                    <div class="form-group flex-fill ml-5" *ngIf="!isExamMode">
                         <div class="form-group flex-fill" *ngIf="quizExercise.id">
                             <input
                                 minlength="3"
