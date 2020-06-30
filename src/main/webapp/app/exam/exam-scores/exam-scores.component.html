@@ -13,7 +13,6 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
-                    <th></th>
                     <th jhiSortBy="student.name">
                         <span jhiTranslate="artemisApp.examScores.name">Name</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -41,7 +40,6 @@
                     <th><span jhiTranslate="artemisApp.examScores.max">Max</span></th>
                     <th></th>
                     <th></th>
-                    <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                         <th>{{ exerciseGroup.maxPoints }}</th>
                     </ng-container>
@@ -49,7 +47,6 @@
                 </tr>
                 <tr>
                     <th><span jhiTranslate="artemisApp.examScores.average">Average</span></th>
-                    <th></th>
                     <th></th>
                     <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
@@ -61,7 +58,6 @@
             </thead>
             <tbody>
                 <tr *ngFor="let row of rows">
-                    <td></td>
                     <td>{{ row.name }}</td>
                     <td>{{ row.login }}</td>
                     <td>{{ row.registrationNumber }}</td>
