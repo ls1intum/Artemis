@@ -156,18 +156,28 @@ public class RepositoryWebsocketResource {
      */
     @MessageMapping("/topic/test-repository/{exerciseId}/files")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    // TODO: this should rather be a REST call so that security checks are easier to implement
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
+        String topic = "/topic/test-repository/" + exerciseId + "/files";
+
+        User user = userService.getUserByLogin(principal.getName()).get();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
+            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
+            return;
+        }
+
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
-        String topic = "/topic/test-repository/" + exerciseId + "/files";
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
+        String testRepoName = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), testRepoName);
 
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getURL());
+            repository = repositoryService.checkoutRepositoryByName(principal, programmingExercise, testsRepoUrl.getURL());
         }
         catch (IllegalAccessException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
@@ -185,15 +195,6 @@ public class RepositoryWebsocketResource {
             return;
         }
 
-        // Apply checks for exam (submission is in time & user's student exam has the exercise)
-        // TODO: is the check necessary in this method?
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        if (!examSubmissionService.isAllowedToSubmit(exercise, user)) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "notAllowedExam");
-            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
-            return;
-        }
-
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
         messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
@@ -201,7 +202,7 @@ public class RepositoryWebsocketResource {
     /**
      * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
      * Map.
-     * 
+     *
      * @param submissions the file submissions (changes) that should be saved in the repository
      * @param repository the git repository in which the file changes should be saved
      * @return a map of <filename, error | null>
