@@ -19,6 +19,8 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -40,6 +42,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     studentExam: StudentExam;
+
+    endDate: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
@@ -92,6 +96,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             this.examId = parseInt(params['examId'], 10);
             this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => {
                 this.exam = exam;
+                this.endDate = exam.endDate ? exam.endDate : moment();
                 if (this.isOver()) {
                     this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
                         this.studentExam = studentExam;
@@ -110,6 +115,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
+            // set endDate with workingTime
+            this.endDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.endDate;
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
                 exercise.studentParticipations.forEach((participation) => {
@@ -164,10 +171,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.exam) {
-            return false;
-        }
-        return this.exam.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : false;
+        return this.endDate.isBefore(this.serverDateService.now());
     }
 
     /**
