@@ -158,21 +158,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
     /**
      * check if exam already started
      */
-    examHasStarted(exam?: Exam): boolean {
-        return exam?.startDate ? exam.startDate.isBefore(this.serverDateService.now()) : false;
+    examHasStarted(): boolean {
+        return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
      * check if exam is over
      */
-    examIsOver(exam?: Exam): boolean {
-        return exam?.endDate ? exam.endDate.isBefore(this.serverDateService.now()) : true;
+    examIsOver(): boolean {
+        return this.exam?.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : true;
     }
 
     /**
      * check if exam mode is active
      */
-    examModeActive(exam?: Exam): boolean {
-        return this.examHasStarted(exam) && !this.examIsOver(exam);
+    examModeActive(): boolean {
+        return this.examHasStarted() && !this.examIsOver();
     }
 }
