@@ -57,7 +57,7 @@ function backup {
 # @param war location
 function deploy {
     user_confirmation "About to start a deployment of WAR File $2 on remote server $1"
-    
+
     # Upload WAR
     scp $2 $1:~/artemis.war.new
 
@@ -70,13 +70,11 @@ cd /opt/artemis/
 sudo rm artemis.war.old
 
 sudo systemctl stop artemis
-sudo systemctl stop mysql
 
 sudo mv artemis.war artemis.war.old
 sudo mv artemis.war.new artemis.war
 sudo chmod +x artemis.war
 
-sudo systemctl start mysql
 sudo systemctl start artemis
 COMMAND
 }
@@ -227,7 +225,7 @@ function backup_menu {
         exit 1
     fi
     shift $((OPTIND -1))
-    
+
     backup $server $database $filesystem
 }
 
@@ -337,7 +335,7 @@ function logs_menu {
         esac
     done
     shift $((OPTIND -1))
-    
+
     logs $server $follow $lines
 }
 

@@ -63,7 +63,7 @@ export class ExamNavigationBarComponent implements OnInit {
         this.setExerciseButtonStatus(i);
     }
 
-    submitExam() {
+    saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {

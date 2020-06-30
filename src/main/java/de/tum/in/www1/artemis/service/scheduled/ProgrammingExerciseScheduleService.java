@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -312,7 +313,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Invokes the given <code>operation</code> on all student participations that satisfy the <code>condition</code>-{@link Predicate}.
      * <p>
      * Requests are executed in batches so that the VCS is not overloaded with requests.
-     * 
+     *
      * @param programmingExerciseId the programming exercise whose participations should be processed
      * @param operation the operation to perform
      * @param condition the condition that tests whether to invoke the operation on a participation
@@ -356,7 +357,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (Exception e) {
                 log.error("'" + operationName + "' failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId() + ": " + e);
+                        + studentParticipation.getId(), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
             index++;
@@ -365,10 +366,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+        }
+        else {
+            log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
     }
 
     private void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
+        }
+        else {
+            log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
     }
 }
