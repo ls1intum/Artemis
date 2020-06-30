@@ -252,11 +252,14 @@ public class ExamService {
 
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
-                // there should only be one after we prepared the student participations
-                Result result = studentParticipation.getResults().iterator().next();
 
-                student.exerciseGroupToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                        new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore()));
+                Set<Result> results = studentParticipation.getResults();
+                if (!results.isEmpty()) {
+                    Result result = studentParticipation.getResults().iterator().next();
+                    student.exerciseGroupToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore()));
+                }
+
             }
         }
         return scores;
