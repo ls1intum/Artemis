@@ -171,48 +171,44 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             );
         } else {
             // be aware of !
-            return !this.studentSubmission.submittedAnswers.every((lastSubmittedAnswer) => {
+            return !this.studentSubmission.submittedAnswers.every((submittedAnswer) => {
                 // checks if there are no changes for each question type
-                if (lastSubmittedAnswer.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    const lastSubmittedSelectedOptions = (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        ? (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                if (submittedAnswer.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                    const submittedSelectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
                         : [];
-                    const changedOptions: AnswerOption[] = this.selectedAnswerOptions[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every selectedOption can be found in the lastSubmittedAnswer
+                    const changedOptions: AnswerOption[] = this.selectedAnswerOptions[submittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every selectedOption can be found in the submittedAnswer
                     return (
-                        lastSubmittedSelectedOptions.length === changedOptions.length &&
-                        changedOptions.every((changedOption) => lastSubmittedSelectedOptions.findIndex((lastSubmittedOptions) => lastSubmittedOptions.id === changedOption.id) >= 0)
+                        submittedSelectedOptions.length === changedOptions.length &&
+                        changedOptions.every((changedOption) => submittedSelectedOptions.findIndex((lastSubmittedOptions) => lastSubmittedOptions.id === changedOption.id) >= 0)
                     );
-                } else if (lastSubmittedAnswer.type === QuizQuestionType.DRAG_AND_DROP) {
-                    const lastSubmittedDnDMapping = (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
-                        ? (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
-                        : [];
-                    const changedMappings: DragAndDropMapping[] = this.dragAndDropMappings[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every dragAndDrop can be found in the lastSubmittedAnswer
+                } else if (submittedAnswer.type === QuizQuestionType.DRAG_AND_DROP) {
+                    const submittedDnDMapping = (submittedAnswer as DragAndDropSubmittedAnswer).mappings ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
+                    const changedMappings: DragAndDropMapping[] = this.dragAndDropMappings[submittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every dragAndDrop can be found in the submittedAnswer
                     return (
-                        lastSubmittedDnDMapping.length === changedMappings.length &&
+                        submittedDnDMapping.length === changedMappings.length &&
                         // work with dragItem.id and dropLocation.id, because id might not be available
                         // check if drag item is in the same drop location as in last submission
                         changedMappings.every(
                             (changedMapping) =>
-                                lastSubmittedDnDMapping.findIndex(
+                                submittedDnDMapping.findIndex(
                                     (lastSubmittedMapping) =>
                                         lastSubmittedMapping.dragItem?.id === changedMapping.dragItem?.id &&
                                         lastSubmittedMapping.dropLocation?.id === changedMapping.dropLocation?.id,
                                 ) >= 0,
                         )
                     );
-                } else if (lastSubmittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
-                    const lastSubmittedSATexts = (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
-                        ? (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
-                        : [];
-                    const changedTexts: ShortAnswerSubmittedText[] = this.shortAnswerSubmittedTexts[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every submittedText can be found in the lastSubmittedAnswer
+                } else if (submittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
+                    const submittedSATexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts : [];
+                    const changedTexts: ShortAnswerSubmittedText[] = this.shortAnswerSubmittedTexts[submittedAnswer.quizQuestion.id];
+                    // check if they have the same length and every submittedText can be found in the submittedAnswer
                     return (
-                        lastSubmittedSATexts.length === changedTexts.length &&
+                        submittedSATexts.length === changedTexts.length &&
                         changedTexts.every(
                             (changedText) =>
-                                lastSubmittedSATexts.findIndex(
+                                submittedSATexts.findIndex(
                                     // work with spot id and text id, because lastSubmittedText does not necessarily have a id
                                     // check if text of last submission is the same for the same spot
                                     (lastSubmittedText) => lastSubmittedText.text === changedText.text && lastSubmittedText.spot.id === changedText.spot.id,

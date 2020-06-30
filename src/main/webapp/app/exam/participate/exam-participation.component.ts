@@ -19,13 +19,15 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
 })
-export class ExamParticipationComponent implements OnInit, OnDestroy {
+export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ExamSubmissionComponent, { static: false })
     currentSubmissionComponent: ExamSubmissionComponent;
 
@@ -81,6 +83,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         private textSubmissionService: TextSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -100,6 +103,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             });
         });
         this.initLiveMode();
+    }
+
+    canDeactivate() {
+        // TODO: also handle the case when the student wants to finish the exam early
+        if (this.isOver()) {
+            return true;
+        }
+        const warning = this.translateService.instant('examPendingChanges'); // are you sure you want to reload the exam, all unsaved changes will be lost!
+        return confirm(warning);
     }
 
     /**
@@ -155,7 +167,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= 60) {
-                this.triggerSave(true);
+                this.triggerSave(true, false);
             }
         }, 1000);
     }
@@ -212,11 +224,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * update the current exercise from the navigation
-     * @param {Exercise} exercise
+     * @param exerciseChange
      */
-    onExerciseChange(exercise: Exercise): void {
-        this.triggerSave(false);
-        this.activeExercise = exercise;
+    onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        this.triggerSave(false, exerciseChange.force);
+        this.activeExercise = exerciseChange.exercise;
         this.reloadSubmissionComponent();
     }
 
@@ -233,13 +245,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      *      --> in this case, we can even save all submissions with isSynced = true
      *
      * @param intervalSave is set to true, if the save was triggered from the interval timer
+     * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
-    triggerSave(intervalSave: boolean) {
+    triggerSave(intervalSave: boolean, force: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if (this.currentSubmissionComponent?.hasUnsavedChanges()) {
+        if (force || this.currentSubmissionComponent?.hasUnsavedChanges()) {
+            // this will lead to a save below, because isSynced will be set to false
             this.currentSubmissionComponent.updateSubmissionFromView(intervalSave);
         }
 
@@ -256,31 +270,41 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         });
 
         // if no connection available -> don't try to sync
-        if (!this.disconnected) {
+        if (force || !this.disconnected) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
-                        this.textSubmissionService
-                            .update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            () => {
+                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
+                                // bist und speichere nochmal."
+                            },
+                        );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        // TODO: works differently than other services
-                        // this.fileUploadSubmissionService;
+                        // nothing to do
                         break;
                     case ExerciseType.MODELING:
-                        this.modelingSubmissionService
-                            .update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            () => {
+                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
+                                // bist und speichere nochmal."
+                            },
+                        );
                         break;
                     case ExerciseType.PROGRAMMING:
-                        // TODO: works differently than other services
-                        // this.programmingSubmissionService;
+                        // nothing to do
                         break;
                     case ExerciseType.QUIZ:
-                        this.examParticipationService
-                            .updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            () => {
+                                // TODO: show a generic error message to the user, e.g. "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online
+                                // bist und speichere nochmal."
+                            },
+                        );
                         break;
                 }
             });

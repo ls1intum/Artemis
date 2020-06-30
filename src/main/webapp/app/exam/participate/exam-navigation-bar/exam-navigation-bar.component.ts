@@ -20,7 +20,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input()
     endDate: Moment;
 
-    @Output() onExerciseChanged = new EventEmitter<Exercise>();
+    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
 
     static itemsVisiblePerSideDefault = 4;
 
@@ -52,25 +52,25 @@ export class ExamNavigationBarComponent implements OnInit {
         });
     }
 
-    changeExercise(i: number) {
+    changeExercise(exerciseIndex: number, force: boolean) {
         // out of index -> do nothing
-        if (i > this.exercises.length - 1 || i < 0) {
+        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
         }
         // set index and emit event
-        this.exerciseIndex = i;
-        this.onExerciseChanged.emit(this.exercises[i]);
-        this.setExerciseButtonStatus(i);
+        this.exerciseIndex = exerciseIndex;
+        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], force });
+        this.setExerciseButtonStatus(exerciseIndex);
     }
 
     saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {
-            // if out of range "change" active exercise to current in order to trigger a save
-            this.changeExercise(this.exerciseIndex);
+            // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+            this.changeExercise(this.exerciseIndex, true);
         } else {
-            this.changeExercise(newIndex);
+            this.changeExercise(newIndex, true);
         }
     }
 
