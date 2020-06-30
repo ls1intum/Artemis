@@ -38,10 +38,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    public examMode = false;
-    public examId: number;
-    public courseId: number;
-    public exam: Exam;
+    public exam: Exam | undefined;
 
     constructor(
         private loginService: LoginService,
@@ -53,7 +50,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
         private router: Router,
-        private route: ActivatedRoute,
         private examParticipationService: ExamParticipationService,
         private serverDateService: ArtemisServerDateService,
     ) {
@@ -80,22 +76,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.routerEventSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
+                this.exam = undefined;
                 const examRoute = new RegExp('exams/[0-9]');
                 if (examRoute.test(event.url) && !event.url.includes('management')) {
                     const routeParams = event.url.split('/');
-                    this.courseId = +routeParams[2];
-                    this.examId = +routeParams[4];
+                    const courseId = +routeParams[2];
+                    const examId = +routeParams[4];
 
-                    if (this.examId !== undefined && this.courseId !== undefined) {
-                        this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((loadedExam) => (this.exam = loadedExam));
+                    if (examId !== undefined && courseId !== undefined) {
+                        this.examParticipationService.loadExam(courseId, examId).subscribe((loadedExam) => (this.exam = loadedExam));
                     }
-                    if (this.examHasStarted(this.exam) && !this.examIsOver(this.exam)) {
-                        this.examMode = true;
-                    } else {
-                        this.examMode = false;
-                    }
-                } else {
-                    this.examMode = false;
                 }
             }
         });
@@ -177,5 +167,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     examIsOver(exam: Exam): boolean {
         return exam?.endDate ? exam.endDate.isBefore(this.serverDateService.now()) : true;
+    }
+
+    /**
+     * check if exam mode is active
+     */
+    examModeActive(exam: Exam): boolean {
+        return exam && this.examHasStarted(exam) && !this.examIsOver(exam);
     }
 }
