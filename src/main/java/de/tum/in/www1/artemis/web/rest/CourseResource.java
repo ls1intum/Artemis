@@ -557,38 +557,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise : interestingExercises) {
-
-            DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
-
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
-            }
-            else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            }
-
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-
-            exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-                        return emptyTutorParticipation;
-                    });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-        }
+        prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -618,38 +587,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise : course.getExercises()) {
-
-            DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
-
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
-            }
-            else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            }
-
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-
-            exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-                        return emptyTutorParticipation;
-                    });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-        }
+        prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -1149,6 +1087,41 @@ public class CourseResource {
         }
         else {
             return forbidden();
+        }
+    }
+
+    private void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations) {
+        for (Exercise exercise : exercises) {
+
+            DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
+            if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+            }
+            else {
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            }
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+
+            exerciseService.calculateNrOfOpenComplaints(exercise);
+
+            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+            // Do not provide example submissions without any assessment
+            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
+            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
+                    .findFirst().orElseGet(() -> {
+                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                        return emptyTutorParticipation;
+                    });
+            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
     }
 }
