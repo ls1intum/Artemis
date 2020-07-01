@@ -145,6 +145,7 @@
                 "addTextExercise": "Textaufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
+                "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
