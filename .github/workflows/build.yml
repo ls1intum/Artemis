@@ -26,6 +26,10 @@ env:
   CI: true
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ${{ toJson(github) }}
   build:
     runs-on: ubuntu-latest
     steps:
