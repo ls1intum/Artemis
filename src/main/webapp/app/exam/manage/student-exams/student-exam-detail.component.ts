@@ -21,8 +21,6 @@ export class StudentExamDetailComponent implements OnInit {
     course: Course;
     student: User;
     workingTimeForm: FormGroup;
-    workingTimeMinutes = 0;
-    workingTimeSeconds = 0;
     isSavingWorkingTime = false;
 
     constructor(
@@ -38,10 +36,6 @@ export class StudentExamDetailComponent implements OnInit {
      */
     ngOnInit(): void {
         this.loadAll();
-        this.workingTimeForm = new FormGroup({
-            minutes: new FormControl(this.workingTimeMinutes, [Validators.min(0), Validators.required]),
-            seconds: new FormControl(this.workingTimeSeconds, [Validators.min(0), Validators.max(59), Validators.required]),
-        });
     }
 
     /**
@@ -88,7 +82,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.workingTimeMinutes * 60 + this.workingTimeSeconds;
+        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam.id, this.studentExam.id, seconds).subscribe(
             (res) => {
                 if (res.body) {
@@ -106,13 +100,15 @@ export class StudentExamDetailComponent implements OnInit {
 
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
-        this.setWorkingTime();
+        this.initWorkingTimeForm();
     }
 
-    private setWorkingTime() {
+    private initWorkingTimeForm() {
         const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime);
         const workingTimeParts = workingTime.split(':');
-        this.workingTimeMinutes = parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10);
-        this.workingTimeSeconds = parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10);
+        this.workingTimeForm = new FormGroup({
+            minutes: new FormControl(parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), [Validators.min(0), Validators.required]),
+            seconds: new FormControl(parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), [Validators.min(0), Validators.max(59), Validators.required]),
+        });
     }
 }
