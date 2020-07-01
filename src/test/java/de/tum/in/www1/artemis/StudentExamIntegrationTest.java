@@ -63,6 +63,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
         Exam exam2 = database.addExam(course1);
         studentExam1 = database.addStudentExam(exam1);
+        studentExam1.setWorkingTime(7200);
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);
         database.addStudentExam(exam2);
@@ -267,5 +268,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).contains(maxWorkingTime);
         assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).containsExactlyInAnyOrderElementsOf(expectedWorkingTimes);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateWorkingTime() throws Exception {
+        Integer newWorkingTime = 180 * 60;
+        StudentExam result = request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/workingTime",
+                newWorkingTime, StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
     }
 }
