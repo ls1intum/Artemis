@@ -9,10 +9,14 @@ export class ArtemisServerDateService {
 
     // offsets of the last synchronizations in ms (max. 5)
     private recentOffsets = new Array<number>();
+    // client (!) dates of the last synchronizations (max. 5)
     private recentClientDates = new Array<moment.Moment>();
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * get a new server date if necessary
+     */
     updateTime(): void {
         let shouldSync = false;
         const now = moment(new Date());
@@ -24,11 +28,12 @@ export class ArtemisServerDateService {
                 }
             });
         } else {
-            // definitly sync if we do not have 5 elements yet
+            // definitely sync if we do not have 5 elements yet
             shouldSync = true;
         }
         // TODO: one additional optimization could be to take the duration for request -> response into account here
         if (shouldSync) {
+            // get new server date
             this.http.get<string>(this.resourceUrl).subscribe((serverDate) => {
                 this.setServerDate(serverDate);
             });
@@ -43,10 +48,13 @@ export class ArtemisServerDateService {
     setServerDate(date: string): void {
         const serverDate = moment(date);
         const clientDate = moment();
+        // save the most recent client date
         this.recentClientDates.push(clientDate);
+        // calculate offset
         const offset = serverDate.diff(clientDate, 'ms');
+        // save the most recent offset
         this.recentOffsets.push(offset);
-        // remove oldest offset if more than 5
+        // remove oldest offset and client date if more than 5
         if (this.recentOffsets.length > 5) {
             this.recentOffsets.shift();
             this.recentClientDates.shift();
@@ -59,11 +67,13 @@ export class ArtemisServerDateService {
      */
     now(): moment.Moment {
         const clientDate = moment();
+        // return the client date if there are no offsets (e.g. when offline or before any api call was made)
         if (this.recentOffsets.length === 0) {
             return clientDate;
         }
         // take first offset if there are less than 5
         let offset = this.recentOffsets[0];
+        // remove noise from offset if there are 5
         if (this.recentOffsets.length === 5) {
             const offsetsSorted = this.recentOffsets.sort((a, b) => b - a);
             // remove lowest

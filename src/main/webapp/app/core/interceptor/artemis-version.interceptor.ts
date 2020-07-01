@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
-import { ARTEMIS_VERSION_HEADER, VERSION, ARTEMIS_SERVER_DATE_HEADER } from 'app/app.constants';
+import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
