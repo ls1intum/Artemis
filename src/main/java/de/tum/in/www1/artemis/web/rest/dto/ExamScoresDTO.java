@@ -7,19 +7,32 @@ import java.util.Map;
 
 public class ExamScoresDTO {
 
-    public Long examId;
+    public Long id;
 
-    public String examTitle;
+    public String title;
+
+    public Integer maxPoints;
+
+    public Double averagePointsAchieved = null;
+
+    public ExamScoresDTO(Long id, String title, Integer maxPoints) {
+        this.id = id;
+        this.title = title;
+        this.maxPoints = maxPoints;
+    }
 
     public List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
-    public List<Student> students = new ArrayList<>();
+    public List<StudentResult> studentResults = new ArrayList<>();
 
+    // Inner DTO
     public static class ExerciseGroup {
 
         public Long id;
 
         public String title;
+
+        public Double averagePointsAchieved = null;
 
         public ExerciseGroup(Long id, String title) {
             this.id = id;
@@ -27,42 +40,51 @@ public class ExamScoresDTO {
         }
     }
 
-    public static class Student {
+    // Inner DTO
+    public static class StudentResult {
 
-        public Long studentId;
+        public Long id;
 
         public String name;
+
+        public String eMail;
 
         public String login;
 
         public String registrationNumber;
 
-        // Mapping ExerciseGroupId to ExerciseResult
-        public Map<Long, ExerciseResult> exerciseGroupToExerciseResult = new HashMap<>();
+        public Double overallPointsAchieved = null;
 
-        public Student(Long studentId, String name, String login, String registrationNumber) {
-            this.studentId = studentId;
+        public Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
+
+        public StudentResult(Long id, String name, String eMail, String login, String registrationNumber) {
+            this.id = id;
+            this.eMail = eMail;
             this.name = name;
             this.login = login;
             this.registrationNumber = registrationNumber;
         }
     }
 
+    // Inner DTO
     public static class ExerciseResult {
 
-        public Long exerciseId;
+        public Long id;
 
-        public String exerciseTitle;
+        public String title;
 
-        public Double exerciseMaxScore;
+        public Double maxScore;
 
-        public Long exerciseAchievedScore;
+        public Long achievedScore;
 
-        public ExerciseResult(Long exerciseId, String exerciseTitle, Double exerciseMaxScore, Long exerciseAchievedScore) {
-            this.exerciseId = exerciseId;
-            this.exerciseTitle = exerciseTitle;
-            this.exerciseMaxScore = exerciseMaxScore;
-            this.exerciseAchievedScore = exerciseAchievedScore;
+        public Double achievedPoints;
+
+        public ExerciseResult(Long id, String title, Double maxScore, Long achievedScore, Double achievedPoints) {
+            this.id = id;
+            this.title = title;
+            this.maxScore = maxScore;
+            this.achievedScore = achievedScore;
+            this.achievedPoints = achievedPoints;
         }
     }
 

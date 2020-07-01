@@ -1,11 +1,12 @@
 <div *ngIf="examScoreDTO">
     <h4>
-        {{ exam.title }}
-        <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: rows.length }">
-            {{ exerciseGroups.length }} exercise groups, {{ rows.length }} students with results
+        {{ examScoreDTO.examTitle }}
+        <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
+            {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} students with results
         </small>
-        <button class="btn btn-primary btn-sm float-right" (click)="exportResults()">
-            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
+        <button class="btn btn-primary btn-sm float-right">
+            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+            <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
     </h4>
 
@@ -13,26 +14,29 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
-                    <th jhiSortBy="student.name">
+                    <th jhiSortBy="name">
                         <span jhiTranslate="artemisApp.examScores.name">Name</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.login">
+                    <th jhiSortBy="login">
                         <span jhiTranslate="artemisApp.examScores.login">Login</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.registrationNumber">
+                    <th jhiSortBy="eMail">
+                        <span jhiTranslate="artemisApp.examScores.eMail">E-Mail</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="registrationNumber">
                         <span jhiTranslate="artemisApp.examScores.registrationNumber">Registration Number</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <th jhiSortBy="exerciseGroup.">
+                        <th>
                             <span>{{ exerciseGroup.title }}</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                     </ng-container>
-                    <th jhiSortBy="overallPoints">
-                        <span jhiTranslate="artemisApp.examScores.overallPoints">Overall Points (%)</span>
+                    <th jhiSortBy="overallPointsAchieved">
+                        <span jhiTranslate="artemisApp.examScores.overallPoints">Overall Points</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                 </tr>
@@ -40,31 +44,43 @@
                     <th><span jhiTranslate="artemisApp.examScores.max">Max</span></th>
                     <th></th>
                     <th></th>
+                    <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                         <!-- Score in den einzelnen Gruppen immer gleich? -->
                         <th></th>
                     </ng-container>
-                    <th>{{ exam.maxPoints }}</th>
+                    <th>{{ examScoreDTO.maxPoints }}</th>
                 </tr>
                 <tr>
                     <th><span jhiTranslate="artemisApp.examScores.average">Average</span></th>
                     <th></th>
                     <th></th>
+                    <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <th>{{ calculateExerciseGroupAverage(exerciseGroup) }}</th>
+                        <th>{{ exerciseGroup.averagePointsAchieved }}</th>
                     </ng-container>
-                    <th>{{ calculateTotalAverage() }}</th>
+                    <th>{{ examScoreDTO.averagePointsAchieved }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let row of rows">
-                    <td>{{ row.name }}</td>
-                    <td>{{ row.login }}</td>
-                    <td>{{ row.registrationNumber ? row.registrationNumber : '-' }}</td>
+                <tr *ngFor="let studentResult of studentResults">
+                    <td>{{ studentResult.name }}</td>
+                    <td>{{ studentResult.login }}</td>
+                    <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
+                    <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <td>{{ row.exerciseGroupToExerciseResult[exerciseGroup.id] ? calculatePoints(row, exerciseGroup) : '-' }}</td>
+                        <td *ngIf="studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
+                            {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
+                            :
+                            {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints }}
+                        </td>
+                        <ng-template #empty>
+                            <td>
+                                -
+                            </td>
+                        </ng-template>
                     </ng-container>
-                    <td>{{ calculateOverallPoints(row) }}</td>
+                    <td>{{ studentResult.overallPointsAchieved ? studentResult.overallPointsAchieved : '-' }}</td>
                 </tr>
             </tbody>
         </table>

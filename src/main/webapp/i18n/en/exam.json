@@ -37,10 +37,11 @@
             "searchForStudents": "Search for students by login or name (comma separated)",
             "name": "Name",
             "login": "Login",
+            "eMail": "E-Mail",
             "registrationNumber": "Registration Number",
             "max": "Max",
             "average": "Average",
-            "overallPoints": "Overall Points (%)",
+            "overallPoints": "Overall Points",
             "exportCSV": " Export Results as CSV",
             "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} students with results"
         },
