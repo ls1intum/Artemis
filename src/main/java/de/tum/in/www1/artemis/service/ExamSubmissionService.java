@@ -43,23 +43,36 @@ public class ExamSubmissionService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
-        // Only apply the additional check if it is an exam submission
+        if (!isAllowedToSubmit(exercise, user)) {
+            // TODO: improve the error message sent to the client
+            return Optional.of(forbidden());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise).
+     *
+     * @param exercise  the exercise for which a submission should be saved
+     * @param user      the user that wants to submit
+     * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
+     *         the user's student exam
+     */
+    public boolean isAllowedToSubmit(Exercise exercise, User user) {
         if (isExamSubmission(exercise)) {
-            // Check that the current user is allowed to submit to this exercise
+            // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
             StudentExam studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+
+            // Check that the current user is allowed to submit to this exercise
             if (!studentExam.getExercises().contains(exercise)) {
-                // TODO: improve the error message sent to the client
-                return Optional.of(forbidden());
+                return false;
             }
 
             // Check that the submission is in time
-            if (!isSubmissionInTime(exercise, studentExam)) {
-                // TODO: improve the error message sent to the client
-                return Optional.of(forbidden());
-            }
+            return isSubmissionInTime(exercise, studentExam);
         }
-        return Optional.empty();
+        return true;
     }
 
     /**

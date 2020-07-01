@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -18,6 +18,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -25,8 +26,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy {
-    @ViewChild(ExamSubmissionComponent, { static: false })
-    currentSubmissionComponent: ExamSubmissionComponent;
+    @ViewChildren(ExamSubmissionComponent)
+    currentSubmissionComponents: QueryList<ExamSubmissionComponent>;
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -36,6 +37,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     courseId: number;
     examId: number;
 
+    // determines if component was once drawn visited
+    submissionComponentVisited: boolean[];
+
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     studentExam: StudentExam;
@@ -43,6 +47,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     activeExercise: Exercise;
     unsavedChanges = false;
     disconnected = false;
+
+    isProgrammingExercise() {
+        return this.activeExercise.type === ExerciseType.PROGRAMMING;
+    }
+
+    isProgrammingExerciseWithCodeEditor(): boolean {
+        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOnlineEditor;
+    }
+
+    isProgrammingExerciseWithOfflineIDE(): boolean {
+        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde;
+    }
 
     examConfirmed = false;
 
@@ -55,8 +71,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
     autoSaveInterval: number;
-
-    _reload = true;
 
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
@@ -89,6 +103,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.initLiveMode();
     }
 
+    get activeExerciseIndex(): number {
+        if (!this.activeExercise) {
+            return 0;
+        }
+        return this.studentExam.exercises.findIndex((examExercise) => examExercise.id === this.activeExercise.id);
+    }
+
+    get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
+        return this.currentSubmissionComponents.find((submissionComponent, index) => index === this.activeExerciseIndex);
+    }
+
     /**
      * exam start text confirmed and name entered, start button clicked and exam avtive
      */
@@ -97,8 +122,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
+            // initializes array which manages submission component initialization
+            this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
+            this.submissionComponentVisited[0] = true;
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
+                // We do not support hints at the moment. Setting an empty array here disables the hint requests
+                exercise.exerciseHints = [];
                 exercise.studentParticipations.forEach((participation) => {
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {
@@ -129,6 +159,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                     }
                 });
             });
+            if (this.activeSubmissionComponent) {
+                this.activeSubmissionComponent.onActivate();
+            }
         }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
@@ -204,12 +237,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     onExerciseChange(exercise: Exercise): void {
         this.triggerSave(false);
         this.activeExercise = exercise;
-        this.reloadSubmissionComponent();
-    }
-
-    private reloadSubmissionComponent() {
-        setTimeout(() => (this._reload = false));
-        setTimeout(() => (this._reload = true));
+        this.submissionComponentVisited[this.activeExerciseIndex] = true;
+        if (this.activeSubmissionComponent) {
+            this.activeSubmissionComponent.onActivate();
+        }
     }
 
     /**
@@ -226,8 +257,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if (this.currentSubmissionComponent?.hasUnsavedChanges()) {
-            this.currentSubmissionComponent.updateSubmissionFromView(intervalSave);
+        if (this.activeSubmissionComponent?.hasUnsavedChanges()) {
+            this.activeSubmissionComponent.updateSubmissionFromView(intervalSave);
         }
 
         // goes through all exercises and checks if there are unsynched submissions

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -385,13 +386,17 @@ public class ExamService {
         for (StudentExam studentExam : studentExams) {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
-                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                // we start the exercise if no participation was found that was already fully initialized
+                if (exercise.getStudentParticipations().stream()
+                        .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
+                                && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
                             ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                         }
+                        // this will create initial (empty) submissions for quiz, text, modeling and file upload
                         var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }

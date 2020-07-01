@@ -7,6 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -69,5 +70,17 @@ export class ExamUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    get isValidVisibleDate() {
+        return this.exam.visibleDate && moment(this.exam.visibleDate).isAfter(moment());
+    }
+
+    get isValidStartDate() {
+        return this.isValidVisibleDate && this.exam.startDate && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
+    }
+
+    get isValidEndDate() {
+        return this.isValidStartDate && this.exam.endDate && moment(this.exam.endDate).isAfter(this.exam.startDate);
     }
 }

@@ -40,18 +40,14 @@
     </div>
     <div class="col-auto">
         <div class="row justify-content-end align-items-start pr-2">
-            <div class="col-auto">
-                <button *ngIf="isProgrammingExercise(); else notAProgrammingExercise" class="btn btn-primary px-3 mb-2" (click)="submitExam()">
-                    {{ 'artemisApp.examParticipation.submitProgrammingExercise' | translate }}
+            <div class="col">
+                <!-- Note: for programming exercises, it does not make sense to show a save or continue button -->
+                <button *ngIf="!isProgrammingExercise()" class="btn btn-primary px-3 mb-2" (click)="saveExercise()">
+                    {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                 </button>
-                <ng-template #notAProgrammingExercise>
-                    <button class="btn btn-primary px-3 mb-2" (click)="submitExam()">
-                        {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
-                    </button>
-                </ng-template>
             </div>
             <div class="col-auto h3 timer px-1" jhiTranslate="artemisApp.examParticipation.timer">Time Left:</div>
-            <div class="col-auto h3 m-0 text-overflow remaining-time mb-2 px-1" [class.critical]="criticalTime">
+            <div class="col-auto h3 m-0 text-overflow remaining-time mb-2 px-0" [class.critical]="criticalTime">
                 {{ displayTime$ | async }}
             </div>
         </div>

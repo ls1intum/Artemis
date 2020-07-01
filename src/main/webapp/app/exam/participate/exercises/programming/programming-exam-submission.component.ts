@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -12,7 +12,7 @@ import { EditorState } from 'app/exercises/programming/shared/code-editor/model/
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, OnChanges {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent {
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
     studentParticipation: ProgrammingExerciseStudentParticipation;
@@ -35,24 +35,14 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ngOnChanges(changes: SimpleChanges): void {
-        if (this.exercise.allowOnlineEditor) {
-            // show submission answers in UI
+    onActivate(): void {
+        if (this.codeEditorComponent) {
+            this.codeEditorComponent.ngOnInit();
         }
     }
 
-    ngOnInit(): void {}
-
     updateSubmissionFromView(intervalSave: boolean): void {
-        if (this.exercise.allowOnlineEditor) {
-            if (intervalSave) {
-                // The 60s auto save should only save and NOT commit the files, as this would trigger a CI run. Just save the files
-                this.codeEditorComponent.actions.onSave();
-            } else {
-                // If the user switches the exercise, we can actually commit
-                this.codeEditorComponent.actions.commit();
-            }
-        }
+        // Note: we just save here and do not commit, because this can lead to problems!
+        this.codeEditorComponent.actions.onSave();
     }
 }
