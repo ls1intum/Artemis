@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -10,6 +7,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.slf4j.Logger;
@@ -19,16 +17,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
@@ -54,6 +50,8 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ModelingExerciseImportService modelingExerciseImportService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final CompassService compassService;
@@ -61,10 +59,11 @@ public class ModelingExerciseResource {
     private final GradingCriterionService gradingCriterionService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService,
+            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService, GroupNotificationService groupNotificationService, CompassService compassService,
             ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseImportService = modelingExerciseImportService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -268,5 +267,61 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise.get(), course, user);
         exerciseService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.get().getTitle())).build();
+    }
+
+    /**
+     * POST /modeling-exercises/import: Imports an existing modeling exercise into an existing course
+     *
+     * This will import the whole exercise except for the participations and Dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * Uses {@link ModelingExerciseImportService}.
+     * See {@link ExerciseImportService#importExercise(Exercise, Exercise)}
+     *
+     * @param sourceExerciseId The ID of the original exercise which should get imported
+     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     *
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     */
+    @PostMapping("/modeling-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            return badRequest();
+        }
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
+        if (optionalOriginalModelingExercise.isEmpty()) {
+            log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
+            return notFound();
+        }
+
+        if (importedExercise.hasExerciseGroup()) {
+            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
+        } else {
+            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        }
+
+        if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            log.debug("User {} does not have instructor rights for the course {}", user.getId(), importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            return forbidden();
+        }
+        final var originalModelingExercise = optionalOriginalModelingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(originalModelingExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                return forbidden();
+        }
+
+        final var newExercise = modelingExerciseImportService.importExercise(originalModelingExercise, importedExercise);
+        if (newExercise == null) {
+            return conflict();
+        }
+
+        modelingExerciseRepository.save((ModelingExercise) newExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
     }
 }
