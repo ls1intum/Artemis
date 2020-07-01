@@ -75,7 +75,8 @@
             "missingStudentExamGenerationSuccess": "{{number}} fehlende individuelle Klausuren erfolgreich generiert!",
             "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
             "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
-            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}"
+            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Wenn Sie fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert."
         },
         "examManagement": {
             "title": "Klausur Verwaltung",

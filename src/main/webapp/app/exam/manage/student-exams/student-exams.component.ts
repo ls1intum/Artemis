@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription } from 'rxjs/Subscription';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -9,6 +10,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -32,6 +34,7 @@ export class StudentExamsComponent implements OnInit {
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
         private jhiAlertService: AlertService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -66,8 +69,23 @@ export class StudentExamsComponent implements OnInit {
 
     /**
      * Generate all student exams for the exam on the server and handle the result.
+     * Asks for confirmation if some exams already exist.
      */
-    generateStudentExams() {
+    handleGenerateStudentExams() {
+        // If student exams already exists, inform the instructor about it and get confirmations for re-creation
+        if (this.studentExams && this.studentExams.length) {
+            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
+            modalRef.componentInstance.text = 'artemisApp.studentExams.studentExamGenerationModalText';
+            modalRef.result.then(() => {
+                this.generateStudentExams();
+            });
+        } else {
+            this.generateStudentExams();
+        }
+    }
+
+    private generateStudentExams() {
         this.isLoading = true;
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => {

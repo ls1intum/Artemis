@@ -75,7 +75,8 @@
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
             "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
-            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
+            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated."
         },
         "examManagement": {
             "title": "Exam Management",
