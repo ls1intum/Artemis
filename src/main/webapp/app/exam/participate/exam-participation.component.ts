@@ -283,7 +283,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * We support 4 different cases here:
      * 1) Navigate between two exercises
      * 2) Click on Save & Continue
-     * 3) The 60s timer was triggered
+     * 3) The 30s timer was triggered
      * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *

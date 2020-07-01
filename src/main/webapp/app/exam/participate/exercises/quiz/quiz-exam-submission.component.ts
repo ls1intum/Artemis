@@ -159,67 +159,17 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     /**
-     * return true if we have no submission yet and we have new answers
-     * returns false if all submittedAnswers in studentSubmission are similar to the ones we have in the respective maps in this components
+     * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
+     */
+    onSelectionChanged() {
+        this.studentSubmission.isSynced = false;
+    }
+
+    /**
+     * return true if the user changed any answer in the quiz
      */
     hasUnsavedChanges(): boolean {
-        if (!this.studentSubmission.submittedAnswers) {
-            // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
-            // need to check the answers, because they are initialized with empty array in updateViewFromSubmission
-            return (
-                Object.values(this.selectedAnswerOptions).some((mcAnswer) => mcAnswer.length > 0) ||
-                Object.values(this.dragAndDropMappings).some((dndAnswer) => dndAnswer.length > 0) ||
-                Object.values(this.shortAnswerSubmittedTexts).some((shortAnswer) => shortAnswer.length > 0)
-            );
-        } else {
-            // be aware of !
-            return !this.studentSubmission.submittedAnswers.every((submittedAnswer) => {
-                // checks if there are no changes for each question type
-                if (submittedAnswer.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    const submittedSelectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        : [];
-                    const changedOptions: AnswerOption[] = this.selectedAnswerOptions[submittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every selectedOption can be found in the submittedAnswer
-                    return (
-                        submittedSelectedOptions.length === changedOptions.length &&
-                        changedOptions.every((changedOption) => submittedSelectedOptions.findIndex((lastSubmittedOptions) => lastSubmittedOptions.id === changedOption.id) >= 0)
-                    );
-                } else if (submittedAnswer.type === QuizQuestionType.DRAG_AND_DROP) {
-                    const submittedDnDMapping = (submittedAnswer as DragAndDropSubmittedAnswer).mappings ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
-                    const changedMappings: DragAndDropMapping[] = this.dragAndDropMappings[submittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every dragAndDrop can be found in the submittedAnswer
-                    return (
-                        submittedDnDMapping.length === changedMappings.length &&
-                        // work with dragItem.id and dropLocation.id, because id might not be available
-                        // check if drag item is in the same drop location as in last submission
-                        changedMappings.every(
-                            (changedMapping) =>
-                                submittedDnDMapping.findIndex(
-                                    (lastSubmittedMapping) =>
-                                        lastSubmittedMapping.dragItem?.id === changedMapping.dragItem?.id &&
-                                        lastSubmittedMapping.dropLocation?.id === changedMapping.dropLocation?.id,
-                                ) >= 0,
-                        )
-                    );
-                } else if (submittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
-                    const submittedSATexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts : [];
-                    const changedTexts: ShortAnswerSubmittedText[] = this.shortAnswerSubmittedTexts[submittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every submittedText can be found in the submittedAnswer
-                    return (
-                        submittedSATexts.length === changedTexts.length &&
-                        changedTexts.every(
-                            (changedText) =>
-                                submittedSATexts.findIndex(
-                                    // work with spot id and text id, because lastSubmittedText does not necessarily have a id
-                                    // check if text of last submission is the same for the same spot
-                                    (lastSubmittedText) => lastSubmittedText.text === changedText.text && lastSubmittedText.spot.id === changedText.spot.id,
-                                ) >= 0,
-                        )
-                    );
-                }
-            });
-        }
+        return !this.studentSubmission.isSynced!;
     }
 
     /**
