@@ -22,6 +22,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
+import { Subject } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -75,6 +77,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
+    private synchronizationAlert$ = new Subject();
+
+    loadingExam: boolean;
+
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -87,7 +93,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
         private alertService: AlertService,
-    ) {}
+    ) {
+        // show only one synchronization error every 5s
+        this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
+    }
 
     /**
      * initializes courseId and course
@@ -96,14 +105,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => {
-                this.exam = exam;
-                if (this.isOver()) {
-                    this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-                        this.studentExam = studentExam;
-                    });
-                }
-            });
+            this.loadingExam = true;
+            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
+                (exam) => {
+                    this.exam = exam;
+                    if (this.isOver()) {
+                        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+                            this.studentExam = studentExam;
+                        });
+                    }
+                    this.loadingExam = false;
+                },
+                (error) => (this.loadingExam = false),
+            );
         });
         this.initLiveMode();
     }
@@ -196,7 +210,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 60) {
+            if (this.autoSaveTimer >= 30) {
                 this.triggerSave(true, false);
             }
         }, 1000);
@@ -266,10 +280,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * We support 3 different cases here:
+     * We support 4 different cases here:
      * 1) Navigate between two exercises
      * 2) Click on Save & Continue
      * 3) The 60s timer was triggered
+     * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *
      * @param intervalSave is set to true, if the save was triggered from the interval timer
@@ -334,7 +349,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private onSaveSubmissionError(error: string) {
-        this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+        // show an only one error for 5s - see constructor
+        this.synchronizationAlert$.next();
         console.error(error);
     }
 }
