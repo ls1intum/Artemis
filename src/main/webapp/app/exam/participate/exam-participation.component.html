@@ -16,7 +16,7 @@
                 <jhi-exam-navigation-bar
                     id="exam-navigation-bar"
                     [exercises]="studentExam.exercises"
-                    [endDate]="exam.endDate"
+                    [endDate]="individualStudentEndDate"
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
                 <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
