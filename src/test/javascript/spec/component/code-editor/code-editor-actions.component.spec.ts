@@ -82,7 +82,11 @@ describe('CodeEditorActionsComponent', () => {
 
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
-    const enableRefreshButtonCombinations = cartesianProduct([EditorState.CLEAN], [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED], [false]);
+    const enableRefreshButtonCombinations = cartesianProduct(
+        [EditorState.CLEAN],
+        [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED],
+        [false],
+    );
 
     cartesianProduct(
         Object.keys(EditorState),

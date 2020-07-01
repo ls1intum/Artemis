@@ -71,10 +71,7 @@
         class="guided-tour-submit-button btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
-            disableActions ||
-            isBuilding ||
-            editorState === EditorState.SAVING ||
-            (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
+            disableActions || isBuilding || editorState === EditorState.SAVING || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
         "
         (click)="commit()"
         data-toggle="tooltip"
