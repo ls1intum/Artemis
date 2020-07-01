@@ -60,9 +60,12 @@ public class RepositoryWebsocketResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, SimpMessageSendingOperations messagingTemplate,
             RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -72,6 +75,7 @@ public class RepositoryWebsocketResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -127,6 +131,15 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
+
+        // Apply checks for exam (submission is in time & user's student exam has the exercise)
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
+            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
+            return;
+        }
+
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
         messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
@@ -140,6 +153,7 @@ public class RepositoryWebsocketResource {
      */
     @MessageMapping("/topic/test-repository/{exerciseId}/files")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    // TODO: this should rather be a REST call so that security checks are easier to implement
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
@@ -175,7 +189,7 @@ public class RepositoryWebsocketResource {
     /**
      * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
      * Map.
-     * 
+     *
      * @param submissions the file submissions (changes) that should be saved in the repository
      * @param repository the git repository in which the file changes should be saved
      * @return a map of <filename, error | null>
