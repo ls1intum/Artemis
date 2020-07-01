@@ -67,19 +67,6 @@ public class StudentExamService {
     }
 
     /**
-     * Get one student exam by id with exercises and exam sessions.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam with exercises and exam sessions
-     */
-    @NotNull
-    public StudentExam findOneWithExercisesAndExamSessions(Long studentExamId) {
-        log.debug("Request to get student exam {} with exercises and exam sessions", studentExamId);
-        return studentExamRepository.findWithExercisesAndExamSessionsById(studentExamId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
-    }
-
-    /**
      * Get all student exams for the given exam.
      *
      * @param examId the id of the exam
