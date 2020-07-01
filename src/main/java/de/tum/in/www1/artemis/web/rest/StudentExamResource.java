@@ -90,6 +90,32 @@ public class StudentExamResource {
     }
 
     /**
+     * PATCH /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime : Update the working time of the student exam
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the id of the student exam to find
+     * @param workingTime   the new working time
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestBody Integer workingTime) {
+        log.debug("REST request to update the working time of student exam : {}", studentExamId);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+        if (workingTime < 0) {
+            return badRequest();
+        }
+        StudentExam studentExam = studentExamService.findOne(studentExamId);
+        studentExam.setWorkingTime(workingTime);
+        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
