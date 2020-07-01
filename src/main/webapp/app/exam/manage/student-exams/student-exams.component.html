@@ -6,7 +6,8 @@
             </h2>
         </div>
         <div class="ml-auto d-flex">
-            <button class="btn btn-primary" style="height: 40px;" (click)="handleGenerateStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+            <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
+            <button class="btn btn-primary ml-1" style="height: 40px;" (click)="handleGenerateStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
                 <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
             </button>

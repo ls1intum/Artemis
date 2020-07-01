@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { forkJoin } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -22,6 +24,7 @@ export class StudentExamsComponent implements OnInit {
     studentExams: StudentExam[];
     course: Course;
     exam: Exam;
+    hasStudentsWithoutExam: boolean;
 
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -49,16 +52,21 @@ export class StudentExamsComponent implements OnInit {
 
     private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
-            this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((res) => {
-                this.setStudentExams(res.body);
-            });
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
-            this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse) => {
-                this.exam = examResponse.body!;
+
+            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(tap((res) => this.setStudentExams(res.body)));
+
+            const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(tap((examResponse) => (this.exam = examResponse.body!)));
+
+            // Calculate hasStudentsWithoutExam only when both observables emitted
+            forkJoin(studentExamObservable, examObservable).subscribe(() => {
+                this.isLoading = false;
+                if (this.exam.registeredUsers) {
+                    this.hasStudentsWithoutExam = this.studentExams.length < this.exam.registeredUsers.length;
+                }
             });
-            this.isLoading = false;
         });
     }
 
