@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -415,11 +416,14 @@ public class ExamResource {
     }
 
     /**
-     * DELETE /courses/:courseId/exams/:examId/students/:studentLogin : Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more
+     * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
+     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
+     * Also deletes
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
      * @param studentLogin the login of the user who should lose student access
+     * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
@@ -445,19 +449,25 @@ public class ExamResource {
         // still have access to the course.
         examRepository.save(exam);
 
-        var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
+        // The student exam might not exist
+        try {
+            var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
 
-        // Optionally delete participations and submissions
-        if (withParticipationsAndSubmission) {
-            List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
-                    studentExam.getExercises());
-            for (var participation : participations) {
-                participationService.delete(participation.getId(), true, true);
+            // Optionally delete participations and submissions
+            if (withParticipationsAndSubmission) {
+                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
+                        studentExam.getExercises());
+                for (var participation : participations) {
+                    participationService.delete(participation.getId(), true, true);
+                }
             }
-        }
 
-        // Delete the student exam
-        studentExamService.deleteStudentExam(studentExam.getId());
+            // Delete the student exam
+            studentExamService.deleteStudentExam(studentExam.getId());
+        }
+        catch (EntityNotFoundException e) {
+            log.debug("Delete student from exam: Student exam for user " + student.getId() + " does not exist in exam " + exam.getId());
+        }
 
         return ResponseEntity.ok().body(null);
     }
