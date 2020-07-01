@@ -324,6 +324,38 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/:courseId/exams/:examId/generate-missing-student-exams:
+     * Generates exams for students, who don't have an individual exam yet.
+     * They are created randomly based on the exam configuration and the exercise groups.
+     *
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to generate missing student exams for exam {}", examId);
+
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        List<StudentExam> studentExams = examService.generateMissingStudentExams(examId);
+
+        // we need to break a cycle for the serialization
+        for (StudentExam studentExam : studentExams) {
+            studentExam.getExam().setRegisteredUsers(null);
+            studentExam.getExam().setExerciseGroups(null);
+            studentExam.getExam().setStudentExams(null);
+        }
+
+        log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
+        return ResponseEntity.ok().body(studentExams);
+    }
+
+    /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
      * for all the student exams belonging to the exam
      *
