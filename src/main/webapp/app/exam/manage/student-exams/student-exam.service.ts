@@ -32,4 +32,15 @@ export class StudentExamService {
     findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
         return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams`, { observe: 'response' });
     }
+
+    /**
+     * Update the working time of the given student exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param studentExamId The id of the student exam to get.
+     * @param workingTime The working time in seconds.
+     */
+    updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
+        return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/studentExams/${studentExamId}/workingTime`, workingTime, { observe: 'response' });
+    }
 }

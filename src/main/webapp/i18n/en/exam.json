@@ -170,7 +170,9 @@
             "reviewer": "Reviewer",
             "openSubmission": "Open Submission",
             "openAssessment": " Open Assessment",
-            "cancelAssessment": " Cancel Assessment"
+            "cancelAssessment": " Cancel Assessment",
+            "workingTimeCouldNotBeSaved": "The working time could not be saved.",
+            "saveWorkingTimeSuccessful": "The working time was saved successfully."
         }
     }
 }

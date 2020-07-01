@@ -171,10 +171,7 @@ export class ExerciseGroupsComponent implements OnInit {
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
             (res) => (this.exerciseGroups = res.body),
-            (err) => {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
-                console.log(err);
-            },
+            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
     }
 }

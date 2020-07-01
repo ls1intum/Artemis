@@ -133,10 +133,8 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Set submit button text depending on component state
         if (this.isImport) {
             this.submitButtonTitle = 'entity.action.import';
-        } else if (this.textExercise.id) {
-            this.submitButtonTitle = 'entity.action.save';
         } else {
-            this.submitButtonTitle = 'entity.action.generate';
+            this.submitButtonTitle = 'entity.action.save';
         }
     }
 
