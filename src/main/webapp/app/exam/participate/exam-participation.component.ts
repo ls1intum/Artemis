@@ -216,6 +216,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }, 1000);
     }
 
+    examEnded() {
+        this.triggerSave(false, true);
+        window.clearInterval(this.autoSaveInterval);
+    }
+
     /**
      * check if exam is over
      */
