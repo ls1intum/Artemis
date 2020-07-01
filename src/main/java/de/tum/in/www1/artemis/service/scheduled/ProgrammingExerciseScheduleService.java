@@ -25,9 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -53,36 +51,45 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ParticipationService participationService;
 
+    private final ExamService examService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, Optional<VersionControlService> versionControlService,
-            ParticipationService participationService) {
+            ParticipationService participationService, ExamService examService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.versionControlService = versionControlService;
         this.participationService = participationService;
+        this.examService = examService;
         this.env = env;
     }
 
     @PostConstruct
     @Override
     public void scheduleRunningExercisesOnStartup() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            // only execute this on production server, i.e. when the prod profile is active
-            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-            return;
+        try {
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
+            SecurityUtils.setAuthorizationObject();
+            // TODO: also take exercises with manual assessments into account here
+            List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
+                    .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
+            // for exams (TODO take info account that the individual due dates can be after the exam end date)
+            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithExam.forEach(this::scheduleExamExercise);
+            log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size()
+                    + " programming exercises with a buildAndTestAfterDueDate.");
         }
-        SecurityUtils.setAuthorizationObject();
-        // TODO: also take exercises with manual assessments into account here
-        List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
-                .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-        programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
-        // for exams (TODO take info account that the individual due dates can be after the exam end date)
-        List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
-        programmingExercisesWithExam.forEach(this::scheduleExamExercise);
-        log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
+        catch (Exception e) {
+            log.error("Failed to start ProgrammingExerciseScheduleService", e);
+        }
     }
 
     /**
@@ -103,11 +110,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
-        if (isExamExercise(exercise)) {
-            scheduleExamExercise(exercise);
+        try {
+            if (isExamExercise(exercise)) {
+                scheduleExamExercise(exercise);
+            }
+            else {
+                scheduleRegularExercise(exercise);
+            }
         }
-        else {
-            scheduleRegularExercise(exercise);
+        catch (Exception e) {
+            log.error("Failed to schedule exercise " + exercise.getId(), e);
         }
     }
 
@@ -120,18 +132,26 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExamExercise(ProgrammingExercise exercise) {
+        var exam = exercise.getExerciseGroup().getExam();
+        var visibleDate = exam.getVisibleDate();
+        var startDate = exam.getStartDate();
+        if (visibleDate == null || startDate == null) {
+            log.error("Programming exercise {} for exam {} cannot be scheduled properly, visible date is {}, start date is {}", exercise.getId(), exam.getId(), visibleDate,
+                    startDate);
+            return;
+        }
         var releaseDate = getExamProgrammingExerciseReleaseDate(exercise);
         if (releaseDate.isAfter(ZonedDateTime.now())) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositoriesForExam(exercise))));
         }
-        else {
+        else if (examService.getLatestIndiviudalExamEndDate(exam).isBefore(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE,
                     Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositoriesForExam(exercise))));
         }
 
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         }
         else {
@@ -248,7 +268,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
         // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
-        var participationsGroupedByDueDate = individualDueDates.stream().collect(Collectors.groupingBy(Tuple::getX, Collectors.mapping(Tuple::getY, Collectors.toSet())));
+        var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.getX() != null)
+                .collect(Collectors.groupingBy(Tuple::getX, Collectors.mapping(Tuple::getY, Collectors.toSet())));
         // 2. Transform those groups into lock-repository tasks with times
         var tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
             Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation);
@@ -268,6 +289,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // Should we take the exercise's own release date more into account?
         // using visible date here because unlocking will take some time, see delay below.
         var releaseDate = exercise.getExerciseGroup().getExam().getVisibleDate();
+        if (releaseDate == null) {
+            releaseDate = exercise.getExerciseGroup().getExam().getStartDate();
+        }
         if (releaseDate == null) {
             releaseDate = exercise.getReleaseDate();
         }

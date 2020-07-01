@@ -170,10 +170,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get falseName(): boolean {
-        return this.enteredName !== this.accountName;
+        return this.enteredName.trim() !== this.accountName.trim();
     }
 
     get inserted(): boolean {
-        return this.enteredName !== '';
+        return this.enteredName.trim() !== '';
     }
 }
