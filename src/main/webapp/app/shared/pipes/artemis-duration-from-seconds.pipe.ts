@@ -3,7 +3,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     /**
-     * Convert seconds to a human-readable duration format.
+     * Convert seconds to a human-readable duration format (mm:ss).
      * @param seconds {number}
      */
     transform(seconds: number): string {

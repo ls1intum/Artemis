@@ -8,6 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -29,6 +30,7 @@ export class StudentExamDetailComponent implements OnInit {
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -47,10 +49,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     loadAll() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.route.data.subscribe(({ studentExam }) => {
-            this.studentExam = studentExam;
-            this.setWorkingTime();
-        });
+        this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
@@ -88,9 +87,25 @@ export class StudentExamDetailComponent implements OnInit {
      * Save the defined working time
      */
     saveWorkingTime() {
-        console.log(this.workingTimeSeconds);
+        this.isSavingWorkingTime = true;
         const seconds = this.workingTimeMinutes * 60 + this.workingTimeSeconds;
-        // TODO
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam.id, this.studentExam.id, seconds).subscribe(
+            (res) => {
+                if (res.body) {
+                    this.setStudentExam(res.body);
+                }
+                this.isSavingWorkingTime = false;
+            },
+            () => {
+                this.alertService.error('artemisApp.studentExamDetail.workingTimeCouldNotBeSaved');
+                this.isSavingWorkingTime = false;
+            },
+        );
+    }
+
+    private setStudentExam(studentExam: StudentExam) {
+        this.studentExam = studentExam;
+        this.setWorkingTime();
     }
 
     private setWorkingTime() {

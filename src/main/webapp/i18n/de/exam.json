@@ -169,7 +169,8 @@
             "reviewer": "Reviewer",
             "openSubmission": "Einreichung öffnen",
             "openAssessment": " Bewertung öffnen",
-            "cancelAssessment": " Bewertung abbrechen"
+            "cancelAssessment": " Bewertung abbrechen",
+            "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden"
         }
     }
 }
