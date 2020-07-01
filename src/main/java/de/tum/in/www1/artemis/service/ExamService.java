@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -50,13 +51,16 @@ public class ExamService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ExamQuizService examQuizService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
+        this.examQuizService = examQuizService;
     }
 
     @Autowired
@@ -420,8 +424,20 @@ public class ExamService {
         var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
-        // TODO: Implement logic
-        return 0;
+        // Collect all quiz exercises for the given exam
+        Set<QuizExercise> quizExercises = new HashSet<>();
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof QuizExercise) {
+                    quizExercises.add((QuizExercise) exercise);
+                }
+            }
+        }
+
+        // Evaluate all quizzes for that exercise
+        quizExercises.forEach(examQuizService::evaluateQuiz);
+
+        return quizExercises.size();
     }
 
     /**
