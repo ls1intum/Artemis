@@ -38,18 +38,32 @@ export class ExamParticipationSummaryComponent {
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
-    getSubmissionForExercise(exercise: Exercise): Submission {
-        return exercise.studentParticipations[0].submissions[0];
+    getSubmissionForExercise(exercise: Exercise): Submission | null {
+        if (
+            exercise &&
+            exercise.studentParticipations &&
+            exercise.studentParticipations[0] &&
+            exercise.studentParticipations[0].submissions &&
+            exercise.studentParticipations[0].submissions[0]
+        ) {
+            return exercise.studentParticipations[0].submissions[0];
+        } else {
+            return null;
+        }
     }
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
-    getParticipationForProgrammingExercise(exercise: Exercise): Participation {
-        return exercise.studentParticipations[0];
+    getParticipationForExercise(exercise: Exercise): Participation | null {
+        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
+            return exercise.studentParticipations[0];
+        } else {
+            return null;
+        }
     }
 
     /**

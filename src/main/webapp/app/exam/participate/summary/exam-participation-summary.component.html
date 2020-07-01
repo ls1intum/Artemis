@@ -28,29 +28,35 @@
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
-            <!-- Text Exercise -->
-            <ng-container *ngIf="exercise.type === TEXT">
-                <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+            <!-- Show submission of student - if no submission found -> display that student did not participate -->
+            <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise); else noSubmission">
+                <!-- Text Exercise -->
+                <ng-container *ngIf="exercise.type === TEXT">
+                    <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+                </ng-container>
+                <!-- Modeling Exercise -->
+                <ng-container *ngIf="exercise.type === MODELING">
+                    <jhi-modeling-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+                </ng-container>
+                <!-- Quiz Exercise -->
+                <ng-container *ngIf="exercise.type === QUIZ">
+                    <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
+                </ng-container>
+                <!-- Programming Exercise -->
+                <ng-container *ngIf="exercise.type === PROGRAMMING">
+                    <jhi-programming-exam-summary
+                        [exercise]="exercise"
+                        [participation]="getParticipationForExercise(exercise)"
+                        [submission]="getSubmissionForExercise(exercise)"
+                    ></jhi-programming-exam-summary>
+                </ng-container>
+                <!-- File Upload Exercise -->
+                <ng-container *ngIf="exercise.type === FILE_UPLOAD">
+                    <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+                </ng-container>
             </ng-container>
-            <!-- Modeling Exercise -->
-            <ng-container *ngIf="exercise.type === MODELING">
-                <jhi-modeling-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
-            </ng-container>
-            <!-- Quiz Exercise -->
-            <ng-container *ngIf="exercise.type === QUIZ">
-                <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
-            </ng-container>
-            <!-- Programming Exercise -->
-            <ng-container *ngIf="exercise.type === PROGRAMMING">
-                <jhi-programming-exam-summary
-                    [exercise]="exercise"
-                    [participation]="getParticipationForProgrammingExercise(exercise)"
-                    [submission]="getSubmissionForExercise(exercise)"
-                ></jhi-programming-exam-summary>
-            </ng-container>
-            <!-- File Upload Exercise -->
-            <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+            <ng-container #noSubmission>
+                You didn't submit any solution for this exercise
             </ng-container>
         </div>
     </div>
