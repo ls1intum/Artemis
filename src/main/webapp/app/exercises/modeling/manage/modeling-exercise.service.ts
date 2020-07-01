@@ -8,7 +8,6 @@ import { ModelingExercise } from '../../../entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
