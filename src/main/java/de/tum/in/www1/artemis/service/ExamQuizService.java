@@ -45,14 +45,34 @@ public class ExamQuizService {
         this.quizStatisticService = quizStatisticService;
     }
 
-    // TODO: @sleiss JavaDoc
+    /**
+     * Evaluate the given quiz exercise by evaluate the submission for each participation (there is only one for each participation in exams)
+     * and update the statistics with the generated results.
+     * @param quizExercise the QuizExercise that should be evaluated
+     */
     public void evaluateQuiz(@NotNull QuizExercise quizExercise) {
+        // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
+        // they can be evaluated
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
         Set<Result> createdResults = evaluateSubmissionsAndSaveInDB(quizExercise);
         quizStatisticService.updateStatistics(createdResults, quizExercise);
     }
 
-    // TODO: @sleiss JavaDoc
+    /**
+     * // @formatter:off
+     * Evaluate the given quiz exercise by performing the following actions for each participation:
+     * 1. Get the submission for each participation (there should be only one as in exam mode, the submission gets created upfront and will be updated)
+     * - If no submission is found, print a warning and continue as we cannot evaluate that submission
+     * - If more than one submission is found, select one of them
+     * 2. mark submission and participation as evaluated
+     * 3. Create a new result for the selected submission and calculate scores
+     * 4. Save the updated submission & participation and the newly created result
+     *
+     * After processing all participations, the created results will be returned for further processing
+     * // @formatter:on
+     * @param quizExercise
+     * @return
+     */
     private Set<Result> evaluateSubmissionsAndSaveInDB(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         Set<StudentParticipation> studentParticipations = quizExercise.getStudentParticipations();
@@ -74,11 +94,9 @@ public class ExamQuizService {
                 else {
                     quizSubmission = (QuizSubmission) submissions.iterator().next();
                 }
+
+                // Update attributes for submission and participations
                 quizSubmission.setType(SubmissionType.TIMEOUT);
-
-                // Create Participation and Result and save to Database (DB Write)
-                // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-
                 participation.setInitializationState(InitializationState.FINISHED);
 
                 // create new result
