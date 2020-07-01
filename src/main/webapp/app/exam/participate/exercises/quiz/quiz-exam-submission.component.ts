@@ -59,6 +59,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
+    onActivate(): void {}
+
     /**
      * Initialize the selections / mappings for each question with an empty array
      */

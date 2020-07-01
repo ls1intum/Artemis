@@ -7,7 +7,7 @@
                 "maxPoints": "max. Punkte: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "ZUSAMMENFASSUNG",
+                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren"
             },
             "title": "Klausur",
@@ -49,6 +49,7 @@
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "points": "Punkte",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Möchtest du sicher fortfahren?"
         },

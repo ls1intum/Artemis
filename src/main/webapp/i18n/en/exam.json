@@ -7,7 +7,7 @@
                 "maxPoints": "max. Points: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "SUMMARY",
+                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
                 "exportPDF": "Export PDF"
             },
             "title": "Exam",
@@ -49,6 +49,7 @@
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "points": "points",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure to continue?"
         },
