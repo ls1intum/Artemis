@@ -41,7 +41,8 @@
                     <th></th>
                     <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <th>{{ exerciseGroup.maxPoints }}</th>
+                        <!-- Score in den einzelnen Gruppen immer gleich? -->
+                        <th></th>
                     </ng-container>
                     <th>{{ exam.maxPoints }}</th>
                 </tr>
@@ -50,7 +51,6 @@
                     <th></th>
                     <th></th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <!-- TODO average von groups berechnen -->
                         <th>{{ calculateExerciseGroupAverage(exerciseGroup) }}</th>
                     </ng-container>
                     <th>{{ calculateTotalAverage() }}</th>
@@ -60,7 +60,7 @@
                 <tr *ngFor="let row of rows">
                     <td>{{ row.name }}</td>
                     <td>{{ row.login }}</td>
-                    <td>{{ row.registrationNumber }}</td>
+                    <td>{{ row.registrationNumber ? row.registrationNumber : '-' }}</td>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                         <td>{{ row.exerciseGroupToExerciseResult[exerciseGroup.id] ? calculatePoints(row, exerciseGroup) : '-' }}</td>
                     </ng-container>
