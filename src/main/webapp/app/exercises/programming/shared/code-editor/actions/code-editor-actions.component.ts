@@ -98,7 +98,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     onRefresh() {
         if (this.commitState !== CommitState.CLEAN || this.editorState !== EditorState.CLEAN) {
             const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
-            modal.componentInstance.didClose.subscribe(() => {
+            modal.componentInstance.shouldRefresh.subscribe(() => {
                 this.waitOnRefresh(this.repositoryService.resetRepository());
             });
         } else {
