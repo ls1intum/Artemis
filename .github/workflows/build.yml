@@ -26,10 +26,6 @@ env:
   CI: true
 
 jobs:
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "${{ toJson(github) }}"
   build:
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +62,7 @@ jobs:
         name: Artemis.war
         path: build/libs/Artemis.war
     - name: Upload Release Artifact
-      if: github.event == 'release'
+      if: github.event_name == 'release' && github.event.action == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
