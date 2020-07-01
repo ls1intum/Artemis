@@ -4,10 +4,9 @@
     </div>
     <div class="conflict-modal__body">
         <jhi-alert-error></jhi-alert-error>
-        <div jhiTranslate="artemisApp.editor.refresh.refreshExplanationLong"></div>
         <span class="conflict-modal__body__warning">
             <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.refresh.refreshWarning"></span>
+            <div jhiTranslate="artemisApp.editor.refresh.refreshExplanationLong"></div>
         </span>
     </div>
     <div class="conflict-modal__footer">
@@ -15,7 +14,7 @@
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="conflict-modal__footer__submit" [disabled]="!confirmForm.valid">
-            <fa-icon [icon]="'times'"></fa-icon><span jhiTranslate="artemisApp.editor.refresh.preformRefresh">Refresh Files</span>
+            <fa-icon [icon]="'times'"></fa-icon><span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh Files</span>
         </button>
     </div>
 </form>

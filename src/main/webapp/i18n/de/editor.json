@@ -50,8 +50,7 @@
             "refresh": {
                 "performRefresh": "Aktualisieren",
                 "refreshExplanationShort": "Aktualisiere alle Dateien aus deinem Repository.",
-                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben.",
-                "refreshWarning": "Es werden alle ungespeicherten Änderungen im Online Editor gelöscht!"
+                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
                 "fileBrowser": "Datei Browser",

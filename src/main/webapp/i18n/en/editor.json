@@ -53,8 +53,7 @@
             "refresh": {
                 "performRefresh": "Refresh files",
                 "refreshExplanationShort": "Refresh and load all files from your repository.",
-                "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server.",
-                "refreshWarning": "This will delete all unsaved and uncommitted changes in the online editor!"
+                "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
             "fileBrowser": {
                 "fileBrowser": "File browser",

@@ -92,5 +92,4 @@ export type DomainChange = DomainParticipationChange | DomainTestRepositoryChang
 export enum GitConflictState {
     CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',
     OK = 'OK',
-    REFRESH = 'REFRESH',
 }

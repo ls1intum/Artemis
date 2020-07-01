@@ -90,7 +90,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+        if (
+            changes.commitState &&
+            ((changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
+                (changes.commitState.previousValue === CommitState.REFRESHING && this.commitState !== CommitState.REFRESHING))
+        ) {
             this.fileSession = {};
             if (this.annotationChange) {
                 this.annotationChange.unsubscribe();
@@ -104,7 +108,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
-        } else if (changes.selectedFile && this.selectedFile) {
+        } else if ((changes.selectedFile && this.selectedFile) || (changes.commitState && changes.commitState.previousValue === CommitState.REFRESHING)) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!this.fileSession[this.selectedFile]) {

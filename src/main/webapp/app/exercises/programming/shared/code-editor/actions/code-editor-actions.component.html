@@ -23,12 +23,7 @@
         class="btn btn-primary navbar-btn mr-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
-            disableActions ||
-            isBuilding ||
-            editorState === EditorState.SAVING ||
-            commitState === CommitState.REFRESHING ||
-            editorState === EditorState.UNSAVED_CHANGES ||
-            commitState === CommitState.COMMITTING
+            disableActions || isBuilding || commitState === CommitState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING
         "
         (click)="onRefresh()"
         data-toggle="tooltip"

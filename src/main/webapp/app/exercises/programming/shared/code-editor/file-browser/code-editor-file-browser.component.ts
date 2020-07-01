@@ -122,9 +122,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
             if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
-            } else if (gitConflictState === GitConflictState.REFRESH) {
-                gitConflictState = GitConflictState.OK;
-                this.initializeComponent();
             }
             this.gitConflictState = gitConflictState;
         });
@@ -148,7 +145,11 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+        if (
+            changes.commitState &&
+            ((changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
+                (changes.commitState.previousValue === CommitState.REFRESHING && this.commitState !== CommitState.REFRESHING))
+        ) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;

@@ -81,9 +81,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             } else if (this.commitState !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
                 setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
-            } else if (gitConflictState === GitConflictState.REFRESH) {
-                // Case c: Repository was refreshed.
-                setTimeout(() => (this.commitState = CommitState.CLEAN), 0);
             }
         });
         this.submissionSubscription = this.submissionService
@@ -100,14 +97,20 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     onRefresh() {
         if (this.commitState !== CommitState.CLEAN || this.editorState !== EditorState.CLEAN) {
-            this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
-        } else {
-            this.commitState = CommitState.REFRESHING;
-            this.repositoryService.pull().subscribe(() => {
-                this.commitState = CommitState.CLEAN;
-                this.conflictService.notifyConflictState(GitConflictState.REFRESH);
+            const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
+            modal.componentInstance.didClose.subscribe(() => {
+                this.waitOnRefresh(this.repositoryService.resetRepository());
             });
+        } else {
+            this.waitOnRefresh(this.repositoryService.pull());
         }
+    }
+
+    waitOnRefresh(refreshOperation: Observable<any>) {
+        this.commitState = CommitState.REFRESHING;
+        refreshOperation.subscribe(() => {
+            this.commitState = CommitState.CLEAN;
+        });
     }
 
     onSave() {
