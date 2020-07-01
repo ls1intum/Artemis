@@ -138,7 +138,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
         // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourseForExam(this.exercise);
+        const course = this.exercise?.course ? this.exercise?.course : this.exercise?.exerciseGroup?.exam?.course;
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course!);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();

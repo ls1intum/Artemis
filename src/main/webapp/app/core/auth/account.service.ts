@@ -13,7 +13,6 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise } from 'app/entities/exercise.model';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -169,11 +168,6 @@ export class AccountService implements IAccountService {
 
     isAtLeastInstructorInCourse(course: Course) {
         return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
-    }
-
-    isAtLeastInstructorInCourseForExam(exercise: Exercise) {
-        const course = exercise.course ? exercise.course : exercise.exerciseGroup?.exam?.course;
-        return this.hasGroup(course!.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
     isAdmin(): boolean {
