@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, Input, HostListener } from '@angular/core';
 import interact from 'interactjs';
 
 /**
@@ -20,6 +20,7 @@ import interact from 'interactjs';
 export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
+    @Input() isExerciseParticipation = false;
 
     /**
      * Performed after full initialization of the view.
@@ -33,7 +34,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
                     // Set maximum width
                     interact.modifiers!.restrictSize({
                         min: { width: 215, height: 0 },
-                        max: { width: 1000, height: 2000 },
+                        max: { width: 750, height: 2000 },
                     }),
                 ],
                 inertia: true,
@@ -48,5 +49,13 @@ export class ResizeableContainerComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    // Make right side always expanded for smaller screens
+    @HostListener('window:resize', ['$event'])
+    onWindowResize(event: any) {
+        if (event.target.innerWidth <= 992) {
+            this.collapsed = false;
+        }
     }
 }

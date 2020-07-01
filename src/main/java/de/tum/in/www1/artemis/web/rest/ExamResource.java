@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +19,15 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -56,8 +59,10 @@ public class ExamResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -65,6 +70,7 @@ public class ExamResource {
         this.examAccessService = examAccessService;
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -88,6 +94,11 @@ public class ExamResource {
         }
 
         if (!exam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
+        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || !exam.getVisibleDate().isBefore(exam.getStartDate())
+                || !exam.getStartDate().isBefore(exam.getEndDate())) {
             return conflict();
         }
 
@@ -131,6 +142,11 @@ public class ExamResource {
             return conflict();
         }
 
+        if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null
+                || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate()) || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, updatedExam.getId());
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -138,33 +154,51 @@ public class ExamResource {
 
         // Make sure that the original references are preserved.
         Exam originalExam = examService.findOne(updatedExam.getId());
+
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
         Exam result = examService.save(updatedExam);
+
+        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) || !Objects.equals(originalExam.getStartDate(), updatedExam.getStartDate())) {
+            // get all exercises
+            Exam examWithExercises = examService.findOneWithExerciseGroupsAndExercises(result.getId());
+            // for all programming exercises in the exam, send their ids for scheduling
+            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
+                    .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId      the course to which the exam belongs
-     * @param examId        the exam to find
-     * @param withStudents  boolean flag whether to include all students registered for the exam
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @param withStudents          boolean flag whether to include all students registered for the exam
+     * @param withExerciseGroups    boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
+            @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
         Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        if (!withStudents) {
+        if (!withStudents && !withExerciseGroups) {
             return ResponseEntity.ok(examService.findOne(examId));
+        }
+        if (withStudents && withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId));
+        }
+        if (withExerciseGroups) {
+            return ResponseEntity.ok(examService.findOneWithExerciseGroupsAndExercises(examId));
         }
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
@@ -182,7 +216,11 @@ public class ExamResource {
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
         Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
-        return courseAccessFailure.orElseGet(() -> ResponseEntity.ok(examService.findAllByCourseId(courseId)));
+        return courseAccessFailure.orElseGet(() -> {
+            List<Exam> exams = examService.findAllByCourseId(courseId);
+            examService.setNumberOfRegisteredUsersForExams(exams);
+            return ResponseEntity.ok(exams);
+        });
     }
 
     /**
@@ -295,18 +333,18 @@ public class ExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Participation>> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
-        Optional<ResponseEntity<List<Participation>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        List<Participation> generatedParticipations = examService.startExercises(examId);
+        Integer noOfgeneratedParticipations = examService.startExercises(examId);
 
-        log.info("Generated {} participations for student exams of exam {}", generatedParticipations.size(), examId);
+        log.info("Generated {} participations for student exams of exam {}", noOfgeneratedParticipations, examId);
 
-        return ResponseEntity.ok().body(generatedParticipations);
+        return ResponseEntity.ok().body(noOfgeneratedParticipations);
     }
 
     /**
@@ -364,5 +402,61 @@ public class ExamResource {
         // still have access to the course.
         examRepository.save(exam);
         return ResponseEntity.ok().body(null);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/conduction : Get an exam for conduction.
+     *
+     * @param courseId  the id of the course
+     * @param examId    the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/conduction")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForConduction(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get exam {} for conduction", examId);
+        return examAccessService.checkAndGetCourseAndExamAccessForConduction(courseId, examId);
+    }
+
+    /**
+     * PUT /courses/:courseId/exams/:examId/exerciseGroupsOrder : Update the order of exercise groups. If the received
+     * exercise groups do not belong to the exam the operation is aborted.
+     *
+     * @param courseId              the id of the course
+     * @param examId                the id of the exam
+     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
+     * @return the list of exercise groups
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroupsOrder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
+        log.debug("REST request to update the order of exercise groups of exam : {}", examId);
+
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Exam exam = examService.findOneWithExerciseGroups(examId);
+
+        // Ensure that exactly as many exercise groups have been received as are currently related to the exam
+        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+            return forbidden();
+        }
+
+        // Ensure that all received exercise groups are already related to the exam
+        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
+            if (!exam.getExerciseGroups().contains(exerciseGroup)) {
+                return forbidden();
+            }
+            // Set the exam manually as it won't be included in orderedExerciseGroups
+            exerciseGroup.setExam(exam);
+        }
+
+        exam.setExerciseGroups(orderedExerciseGroups);
+        exam = examService.save(exam);
+
+        return ResponseEntity.ok(exam.getExerciseGroups());
     }
 }

@@ -244,7 +244,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_student_correctInitializationState() throws Exception {
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
@@ -265,7 +265,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_team_correctInitializationState() throws Exception {
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -318,7 +318,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin());
 
         // Start participation with original team
-        participationService.startExercise(exercise, team);
+        participationService.startExercise(exercise, team, false);
 
         // Update team with new student after participation has already started
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
@@ -356,7 +356,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, exercise.getProjectKey(), firstStudent);
 
         // Start participation with original team
-        participationService.startExercise(exercise, team);
+        participationService.startExercise(exercise, team, false);
 
         // Update team with removed student
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);

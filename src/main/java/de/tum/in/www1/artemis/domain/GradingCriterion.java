@@ -25,7 +25,7 @@ public class GradingCriterion implements Serializable {
     private Long id;
 
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties(value = "gradingCriterion")
+    @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 

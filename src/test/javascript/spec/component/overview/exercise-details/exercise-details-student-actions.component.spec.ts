@@ -56,7 +56,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         studentAssignedTeamIdComputed: true,
         studentParticipations: [],
     } as unknown) as ProgrammingExercise;
-    const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id } as ProgrammingExercise;
+    const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

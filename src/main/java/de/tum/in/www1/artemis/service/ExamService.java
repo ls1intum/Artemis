@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,12 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -45,11 +48,15 @@ public class ExamService {
 
     private final ParticipationService participationService;
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService) {
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     @Autowired
@@ -94,15 +101,40 @@ public class ExamService {
     }
 
     /**
+     * Get one exam by id with exercise groups and exercises.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NotNull
+    public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with exercise groups : {}", examId);
+        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
      * Get one exam by id with registered users.
      *
      * @param examId the id of the entity
-     * @return the exam with registered user
+     * @return the exam with registered users
      */
     @NotNull
     public Exam findOneWithRegisteredUsers(Long examId) {
         log.debug("Request to get exam with registered users : {}", examId);
         return examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+    }
+
+    /**
+     * Get one exam by id with registered users and exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with registered users and exercise groups
+     */
+    @NotNull
+    public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
+        log.debug("Request to get exam with registered users and registered students : {}", examId);
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
     }
 
     /**
@@ -162,6 +194,14 @@ public class ExamService {
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
 
+        // Check that the start and end date of the exam is set
+        if (exam.getStartDate() == null || exam.getEndDate() == null) {
+            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
+        }
+
+        // Determine the default working time by computing the duration between start and end date of the exam
+        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup.getExercises().isEmpty()) {
@@ -203,13 +243,14 @@ public class ExamService {
         for (User registeredUser : exam.getRegisteredUsers()) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
+            studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
             studentExam.setUser(registeredUser);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
-                // we get one random exercise from all preselected exercise groups
+                // We get one random exercise from all preselected exercise groups
                 studentExam.addExercise(selectRandomExercise(random, exerciseGroups.get(index)));
             }
 
@@ -282,6 +323,30 @@ public class ExamService {
         return notFoundStudentsDtos;
     }
 
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    public void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
+    }
+
     private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
         // Add all mandatory indices
         List<Integer> indices = new ArrayList<>(mandatoryIndices);
@@ -307,20 +372,32 @@ public class ExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return list of generated participations
+     * @return number of generated Participations
      */
-    @Transactional
-    // TODO IMPORTANT: do not use transactional here, but instead load the exam with all exercises, participations and submissions, in case they exist
-    public List<Participation> startExercises(Long examId) {
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+    public Integer startExercises(Long examId) {
+
+        var exam = examRepository.findWithStudentExamsExercisesParticipationsSubmissionsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        var studentExams = exam.getStudentExams();
+
         List<Participation> generatedParticipations = new ArrayList<>();
 
         for (StudentExam studentExam : studentExams) {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
-                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                // we start the exercise if no participation was found that was already fully initialized
+                if (exercise.getStudentParticipations().stream()
+                        .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
+                                && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
-                        var participation = participationService.startExercise(exercise, student);
+                        if (exercise instanceof ProgrammingExercise) {
+                            // Load lazy property
+                            final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+                            ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                        }
+                        // this will create initial (empty) submissions for quiz, text, modeling and file upload
+                        var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {
@@ -330,6 +407,62 @@ public class ExamService {
             }
         }
 
-        return generatedParticipations;
+        return generatedParticipations.size();
+    }
+
+    /**
+     * Returns the latest individual exam end date as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, the exam end date is returned.
+     *
+     * @param examId the id of the exam
+     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public ZonedDateTime getLatestIndiviudalExamEndDate(Long examId) {
+        return getLatestIndiviudalExamEndDate(findOne(examId));
+    }
+
+    /**
+     * Returns the latest individual exam end date as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, the exam end date is returned.
+     *
+     * @param exam the exam
+     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
+     */
+    public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
+        if (exam.getStartDate() == null)
+            return null;
+        var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
+        return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
+    }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     *
+     * @param examId the id of the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Long examId) {
+        return getAllIndiviudalExamEndDates(findOne(examId));
+    }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     *
+     * @param exam the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
+        if (exam.getStartDate() == null)
+            return null;
+        var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
+        return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 }

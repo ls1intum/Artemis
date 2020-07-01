@@ -15,7 +15,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -27,8 +27,8 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    readonly MODELING = ExerciseType.MODELING;
-    readonly CLASS_DIAGRAM = UMLDiagramType.ClassDiagram;
+    ExerciseType = ExerciseType;
+    AssessmentType = AssessmentType;
 
     course: Course;
     modelingExercise: ModelingExercise;
@@ -87,7 +87,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                if (res.body!.type === this.MODELING) {
+                if (res.body!.type === ExerciseType.MODELING) {
                     this.modelingExercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
                 } else {
@@ -137,7 +137,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     filterSubmissions(forceReload: boolean) {
-        if (this.isCompassActive(this.modelingExercise) && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
+        if (this.modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
             this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
                 (optimal: number[]) => {
                     this.nextOptimalSubmissionIds = optimal;
@@ -150,13 +150,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         } else {
             this.applyFilter();
         }
-    }
-
-    isCompassActive(modelingExercise: ModelingExercise) {
-        return (
-            modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
-            (modelingExercise.diagramType === UMLDiagramType.ClassDiagram || modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)
-        );
     }
 
     /**
@@ -185,7 +178,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * Reset optimality attribute of models
      */
     resetOptimality() {
-        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM) {
+        if (this.modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.modelingAssessmentService.resetOptimality(this.modelingExercise.id).subscribe(() => {
                 this.filterSubmissions(true);
             });

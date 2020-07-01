@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,15 +23,20 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.studentParticipations", "exercises.studentParticipations.submissions" })
-    Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsById(Long id);
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.studentParticipations", "exercises.studentParticipations.submissions" })
-    @Query("SELECT studentExam FROM StudentExam studentExam WHERE studentExam.user.id = :#{#userId} AND studentExam.exam.id = :#{#examId}")
-    Optional<StudentExam> findWithExercisesAndStudentParticipationsAndSubmissionsByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
+    Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     List<StudentExam> findByExamId(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithEagerExercisesById(Long id);
+
+    @Query("select distinct se from StudentExam se left join se.exercises e where e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
+    Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
+    @Query("select max(se.workingTime) from StudentExam se where se.exam.id = :#{#examId}")
+    Optional<Integer> findMaxWorkingTimeByExamId(@Param("examId") Long examId);
+
+    @Query("select distinct se.workingTime from StudentExam se where se.exam.id = :#{#examId}")
+    Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
 }

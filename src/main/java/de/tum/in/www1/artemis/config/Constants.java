@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import java.io.File;
 import java.util.regex.Pattern;
 
 /**
@@ -16,19 +15,6 @@ public final class Constants {
     public static final String DEFAULT_LANGUAGE = "en";
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
-
-    public static final String TEMP_FILEPATH = "uploads" + File.separator + "images" + File.separator + "temp" + File.separator;
-
-    public static final String DRAG_AND_DROP_BACKGROUND_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "backgrounds"
-            + File.separator;
-
-    public static final String DRAG_ITEM_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "drag-items" + File.separator;
-
-    public static final String COURSE_ICON_FILEPATH = "uploads" + File.separator + "images" + File.separator + "course" + File.separator + "icons" + File.separator;
-
-    public static final String LECTURE_ATTACHMENT_FILEPATH = "uploads" + File.separator + "attachments" + File.separator + "lecture" + File.separator;
-
-    public static final String FILE_UPLOAD_EXERCISES_FILEPATH = "uploads" + File.separator + "file-upload-exercises" + File.separator;
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -136,6 +122,14 @@ public final class Constants {
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
+
+    public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
+
+    public static final String HAZELCAST_QUIZ_PREFIX = "quiz-";
+
+    public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
+
+    public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     private Constants() {
     }

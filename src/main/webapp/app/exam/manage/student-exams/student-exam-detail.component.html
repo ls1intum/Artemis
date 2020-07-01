@@ -1,6 +1,8 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ courseTitle: course?.title }">Student exam ({{ course?.title }})</h4>
+        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam.title }">
+            Student exam ({{ studentExam.exam.title }})
+        </h4>
     </div>
     <div class="ml-auto d-flex" *ngIf="false">
         <button class="btn btn-primary" style="height: 35px;" (click)="downloadPdf()" *ngIf="course?.isAtLeastInstructor">
@@ -31,6 +33,11 @@
                 {{ student.visibleRegistrationNumber }}
             </li>
         </ol>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
+        {{ studentExam.workingTime | artemisDurationFromSeconds }}
     </div>
 
     <div class="mb-3">

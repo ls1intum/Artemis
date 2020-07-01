@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.time.Instant;
 import java.util.*;
 
@@ -76,7 +73,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, Set<User> users) {
+    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
@@ -102,10 +99,13 @@ public class BitbucketService extends AbstractVersionControlService {
                 else {
                     log.debug("Bitbucket user {} already exists", username);
                 }
-
             }
 
-            addMemberToRepository(repositoryUrl, user);
+            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+                // only add access to the repository if the offline IDE usage is NOT disallowed
+                // NOTE: null values are interpreted as offline IDE is allowed
+                addMemberToRepository(repositoryUrl, user);
+            }
         }
 
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));

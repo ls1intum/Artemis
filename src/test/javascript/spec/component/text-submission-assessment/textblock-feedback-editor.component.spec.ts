@@ -8,6 +8,7 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -35,6 +36,8 @@ describe('TextblockFeedbackEditorComponent', () => {
         component = fixture.componentInstance;
         component.textBlock = textBlock;
         component.feedback = Feedback.forText(textBlock);
+        component.feedback.gradingInstruction = new GradingInstruction();
+        component.feedback.gradingInstruction.usageCount = 0;
         compiled = fixture.debugElement.nativeElement;
         fixture.detectChanges();
     });

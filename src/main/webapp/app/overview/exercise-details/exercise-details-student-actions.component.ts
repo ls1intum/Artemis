@@ -40,6 +40,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
     @Input() showResult: boolean;
 
+    @Input() examMode: boolean;
+
     public repositoryPassword: string;
     public wasCopied = false;
     public useSsh = false;
@@ -132,6 +134,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
+     * check if offline IDE is allowed
+     * @return {boolean}
+     */
+    isOfflineIdeAllowed(): boolean {
+        return (this.exercise as ProgrammingExercise).allowOfflineIde;
+    }
+
+    /**
      * console log if copy fails
      */
     onCopyFailure() {
@@ -168,7 +178,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryClone');
+                        } else {
+                            this.jhiAlertService.success('artemisApp.exercise.personalRepositoryOnline');
+                        }
                     }
                 },
                 (error) => {

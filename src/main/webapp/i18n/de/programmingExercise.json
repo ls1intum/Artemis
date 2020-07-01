@@ -40,6 +40,10 @@
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
             "allowOnlineEditor": "Online Editor erlauben",
+            "onlineEditor": "Online Editor",
+            "allowOfflineIde": "Offline IDE erlauben",
+            "offlineIde": "Offline IDE",
+            "participationMode": "Teilnahme Modus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",

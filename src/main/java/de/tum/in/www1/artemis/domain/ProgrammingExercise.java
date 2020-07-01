@@ -48,8 +48,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
 
-    @Column(name = "allow_online_editor")
+    @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
+
+    @Column(name = "allow_offline_ide", table = "programming_exercise_details")
+    private Boolean allowOfflineIde;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
@@ -234,6 +237,19 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
+    public Boolean isAllowOfflineIde() {
+        return allowOfflineIde;
+    }
+
+    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+        return this;
+    }
+
+    public void setAllowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+    }
+
     public String getProjectKey() {
         return this.projectKey;
     }
@@ -266,7 +282,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Nullable
     @Override
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
                 return submission.getResult().isRated();

@@ -1,11 +1,11 @@
-import { CodeEditorContainer } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { OnDestroy, OnInit } from '@angular/core';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
+import { OnDestroy, OnInit, Component } from '@angular/core';
+import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -20,6 +20,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 
 /**
  * Enumeration specifying the repository type
@@ -42,7 +44,8 @@ export enum LOADING_STATE {
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
-export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+@Component({ template: '' })
+export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -75,6 +78,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private exerciseHintService: ExerciseHintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -93,7 +97,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route!.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
@@ -119,9 +123,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                             this.domainChangeSubscription = this.subscribeToDomainChange();
                         }
                     }),
+                    switchMap(() => {
+                        return this.loadExerciseHints();
+                    }),
                 )
                 .subscribe(
-                    () => (this.loadingState = LOADING_STATE.CLEAR),
+                    (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
+                        this.loadingState = LOADING_STATE.CLEAR;
+                    },
                     (err) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;
                         this.onError(err);
@@ -226,6 +236,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     /**
+     * Load exercise hints. Take them from the exercise if available.
+     */
+    private loadExerciseHints() {
+        if (!this.exercise.exerciseHints) {
+            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+        }
+        return of(this.exercise.exerciseHints);
+    }
+
+    /**
      * Set the selected participation domain based on a its id.
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
@@ -295,8 +315,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         }
         const assignmentParticipationId = this.exercise.studentParticipations[0].id;
         this.exercise.studentParticipations = [];
-        this.participationService
-            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+        this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError('participationCouldNotBeDeleted')),
                 tap(() => this.createAssignmentParticipation()),

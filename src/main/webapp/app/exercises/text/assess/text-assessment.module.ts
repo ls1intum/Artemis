@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { textAssessmentRoutes } from './text-assessment.route';
-import { TextSelectDirective } from './text-assessment-editor/text-select.directive';
 import { TextAssessmentEditorComponent } from './text-assessment-editor/text-assessment-editor.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
@@ -12,6 +11,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
@@ -23,8 +23,9 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         ArtemisComplaintsForTutorModule,
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
+        TextSharedModule,
     ],
-    declarations: [TextSelectDirective, TextAssessmentEditorComponent, TextAssessmentDashboardComponent, ResizableInstructionsComponent, HighlightedTextAreaComponent],
+    declarations: [TextAssessmentEditorComponent, TextAssessmentDashboardComponent, ResizableInstructionsComponent, HighlightedTextAreaComponent],
     exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
 export class ArtemisTextExerciseAssessmentModule {}

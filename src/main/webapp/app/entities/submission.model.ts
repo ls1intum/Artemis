@@ -35,6 +35,9 @@ export abstract class Submission implements BaseEntity {
 
     public language: Language | null;
 
+    // only used for exam to check if it is saved to server
+    public isSynced?: boolean;
+
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
     }

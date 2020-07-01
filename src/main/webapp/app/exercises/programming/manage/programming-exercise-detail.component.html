@@ -9,7 +9,7 @@
                 <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <button
                     type="submit"
-                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                 >
@@ -110,6 +110,10 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde">Allow Offline IDE</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.allowOfflineIde }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
                 <dd>

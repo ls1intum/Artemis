@@ -187,6 +187,9 @@ public class DatabaseUtilService {
     private StudentExamRepository studentExamRepository;
 
     @Autowired
+    private ExamSessionRepository examSessionRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     public void resetDatabase() {
@@ -214,6 +217,7 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
+        examSessionRepository.deleteAll();
         studentExamRepository.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
@@ -313,7 +317,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -517,9 +521,10 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addExam(Course course, User user, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.addUser(user);
+        exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
         examRepository.save(exam);
@@ -529,6 +534,15 @@ public class DatabaseUtilService {
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
+        return exam;
+    }
+
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
         examRepository.save(exam);
         return exam;
     }
@@ -548,24 +562,25 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public StudentExam addStudentExamWithExercisesAndParticipationAndSubmission(Exam exam, User user) {
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(8),
-                null);
-        GradingCriterion gradingCriterion = ModelFactory.generateGradingCriterion("title");
-        textExercise.addGradingCriteria(gradingCriterion);
-        textExercise.setGradingInstructions("this is a grading instruction");
-        textExercise.setSampleSolution("this is a sample solution");
-        textExercise = exerciseRepo.save(textExercise);
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime startDate, ZonedDateTime endDate) {
+        var assessmentDueDate = ZonedDateTime.now().plusDays(8);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        exam = examRepository.save(exam);
+        // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
+        var exerciseGroup1 = exam.getExerciseGroups().get(0);
+        var exerciseGroup2 = exam.getExerciseGroups().get(1);
 
-        Submission submission = ModelFactory.generateTextSubmission("", Language.ENGLISH, true);
-        addSubmission(textExercise, submission, user.getLogin());
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
+        textExercise1 = exerciseRepo.save(textExercise1);
+        textExercise2 = exerciseRepo.save(textExercise2);
 
-        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
-        studentExam.addExercise(textExercise);
-        studentExam.setUser(user);
-        studentExamRepository.save(studentExam);
-
-        return studentExam;
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup2, startDate, endDate);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup2, startDate, endDate);
+        quizExercise1 = exerciseRepo.save(quizExercise1);
+        quizExercise2 = exerciseRepo.save(quizExercise2);
+        return exam;
     }
 
     /**
@@ -704,16 +719,25 @@ public class DatabaseUtilService {
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+
         GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
+
+        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
+
         testCriterion.setExercise(exercise);
         var criteria = new ArrayList<GradingCriterion>();
         criteria.add(emptyCriterion);
         criteria.add(testCriterion);
+        criteria.add(testCriterion2);
         exercise.setGradingCriteria(criteria);
         return exercise.getGradingCriteria();
     }
@@ -931,9 +955,7 @@ public class DatabaseUtilService {
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
-
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
-
         return course;
     }
 
@@ -1503,6 +1525,17 @@ public class DatabaseUtilService {
     }
 
     @NotNull
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
+        quizExercise.addQuestions(createMultipleChoiceQuestion());
+        quizExercise.addQuestions(createDragAndDropQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions(null);
+        return quizExercise;
+    }
+
+    @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
@@ -1562,7 +1595,7 @@ public class DatabaseUtilService {
 
     /**
      * Generate submissions for a student for an exercise. Results are mixed.
-     * @param quizExercise QuizExercise th submissions are for
+     * @param quizExercise QuizExercise the submissions are for (we assume 3 questions here)
      * @param studentID ID of the student
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date

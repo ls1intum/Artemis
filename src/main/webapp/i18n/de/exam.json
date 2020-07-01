@@ -6,6 +6,10 @@
                 "duration": "Dauer: {{duration}} min",
                 "maxPoints": "max. Punkte: {{points}}"
             },
+            "examSummary": {
+                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
+                "exportPDF": "Als PDF exportieren"
+            },
             "title": "Klausur",
             "startExam": "Klausur starten",
             "summary": "Zusammenfassung",
@@ -16,7 +20,11 @@
             "nrOfStudents": "Anzahl der registrierten Studenten",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "exercise": "Aufgabe {{nr}}",
+            "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
+            "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "validation": {
+                "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
@@ -24,8 +32,24 @@
             }
         },
         "examParticipation": {
-            "connected": "Verbunden. Ihre Antworten werden alle 60s gespeichert.",
-            "disconnected": "Nicht verbunden. Gehen Sie online, um Ihre Änderungen auf dem Server zu speichern, aber Sie können weiterarbeiten!"
+            "timer": "Restzeit: ",
+            "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
+            "ideConnected": "Verbunden.",
+            "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
+            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du die Repository klonst.",
+            "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code Editor weiterarbeiten zu können.",
+            "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
+            "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
+            "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
+            "finishExam": "Klausur abgeben",
+            "progress": "Aufgabe {{ current }} von {{ all }}",
+            "progressSmall": "{{ current }}/{{ all }}",
+            "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
+            "submitProgrammingExercise": "Weiter",
+            "submitOtherExercise": "Speichern & Weiter",
+            "submitLastExercise": "Speichern",
+            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "points": "Punkte"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -39,11 +63,16 @@
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
+            "workingTime": "Bearbeitungszeit",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
             "id": "ID",
-            "exam": "Klausur"
+            "exam": "Klausur",
+            "studentExamGenerationSuccess": "{{number}} individuelle Klausuren erfolgreich generiert!",
+            "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
+            "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
+            "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",
@@ -114,8 +143,10 @@
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
+                "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
-                "addProgrammingExercise": "Programmieraufgabe hinzufügen"
+                "addProgrammingExercise": "Programmieraufgabe hinzufügen",
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -123,7 +154,7 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ courseTitle }})",
+            "studentExam": "Klausur ({{ examTitle }})",
             "exercises": "Aufgaben",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",

@@ -1,4 +1,4 @@
-import { OnDestroy } from '@angular/core';
+import { OnDestroy, Injectable } from '@angular/core';
 import { DomainChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -7,6 +7,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 /**
  * Service that can be extended to automatically receive updates on changed domains.
  */
+@Injectable({ providedIn: 'root' })
 export abstract class DomainDependentService implements OnDestroy {
     protected domain: DomainChange;
     protected domainChangeSubscription: Subscription;
