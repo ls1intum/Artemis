@@ -7,7 +7,7 @@
                 "maxPoints": "max. Punkte: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "ZUSAMMENFASSUNG",
+                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren"
             },
             "title": "Klausur",
@@ -51,7 +51,8 @@
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
-            "generateParticipationRetry": "Erneut versuchen"
+            "generateParticipationRetry": "Erneut versuchen",
+            "points": "Punkte"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

@@ -47,7 +47,7 @@ export class ExerciseHintStudentDialogComponent {
 })
 export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    exerciseHints: ExerciseHint[] | null;
+    @Input() exerciseHints: ExerciseHint[] | null;
     protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
@@ -56,14 +56,16 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
      * Fetches all exercise hints for an exercise from the server
      */
     ngOnInit() {
-        this.exerciseHintService
-            .findByExerciseId(this.exerciseId)
-            .pipe(
-                map(({ body }) => body),
-                tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
-                catchError(() => of()),
-            )
-            .subscribe();
+        if (!this.exerciseHints) {
+            this.exerciseHintService
+                .findByExerciseId(this.exerciseId)
+                .pipe(
+                    map(({ body }) => body),
+                    tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
+                    catchError(() => of()),
+                )
+                .subscribe();
+        }
     }
 
     /**

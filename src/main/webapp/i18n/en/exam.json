@@ -7,7 +7,7 @@
                 "maxPoints": "max. Points: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "SUMMARY",
+                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
                 "exportPDF": "Export PDF"
             },
             "title": "Exam",
@@ -51,7 +51,8 @@
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
-            "generateParticipationRetry": "Retry"
+            "generateParticipationRetry": "Retry",
+            "points": "points"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

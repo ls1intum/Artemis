@@ -19,29 +19,33 @@
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
-                <ng-container [ngSwitch]="activeExercise.type">
-                    <ng-container *ngIf="_reload">
-                        <jhi-quiz-submission-exam
-                            *ngSwitchCase="QUIZ"
-                            [exercise]="activeExercise"
-                            [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
-                        ></jhi-quiz-submission-exam>
-                        <jhi-text-editor-exam
-                            *ngSwitchCase="TEXT"
-                            [exercise]="activeExercise"
-                            [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
-                        ></jhi-text-editor-exam>
-                        <jhi-modeling-submission-exam
-                            *ngSwitchCase="MODELING"
-                            [exercise]="activeExercise"
-                            [studentSubmission]="activeExercise.studentParticipations[0].submissions[0]"
-                        ></jhi-modeling-submission-exam>
-                        <jhi-programming-submission-exam
-                            *ngSwitchCase="PROGRAMMING"
-                            [exercise]="activeExercise"
-                            [studentParticipation]="activeExercise.studentParticipations[0]"
-                            [courseId]="courseId"
-                        ></jhi-programming-submission-exam>
+                <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+                    <ng-container *ngIf="submissionComponentVisited[i]">
+                        <ng-container [ngSwitch]="exercise.type">
+                            <div [hidden]="i !== activeExerciseIndex">
+                                <jhi-quiz-submission-exam
+                                    *ngSwitchCase="QUIZ"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                ></jhi-quiz-submission-exam>
+                                <jhi-text-editor-exam
+                                    *ngSwitchCase="TEXT"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                ></jhi-text-editor-exam>
+                                <jhi-modeling-submission-exam
+                                    *ngSwitchCase="MODELING"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                ></jhi-modeling-submission-exam>
+                                <jhi-programming-submission-exam
+                                    *ngSwitchCase="PROGRAMMING"
+                                    [exercise]="exercise"
+                                    [studentParticipation]="exercise.studentParticipations[0]"
+                                    [courseId]="courseId"
+                                ></jhi-programming-submission-exam>
+                            </div>
+                        </ng-container>
                     </ng-container>
                 </ng-container>
             </ng-container>

@@ -1,11 +1,11 @@
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
 import { OnDestroy, OnInit, Component } from '@angular/core';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -20,6 +20,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 
 /**
  * Enumeration specifying the repository type
@@ -76,6 +78,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private exerciseHintService: ExerciseHintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -120,9 +123,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                             this.domainChangeSubscription = this.subscribeToDomainChange();
                         }
                     }),
+                    switchMap(() => {
+                        return this.loadExerciseHints();
+                    }),
                 )
                 .subscribe(
-                    () => (this.loadingState = LOADING_STATE.CLEAR),
+                    (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
+                        this.loadingState = LOADING_STATE.CLEAR;
+                    },
                     (err) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;
                         this.onError(err);
@@ -224,6 +233,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
             : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(map(({ body }) => body!));
+    }
+
+    /**
+     * Load exercise hints. Take them from the exercise if available.
+     */
+    private loadExerciseHints() {
+        if (!this.exercise.exerciseHints) {
+            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+        }
+        return of(this.exercise.exerciseHints);
     }
 
     /**

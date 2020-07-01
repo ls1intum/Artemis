@@ -30,6 +30,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.updateViewFromSubmission();
     }
 
+    onActivate(): void {}
+
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {
             // Updates the Apollon editor model state (view) with the latest modeling submission
