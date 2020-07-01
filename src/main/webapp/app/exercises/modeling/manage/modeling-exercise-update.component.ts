@@ -148,11 +148,13 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Sends a request to either update or create a modeling exercise
+     * Sends a request to either update, create or import a modeling exercise
      */
     save(): void {
         this.isSaving = true;
-        if (this.modelingExercise.id !== undefined) {
+        if (this.isImport) {
+            this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
+        } else if (this.modelingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;

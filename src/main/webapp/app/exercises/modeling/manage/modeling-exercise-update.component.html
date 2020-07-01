@@ -81,7 +81,14 @@
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
-            <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" (ngModelChange)="diagramTypeChanged()" id="field_diagramType">
+            <select
+                [disabled]="isImport || modelingExercise.id"
+                class="form-control"
+                name="diagramType"
+                [(ngModel)]="modelingExercise.diagramType"
+                (ngModelChange)="diagramTypeChanged()"
+                id="field_diagramType"
+            >
                 <option value="ClassDiagram">{{ 'artemisApp.DiagramType.ClassDiagram' | translate }}</option>
                 <option value="ActivityDiagram">{{ 'artemisApp.DiagramType.ActivityDiagram' | translate }}</option>
                 <option value="ObjectDiagram">{{ 'artemisApp.DiagramType.ObjectDiagram' | translate }}</option>
@@ -100,6 +107,7 @@
                     (ngModelChange)="modelingExercise.assessmentType = $event ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL"
                     class="form-check-input custom-control-input"
                     name="automaticAssessmentEnabled"
+                    [disabled]="isImport"
                 />
                 <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
             </div>
@@ -127,7 +135,7 @@
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
-            <ul *ngIf="modelingExercise.id && !isImport">
+            <ul>
                 <li *ngIf="modelingExercise.sampleSolutionModel">
                     <button
                         [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
@@ -147,7 +155,7 @@
             >
                 Create example solution
             </button>
-            <div class="alert alert-info" *ngIf="!modelingExercise.id" jhiTranslate="artemisApp.modelingExercise.exampleSolutionRequiresExercise">
+            <div class="alert alert-info" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSolutionRequiresExercise">
                 To create an example solution, you first need to finish creating the modeling exercise
             </div>
         </div>
@@ -168,6 +176,7 @@
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
                     <button
+                        *ngIf="!isImport"
                         [routerLink]="['/course-management', examCourseId, 'modeling-exercises', modelingExercise.id, 'example-submissions', exampleSubmission.id]"
                         class="btn btn-link"
                         type="button"
@@ -183,14 +192,14 @@
                         style="margin-left: 10px;"
                         title="An assessment is available"
                     ></fa-icon>
-                    <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
+                    <button *ngIf="!isImport" class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
                         <fa-icon [icon]="'ban'"></fa-icon>
                     </button>
                 </li>
             </ul>
 
             <button
-                *ngIf="modelingExercise.id"
+                *ngIf="modelingExercise.id && !isImport"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
@@ -198,14 +207,11 @@
                 Create example submission
             </button>
 
-            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise">
+            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the modeling exercise
             </div>
-            <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.modelingExercise.import.exampleSubmissionsRequireExercise">
-                To create an example submission, you first need to finish importing the modeling exercise
-            </div>
         </div>
-        <div class="form-group" *ngIf="modelingExercise.id">
+        <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
