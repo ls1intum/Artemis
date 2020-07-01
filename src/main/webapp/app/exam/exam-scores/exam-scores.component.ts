@@ -35,7 +35,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     options: Intl.NumberFormatOptions = { maximumFractionDigits: 1 }; // TODO: allow user to customize
     locale = getLang(); // default value, will be overridden by the current language of Artemis
 
-    constructor(private route: ActivatedRoute, private examService: ExamManagementService, private sortService: SortService, private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper,) {
+    constructor(
+        private route: ActivatedRoute,
+        private examService: ExamManagementService,
+        private sortService: SortService,
+        private languageService: JhiLanguageService,
+        private languageHelper: JhiLanguageHelper,
+    ) {
         this.predicate = 'id';
         this.reverse = false;
         this.locale = this.languageService.currentLang;
@@ -60,7 +66,32 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     calculatePoints(row: any, exerciseGroup: any) {
-        return (row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseAchievedScore * row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseMaxScore) / 100;
+        return this.round(
+            (row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseAchievedScore * row.exerciseGroupToExerciseResult[exerciseGroup.id].exerciseMaxScore) / 100,
+            1,
+        );
+    }
+
+    private round(value: any, exp: number) {
+        // helper function to make actually rounding possible
+        if (typeof exp === 'undefined' || +exp === 0) {
+            return Math.round(value);
+        }
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(exp % 1 === 0)) {
+            return NaN;
+        }
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
     calculateOverallPoints(row: any) {
@@ -79,7 +110,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             sum += this.calculateOverallPoints(this.rows[i]);
         }
 
-        return sum / this.rows.length;
+        return this.round(sum / this.rows.length, 1);
     }
 
     calculateExerciseGroupAverage(exerciseGroup: any) {
@@ -93,7 +124,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
 
         if (hasResult) {
-            return sum / this.rows.length;
+            return this.round(sum / this.rows.length, 1);
         } else {
             return '-';
         }
