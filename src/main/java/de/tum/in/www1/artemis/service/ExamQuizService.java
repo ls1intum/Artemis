@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -86,13 +85,12 @@ public class ExamQuizService {
                             quizExercise.getId());
                     continue;
                 }
-                else if (submissions.size() > 1) {
-                    log.warn("Found more than 1 submission for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
-                            quizExercise.getId());
-                    quizSubmission = (QuizSubmission) submissions.iterator().next();
-                }
                 else {
-                    quizSubmission = (QuizSubmission) submissions.iterator().next();
+                    List<Submission> submissionsList = new ArrayList<>(submissions);
+
+                    // Load submission with highest id
+                    submissionsList.sort(Comparator.comparing(Submission::getId).reversed());
+                    quizSubmission = (QuizSubmission) submissionsList.get(0);
                 }
 
                 // Update attributes for submission and participations
