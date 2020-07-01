@@ -76,7 +76,8 @@
                 "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
                 "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
                 "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden.",
-                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand."
+                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand.",
+                "notAllowedExam": "Du kannst (nicht mehr) abgeben"
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
