@@ -618,7 +618,6 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        // TODO Add correct status calculation for exam exercises
         for (Exercise exercise : course.getExercises()) {
 
             DueDateStat numberOfSubmissions;

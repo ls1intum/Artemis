@@ -546,6 +546,23 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard_notFound() throws Exception {
+        request.get("/api/courses/1/exam/1/for-exam-tutor-dashboard", HttpStatus.NOT_FOUND, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor6", roles = "TA")
+    public void testGetCourseForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Exam exam = course.getExams().iterator().next();
+        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        examRepository.save(exam);
+
+        request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllCoursesWithUserStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
