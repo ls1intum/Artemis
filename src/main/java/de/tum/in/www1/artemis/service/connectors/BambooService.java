@@ -825,7 +825,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (response != null) {
             for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
-                String logString = (String) logEntry.get("log");
+                String logString = (String) logEntry.get("unstyledLog");
                 boolean compilationErrorFound = false;
 
                 if (logString.contains("COMPILATION ERROR")) {
