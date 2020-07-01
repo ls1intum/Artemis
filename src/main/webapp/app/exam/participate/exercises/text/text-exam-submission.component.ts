@@ -52,7 +52,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     public hasUnsavedChanges(): boolean {
-        return this.studentSubmission.text !== this.answer;
+        return !this.studentSubmission.isSynced!;
     }
 
     public updateSubmissionFromView(): void {
@@ -80,6 +80,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onTextEditorInput(event: Event) {
+        this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
 }
