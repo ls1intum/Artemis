@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -7,9 +9,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,14 +16,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
@@ -59,8 +59,8 @@ public class ModelingExerciseResource {
     private final GradingCriterionService gradingCriterionService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
+            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
+            GroupNotificationService groupNotificationService, CompassService compassService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -300,7 +300,8 @@ public class ModelingExerciseResource {
 
         if (importedExercise.hasExerciseGroup()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
-        } else {
+        }
+        else {
             log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
@@ -311,8 +312,8 @@ public class ModelingExerciseResource {
         final var originalModelingExercise = optionalOriginalModelingExercise.get();
 
         if (!authCheckService.isAtLeastInstructorInCourse(originalModelingExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-                return forbidden();
+            log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            return forbidden();
         }
 
         final var newExercise = modelingExerciseImportService.importExercise(originalModelingExercise, importedExercise);
@@ -322,6 +323,6 @@ public class ModelingExerciseResource {
 
         modelingExerciseRepository.save((ModelingExercise) newExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
     }
 }

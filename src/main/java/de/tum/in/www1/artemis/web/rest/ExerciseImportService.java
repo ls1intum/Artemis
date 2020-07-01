@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.repository.*;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.repository.*;
 
 @Repository
 public abstract class ExerciseImportService {
@@ -25,8 +25,8 @@ public abstract class ExerciseImportService {
 
     protected final TextBlockRepository textBlockRepository;
 
-
-    public ExerciseImportService(JpaRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
+    public ExerciseImportService(JpaRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
@@ -42,7 +42,7 @@ public abstract class ExerciseImportService {
      * @return Returns the importedExercise. If the type casting fails, returns null.
      */
     @Transactional
-    public abstract Exercise importExercise (final Exercise templateExercise, final Exercise importedExercise);
+    public abstract Exercise importExercise(final Exercise templateExercise, final Exercise importedExercise);
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
         if (importedExercise.hasCourse()) {

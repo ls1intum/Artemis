@@ -1,21 +1,23 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.*;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashSet;
-import java.util.Set;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.repository.*;
 
 @Repository
 public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
-    public ModelingExerciseImportService(ModelingExerciseRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
+    public ModelingExerciseImportService(ModelingExerciseRepository exerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
         super(exerciseRepository, exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
     }
 
