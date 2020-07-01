@@ -110,7 +110,7 @@ public class StudentExamResource {
         if (workingTime < 0) {
             return badRequest();
         }
-        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        StudentExam studentExam = studentExamService.findOneWithExercisesAndExamSessions(studentExamId);
         studentExam.setWorkingTime(workingTime);
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
