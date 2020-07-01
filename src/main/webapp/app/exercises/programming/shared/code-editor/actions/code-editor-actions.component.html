@@ -24,10 +24,11 @@
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
             disableActions ||
-            commitState === CommitState.PULLING ||
+            isBuilding ||
+            editorState === EditorState.SAVING ||
+            commitState === CommitState.REFRESHING ||
             editorState === EditorState.UNSAVED_CHANGES ||
-            commitState === CommitState.COMMITTING ||
-            commitState === CommitState.COULD_NOT_BE_RETRIEVED
+            commitState === CommitState.COMMITTING
         "
         (click)="onRefresh()"
         data-toggle="tooltip"
@@ -38,7 +39,7 @@
             <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
         </span>
         <span *ngIf="commitState !== CommitState.REFRESHING"
-            ><fa-icon [icon]="['far', 'sync']"></fa-icon> <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span></span
+            ><fa-icon [icon]="['fas', 'sync']"></fa-icon> <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span></span
         >
     </button>
     <button
@@ -50,6 +51,7 @@
             disableActions ||
             editorState !== EditorState.UNSAVED_CHANGES ||
             commitState === CommitState.COMMITTING ||
+            commitState === CommitState.REFRESHING ||
             commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
             commitState === CommitState.UNDEFINED
         "
@@ -69,7 +71,10 @@
         class="guided-tour-submit-button btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
-            disableActions || editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
+            disableActions ||
+            isBuilding ||
+            editorState === EditorState.SAVING ||
+            (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
         "
         (click)="commit()"
         data-toggle="tooltip"
