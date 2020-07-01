@@ -219,7 +219,7 @@
                             Build plan
                         </button>
                         <button
-                            routerLink="/code-editor/{{ value.participation.id }}"
+                            routerLink="/courses/{{ course.id }}/programming-exercises/{{ exercise.id }}/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
