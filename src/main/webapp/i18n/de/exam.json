@@ -7,7 +7,7 @@
                 "maxPoints": "max. Punkte: {{points}}"
             },
             "examSummary": {
-                "summaryCapital": "ZUSAMMENFASSUNG",
+                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren"
             },
             "title": "Klausur",
@@ -37,7 +37,11 @@
         "examParticipation": {
             "timer": "Restzeit: ",
             "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
+            "ideConnected": "Verbunden.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
+            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du die Repository klonst.",
+            "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code Editor weiterarbeiten zu können.",
+            "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
             "finishExam": "Klausur abgeben",
@@ -45,8 +49,10 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Die Klausur konnte nicht geladen werden. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weitere",
-            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\""
+            "submitOtherExercise": "Speichern & Weiter",
+            "submitLastExercise": "Speichern",
+            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "points": "Punkte"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -140,7 +146,6 @@
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "addTextExercise": "Textaufgabe hinzufügen",
-                "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",

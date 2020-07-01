@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -473,13 +475,17 @@ public class ExamService {
         for (StudentExam studentExam : studentExams) {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
-                if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student))) {
+                // we start the exercise if no participation was found that was already fully initialized
+                if (exercise.getStudentParticipations().stream()
+                        .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
+                                && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
                             ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                         }
+                        // this will create initial (empty) submissions for quiz, text, modeling and file upload
                         var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
@@ -491,5 +497,61 @@ public class ExamService {
         }
 
         return generatedParticipations.size();
+    }
+
+    /**
+     * Returns the latest individual exam end date as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, the exam end date is returned.
+     *
+     * @param examId the id of the exam
+     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public ZonedDateTime getLatestIndiviudalExamEndDate(Long examId) {
+        return getLatestIndiviudalExamEndDate(findOne(examId));
+    }
+
+    /**
+     * Returns the latest individual exam end date as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, the exam end date is returned.
+     *
+     * @param exam the exam
+     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
+     */
+    public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
+        if (exam.getStartDate() == null)
+            return null;
+        var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
+        return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
+    }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     *
+     * @param examId the id of the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Long examId) {
+        return getAllIndiviudalExamEndDates(findOne(examId));
+    }
+
+    /**
+     * Returns all individual exam end dates as determined by the working time of the student exams.
+     * <p>
+     * If no student exams are available, an empty set returned.
+     *
+     * @param exam the exam
+     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     */
+    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
+        if (exam.getStartDate() == null)
+            return null;
+        var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
+        return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 }

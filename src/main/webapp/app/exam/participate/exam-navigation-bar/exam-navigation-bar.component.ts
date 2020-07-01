@@ -63,7 +63,7 @@ export class ExamNavigationBarComponent implements OnInit {
         this.setExerciseButtonStatus(i);
     }
 
-    submitExam() {
+    saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {
@@ -96,6 +96,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
         if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
             // make button blue
+            this.icon = 'check';
             status = 'synced';
             if (i === this.exerciseIndex) {
                 status = status + ' active';

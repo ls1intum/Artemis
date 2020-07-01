@@ -18,17 +18,16 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
-import { ProgrammingExerciseRepositoryFile } from 'app/entities/participation/ProgrammingExerciseRepositoryFile.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
-    createFile: (fileName: string) => Observable<void | null>;
-    createFolder: (folderName: string) => Observable<void | null>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object | null>;
+    createFile: (fileName: string) => Observable<void>;
+    createFolder: (folderName: string) => Observable<void>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
-    renameFile: (filePath: string, newFileName: string) => Observable<void | null>;
-    deleteFile: (filePath: string) => Observable<void | null>;
+    renameFile: (filePath: string, newFileName: string) => Observable<void>;
+    deleteFile: (filePath: string) => Observable<void>;
 }
 
 export interface ICodeEditorRepositoryService {
@@ -46,8 +45,6 @@ const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissio
     return !!(toBeDetermined as FileSubmissionError).error;
 };
 
-export const savedLocallyError: Error = new Error('Your changes could only be stored locally because you are disconnected.');
-
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
 /**
  * Check a HttpErrorResponse for specific status codes that are relevant for the code-editor.
@@ -61,10 +58,6 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
             }
-            // If we receive a timeout error, return ok and sync later
-            if (err.status === 504) {
-                conflictService.notifyConflictState(GitConflictState.OK);
-            }
             return throwError(err);
         }),
     );
@@ -76,17 +69,13 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     }
 
     getStatus = () => {
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http.get<any>(this.restResourceUrl!).pipe(
-                    handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
-                    tap(({ repositoryStatus }) => {
-                        if (repositoryStatus !== CommitState.CONFLICT) {
-                            this.conflictService.notifyConflictState(GitConflictState.OK);
-                        }
-                    }),
-                ),
-            () => of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }), // TODO track change status when offline
+        return this.http.get<any>(this.restResourceUrl!).pipe(
+            handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
+            tap(({ repositoryStatus }) => {
+                if (repositoryStatus !== CommitState.CONFLICT) {
+                    this.conflictService.notifyConflictState(GitConflictState.OK);
+                }
+            }),
         );
     };
 
@@ -154,127 +143,41 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
 
-    onGotOnline = () => {
-        const unsynchedFiles = this.participation?.unsynchedFiles;
-        if (unsynchedFiles && unsynchedFiles?.length > 0) {
-            return this.updateFiles(unsynchedFiles)
-                .first()
-                .subscribe(() => this.participation.unsynchedFiles.splice(0, this.participation.unsynchedFiles.length));
-        }
+    getRepositoryContent = () => {
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
-    getRepositoryContent() {
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService)),
-            () => this.participationObservable().map(({ repositoryFiles }) => this.getFilenameAndType(repositoryFiles)),
+    getFile = (fileName: string) => {
+        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+            map((data) => ({ fileContent: data })),
+            handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
-    }
+    };
 
-    getFile(fileName: string) {
-        const file = this.participation?.unsynchedFiles?.find((f) => f.fileName === fileName);
-        if (file) {
-            return of(file);
-        }
+    createFile = (fileName: string) => {
+        return this.http
+            .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
 
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
-                    map((data) => ({ fileContent: data })),
-                    handleErrorResponse<{ fileContent: string }>(this.conflictService),
-                ),
-            () => this.participationObservable().map(({ repositoryFiles }) => repositoryFiles.find((f) => f.filename === fileName) || { fileContent: '' }),
-        );
-    }
+    createFolder = (folderName: string) => {
+        return this.http
+            .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
 
-    createFile(fileName: string) {
-        if (this.participation) {
-            this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: fileName, fileType: FileType.FILE, fileContent: '' }));
-        }
+    updateFileContent = (fileName: string, fileContent: string) => {
+        return this.http
+            .put(`${this.restResourceUrl}/file`, fileContent, {
+                params: new HttpParams().set('file', fileName),
+            })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
 
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http
-                    .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
-                    .pipe(handleErrorResponse(this.conflictService)),
-            () => {
-                if (this.participation?.unsynchedFiles) {
-                    this.participation.unsynchedFiles.push({ fileName, fileContent: '' });
-                } else if (this.participation) {
-                    this.participation.unsynchedFiles = [{ fileName, fileContent: '' }];
-                }
-                return of(null);
-            },
-            true,
-        );
-    }
-
-    createFolder(folderName: string) {
-        if (this.participation) {
-            this.participation.repositoryFiles?.push(Object.assign(new ProgrammingExerciseRepositoryFile(), { filename: folderName, fileType: FileType.FOLDER, fileContent: '' }));
-        }
-
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http
-                    .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
-                    .pipe(handleErrorResponse(this.conflictService)),
-            () => of(null),
-            true,
-        );
-    }
-
-    // This method is never called
-    updateFileContent(fileName: string, fileContent: string) {
-        const file = this.participation?.repositoryFiles?.find((f) => f.filename === fileName);
-        if (file) {
-            file.fileContent = fileContent;
-        }
-
-        return this.fallbackWhenOfflineOrUnavailable(
-            () => this.http.put(`${this.restResourceUrl}/file`, fileContent, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService)),
-            () => {
-                const syncFile = this.participation?.unsynchedFiles?.find((f) => f.fileName === fileName);
-                if (syncFile) {
-                    syncFile.fileContent = fileContent;
-                }
-                return of(null);
-            },
-            true,
-        );
-    }
-
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
+    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        // First store the newest changes in the participation
-        if (this.participation && this.participation.repositoryFiles) {
-            fileUpdates.forEach((update) => {
-                const fileToUpdate = this.participation.repositoryFiles.find((file) => file.filename === update.fileName);
-                if (fileToUpdate) {
-                    fileToUpdate.fileContent = update.fileContent;
-                }
-            });
-        }
-
-        if (!this.isOnline) {
-            if (this.participation) {
-                if (!this.participation.unsynchedFiles) {
-                    this.participation.unsynchedFiles = [];
-                }
-                for (const file of fileUpdates) {
-                    const index = this.participation.unsynchedFiles.findIndex((f) => f.fileName === file.fileName);
-                    if (index >= 0) {
-                        this.participation.unsynchedFiles[index].fileContent = file.fileContent;
-                    } else {
-                        this.participation.unsynchedFiles.push(file);
-                    }
-                }
-            }
-            return throwError(savedLocallyError);
-        }
-
         if (this.fileUpdateUrl) {
             this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
         }
@@ -300,62 +203,29 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 catchError(() => of()),
             )
             .subscribe();
-        // TODO: This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
-        setTimeout(() => {
-            this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        });
+        // TODO: TEMPORARY FIX This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
+        this.magicWait(1000);
+        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         return this.fileUpdateSubject.asObservable();
-    }
+    };
 
-    renameFile(currentFilePath: string, newFilename: string) {
-        const file = this.participation?.repositoryFiles?.find((f) => f.filename === currentFilePath);
-        if (file) {
-            file.filename = currentFilePath.substring(0, currentFilePath.lastIndexOf('/') + 1) + newFilename;
+    magicWait(ms: number) {
+        const start = new Date().getTime();
+        let end = start;
+        while (end < start + ms) {
+            end = new Date().getTime();
         }
-
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http
-                    .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
-                    .pipe(handleErrorResponse(this.conflictService)),
-            () => {
-                const syncFile = this.participation?.unsynchedFiles?.find((f) => f.fileName === currentFilePath);
-                if (syncFile) {
-                    syncFile.fileName = newFilename;
-                }
-                return of(null);
-            },
-            true,
-        );
     }
 
-    deleteFile(fileName: string) {
-        const fileIndex = this.participation?.repositoryFiles?.findIndex((f) => f.filename === fileName);
-        if (fileIndex != null && fileIndex >= 0) {
-            this.participation.repositoryFiles.splice(fileIndex, 1);
-        }
+    renameFile = (currentFilePath: string, newFilename: string) => {
+        return this.http
+            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
 
-        return this.fallbackWhenOfflineOrUnavailable(
-            () =>
-                this.http
-                    .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
-                    .pipe(handleErrorResponse(this.conflictService)),
-            () => {
-                const index = this.participation?.unsynchedFiles?.findIndex((f) => f.fileName === fileName);
-                if (index != null && index >= 0) {
-                    this.participation.unsynchedFiles.splice(index, 1);
-                }
-                return of(null);
-            },
-            true,
-        );
-    }
-
-    getFilenameAndType(files: ProgrammingExerciseRepositoryFile[]) {
-        const fileDict: { [filename: string]: FileType } = {};
-        files.forEach((file) => {
-            fileDict[file.filename] = file.fileType;
-        });
-        return fileDict;
-    }
+    deleteFile = (fileName: string) => {
+        return this.http
+            .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
 }

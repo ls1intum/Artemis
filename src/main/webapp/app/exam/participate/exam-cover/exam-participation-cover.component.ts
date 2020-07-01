@@ -1,20 +1,16 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
+
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -50,7 +46,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private accountService: AccountService,
         private examParticipationService: ExamParticipationService,
-        private codeEditorRepositoryFileService: CodeEditorRepositoryFileService,
         private serverDateService: ArtemisServerDateService,
     ) {}
 
@@ -107,14 +102,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startExam() {
         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
-            // TODO: In case of programming exercises with a programming submission (and online editor enabled) save the
-            // files in the participation to the codeEditorRepositoryFileService
-            studentExam.exercises.forEach((exercise) => {
-                if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                    exercise.studentParticipations[0] = Object.assign(new ProgrammingExerciseStudentParticipation(), exercise.studentParticipations[0]);
-                    this.codeEditorRepositoryFileService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
-                }
-            });
             if (this.hasStarted()) {
                 this.onExamStarted.emit(studentExam);
             } else {
@@ -183,10 +170,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get falseName(): boolean {
-        return this.enteredName !== this.accountName;
+        return this.enteredName.trim() !== this.accountName.trim();
     }
 
     get inserted(): boolean {
-        return this.enteredName !== '';
+        return this.enteredName.trim() !== '';
     }
 }

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -37,6 +40,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     StudentExamRepository studentExamRepository;
+
+    @Autowired
+    ExamSessionRepository examSessionRepository;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -132,7 +138,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+            final HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "foo");
+            headers.set("X-Artemis-Client-Fingerprint", "bar");
+            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.getExercises().size()).isEqualTo(2);
             var textExercise = (TextExercise) response.getExercises().get(0);
@@ -175,7 +184,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             assertThat(response.getExamSessions()).hasSize(1);
             var examSession = response.getExamSessions().iterator().next();
+            final var optionalExamSession = examSessionRepository.findById(examSession.getId());
+            assertThat(optionalExamSession).isPresent();
+
             assertThat(examSession.getSessionToken()).isNotNull();
+            assertThat(examSession.getUserAgent()).isNull();
+            assertThat(examSession.getBrowserFingerprintHash()).isNull();
+            assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
+            assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
 
             // TODO: add other exercises, programming, modeling and file upload
 
@@ -185,5 +201,71 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser("instructor1");
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetWorkingTimesNoStudentExams() throws Exception {
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+
+        // register user
+        exam.setRegisteredUsers(new HashSet<>(users));
+        exam.setNumberOfExercisesInExam(2);
+        exam.setRandomizeExerciseOrder(false);
+        exam = examRepository.save(exam);
+
+        /*
+         * don't generate individual student exams
+         */
+
+        assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).isEmpty();
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetWorkingTimesDifferentStudentExams() throws Exception {
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+
+        // register user
+        exam.setRegisteredUsers(new HashSet<>(users));
+        exam.setNumberOfExercisesInExam(2);
+        exam.setRandomizeExerciseOrder(false);
+        exam = examRepository.save(exam);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+
+        // Modify working times
+
+        var expectedWorkingTimes = new HashSet<Integer>();
+        int maxWorkingTime = (int) Duration.between(examStartDate, examEndDate).getSeconds();
+
+        for (int i = 0; i < studentExams.size(); i++) {
+            if (i % 2 == 0)
+                maxWorkingTime += 35;
+            expectedWorkingTimes.add(maxWorkingTime);
+
+            var studentExam = studentExams.get(i);
+            studentExam.setWorkingTime(maxWorkingTime);
+            studentExamRepository.save(studentExam);
+        }
+
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).contains(maxWorkingTime);
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).containsExactlyInAnyOrderElementsOf(expectedWorkingTimes);
     }
 }

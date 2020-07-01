@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -36,6 +37,20 @@ public class StudentExamService {
     public StudentExam findOne(Long studentExamId) {
         log.debug("Request to get student exam : {}", studentExamId);
         return studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    }
+
+    /**
+     * Get one student exam by exam id and user.
+     *
+     * @param examId    the id of the exam
+     * @param userId    the id of the user
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public StudentExam findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
+        log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
+        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with for userId \"" + userId + "\" and examId \"" + examId + "\" does not exist"));
     }
 
     /**
@@ -97,5 +112,30 @@ public class StudentExamService {
         log.debug("Request to get student exam with exercise {} for user {}", exerciseId, userId);
         return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Student exam for exercise " + exerciseId + " and user " + userId + " does not exist"));
+    }
+
+    /**
+     * Get the maximal working time of all student exams for the exam with the given id.
+     *
+     * @param examId the id of the exam
+     * @return the maximum of all student exam working times for the given exam
+     * @throws EntityNotFoundException if no student exams could be found
+     */
+    @NotNull
+    public Integer findMaxWorkingTimeByExamId(Long examId) {
+        log.debug("Request to get the maximum working time of all student exams for Exam : {}", examId);
+        return studentExamRepository.findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+    }
+
+    /**
+     * Get all distinct student working times of one exam. 
+     *
+     * @param examId the id of the exam
+     * @return a set of all distinct working time values among the student exams of an exam. May be empty if no student exams can be found. 
+     */
+    @NotNull
+    public Set<Integer> findAllDistinctWorkingTimesByExamId(Long examId) {
+        log.debug("Request to find all distinct working times for Exam : {}", examId);
+        return studentExamRepository.findAllDistinctWorkingTimesByExamId(examId);
     }
 }
