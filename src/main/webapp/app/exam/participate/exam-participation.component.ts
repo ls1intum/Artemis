@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -21,9 +21,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { BehaviorSubject, Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -127,17 +127,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
-            // init studentExam and activeExercise
+            // init studentExam
             this.studentExam = studentExam;
-            this.activeExercise = studentExam.exercises[0];
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
-            this.submissionComponentVisited[0] = true;
-            if (!this.isExerciseParticipationValid(this.activeExercise)) {
-                // invalid participation, make server call to fix
-                // call startExercise on server - subscribe to execute
-                this.createParticipationForExercise(this.activeExercise).subscribe();
-            }
+            // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
                 // We do not support hints at the moment. Setting an empty array here disables the hint requests
@@ -150,9 +144,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
                     }
                 });
             });
-            if (this.activeSubmissionComponent) {
-                this.activeSubmissionComponent.onActivate();
-            }
+            const initialExercise = this.studentExam.exercises[0];
+            this.initializeExercise(initialExercise);
         }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
@@ -242,14 +235,36 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     onExerciseChange(exercise: Exercise): void {
         // save exercise on change
         this.triggerSave(false);
+        this.initializeExercise(exercise);
+    }
+
+    /**
+     * sets active exercise and checks if participation is valid for exercise
+     * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
+     * @param exercise to initialize
+     */
+    private initializeExercise(exercise: Exercise) {
         this.activeExercise = exercise;
         // if we do not have a valid participation for the exercise -> initialize it
         if (!this.isExerciseParticipationValid(exercise)) {
             this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation !== null) {
-                    this.submissionComponentVisited[this.activeExerciseIndex] = true;
-                    if (this.activeSubmissionComponent) {
-                        this.activeSubmissionComponent.onActivate();
+                    // for programming exercises -> wait for latest submission before showing exercise
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.programmingSubmissionService.getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, true).subscribe((programmingSubmissionObj) => {
+                            if (programmingSubmissionObj.submission) {
+                                participation.submissions = [programmingSubmissionObj.submission];
+                            }
+                            this.submissionComponentVisited[this.activeExerciseIndex] = true;
+                            if (this.activeSubmissionComponent) {
+                                this.activeSubmissionComponent.onActivate();
+                            }
+                        });
+                    } else {
+                        this.submissionComponentVisited[this.activeExerciseIndex] = true;
+                        if (this.activeSubmissionComponent) {
+                            this.activeSubmissionComponent.onActivate();
+                        }
                     }
                 }
             });
