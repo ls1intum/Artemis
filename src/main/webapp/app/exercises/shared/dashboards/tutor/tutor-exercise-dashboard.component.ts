@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
