@@ -8,7 +8,8 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
-                "exportPDF": "Als PDF exportieren"
+                "exportPDF": "Als PDF exportieren",
+                "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben."
             },
             "title": "Klausur",
             "startExam": "Klausur starten",

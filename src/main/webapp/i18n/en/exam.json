@@ -8,7 +8,8 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
-                "exportPDF": "Export PDF"
+                "exportPDF": "Export PDF",
+                "noSubmissionFound": "You didn't submit any solution for this exercise."
             },
             "title": "Exam",
             "startExam": "Start Exam",
