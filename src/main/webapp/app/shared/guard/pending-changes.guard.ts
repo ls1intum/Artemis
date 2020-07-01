@@ -15,7 +15,7 @@ export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate
      * @returns boolean | Observable<boolean>
      */
     canDeactivate(component: ComponentCanDeactivate): boolean | Observable<boolean> {
-        const warning = this.translateService.instant('pendingChanges');
+        const warning = component.canDeactivateWarning || this.translateService.instant('pendingChanges');
         return component.canDeactivate() ? true : confirm(warning);
     }
 }

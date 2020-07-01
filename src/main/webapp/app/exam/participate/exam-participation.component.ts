@@ -124,18 +124,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     canDeactivate() {
         // TODO: also handle the case when the student wants to finish the exam early
-        if (this.isOver()) {
-            return true;
-        }
-        const warning = this.translateService.instant('artemisApp.examParticipation.pendingChanges');
-        return confirm(warning);
+        return this.isOver();
+    }
+
+    get canDeactivateWarning() {
+        return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
     }
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any): void {
         if (!this.isOver()) {
-            $event.returnValue = this.translateService.instant('artemisApp.examParticipation.pendingChanges');
+            $event.returnValue = this.canDeactivateWarning;
         }
     }
 
