@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
+import { tap, map, switchMap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -15,7 +15,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -50,6 +50,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
         private router: Router,
+        private route: ActivatedRoute,
         private examParticipationService: ExamParticipationService,
         private serverDateService: ArtemisServerDateService,
     ) {
@@ -75,18 +76,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .subscribe();
 
         this.routerEventSubscription = this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                this.exam = undefined;
-                const examRoute = new RegExp('exams/[0-9]');
-                if (examRoute.test(event.url) && !event.url.includes('management')) {
-                    const routeParams = event.url.split('/');
-                    const courseId = +routeParams[2];
-                    const examId = +routeParams[4];
+            this.exam = undefined;
 
-                    if (examId !== undefined && courseId !== undefined) {
-                        this.examParticipationService.loadExam(courseId, examId).subscribe((loadedExam) => (this.exam = loadedExam));
+            if (event instanceof NavigationEnd && event.url.includes('exams') && !event.url.includes('management')) {
+                const routePathParams = of(event).pipe(
+                    map(() => this.route.root),
+                    map((root) => root.firstChild),
+                    switchMap((firstChild) => {
+                        if (firstChild) {
+                            return firstChild?.paramMap.pipe(map((paramMap) => [paramMap.get('courseId'), paramMap.get('examId')]));
+                        } else {
+                            return of(null);
+                        }
+                    }),
+                );
+                routePathParams.subscribe((param) => {
+                    if (param !== null) {
+                        if (param[0] !== null && param[1] !== null) {
+                            this.examParticipationService.loadExam(+param[0], +param[1]).subscribe((loadedExam) => (this.exam = loadedExam));
+                        }
                     }
-                }
+                });
             }
         });
     }
@@ -156,23 +166,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * check if exam already started
-     */
-    examHasStarted(): boolean {
-        return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
-    }
-
-    /**
-     * check if exam is over
-     */
-    examIsOver(): boolean {
-        return this.exam?.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : true;
-    }
-
-    /**
      * check if exam mode is active
      */
     examModeActive(): boolean {
-        return this.examHasStarted() && !this.examIsOver();
+        if (this.exam && this.exam.startDate && this.exam.endDate) {
+            return this.serverDateService.now().isBetween(this.exam.startDate, this.exam.endDate);
+        }
+        return false;
     }
 }
