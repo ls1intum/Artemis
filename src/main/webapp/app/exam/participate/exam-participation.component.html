@@ -1,4 +1,4 @@
-<ng-container *ngIf="exam; else noExam">
+<ng-container *ngIf="exam; else noStudentExam">
     <jhi-exam-participation-cover
         [startView]="true"
         [exam]="exam"
@@ -91,6 +91,6 @@
         </ng-container>
     </ng-container>
 </ng-container>
-<ng-template #noExam>
-    <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
+<ng-template #noStudentExam>
+    <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>
 </ng-template>

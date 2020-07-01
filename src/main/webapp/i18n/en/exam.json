@@ -44,7 +44,7 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noExam": "Exam could not be loaded. Please contact your instructor.",
+            "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
