@@ -116,7 +116,7 @@
                 "visibleRegistrationNumber": "Matrikelnummer",
                 "removeFromExam": {
                     "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
-                    "deleteParticipationsAndSubmission": "Sollen participations und submissions des Studenten in der zugehörigen Klausur gelöscht werden?"
+                    "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
                 },
                 "importStudents": {
                     "buttonLabel": "Studenten importieren",
