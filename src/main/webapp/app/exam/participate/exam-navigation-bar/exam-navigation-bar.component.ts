@@ -109,6 +109,7 @@ export class ExamNavigationBarComponent implements OnInit {
             return status;
         } else {
             // make button yellow
+            this.icon = 'edit';
             status = 'notSynced';
             return status;
         }
