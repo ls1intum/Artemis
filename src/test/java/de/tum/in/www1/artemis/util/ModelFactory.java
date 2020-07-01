@@ -330,6 +330,10 @@ public class ModelFactory {
         Exam exam = new Exam();
         exam.setTitle("Exam title");
         exam.setCourse(course);
+        ZonedDateTime dateTime = ZonedDateTime.now();
+        exam.setVisibleDate(dateTime);
+        exam.setStartDate(dateTime.plusMinutes(10));
+        exam.setEndDate(dateTime.plusMinutes(60));
         return exam;
     }
 
