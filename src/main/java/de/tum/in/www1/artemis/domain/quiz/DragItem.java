@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -185,7 +186,7 @@ public class DragItem implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilepath(), getId());
     }
 
     @PostPersist
@@ -199,13 +200,13 @@ public class DragItem implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilepath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, Constants.DRAG_ITEM_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, FilePathService.getDragItemFilepath(), getId());
     }
 
     @Override

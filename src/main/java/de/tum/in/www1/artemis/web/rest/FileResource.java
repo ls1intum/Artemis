@@ -27,7 +27,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -36,6 +35,7 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -104,10 +104,10 @@ public class FileResource {
 
         try {
             // create folder if necessary
-            File folder = new File(Constants.TEMP_FILEPATH);
+            File folder = new File(FilePathService.getTempFilepath());
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
-                    log.error("Could not create directory: {}", Constants.TEMP_FILEPATH);
+                    log.error("Could not create directory: {}", FilePathService.getTempFilepath());
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             }
@@ -124,7 +124,7 @@ public class FileResource {
                     filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                             + fileExtension;
                 }
-                String path = Constants.TEMP_FILEPATH + filename;
+                String path = FilePathService.getTempFilepath() + filename;
 
                 newFile = new File(path);
                 if (keepFileName && newFile.exists()) {
@@ -158,7 +158,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(Constants.TEMP_FILEPATH + filename);
+        return responseEntityForFilePath(FilePathService.getTempFilepath() + filename);
     }
 
     /**
@@ -198,7 +198,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
+        return responseEntityForFilePath(FilePathService.getDragAndDropBackgroundFilepath() + filename);
     }
 
     /**
@@ -212,7 +212,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(Constants.DRAG_ITEM_FILEPATH + filename);
+        return responseEntityForFilePath(FilePathService.getDragItemFilepath() + filename);
     }
 
     /**
@@ -253,7 +253,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
+        return responseEntityForFilePath(FilePathService.getCourseIconFilepath() + filename);
     }
 
     /**
@@ -294,7 +294,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Constants.LECTURE_ATTACHMENT_FILEPATH + optionalLecture.get().getId(), filename);
+        return buildFileResponse(FilePathService.getLectureAttachmentFilepath() + optionalLecture.get().getId(), filename);
     }
 
     /**

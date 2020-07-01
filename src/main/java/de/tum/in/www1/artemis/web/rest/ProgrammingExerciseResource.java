@@ -331,7 +331,7 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
@@ -386,6 +386,8 @@ public class ProgrammingExerciseResource {
         catch (HttpException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
+
+        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
         // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);

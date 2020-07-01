@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
@@ -262,9 +263,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             String destination = headerAccessor.getDestination();
 
             if (StompCommand.SUBSCRIBE.equals(headerAccessor.getCommand())) {
-                if (!allowSubscription(principal, destination)) {
-                    logUnauthorizedDestinationAccess(principal, destination);
-                    return null; // erase the forbidden SUBSCRIBE command the user was trying to send
+                try {
+                    if (!allowSubscription(principal, destination)) {
+                        logUnauthorizedDestinationAccess(principal, destination);
+                        return null; // erase the forbidden SUBSCRIBE command the user was trying to send
+                    }
+                }
+                catch (EntityNotFoundException e) {
+                    // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
+                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal.getName(), destination, e.getMessage());
+                    return null;
                 }
             }
 

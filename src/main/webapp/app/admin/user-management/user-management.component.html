@@ -5,6 +5,7 @@
             <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
         </button>
     </h2>
+    <jhi-alert-error></jhi-alert-error>
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
@@ -18,7 +19,6 @@
                     formControlName="searchControl"
                     [(ngModel)]="searchTerm"
                     (focusout)="loadAll()"
-                    (keyup.enter)="loadAll()"
                 />
                 <button class="btn btn-primary ml-3" (click)="loadAll()">
                     <span jhiTranslate="userManagement.search">Search</span>
@@ -31,9 +31,9 @@
                 <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
             </div>
         </form>
-        <table class="table table-striped">
+        <table class="table table-striped" aria-describedby="user-management-page-heading">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="transition.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="'sort'"></fa-icon></th>
@@ -68,7 +68,7 @@
                             class="btn btn-success btn-sm"
                             (click)="setActive(user, false)"
                             *ngIf="user.activated"
-                            [disabled]="currentAccount.login === user.login"
+                            [disabled]="!currentAccount || currentAccount.login === user.login"
                             jhiTranslate="userManagement.activated"
                         >
                             Activated
@@ -104,7 +104,7 @@
                                 deleteQuestion="userManagement.delete.question"
                                 (delete)="deleteUser(user.login)"
                                 [dialogError]="dialogError$"
-                                [disabled]="currentAccount.login === user.login"
+                                [disabled]="!currentAccount || currentAccount.login === user.login"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>
@@ -126,7 +126,7 @@
                 [maxSize]="5"
                 [rotate]="true"
                 [boundaryLinks]="true"
-                (pageChange)="loadPage(page)"
+                (pageChange)="transition()"
             ></ngb-pagination>
         </div>
     </div>

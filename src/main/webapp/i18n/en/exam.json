@@ -6,6 +6,10 @@
                 "duration": "Duration: {{duration}} min",
                 "maxPoints": "max. Points: {{points}}"
             },
+            "examSummary": {
+                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
+                "exportPDF": "Export PDF"
+            },
             "title": "Exam",
             "startExam": "Start Exam",
             "summary": "Summary",
@@ -16,6 +20,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "exercise": "Exercise {{nr}}",
             "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
@@ -27,8 +32,13 @@
             }
         },
         "examParticipation": {
+            "timer": "Time Left: ",
             "connected": "Connected. Your answers will be saved every 60s.",
+            "ideConnected": "Connected.",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
+            "disconnectedCodeEditorAndOfflineIDE": "You are disconnected. Please check your Internet connection. You can still work offline by cloning the repository.",
+            "disconnectedCodeEditorNoOfflineIDE": "You are disconnected. Please reconnect in order to continue working in the online code editor.",
+            "disconnectedNoCodeEditor": "You are disconnected. Please check your Internet connection.",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
             "timeUntilPlannedStart": "Time until planned start:",
             "finishExam": "Finish exam",
@@ -36,7 +46,10 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "noExam": "Exam could not be loaded. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Submit & continue"
+            "submitOtherExercise": "Save & continue",
+            "submitLastExercise": "Save",
+            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "points": "points"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -130,7 +143,6 @@
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add text exercise",
-                "addFileUploadExercise": "Add file upload exercise",
                 "addQuizExercise": "Add quiz",
                 "addFileUploadExercise": "Add file upload exercise",
                 "addProgrammingExercise": "Add programming exercise",

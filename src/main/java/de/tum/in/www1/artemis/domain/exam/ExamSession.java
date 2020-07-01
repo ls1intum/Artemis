@@ -35,6 +35,9 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
     @Column(name = "browser_fingerprint_hash")
     private String browserFingerprintHash;
 
+    @Column(name = "instance_id")
+    private String instanceId;
+
     public ExamSession() {
     }
 
@@ -76,6 +79,20 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
 
     public void setBrowserFingerprintHash(String browserFingerprintHash) {
         this.browserFingerprintHash = browserFingerprintHash;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public void hideDetails() {
+        setUserAgent(null);
+        setBrowserFingerprintHash(null);
+        setInstanceId(null);
     }
 
     @Override

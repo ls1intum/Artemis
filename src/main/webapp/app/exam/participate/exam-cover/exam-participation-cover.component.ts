@@ -1,5 +1,4 @@
 import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
-import * as moment from 'moment';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -11,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -38,7 +38,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     formattedStartDate = '';
 
     accountName = '';
-    enteredName?: string;
+    enteredName = '';
 
     constructor(
         private courseService: CourseManagementService,
@@ -46,6 +46,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private accountService: AccountService,
         private examParticipationService: ExamParticipationService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     /**
@@ -92,7 +93,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check if exam already started
      */
     hasStarted(): boolean {
-        return this.exam?.startDate ? this.exam.startDate.isBefore(moment()) : false;
+        return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -123,7 +124,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 this.onExamStarted.emit(studentExam);
             } else {
-                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(moment(), 'seconds'));
+                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(this.serverDateService.now(), 'seconds'));
             }
         } else {
             this.timeUntilStart = '';
@@ -165,10 +166,14 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get startButtonEnabled(): boolean {
-        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(moment()));
+        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
     }
 
     get falseName(): boolean {
-        return this.enteredName !== this.accountName;
+        return this.enteredName.trim() !== this.accountName.trim();
+    }
+
+    get inserted(): boolean {
+        return this.enteredName.trim() !== '';
     }
 }
