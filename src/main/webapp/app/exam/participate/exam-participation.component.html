@@ -19,7 +19,7 @@
                     (onExerciseChanged)="onExerciseChange($event)"
                     (examAboutToEnd)="examEnded()"
                 ></jhi-exam-navigation-bar>
-                <div class="d-flex my-2">
+                <div class="d-flex justify-content-center mt-2 mb-4">
                     <jhi-alert></jhi-alert>
                 </div>
                 <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
