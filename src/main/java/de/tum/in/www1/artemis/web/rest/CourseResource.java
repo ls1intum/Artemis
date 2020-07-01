@@ -559,7 +559,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/for-exam-tutor-dashboard
+     * GET /courses/:courseId/exam/:examId:for-exam-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @param examId the id of the exam that contains the exercises

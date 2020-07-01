@@ -449,7 +449,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Navigates back to the tutor dashboard
+     * Navigates back to the tutor (exam) dashboard
      */
     back() {
         if (this.exercise?.course) {
