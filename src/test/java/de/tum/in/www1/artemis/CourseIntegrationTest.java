@@ -122,9 +122,11 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private final int numberOfInstructors = 1;
 
+    private List<User> users;
+
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
@@ -515,7 +517,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetCourseForExamDashboard() throws Exception {
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(this.users.get(0));
         Course receivedCourse = request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
                 Course.class);
 
@@ -526,14 +528,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetCourseFerExamDashboard_asStudent_forbidden() throws Exception {
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(this.users.get(0));
         request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetCourseForExamDashboard_beforeDueDate() throws Exception {
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(this.users.get(0));
         Exam exam = course.getExams().iterator().next();
         exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
         examRepository.save(exam);
@@ -554,7 +556,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetCourseForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(this.users.get(0));
         Exam exam = course.getExams().iterator().next();
         exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
         examRepository.save(exam);

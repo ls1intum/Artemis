@@ -291,8 +291,6 @@ public class DatabaseUtilService {
     @Autowired
     private ExamRepository examRepository;
 
-    private List<User> users;
-
     public void resetDatabase() {
 
         conflictRepo.deleteAll();
@@ -376,7 +374,7 @@ public class DatabaseUtilService {
         usersToAdd.addAll(tutors);
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
-        this.users = userRepo.saveAll(usersToAdd);
+        userRepo.saveAll(usersToAdd);
         assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
@@ -462,9 +460,9 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithExamAndExerciseGroupAndExercises() {
+    public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
         Course course = createCourse();
-        Exam exam = addExam(course, this.users.get(0), ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now());
+        Exam exam = addExam(course, user, ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now());
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1));
         return courseRepo.save(course);

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map, filter, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -161,15 +161,10 @@ export class CourseManagementService {
      * @param examId - Id of the exam when it is in exam mode, otherwise undefined
      */
     getForTutors(courseId: number, examId: number): Observable<EntityResponseType> {
-        if (examId) {
-            return this.http
-                .get<Course>(`${this.resourceUrl}/${courseId}/exam/${examId}/for-exam-tutor-dashboard`, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-        } else {
-            return this.http
-                .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-        }
+        const url = examId ? `${this.resourceUrl}/${courseId}/exam/${examId}/for-exam-tutor-dashboard` : `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
+        return this.http
+            .get<Course>(url, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**

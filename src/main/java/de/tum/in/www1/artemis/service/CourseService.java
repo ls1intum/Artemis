@@ -188,7 +188,8 @@ public class CourseService {
     }
 
     /**
-     * Get one course by id with all exercises for all exams
+     * Get one course by id with all exercises for all exams if the exam is over, else leave exercises empty
+     *
      * @param courseId - The id of the entity
      * @param examId - Id of the exam that contains the exercises
      * @return the entity

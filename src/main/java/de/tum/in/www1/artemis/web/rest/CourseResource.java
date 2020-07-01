@@ -548,7 +548,7 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             return forbidden();
         }
 
@@ -609,7 +609,7 @@ public class CourseResource {
             return notFound();
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             return forbidden();
         }
 
@@ -668,7 +668,7 @@ public class CourseResource {
 
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
@@ -707,7 +707,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             return forbidden();
         }
 
@@ -726,7 +726,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
@@ -828,7 +828,7 @@ public class CourseResource {
         final long start = System.currentTimeMillis();
         final Course course = courseService.findOne(courseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -868,8 +868,8 @@ public class CourseResource {
         return ResponseEntity.ok(stats);
     }
 
-    private boolean userHasPermission(Course course, User user) {
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+    private boolean userIsNotTaOrInstructorInCourseOrAdmin(Course course, User user) {
+        return !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin();
     }
 
     /**

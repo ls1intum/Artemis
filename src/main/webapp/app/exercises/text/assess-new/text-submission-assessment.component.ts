@@ -105,6 +105,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.canOverride = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.courseId = 0;
     }
 
     /**
@@ -137,11 +138,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
         // case distinction for exam mode
-        if (this.exercise!.course) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course);
-        } else {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.exerciseGroup!.exam!.course!);
-        }
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourseForExam(this.exercise);
+
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
