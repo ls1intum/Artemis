@@ -28,6 +28,8 @@
             "submittingChangesTooltip": "Submitting changes.",
             "preparingForSubmit": "Preparing...",
             "preparingForSubmitTooltip": "Preparing for submit.",
+            "refreshingFiles": "Refreshing...",
+            "refreshingFilesTooltip": "Refreshing all files in the editor.",
             "submit": "Submit",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",

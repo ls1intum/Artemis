@@ -28,6 +28,8 @@
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
+            "refreshingFiles": "Aktualisiert...",
+            "refreshingFilesTooltip": "Aktualisiert alle Dateien im Editor.",
             "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
