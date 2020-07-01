@@ -297,7 +297,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 55L);
+        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
         assertThat(result).isEqualTo(notFound());
     }
 

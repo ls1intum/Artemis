@@ -80,7 +80,8 @@
                 "couldNotBeRetrieved": "The repository status could not be retrieved.",
                 "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
                 "failedToLoadBuildLogs": "The build logs could not be retrieved.",
-                "repositoryInConflict": "Your repository has entered a conflict state."
+                "repositoryInConflict": "Your repository has entered a conflict state.",
+                "notAllowedExam": "You must not submit (anymore)"
             },
             "testStatusLabels": {
                 "noResult": "No results",
