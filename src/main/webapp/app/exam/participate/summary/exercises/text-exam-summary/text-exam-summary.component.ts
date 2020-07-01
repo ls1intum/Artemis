@@ -3,12 +3,17 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Component({
     selector: 'jhi-text-exam-summary',
-    templateUrl: './text-exam-summary.component.html',
-    styles: [],
+    template: '{{ submission.text }}',
+    styles: [
+        `
+            :host {
+                white-space: pre-wrap;
+                display: block;
+                background-color: #f8f9fa;
+            }
+        `,
+    ],
 })
 export class TextExamSummaryComponent {
-    @Input()
-    submission: TextSubmission;
-
-    constructor() {}
+    @Input() submission: TextSubmission;
 }
