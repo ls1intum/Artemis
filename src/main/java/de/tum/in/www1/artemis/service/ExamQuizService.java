@@ -70,8 +70,8 @@ public class ExamQuizService {
      *
      * After processing all participations, the created results will be returned for further processing
      * // @formatter:on
-     * @param quizExercise
-     * @return
+     * @param quizExercise the QuizExercise that should be evaluated
+     * @return the generated results
      */
     private Set<Result> evaluateSubmissionsAndSaveInDB(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
