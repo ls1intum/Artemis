@@ -178,6 +178,35 @@ public class ExamService {
         return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
     }
 
+    private void validateStudentExamGeneration(Exam exam, long numberOfOptionalExercises) throws BadRequestAlertException{
+        // Check that the start and end date of the exam is set
+        if (exam.getStartDate() == null || exam.getEndDate() == null) {
+            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
+        }
+
+        // Ensure that all exercise groups have at least one exercise
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup.getExercises().isEmpty()) {
+                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
+            }
+        }
+
+        // Check that numberOfExercisesInExam is set
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
+        }
+
+        // Check that there are enough exercise groups
+        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
+            throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
+        }
+
+        // Check that there are not too much mandatory exercise groups
+        if (numberOfOptionalExercises < 0) {
+            throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
+        }
+    }
+
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
@@ -193,40 +222,14 @@ public class ExamService {
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
+        // Validate the settings of the exam
+        validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Determine the default working time by computing the duration between start and end date of the exam
         Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
-
-        // Ensure that all exercise groups have at least one exercise
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup.getExercises().isEmpty()) {
-                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
-            }
-        }
-
-        // Check that numberOfExercisesInExam is set
-        if (exam.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
-        }
-
-        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-
-        // Check that there are enough exercise groups
-        if (exerciseGroups.size() < exam.getNumberOfExercisesInExam()) {
-            throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
-        }
-
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Check that there are not too much mandatory exercise groups
-        if (numberOfOptionalExercises < 0) {
-            throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
-        }
 
         // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
         List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
@@ -267,6 +270,16 @@ public class ExamService {
         // TODO: make sure the student exams still contain non proxy users
 
         return studentExams;
+    }
+
+    /**
+     * Generates the student exams randomly based on the exam configuration and the exercise groups
+     *
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    public List<StudentExam> generateMissingStudentExams(Long examId) {
+
     }
 
     /**
