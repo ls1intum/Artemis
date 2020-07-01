@@ -169,8 +169,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      *
      * @param user User that should be removed from the exam
      */
-    removeFromExam(user: User) {
-        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id, user.login!).subscribe(
+    removeFromExam(user: User, $event: { [key: string]: boolean }) {
+        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id, user.login!, $event.deleteParticipationsAndSubmission).subscribe(
             () => {
                 this.allRegisteredUsers = this.allRegisteredUsers.filter((u) => u.login !== user.login);
                 this.dialogErrorSource.next('');

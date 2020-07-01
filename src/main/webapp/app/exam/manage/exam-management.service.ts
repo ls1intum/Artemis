@@ -116,8 +116,9 @@ export class ExamManagementService {
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
      */
-    removeStudentFromExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
+        const options = createRequestOption({ withParticipationsAndSubmission });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { params: options, observe: 'response' });
     }
 
     /**

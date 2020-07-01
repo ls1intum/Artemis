@@ -114,8 +114,9 @@
                 "lastName": "Nachname",
                 "email": "E-Mail",
                 "visibleRegistrationNumber": "Matrikelnummer",
-                "removeFromGroup": {
-                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden?"
+                "removeFromExam": {
+                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
+                    "deleteParticipationsAndSubmission": "Sollen participations und submissions des Studenten in der zugehörigen Klausur gelöscht werden?"
                 },
                 "importStudents": {
                     "buttonLabel": "Studenten importieren",
