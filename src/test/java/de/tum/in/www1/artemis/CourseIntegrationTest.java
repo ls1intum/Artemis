@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
@@ -41,6 +42,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -110,6 +112,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
+
+    @Autowired
+    ExamRepository examRepository;
 
     private final int numberOfStudents = 4;
 
@@ -516,6 +521,28 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // Test that the received course has two exercises
         assertThat(receivedCourse.getExercises().size()).as("Two exercises are returned").isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetCourseFerExamDashboard_asStudent_forbidden() throws Exception {
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard_beforeDueDate() throws Exception {
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises();
+        Exam exam = course.getExams().iterator().next();
+        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        examRepository.save(exam);
+
+        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
+                Course.class);
+
+        // Test that the received course has two exercises
+        assertThat(receivedCourse.getExercises().size()).as("Two exercises are returned").isEqualTo(0);
     }
 
     @Test
