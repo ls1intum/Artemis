@@ -21,7 +21,7 @@ export class ExamParticipationSummaryComponent {
     @Input()
     studentExam: StudentExam;
 
-    collapsedSubmissionIds: number[] = [];
+    collapsedExerciseIds: number[] = [];
 
     constructor() {}
 
@@ -67,23 +67,23 @@ export class ExamParticipationSummaryComponent {
     }
 
     /**
-     * @param submissionId
+     * @param exerciseId
      * checks collapse control of exercise cards depending on submissionId
      */
-    isCollapsed(submissionId: number): boolean {
-        return this.collapsedSubmissionIds.includes(submissionId);
+    isCollapsed(exerciseId: number): boolean {
+        return this.collapsedExerciseIds.includes(exerciseId);
     }
 
     /**
-     * @param submissionId
+     * @param exerciseId
      * adds collapse control of exercise cards depending on submissionId
      */
-    toggleCollapseSubmission(submissionId: number): void {
-        const collapsed = this.isCollapsed(submissionId);
+    toggleCollapseExercise(exerciseId: number): void {
+        const collapsed = this.isCollapsed(exerciseId);
         if (collapsed) {
-            this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
+            this.collapsedExerciseIds = this.collapsedExerciseIds.filter((id) => id !== exerciseId);
         } else {
-            this.collapsedSubmissionIds.push(submissionId);
+            this.collapsedExerciseIds.push(exerciseId);
         }
     }
 }
