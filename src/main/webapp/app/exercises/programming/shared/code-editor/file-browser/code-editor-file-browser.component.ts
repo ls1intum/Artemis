@@ -178,6 +178,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 tap((files) => {
                     this.isLoadingFiles = false;
                     this.repositoryFiles = files;
+                    this.unsavedFiles = [];
                     this.setupTreeview();
                 }),
             )

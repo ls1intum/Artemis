@@ -109,6 +109,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     waitOnRefresh(refreshOperation: Observable<any>) {
         this.commitState = CommitState.REFRESHING;
         refreshOperation.subscribe(() => {
+            this.unsavedFiles = {};
             this.commitState = CommitState.CLEAN;
         });
     }
