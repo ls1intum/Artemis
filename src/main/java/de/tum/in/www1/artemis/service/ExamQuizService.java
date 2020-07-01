@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -12,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -49,12 +49,13 @@ public class ExamQuizService {
      * and update the statistics with the generated results.
      * @param quizExercise the QuizExercise that should be evaluated
      */
-    public void evaluateQuiz(@NotNull QuizExercise quizExercise) {
+    public void evaluateQuizAndUpdateStatistics(@NotNull QuizExercise quizExercise) {
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
-        Set<Result> createdResults = evaluateSubmissionsAndSaveInDB(quizExercise);
+        Set<Result> createdResults = evaluateSubmissions(quizExercise);
         quizStatisticService.updateStatistics(createdResults, quizExercise);
+        quizStatisticService.recalculateStatistics(quizExercise);
     }
 
     /**
@@ -72,7 +73,7 @@ public class ExamQuizService {
      * @param quizExercise the QuizExercise that should be evaluated
      * @return the generated results
      */
-    private Set<Result> evaluateSubmissionsAndSaveInDB(@NotNull QuizExercise quizExercise) {
+    private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         Set<StudentParticipation> studentParticipations = quizExercise.getStudentParticipations();
 
@@ -85,23 +86,34 @@ public class ExamQuizService {
                             quizExercise.getId());
                     continue;
                 }
-                else {
+                else if (submissions.size() > 1) {
+                    log.warn("Found multiple ({}) submissions for participation {} (Participant {}) in quiz {}, taking the one with highest id", submissions.size(),
+                            participation.getId(), participation.getParticipant().getName(), quizExercise.getId());
                     List<Submission> submissionsList = new ArrayList<>(submissions);
 
                     // Load submission with highest id
                     submissionsList.sort(Comparator.comparing(Submission::getId).reversed());
                     quizSubmission = (QuizSubmission) submissionsList.get(0);
                 }
+                else {
+                    quizSubmission = (QuizSubmission) submissions.iterator().next();
+                }
 
-                // Update attributes for submission and participations
-                quizSubmission.setType(SubmissionType.TIMEOUT);
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                // create new result
-                Result result = new Result().participation(participation).submission(quizSubmission);
+                boolean resultExisting = false;
+                // create new result if none is existing
+                Result result;
+                if (participation.getResults().size() == 0) {
+                    result = new Result().participation(participation).submission(quizSubmission);
+                }
+                else {
+                    resultExisting = true;
+                    result = participation.getResults().iterator().next();
+                }
                 result.setRated(true);
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
-                result.setCompletionDate(quizSubmission.getSubmissionDate());
+                result.setCompletionDate(ZonedDateTime.now());
                 result.setSubmission(quizSubmission);
 
                 // calculate scores and update result and submission accordingly
@@ -115,9 +127,12 @@ public class ExamQuizService {
                 participation = studentParticipationRepository.save(participation);
                 quizSubmissionRepository.save(quizSubmission);
                 result = resultRepository.save(result);
+                result = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId()).orElse(null);
 
                 // Add result so that it can be returned (and processed later)
-                createdResults.add(result);
+                if (!resultExisting) {
+                    createdResults.add(result);
+                }
             }
             catch (Exception e) {
                 log.error("Exception in evaluateExamQuizExercise() for user {} in quiz {}: {}", participation.getParticipantIdentifier(), quizExercise.getId(), e.getMessage(), e);

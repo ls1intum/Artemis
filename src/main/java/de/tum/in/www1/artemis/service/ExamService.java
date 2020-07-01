@@ -435,7 +435,7 @@ public class ExamService {
         }
 
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(examQuizService::evaluateQuiz);
+        quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
 
         return quizExercises.size();
     }
