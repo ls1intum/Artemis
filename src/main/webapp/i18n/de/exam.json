@@ -170,7 +170,8 @@
             "openSubmission": "Einreichung öffnen",
             "openAssessment": " Bewertung öffnen",
             "cancelAssessment": " Bewertung abbrechen",
-            "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden"
+            "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
+            "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
         }
     }
 }

@@ -95,6 +95,7 @@ export class StudentExamDetailComponent implements OnInit {
                     this.setStudentExam(res.body);
                 }
                 this.isSavingWorkingTime = false;
+                this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
             },
             () => {
                 this.alertService.error('artemisApp.studentExamDetail.workingTimeCouldNotBeSaved');
