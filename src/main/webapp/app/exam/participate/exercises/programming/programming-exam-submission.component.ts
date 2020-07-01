@@ -42,15 +42,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     updateSubmissionFromView(intervalSave: boolean): void {
-        if (this.exercise.allowOnlineEditor) {
-            if (intervalSave) {
-                // The 60s auto save should only save and NOT commit the files, as this would trigger a CI run. Just save the files
-                this.codeEditorComponent.actions.onSave();
-            } else {
-                // If the user switches the exercise, we can actually commit
-                this.codeEditorComponent.actions.onSave();
-                this.codeEditorComponent.actions.commit();
-            }
-        }
+        // Note: we just save here and do not commit, because this can lead to problems!
+        this.codeEditorComponent.actions.onSave();
     }
 }
