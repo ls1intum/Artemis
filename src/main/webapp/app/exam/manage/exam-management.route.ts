@@ -232,7 +232,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:groupId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
         resolve: {
-            textExercise: ModelingExerciseResolver,
+            modelingExercise: ModelingExerciseResolver,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -245,7 +245,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:groupId/modeling-exercises/import/:exerciseId',
         component: ModelingExerciseUpdateComponent,
         resolve: {
-            textExercise: ModelingExerciseResolver,
+            modelingExercise: ModelingExerciseResolver,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -258,7 +258,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:groupId/modeling-exercises/:exerciseId/edit',
         component: ModelingExerciseUpdateComponent,
         resolve: {
-            textExercise: ModelingExerciseResolver,
+            modelingExercise: ModelingExerciseResolver,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

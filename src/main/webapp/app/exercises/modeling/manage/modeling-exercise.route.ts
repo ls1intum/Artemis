@@ -60,7 +60,7 @@ export const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId/import',
         component: ModelingExerciseUpdateComponent,
         resolve: {
-            textExercise: ModelingExerciseResolver,
+            modelingExercise: ModelingExerciseResolver,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
