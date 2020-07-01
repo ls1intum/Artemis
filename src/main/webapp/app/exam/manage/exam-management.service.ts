@@ -131,6 +131,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Generate missing student exams for newly added students of the exam.
+     * @param courseId
+     * @param examId
+     * @returns a list with the generate student exams
+     */
+    generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
+    }
+
+    /**
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
