@@ -7,14 +7,9 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param seconds {number}
      */
     transform(seconds: number): string {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds - hours * 3600) / 60);
-        seconds = seconds - hours * 3600 - minutes * 60;
+        const minutes = Math.floor(seconds / 60);
+        seconds = seconds - minutes * 60;
 
-        let hoursOut = hours.toString();
-        if (hours < 10) {
-            hoursOut = '0' + hours.toString();
-        }
         let minutesOut = minutes.toString();
         if (minutes < 10) {
             minutesOut = '0' + minutes.toString();
@@ -24,6 +19,6 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
             secondsOut = '0' + seconds.toString();
         }
 
-        return hoursOut + ':' + minutesOut + ':' + secondsOut;
+        return minutesOut + ':' + secondsOut;
     }
 }
