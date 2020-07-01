@@ -101,9 +101,9 @@
                             </span>
                             <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
                         </span>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value | artemisDurationFromSeconds }}</span>
-                        </ng-template>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value | artemisDurationFromSeconds }}</span>
                     </ng-template>
                 </ngx-datatable-column>
 
