@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, of } from 'rxjs';
-import { tap, map, switchMap } from 'rxjs/operators';
+import { tap, map, switchMap, filter } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -15,7 +15,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -56,6 +56,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
+
+        this.loadExamIfAvailable();
     }
 
     ngOnInit() {
@@ -74,31 +76,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
-
-        this.routerEventSubscription = this.router.events.subscribe((event) => {
-            this.exam = undefined;
-
-            if (event instanceof NavigationEnd && event.url.includes('exams') && !event.url.includes('management')) {
-                const routePathParams = of(event).pipe(
-                    map(() => this.route.root),
-                    map((root) => root.firstChild),
-                    switchMap((firstChild) => {
-                        if (firstChild) {
-                            return firstChild?.paramMap.pipe(map((paramMap) => [paramMap.get('courseId'), paramMap.get('examId')]));
-                        } else {
-                            return of(null);
-                        }
-                    }),
-                );
-                routePathParams.subscribe((param) => {
-                    if (param !== null) {
-                        if (param[0] !== null && param[1] !== null) {
-                            this.examParticipationService.loadExam(+param[0], +param[1]).subscribe((loadedExam) => (this.exam = loadedExam));
-                        }
-                    }
-                });
-            }
-        });
     }
 
     ngOnDestroy(): void {
@@ -163,6 +140,32 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 return 'global.menu.continueTutorial';
             }
         }
+    }
+
+    loadExamIfAvailable() {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event) => {
+            this.exam = undefined;
+            if (event.url.includes('exams') && !event.url.includes('management')) {
+                const routePathParams = of(event).pipe(
+                    map(() => this.route.root),
+                    map((root) => root.firstChild),
+                    switchMap((firstChild) => {
+                        if (firstChild) {
+                            return firstChild?.paramMap.pipe(map((paramMap) => [paramMap.get('courseId'), paramMap.get('examId')]));
+                        } else {
+                            return of(null);
+                        }
+                    }),
+                );
+                routePathParams.subscribe((param) => {
+                    if (param !== null) {
+                        if (param[0] !== null && param[1] !== null) {
+                            this.examParticipationService.loadExam(+param[0], +param[1]).subscribe((loadedExam) => (this.exam = loadedExam));
+                        }
+                    }
+                });
+            }
+        });
     }
 
     /**
