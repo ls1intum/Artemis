@@ -23,6 +23,10 @@
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
+    <div class="mb-1">
+        <span class="editor-statusbar__title">{{ exercise.title }}</span>
+        <span class="text-muted">[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+    </div>
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end;">
@@ -41,6 +45,7 @@
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
         [exercise]="exercise"
+        [exerciseHints]="exercise.exerciseHints"
         [participation]="studentParticipation"
         [personalParticipation]="true"
     ></jhi-programming-exercise-instructions>
