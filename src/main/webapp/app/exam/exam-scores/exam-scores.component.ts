@@ -138,6 +138,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Method for exporting the csv with the needed data
      */
     exportResults() {
+        /*
         if (this.exerciseGroups.length > 0) {
             const rows = [];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
@@ -286,6 +287,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const csvExporter = new ExportToCsv(options);
             csvExporter.generateCsv(rows); // includes download
         }
+        */
     }
 
     /**
