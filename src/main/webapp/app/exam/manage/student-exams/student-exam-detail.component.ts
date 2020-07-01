@@ -19,11 +19,10 @@ export class StudentExamDetailComponent implements OnInit {
     studentExam: StudentExam;
     course: Course;
     student: User;
-    workingTimeHours = 0;
+    workingTimeForm: FormGroup;
     workingTimeMinutes = 0;
     workingTimeSeconds = 0;
     isSavingWorkingTime = false;
-    workingTimeForm: FormGroup;
 
     constructor(
         private route: ActivatedRoute,
@@ -38,8 +37,7 @@ export class StudentExamDetailComponent implements OnInit {
     ngOnInit(): void {
         this.loadAll();
         this.workingTimeForm = new FormGroup({
-            hours: new FormControl(this.workingTimeHours, [Validators.min(0), Validators.required]),
-            minutes: new FormControl(this.workingTimeMinutes, [Validators.min(0), Validators.max(59), Validators.required]),
+            minutes: new FormControl(this.workingTimeMinutes, [Validators.min(0), Validators.required]),
             seconds: new FormControl(this.workingTimeSeconds, [Validators.min(0), Validators.max(59), Validators.required]),
         });
     }
@@ -91,15 +89,14 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         console.log(this.workingTimeSeconds);
-        const seconds = this.workingTimeHours * 3600 + this.workingTimeMinutes * 60 + this.workingTimeSeconds;
+        const seconds = this.workingTimeMinutes * 60 + this.workingTimeSeconds;
         // TODO
     }
 
     private setWorkingTime() {
         const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime);
-        const workingTimeParts = workingTime.split('|');
-        this.workingTimeHours = parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10);
+        const workingTimeParts = workingTime.split(':');
+        this.workingTimeMinutes = parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10);
         this.workingTimeSeconds = parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10);
-        this.workingTimeMinutes = parseInt(workingTimeParts[2] ? workingTimeParts[2] : '0', 10);
     }
 }
