@@ -16,6 +16,7 @@ import * as moment from 'moment';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -47,6 +48,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private examService: ExamManagementService,
         private router: Router,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     async ngOnInit() {
@@ -83,7 +85,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         });
                     }
                 });
-                this.nextRelevantExams = this.exams.filter((exam) => moment(exam.endDate!).isAfter(moment()));
+                this.nextRelevantExams = this.exams.filter((exam) => moment(exam.endDate!).isAfter(this.serverDateService.now()));
             },
             (response: string) => this.onError(response),
         );
