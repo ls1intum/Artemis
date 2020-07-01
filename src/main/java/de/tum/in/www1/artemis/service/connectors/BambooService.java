@@ -825,7 +825,13 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (response != null) {
             for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
-                String logString = (String) logEntry.get("log");
+                String logString = (String) logEntry.get("unstyledLog");
+                // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
+                // We want to have unescaped characters but fail back to the escaped characters in case no unescaped characters are present
+                if (logString == null) {
+                    logString = (String) logEntry.get("log");
+                }
+
                 boolean compilationErrorFound = false;
 
                 if (logString.contains("COMPILATION ERROR")) {
