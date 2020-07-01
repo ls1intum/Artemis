@@ -90,6 +90,32 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
+     * Generate missing student exams for the exam on the server and handle the result.
+     * Student exams can be missing if a student was added after the initial generation of all student exams.
+     */
+    generateMissingStudentExams() {
+        this.isLoading = true;
+        this.examManagementService.generateMissingStudentExams(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.missingStudentExamGenerationSuccess',
+                        params: { number: res?.body?.length },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.loadAll();
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
      * Starts all the exercises of the student exams that belong to the exam
      */
     startExercises() {

@@ -59,6 +59,7 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
+            "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
@@ -71,6 +72,8 @@
             "exam": "Exam",
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
+            "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
+            "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
         },
