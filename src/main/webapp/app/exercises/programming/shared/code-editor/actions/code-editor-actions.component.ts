@@ -9,6 +9,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programmi
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -80,6 +81,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             } else if (this.commitState !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
                 setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
+            } else if (gitConflictState === GitConflictState.REFRESH) {
+                // Case c: Repository was refreshed.
+                setTimeout(() => (this.commitState = CommitState.CLEAN), 0);
             }
         });
         this.submissionSubscription = this.submissionService
@@ -91,6 +95,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
+        }
+    }
+
+    onRefresh() {
+        if (this.commitState !== CommitState.CLEAN || this.editorState !== EditorState.CLEAN) {
+            this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
+        } else {
+            this.commitState = CommitState.REFRESHING;
+            this.repositoryService.pull().subscribe(() => {
+                this.commitState = CommitState.CLEAN;
+                this.conflictService.notifyConflictState(GitConflictState.REFRESH);
+            });
         }
     }
 

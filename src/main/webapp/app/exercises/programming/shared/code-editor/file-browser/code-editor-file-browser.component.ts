@@ -122,6 +122,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
             if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
+            } else if (gitConflictState === GitConflictState.REFRESH) {
+                gitConflictState = GitConflictState.OK;
+                this.initializeComponent();
             }
             this.gitConflictState = gitConflictState;
         });
