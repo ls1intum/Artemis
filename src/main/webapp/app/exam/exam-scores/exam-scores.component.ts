@@ -20,6 +20,7 @@ export class ExamScoresComponent implements OnInit {
 
     public predicate = 'id';
     public reverse = false;
+    public isLoading = true;
 
     constructor(private route: ActivatedRoute, private examService: ExamManagementService, private sortService: SortService, private jhiAlertService: AlertService) {}
 
@@ -32,6 +33,7 @@ export class ExamScoresComponent implements OnInit {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
                     }
+                    this.isLoading = false;
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
