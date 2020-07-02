@@ -50,6 +50,8 @@
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
             "points": "points",
+            "synced": "Exercise is synchronised to the server",
+            "notSynced": "Exercise is not synchronised to the server",
             "syncedAndSubmitted": "Exercise is synchronised to the server and submitted",
             "syncedAndNotSubmitted": "Exercise is synchronised to the server but not submitted",
             "notSyncedAndSubmitted": "Exercise is not synchronised to the server but submitted",

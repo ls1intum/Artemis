@@ -117,14 +117,22 @@ export class ExamNavigationBarComponent implements OnInit {
 
     getExerciseButtonTooltip(i: number): string {
         const submission = this.exercises[i].studentParticipations[0].submissions[0];
-        if (submission.isSynced && submission.submitted) {
-            return 'syncedAndSubmitted';
-        } else if (submission.isSynced && !submission.submitted) {
-            return 'syncedAndNotSubmitted';
-        } else if (!submission.isSynced && submission.submitted) {
-            return 'notSyncedAndSubmitted';
+        if (this.exercises[i].type === ExerciseType.PROGRAMMING) {
+            if (submission.isSynced && submission.submitted) {
+                return 'syncedAndSubmitted';
+            } else if (submission.isSynced && !submission.submitted) {
+                return 'syncedAndNotSubmitted';
+            } else if (!submission.isSynced && submission.submitted) {
+                return 'notSyncedAndSubmitted';
+            } else {
+                return 'notSyncedAndNotSubmitted';
+            }
         } else {
-            return 'notSyncedAndNotSubmitted';
+            if (submission.isSynced) {
+                return 'synced';
+            } else {
+                return 'notSynced';
+            }
         }
     }
 }

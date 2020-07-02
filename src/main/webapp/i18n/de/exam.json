@@ -50,6 +50,8 @@
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
             "points": "Punkte",
+            "synced": "Aufgabe ist mit dem Server synchronisiert",
+            "notSynced": "Aufgabe ist mit dem Server synchronisiert",
             "syncedAndSubmitted": "Aufgabe ist mit dem Server synchronisiert und eingereicht",
             "syncedAndNotSubmitted": "Aufgabe ist mit dem Server synchronisiert aber nicht eingereicht",
             "notSyncedAndSubmitted": "Aufgabe ist nicht mit dem Server synchronisiert aber eingereicht",
