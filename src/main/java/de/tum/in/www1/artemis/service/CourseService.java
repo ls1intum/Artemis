@@ -188,13 +188,15 @@ public class CourseService {
     }
 
     /**
-     * Get one course by id with all exercises for all exams if the exam is over, else leave exercises empty
+     * Get one course by id with all exercises for the specified exam if the exam is over, else leave exercises empty
+     *
+     * The exam exercises are added to course.exercises in order to make it compatible with the dashboard
      *
      * @param courseId - The id of the entity
      * @param examId - Id of the exam that contains the exercises
      * @return the entity
      */
-    public Course findOneWithExamExercises(long courseId, long examId) {
+    public Course findOneWithExamExercisesForExamDashboard(long courseId, long examId) {
         log.debug("Request to get Course : {}", courseId);
         Optional<Course> optionalCourse = courseRepository.findById(courseId);
 
