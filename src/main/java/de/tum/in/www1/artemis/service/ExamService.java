@@ -200,9 +200,8 @@ public class ExamService {
         // Validate settings of the exam
         validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
+        // StudentExams are saved in the called method
         List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
-
-        studentExams = studentExamRepository.saveAll(studentExams);
 
         // TODO: make sure the student exams still contain non proxy users
 
@@ -235,9 +234,8 @@ public class ExamService {
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
         missingUsers.removeAll(usersWithExam);
 
+        // StudentExams are saved in the called method
         List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
-
-        missingStudentExams = studentExamRepository.saveAll(missingStudentExams);
 
         // TODO: make sure the student exams still contain non proxy users
 
@@ -281,7 +279,7 @@ public class ExamService {
     }
 
     /**
-     * Generates random exams for each user in the given users set.
+     * Generates random exams for each user in the given users set and saves them.
      *
      * @param exam exam for which the individual student exams will be generated
      * @param users users for which the individual exams will be generated
@@ -328,6 +326,7 @@ public class ExamService {
 
             studentExams.add(studentExam);
         }
+        studentExams = studentExamRepository.saveAll(studentExams);
         return studentExams;
     }
 
