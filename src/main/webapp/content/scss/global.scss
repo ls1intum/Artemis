@@ -736,3 +736,12 @@ ngb-tooltip-window {
         margin-right: 2px;
     }
 }
+
+@media print {
+    .container {
+        min-width: 0 !important;
+    }
+    .card {
+        display: block !important;
+    }
+}

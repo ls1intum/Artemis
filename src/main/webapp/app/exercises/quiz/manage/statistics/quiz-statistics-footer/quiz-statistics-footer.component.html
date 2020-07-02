@@ -11,12 +11,16 @@
                     <div ngbDropdownMenu *ngIf="quizExercise">
                         <button
                             class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course?.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
+                            routerLink="/course-management/{{ quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course.id }}/quiz-exercises/{{
+                                quizExercise.id
+                            }}/quiz-point-statistic"
                             jhiTranslate="showStatistic.quizPointStatisticTitle"
                         ></button>
                         <button
                             class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course?.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
+                            routerLink="/course-management/{{ quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course.id }}/quiz-exercises/{{
+                                quizExercise.id
+                            }}/quiz-statistic"
                             jhiTranslate="showStatistic.quizStatisticTitle"
                         ></button>
                         <div *ngIf="quizExercise.quizQuestions">
@@ -24,21 +28,27 @@
                                 <button
                                     *ngIf="question.type === MULTIPLE_CHOICE"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course?.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{
+                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course.id
+                                    }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title | truncate }}
                                 </button>
                                 <button
                                     *ngIf="question.type === DRAG_AND_DROP"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course?.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{
+                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course.id
+                                    }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title | truncate }}
                                 </button>
                                 <button
                                     *ngIf="question.type === SHORT_ANSWER"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course?.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{
+                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course.id
+                                    }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title | truncate }}
                                 </button>
