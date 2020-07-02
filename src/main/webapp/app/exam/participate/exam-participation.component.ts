@@ -24,6 +24,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -47,7 +49,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
+    examTitle = '';
     studentExam: StudentExam;
+
+    individualStudentEndDate: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
@@ -105,10 +110,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
+            if (!!window.history.state.exam) {
+                this.examTitle = window.history.state.exam?.title;
+            }
             this.loadingExam = true;
             this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
                 (exam) => {
                     this.exam = exam;
+                    this.individualStudentEndDate = exam.endDate ? exam.endDate : this.serverDateService.now();
                     if (this.isOver()) {
                         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
                             this.studentExam = studentExam;
@@ -158,6 +167,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
+            // set endDate with workingTime
+            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             this.submissionComponentVisited[0] = true;
@@ -225,10 +236,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.exam) {
-            return false;
-        }
-        return this.exam.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : false;
+        return this.individualStudentEndDate.isBefore(this.serverDateService.now());
     }
 
     /**

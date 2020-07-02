@@ -15,7 +15,7 @@
                 <jhi-exam-navigation-bar
                     id="exam-navigation-bar"
                     [exercises]="studentExam.exercises"
-                    [endDate]="exam.endDate"
+                    [endDate]="individualStudentEndDate"
                     (onExerciseChanged)="onExerciseChange($event)"
                     (examAboutToEnd)="examEnded()"
                 ></jhi-exam-navigation-bar>
@@ -100,7 +100,6 @@
         </div>
     </ng-template>
 </ng-container>
-<!-- no exam -->
 <ng-container *ngIf="!loadingExam && !exam">
-    <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
+    <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>
 </ng-container>
