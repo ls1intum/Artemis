@@ -3,4 +3,7 @@
     <span>
         <a href="{{ this.participation?.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ this.participation?.repositoryUrl }}</a>
     </span>
+    <br />
+    <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | translate }}:</span>
+    <span [title]="this.submission.commitHash">{{ (submission.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | translate) }}</span>
 </h6>

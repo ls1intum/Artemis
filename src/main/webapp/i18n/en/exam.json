@@ -8,7 +8,9 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
-                "exportPDF": "Export PDF"
+                "exportPDF": "Export PDF",
+                "lastCommitHash": "Last Commit Hash",
+                "noCommitHash": "Reload to get the commit hash."
             },
             "title": "Exam",
             "startExam": "Start Exam",
