@@ -15,7 +15,7 @@ Course Info Bar
 
     .tab-item {
         cursor: pointer;
-        margin: 0 1em;
+        margin: 0 0.5em;
 
         &.active {
             box-shadow: 0 2px 0 $artemis-dark;
@@ -26,7 +26,7 @@ Course Info Bar
 .tab-bar-course-overview {
     // ensure enough vertical space below for absolutely positioned exercise controls
     // when tab bar is shown on course overview page
-    @media (max-width: 690px) {
+    @media (max-width: 750px) {
         min-height: 100px;
         padding-bottom: 40px;
     }
