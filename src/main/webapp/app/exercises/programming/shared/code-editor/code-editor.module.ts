@@ -18,6 +18,7 @@ import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/sh
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
 
 @NgModule({
     imports: [AceEditorModule, MomentModule, ArtemisSharedModule, FeatureToggleModule, TreeviewModule.forRoot(), ArtemisProgrammingExerciseInstructionsEditorModule],
@@ -35,6 +36,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
+        CodeEditorConfirmRefreshModalComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -45,7 +47,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
     ],
-    entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent],
+    entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent, CodeEditorConfirmRefreshModalComponent],
     providers: [],
 })
 export class ArtemisCodeEditorModule {}
