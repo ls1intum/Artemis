@@ -143,7 +143,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.isLoading = false;
 
         // track feedback externally
-        this.assessmentsService.trackFeedback(this.result);
+        this.assessmentsService.trackFeedback(this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -170,7 +170,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback externally
-        this.assessmentsService.trackFeedback(this.result!);
+        this.assessmentsService.trackFeedback(this.submission);
 
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -193,7 +193,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback externally
-        this.assessmentsService.trackFeedback(this.result);
+        this.assessmentsService.trackFeedback(this.submission);
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(

@@ -10,6 +10,8 @@ import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { cloneDeep } from 'lodash';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -177,12 +179,20 @@ export class TextAssessmentsService {
     /**
      * Track the change of the Feedback in Athene
      *
-     * @param result - The result object that is tracked
+     * @param submission - The submission object that is tracked
      */
-    public trackFeedback(result: Result) {
-        if (result.participation?.trackingToken) {
+    public trackFeedback(submission: TextSubmission | null) {
+        // clone submission and resolve circular json properties
+        const submissionForSending = cloneDeep(submission);
+        submissionForSending!.result.submission = null;
+        submissionForSending!.result.participation = null;
+        submissionForSending!.participation.submissions = [];
+
+        if (submission!.participation?.trackingToken) {
             this.http
-                .post(`${SERVER_API_URL}/tracking/result/${result.id}`, result, { headers: { 'X-Athene-Tracking-Authorization': result.participation.trackingToken } })
+                .post(`${SERVER_API_URL}/tracking/result/${submission!.result.id}`, submissionForSending, {
+                    headers: { 'X-Athene-Tracking-Authorization': submission!.participation.trackingToken },
+                })
                 .subscribe();
         }
     }
