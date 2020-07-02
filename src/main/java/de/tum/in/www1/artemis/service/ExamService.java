@@ -201,6 +201,13 @@ public class ExamService {
         return relevantResult.orElse(null);
     }
 
+    /**
+     * Rounds a double to a specified number of decimal places
+     *
+     * @param value
+     * @param places
+     * @return rounded number
+     */
     public static double round(double value, int places) {
         if (places < 0)
             throw new IllegalArgumentException();
