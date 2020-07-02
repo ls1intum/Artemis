@@ -8,7 +8,7 @@
     <div class="col">
         <div class="d-flex justify-content-center">
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex - 1)">
+                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex - 1, false)">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
@@ -28,7 +28,7 @@
                         class="btn w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(i) | translate"
-                        (click)="changeExercise(i)"
+                        (click)="changeExercise(i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>
                     </button>
@@ -36,7 +36,7 @@
                 </div>
             </ng-container>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex + 1)">
+                <button class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex + 1, false)">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
                 </button>

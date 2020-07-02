@@ -4,6 +4,7 @@
             "title": "Your current courses",
             "exerciseTitle": "Current active exercise of \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise of \"{{ course }}\":",
+            "examTitle": "Current exam of \"{{ course }}\":",
             "cardTitle": "Your current score:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
