@@ -19,7 +19,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -133,7 +133,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                     this.loadingExam = false;
                 },
-                (error) => (this.loadingExam = false),
+                // if error occurs
+                () => (this.loadingExam = false),
             );
         });
         this.initLiveMode();
@@ -219,14 +220,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 30) {
-                this.triggerSave(true, false);
+            if (this.autoSaveTimer >= 30 && !this.isOver()) {
+                this.triggerSave(false);
             }
         }, 1000);
     }
 
     examEnded() {
-        this.triggerSave(false, true);
+        this.triggerSave(true);
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -282,7 +283,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
-        this.triggerSave(false, exerciseChange.force);
+        this.triggerSave(exerciseChange.force);
         this.initializeExercise(exerciseChange.exercise);
     }
 
@@ -360,17 +361,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *
-     * @param intervalSave is set to true, if the save was triggered from the interval timer
      * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
-    triggerSave(intervalSave: boolean, force: boolean) {
+    triggerSave(force: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
         if ((this.activeSubmissionComponent && force) || this.activeSubmissionComponent?.hasUnsavedChanges()) {
             // this will lead to a save below, because isSynced will be set to false
-            this.activeSubmissionComponent.updateSubmissionFromView(intervalSave);
+            this.activeSubmissionComponent.updateSubmissionFromView();
         }
 
         // goes through all exercises and checks if there are unsynched submissions
