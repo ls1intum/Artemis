@@ -308,6 +308,16 @@ public class ExamService {
             }
         }
 
+        // Uptading exam information in DTO
+        Double sumOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null)
+                .map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
+
+        Long numberOfStudentResultsWithOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null).count();
+
+        if (numberOfStudentResultsWithOverallPoints != 0.0) {
+            scores.averagePointsAchieved = round((sumOverallPoints / numberOfStudentResultsWithOverallPoints), 2);
+        }
+
         return scores;
     }
 
