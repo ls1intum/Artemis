@@ -273,6 +273,18 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id and eagerly load questions, statistics and submissions
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the quiz exercise entity
+     */
+    public QuizExercise findOneWithQuestionsAndStatisticsAndParticipations(Long quizExerciseId) {
+        log.debug("Find quiz exercise {} with questions and statistics and participations", quizExerciseId);
+        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndParticipationsById(quizExerciseId);
+        return optionalQuizExercise.orElse(null);
+    }
+
+    /**
      * Get all quiz exercises for the given course.
      *
      * @param courseId the id of the course
