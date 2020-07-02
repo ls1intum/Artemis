@@ -9,13 +9,17 @@
                     <fa-icon [icon]="'info-circle'" [fixedWidth]="true" style="color: white;"></fa-icon>
                 </a>
             </h2>
+            <h3 *ngIf="isExamMode">
+                {{ exam?.title }}
+            </h3>
         </div>
     </div>
 </div>
 
 <jhi-alert></jhi-alert>
 
-<div *ngIf="course">
+<div *ngIf="course && !isExamMode">
+    <!-- TODO: also support this for the exam mode -->
     <div id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="row mt-3 justify-content-around">
             <div class="col-4 text-center">
@@ -30,7 +34,7 @@
 
         <div class="row justify-content-around">
             <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', course.id, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
+                <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
                     <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
                     <p class="h3">{{ numberOfTutorComplaints }}</p>
                 </a>
@@ -43,7 +47,7 @@
 
         <div class="row justify-content-around">
             <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.id }">
+                <a [routerLink]="['/course-management', courseId, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.id }">
                     <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
                     <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
                 </a>
@@ -55,7 +59,7 @@
         </div>
         <div class="row justify-content-around">
             <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
                     <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessmentLocks' | translate }}:</p>
                     <p class="h3">{{ numberOfAssessmentLocks }}</p>
                 </a>
@@ -138,7 +142,7 @@
                     <td>
                         <button
                             *ngIf="!exercise.teamMode; else teamsLink"
-                            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'tutor-dashboard']"
+                            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'tutor-dashboard']"
                             class="btn btn-info btn-sm mr-1"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >
@@ -146,7 +150,7 @@
                         </button>
                         <ng-template #teamsLink>
                             <button
-                                [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                 [queryParams]="{ filter: TeamFilterProp.OWN }"
                                 class="btn btn-info btn-sm mr-1"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"

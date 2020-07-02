@@ -217,7 +217,6 @@ public class CourseService {
 
             // set all exam exercises
             course.setExercises(exercises);
-
             return course;
         }
         return null;

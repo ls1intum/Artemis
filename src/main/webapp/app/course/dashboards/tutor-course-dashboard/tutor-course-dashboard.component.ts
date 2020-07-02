@@ -14,6 +14,7 @@ import { Course } from 'app/entities/course.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -24,6 +25,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     readonly TeamFilterProp = TeamFilterProp;
 
     course: Course;
+    exam: Exam;
     courseId: number;
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
@@ -88,57 +90,65 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     loadAll() {
         const examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.isExamMode = !!examId;
-        this.courseService.getForTutors(this.courseId, examId).subscribe(
-            (res: HttpResponse<Course>) => {
-                this.course = Course.from(res.body!);
-                this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
-                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+        if (this.isExamMode) {
+            this.courseService.getExamWithExercises(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
+                this.exam = res.body!;
+                this.course = res.body!.course;
+                // TODO: populate exercises over exam.exerciseGroups.exercises and reuse some code from below
+            });
+        } else {
+            this.courseService.getForTutors(this.courseId).subscribe(
+                (res: HttpResponse<Course>) => {
+                    this.course = Course.from(res.body!);
+                    this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
+                    this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
-                if (this.course.exercises && this.course.exercises.length > 0) {
-                    const [finishedExercises, unfinishedExercises] = partition(
-                        this.course.exercises,
-                        (exercise) =>
-                            exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
-                            exercise.numberOfOpenComplaints === 0 &&
-                            exercise.numberOfOpenMoreFeedbackRequests === 0,
-                    );
-                    this.finishedExercises = finishedExercises;
-                    this.unfinishedExercises = unfinishedExercises;
-                    // sort exercises by type to get a better overview in the dashboard
-                    this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
-                    this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
-                }
-            },
-            (response: string) => this.onError(response),
-        );
+                    if (this.course.exercises && this.course.exercises.length > 0) {
+                        const [finishedExercises, unfinishedExercises] = partition(
+                            this.course.exercises,
+                            (exercise) =>
+                                exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                                exercise.numberOfOpenComplaints === 0 &&
+                                exercise.numberOfOpenMoreFeedbackRequests === 0,
+                        );
+                        this.finishedExercises = finishedExercises;
+                        this.unfinishedExercises = unfinishedExercises;
+                        // sort exercises by type to get a better overview in the dashboard
+                        this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
+                        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
+                    }
+                },
+                (response: string) => this.onError(response),
+            );
 
-        this.courseService.getStatsForTutors(this.courseId).subscribe(
-            (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = StatsForDashboard.from(res.body!);
-                this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                this.numberOfAssessments = this.stats.numberOfAssessments;
-                this.numberOfComplaints = this.stats.numberOfComplaints;
-                this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
-                this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
-                this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
-                this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
-                const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
-                if (tutorLeaderboardEntry) {
-                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
-                } else {
-                    this.numberOfTutorAssessments = 0;
-                    this.numberOfTutorComplaints = 0;
-                    this.numberOfTutorMoreFeedbackRequests = 0;
-                }
+            this.courseService.getStatsForTutors(this.courseId).subscribe(
+                (res: HttpResponse<StatsForDashboard>) => {
+                    this.stats = StatsForDashboard.from(res.body!);
+                    this.numberOfSubmissions = this.stats.numberOfSubmissions;
+                    this.numberOfAssessments = this.stats.numberOfAssessments;
+                    this.numberOfComplaints = this.stats.numberOfComplaints;
+                    this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
+                    this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
+                    this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
+                    this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
+                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
+                    if (tutorLeaderboardEntry) {
+                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
+                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
+                    } else {
+                        this.numberOfTutorAssessments = 0;
+                        this.numberOfTutorComplaints = 0;
+                        this.numberOfTutorMoreFeedbackRequests = 0;
+                    }
 
-                if (this.numberOfSubmissions.total > 0) {
-                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
-                }
-            },
-            (response: string) => this.onError(response),
-        );
+                    if (this.numberOfSubmissions.total > 0) {
+                        this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                    }
+                },
+                (response: string) => this.onError(response),
+            );
+        }
     }
 
     /**
