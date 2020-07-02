@@ -101,14 +101,28 @@ public class ModelingExerciseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
+    /**
+     * This method performs the basic checks for a modeling exercise. These include making sure that a course
+     * or exerciseGroup has been set Otherwise re return http badRequest.
+     * If the above condition is met, it then checks whether the user is an instructor of the parent course.
+     * If not, it returns http forbidden.
+     * @param modelingExercise The modeling exercise to be checked
+     * @return Returns the http error, or null if successful
+     */
     @Nullable
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (modelingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
+            // fetch course from database to make sure client didn't change groups
+            Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                if (modelingExercise.hasCourse() && modelingExercise.hasExerciseGroup()) {
+                    return badRequest();
+                }
+                return null;
+            }
             return forbidden();
         }
-        return null;
+        return badRequest();
     }
 
     /**
