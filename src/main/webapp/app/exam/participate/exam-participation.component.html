@@ -56,11 +56,8 @@
             <div *ngIf="!disconnected" class="exam-footer connected">
                 <div class="container">
                     <div class="exam-footer-content">
-                        <p
-                            *ngIf="isProgrammingExerciseWithOfflineIDE() && !isProgrammingExerciseWithCodeEditor(); else standardConnected"
-                            jhiTranslate="artemisApp.examParticipation.ideConnected"
-                            class="mb-0"
-                        ></p>
+                        <!-- Note by SK: this case shows an empty <p> on purpose -->
+                        <p *ngIf="isProgrammingExercise(); else standardConnected" jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0"></p>
                         <ng-template #standardConnected>
                             <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
                         </ng-template>

@@ -33,10 +33,10 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
-            "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
-            "ideConnected": "Verbunden.",
+            "connected": "Deine Antworten werden alle 30s gespeichert.",
+            "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
-            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du die Repository klonst.",
+            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du das Repository klonst.",
             "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code Editor weiterarbeiten zu können.",
             "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
