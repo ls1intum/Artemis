@@ -65,6 +65,7 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
+            "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
             "evaluateQuizExercises": "Evaluate quizzes",
             "searchForStudents": "Search for students by login or name (comma separated)",
@@ -78,8 +79,14 @@
             "exam": "Exam",
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
+            "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
+            "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamStatusSuccess": "All registered students have an individual exam",
+            "studentExamStatusWarning": "Not all registered students have an individual exam",
+            "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}"
         },
@@ -117,7 +124,8 @@
                 "email": "Email",
                 "registrationNumber": "Matriculation number",
                 "removeFromExam": {
-                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?"
+                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
+                    "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"
                 },
                 "importStudents": {
                     "buttonLabel": "Import students",
@@ -151,10 +159,11 @@
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
-                "addTextExercise": "Add text exercise",
-                "addQuizExercise": "Add quiz",
-                "addFileUploadExercise": "Add file upload exercise",
-                "addProgrammingExercise": "Add programming exercise",
+                "addTextExercise": "Add Text Exercise",
+                "addQuizExercise": "Add Quiz",
+                "addFileUploadExercise": "Add File Upload Exercise",
+                "addModelingExercise": "Add Modeling Exercise",
+                "addProgrammingExercise": "Add Programming Exercise",
                 "orderCouldNotBeSaved": "The order could not be saved"
             },
             "delete": {

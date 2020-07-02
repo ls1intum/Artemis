@@ -189,22 +189,71 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(Long examId) {
-        List<StudentExam> studentExams = new ArrayList<>();
-        SecureRandom random = new SecureRandom();
-
         // Delete all existing student exams via orphan removal
         Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
+        // Validate settings of the exam
+        validateStudentExamGeneration(exam, numberOfOptionalExercises);
+
+        // StudentExams are saved in the called method
+        List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
+
+        // TODO: make sure the student exams still contain non proxy users
+
+        return studentExams;
+    }
+
+    /**
+     * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
+     * The difference between all registered users and the users who already have an individual exam
+     * is the set of users for which student exams will be created.
+     *
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    public List<StudentExam> generateMissingStudentExams(Long examId) {
+        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+
+        // Validate settings of the exam
+        validateStudentExamGeneration(exam, numberOfOptionalExercises);
+
+        // Get all users who already have an individual exam
+        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
+        Set<User> usersWithExam = examWithExistingStudentExams.getStudentExams().stream().map(studentExam -> studentExam.getUser()).collect(Collectors.toSet());
+
+        // Get all registered users
+        Set<User> allRegisteredUsers = exam.getRegisteredUsers();
+
+        // Get all students who don't have an exam yet
+        Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
+        missingUsers.removeAll(usersWithExam);
+
+        // StudentExams are saved in the called method
+        List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
+
+        // TODO: make sure the student exams still contain non proxy users
+
+        return missingStudentExams;
+    }
+
+    /**
+     * Validates exercise settings.
+     *
+     * @param exam exam which is validated
+     * @param numberOfOptionalExercises number of optional exercises in the exam
+     * @throws BadRequestAlertException
+     */
+    private void validateStudentExamGeneration(Exam exam, long numberOfOptionalExercises) throws BadRequestAlertException {
         // Check that the start and end date of the exam is set
         if (exam.getStartDate() == null || exam.getEndDate() == null) {
             throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
         }
-
-        // Determine the default working time by computing the duration between start and end date of the exam
-        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
 
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
@@ -218,19 +267,31 @@ public class ExamService {
             throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
         }
 
-        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-
         // Check that there are enough exercise groups
-        if (exerciseGroups.size() < exam.getNumberOfExercisesInExam()) {
+        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
             throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
         }
-
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Check that there are not too much mandatory exercise groups
         if (numberOfOptionalExercises < 0) {
             throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
         }
+    }
+
+    /**
+     * Generates random exams for each user in the given users set and saves them.
+     *
+     * @param exam exam for which the individual student exams will be generated
+     * @param users users for which the individual exams will be generated
+     * @param numberOfOptionalExercises number of optional exercises in the exam
+     * @return List of StudentExams generated for the given users
+     */
+    private List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, long numberOfOptionalExercises) {
+        List<StudentExam> studentExams = new ArrayList<>();
+        SecureRandom random = new SecureRandom();
+
+        // Determine the default working time by computing the duration between start and end date of the exam
+        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
 
         // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
         List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
@@ -244,18 +305,18 @@ public class ExamService {
             }
         }
 
-        for (User registeredUser : exam.getRegisteredUsers()) {
+        for (User user : users) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
             studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
-            studentExam.setUser(registeredUser);
+            studentExam.setUser(user);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
                 // We get one random exercise from all preselected exercise groups
-                studentExam.addExercise(selectRandomExercise(random, exerciseGroups.get(index)));
+                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
             }
 
             // Apply random exercise order
@@ -265,11 +326,7 @@ public class ExamService {
 
             studentExams.add(studentExam);
         }
-
         studentExams = studentExamRepository.saveAll(studentExams);
-
-        // TODO: make sure the student exams still contain non proxy users
-
         return studentExams;
     }
 

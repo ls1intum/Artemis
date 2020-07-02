@@ -420,7 +420,7 @@ public class TextExerciseResource {
      *
      * This will import the whole exercise except for the participations and Dates.
      * Referenced entities will get cloned and assigned a new id.
-     * See{@link TextExerciseImportService#importTextExercise(TextExercise, TextExercise)}
+     * See{@link ExerciseImportService#importExercise(Exercise, Exercise)}
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
@@ -471,9 +471,12 @@ public class TextExerciseResource {
             }
         }
 
-        final var newExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
-        textExerciseRepository.save(newExercise);
+        final var newExercise = textExerciseImportService.importExercise(originalTextExercise, importedExercise);
+        if (newExercise == null) {
+            return conflict();
+        }
+        textExerciseRepository.save((TextExercise) newExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body(newExercise);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((TextExercise) newExercise);
     }
 }
