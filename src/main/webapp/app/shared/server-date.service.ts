@@ -21,12 +21,9 @@ export class ArtemisServerDateService {
         let shouldSync = false;
         const now = moment(new Date());
         if (this.recentClientDates.length > 4) {
-            this.recentClientDates.forEach((recentClientDate) => {
-                // only if all recent client dates (i.e. recent syncs are older than 60s)
-                if (now.diff(recentClientDate, 's') > 60) {
-                    shouldSync = true;
-                }
-            });
+             // only if some recent client dates (i.e. recent syncs) are older than 60s
+            shouldSync = this.recentClientDates.some((recentClientDate) => 
+                now.diff(recentClientDate, 's') > 60);
         } else {
             // definitely sync if we do not have 5 elements yet
             shouldSync = true;
