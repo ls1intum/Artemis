@@ -103,7 +103,7 @@ public class ModelingExerciseResource {
 
     /**
      * This method performs the basic checks for a modeling exercise. These include making sure that a course
-     * or exerciseGroup has been set Otherwise re return http badRequest.
+     * or exerciseGroup has been set, otherwise we return http badRequest.
      * If the above condition is met, it then checks whether the user is an instructor of the parent course.
      * If not, it returns http forbidden.
      * @param modelingExercise The modeling exercise to be checked
@@ -312,6 +312,11 @@ public class ModelingExerciseResource {
             return notFound();
         }
 
+        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(importedExercise);
+        if (responseFailure != null) {
+            return responseFailure;
+        }
+
         if (importedExercise.hasExerciseGroup()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
         }
@@ -319,10 +324,6 @@ public class ModelingExerciseResource {
             log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
-        if (!authCheckService.isAtLeastInstructorInCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-            log.debug("User {} does not have instructor rights for the course {}", user.getId(), importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            return forbidden();
-        }
         final var originalModelingExercise = optionalOriginalModelingExercise.get();
 
         if (!authCheckService.isAtLeastInstructorInCourse(originalModelingExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
