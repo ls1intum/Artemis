@@ -4,8 +4,12 @@ import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.Communicatio
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +42,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -247,5 +254,99 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testDeleteModelingExercise_notInstructorInCourse() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course2);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToExam() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(null);
+        modelingExercise.setExerciseGroup(exerciseGroup1);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void importModelingExerciseFromCourseToExam_forbidden() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(null);
+        modelingExercise.setExerciseGroup(exerciseGroup1);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromExamToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course1);
+        modelingExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void importModelingExerciseFromExamToCourse_forbidden() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course1);
+        modelingExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromExamToExam() throws Exception {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, exerciseGroup1);
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setExerciseGroup(exerciseGroup2);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToCourse_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(null);
+
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 }
