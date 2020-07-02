@@ -55,6 +55,9 @@ public class ExamQuizService {
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         quizStatisticService.updateStatistics(createdResults, quizExercise);
+
+        // The updateStatistics method filters the answer options, so we have to fetch them again
+        quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
         quizStatisticService.recalculateStatistics(quizExercise);
     }
 

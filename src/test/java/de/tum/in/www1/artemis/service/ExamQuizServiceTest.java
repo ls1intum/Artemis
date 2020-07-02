@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -53,6 +55,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    StudentExamRepository studentExamRepository;
 
     private QuizExercise quizExercise;
 
@@ -123,54 +131,14 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+        checkStatistics(quizExercise);
 
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
-        Assertions.assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
-        Assertions.assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
-        // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
-        // check statistic for each question
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
-            }
-            else if (question instanceof DragAndDropQuestion) {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
-            }
-            else {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
-            }
-            Assertions.assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-            Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
-            Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
-        }
-
-        for (int i = 0; i < numberOfParticipants; i++) {
-            studentExamService.deleteStudentExam((long) i + 1);
-        }
+        studentExamRepository.deleteAll();
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        userRepository.deleteAll();
     }
 
     @Test
@@ -206,6 +174,17 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
+        checkStatistics(quizExercise);
+
+        studentExamRepository.deleteAll();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        userRepository.deleteAll();
+    }
+
+    private void checkStatistics(QuizExercise quizExercise) {
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
@@ -247,12 +226,5 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
             Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
         }
-
-        for (int i = 0; i < numberOfParticipants; i++) {
-            studentExamService.deleteStudentExam((long) i + 1);
-        }
-
-        // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 }
