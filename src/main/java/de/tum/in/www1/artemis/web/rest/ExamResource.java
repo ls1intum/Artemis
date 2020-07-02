@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -53,16 +54,21 @@ public class ExamResource {
 
     private final ExamService examService;
 
+    private final StudentExamService studentExamService;
+
     private final ExamAccessService examAccessService;
 
     private final ExerciseService exerciseService;
+
+    private final ParticipationService participationService;
 
     private final AuditEventRepository auditEventRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
+            StudentExamService studentExamService, ParticipationService participationService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -71,6 +77,8 @@ public class ExamResource {
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.studentExamService = studentExamService;
+        this.participationService = participationService;
     }
 
     /**
@@ -324,6 +332,38 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/:courseId/exams/:examId/generate-missing-student-exams:
+     * Generates exams for students, who don't have an individual exam yet.
+     * They are created randomly based on the exam configuration and the exercise groups.
+     *
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam
+     * @return the list of student exams with their corresponding users
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to generate missing student exams for exam {}", examId);
+
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        List<StudentExam> studentExams = examService.generateMissingStudentExams(examId);
+
+        // we need to break a cycle for the serialization
+        for (StudentExam studentExam : studentExams) {
+            studentExam.getExam().setRegisteredUsers(null);
+            studentExam.getExam().setExerciseGroups(null);
+            studentExam.getExam().setStudentExams(null);
+        }
+
+        log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
+        return ResponseEntity.ok().body(studentExams);
+    }
+
+    /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
      * for all the student exams belonging to the exam
      *
@@ -398,16 +438,20 @@ public class ExamResource {
     }
 
     /**
-     * DELETE /courses/:courseId/exams/:examId/students/:studentLogin : Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more
+     * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
+     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
+     * Optionally, also deletes participations and submissions of the student in the student exam.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
      * @param studentLogin the login of the user who should lose student access
+     * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
+    public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
+            @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
         log.debug("REST request to remove {} as student from exam : {}", studentLogin, examId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
@@ -415,15 +459,35 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        var exam = examService.findOneWithRegisteredUsers(examId);
-        Optional<User> student = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
-        if (student.isEmpty()) {
+        Optional<User> optionalStudent = userService.getUserWithGroupsAndAuthoritiesByLogin(studentLogin);
+        if (optionalStudent.isEmpty()) {
             return notFound();
         }
-        exam.removeUser(student.get());
+        var exam = examService.findOneWithRegisteredUsers(examId);
+        User student = optionalStudent.get();
+        exam.removeUser(student);
+
         // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
         // still have access to the course.
         examRepository.save(exam);
+
+        // The student exam might not be generated yet
+        Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
+        if (optionalStudentExam.isPresent()) {
+            StudentExam studentExam = optionalStudentExam.get();
+
+            // Optionally delete participations and submissions
+            if (withParticipationsAndSubmission) {
+                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
+                        studentExam.getExercises());
+                for (var participation : participations) {
+                    participationService.delete(participation.getId(), true, true);
+                }
+            }
+
+            // Delete the student exam
+            studentExamService.deleteStudentExam(studentExam.getId());
+        }
         return ResponseEntity.ok().body(null);
     }
 
