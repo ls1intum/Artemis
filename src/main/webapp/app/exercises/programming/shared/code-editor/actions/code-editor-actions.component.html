@@ -22,7 +22,7 @@
         type="button"
         class="btn btn-primary navbar-btn mr-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        [overwriteDisabled]="disableActions || isBuilding || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+        [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
         data-toggle="tooltip"
         data-placement="left"

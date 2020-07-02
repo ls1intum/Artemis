@@ -85,7 +85,7 @@ describe('CodeEditorActionsComponent', () => {
     const enableRefreshButtonCombinations = cartesianProduct(
         [EditorState.CLEAN, EditorState.UNSAVED_CHANGES],
         [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED],
-        [false],
+        [false, true],
     );
 
     cartesianProduct(
