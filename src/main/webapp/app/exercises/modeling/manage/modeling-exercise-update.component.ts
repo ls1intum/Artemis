@@ -10,7 +10,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -101,6 +101,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                             );
                         }
+                    } else {
+                        // Lock individual mode for exam exercises
+                        this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
+                        this.modelingExercise.teamAssignmentConfig = null;
+                        this.modelingExercise.teamMode = false;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
