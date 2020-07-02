@@ -52,10 +52,8 @@
             "points": "Punkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
-            "syncedAndSubmitted": "Aufgabe gespeichert und eingereicht",
-            "syncedAndNotSubmitted": "Aufgabe gespeichert aber nicht eingereicht",
-            "notSyncedAndSubmitted": "Aufgabe nicht gespeichert aber eingereicht",
-            "notSyncedAndNotSubmitted": "Aufgabe nicht gespeichert und nicht eingereicht",
+            "submitted": "Aufgabe eingereicht",
+            "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
         },
