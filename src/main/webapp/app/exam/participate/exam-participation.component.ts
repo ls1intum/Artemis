@@ -235,7 +235,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is over
      */
     isOver(): boolean {
-        return this.individualStudentEndDate.isBefore(this.serverDateService.now());
+        return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
     }
 
     /**

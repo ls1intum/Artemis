@@ -9,7 +9,9 @@
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
                 "exportPDF": "Export PDF",
-                "noSubmissionFound": "You didn't submit any solution for this exercise."
+                "noSubmissionFound": "You didn't submit any solution for this exercise.",
+                "lastCommitHash": "Last Commit Hash",
+                "noCommitHash": "Reload to get the commit hash."
             },
             "title": "Exam",
             "startExam": "Start Exam",

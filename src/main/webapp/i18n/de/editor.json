@@ -28,6 +28,8 @@
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
+            "refreshingFiles": "Aktualisiert...",
+            "refreshingFilesTooltip": "Aktualisiert alle Dateien im Editor.",
             "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
@@ -37,12 +39,18 @@
             "downloadBuildResult": "Build Ergebnis herunterladen",
             "saving": "Speichert",
             "saveFiles": "Speichern",
+            "refreshing": "Aktualisiert",
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "conflict": {
                 "resolveConflict": "Konflikt bereinigen"
+            },
+            "refresh": {
+                "performRefresh": "Aktualisieren",
+                "refreshExplanationShort": "Aktualisiere alle Dateien aus deinem Repository.",
+                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
                 "fileBrowser": "Datei Browser",

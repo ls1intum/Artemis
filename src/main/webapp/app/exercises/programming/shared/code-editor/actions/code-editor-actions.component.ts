@@ -9,6 +9,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programmi
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -92,6 +93,25 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
         }
+    }
+
+    onRefresh() {
+        if (this.editorState !== EditorState.CLEAN) {
+            const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
+            modal.componentInstance.shouldRefresh.subscribe(() => {
+                this.executeRefresh();
+            });
+        } else {
+            this.executeRefresh();
+        }
+    }
+
+    executeRefresh() {
+        this.editorState = EditorState.REFRESHING;
+        this.repositoryService.pull().subscribe(() => {
+            this.unsavedFiles = {};
+            this.editorState = EditorState.CLEAN;
+        });
     }
 
     onSave() {
