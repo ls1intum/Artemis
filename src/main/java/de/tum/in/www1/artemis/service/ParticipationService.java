@@ -182,6 +182,7 @@ public class ParticipationService {
      * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
      * @return the participation connecting the given exercise and user
      */
+    @Transactional
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
         // common for all exercises
         // Check if participation already exists
@@ -237,6 +238,10 @@ public class ParticipationService {
                 if (createInitialSubmission) {
                     initializeSubmission(participation, exercise, null);
                 }
+            }
+            else if (submissionRepository.existsByParticipationId(participation.getId())) {
+                // reload and return submissions
+                participation.getSubmissions().size();
             }
         }
         participation = save(participation);
