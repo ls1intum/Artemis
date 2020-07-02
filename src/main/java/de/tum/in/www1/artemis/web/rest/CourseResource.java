@@ -548,7 +548,7 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -573,12 +573,14 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard");
-        Course course = courseService.findOneWithExamExercises(courseId, examId);
+
+        // TODO: this method is not implemented in a good way. We should NOT send exam exercises as part of the course into the client
+        Course course = courseService.findOneWithExamExercisesForExamDashboard(courseId, examId);
         if (course == null) {
             return notFound();
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -606,7 +608,7 @@ public class CourseResource {
 
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
@@ -645,7 +647,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -664,7 +666,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
@@ -766,7 +768,7 @@ public class CourseResource {
         final long start = System.currentTimeMillis();
         final Course course = courseService.findOne(courseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        if (userIsNotTaOrInstructorInCourseOrAdmin(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -804,10 +806,6 @@ public class CourseResource {
 
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
-    }
-
-    private boolean userIsNotTaOrInstructorInCourseOrAdmin(Course course, User user) {
-        return !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin();
     }
 
     /**
