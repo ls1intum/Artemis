@@ -336,7 +336,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // if the same participations is not yet present in the exercise -> add it
                 if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
                     // remove because of circular dependency when converting to JSON
-                    // TODO: check this -> debugger sometimes stopped here, might add a check
                     delete createdParticipation.exercise;
                     exercise.studentParticipations.push(createdParticipation);
                     if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
