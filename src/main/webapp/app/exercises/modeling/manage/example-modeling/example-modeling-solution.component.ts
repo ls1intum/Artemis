@@ -42,7 +42,12 @@ export class ExampleModelingSolutionComponent implements OnInit {
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            if (this.exercise.course == null) {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup!.exam!.course);
+            } else {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            }
+
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         });
     }

@@ -86,7 +86,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            if (this.exercise.course == null) {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup!.exam!.course!);
+            } else {
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            }
         });
 
         if (this.isNewSubmission) {
