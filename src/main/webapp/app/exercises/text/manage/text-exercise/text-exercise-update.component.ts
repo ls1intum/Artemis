@@ -24,7 +24,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
-    submitButtonTitle: string;
     examCourseId: number;
     checkedFlag: boolean;
     isExamMode: boolean;
@@ -129,15 +128,6 @@ export class TextExerciseUpdateComponent implements OnInit {
             .subscribe();
         this.isSaving = false;
         this.notificationText = null;
-
-        // Set submit button text depending on component state
-        if (this.isImport) {
-            this.submitButtonTitle = 'entity.action.import';
-        } else if (this.textExercise.id) {
-            this.submitButtonTitle = 'entity.action.save';
-        } else {
-            this.submitButtonTitle = 'entity.action.generate';
-        }
     }
 
     /**

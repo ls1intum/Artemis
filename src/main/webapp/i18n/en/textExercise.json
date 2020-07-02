@@ -10,6 +10,11 @@
             "import": {
                 "exampleSubmissionsRequireExercise": "To edit the example submissions, you first need to finish importing the text exercise."
             },
+            "submitButton": {
+                "create": "Create",
+                "import": "Import",
+                "save": "Save"
+            },
             "wordCount": "Number of words: {{ count }}",
             "characterCount": "Number of characters: {{ count }}",
             "created": "A new Text Exercise is created with identifier {{ param }}",
