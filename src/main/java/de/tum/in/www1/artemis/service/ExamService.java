@@ -222,7 +222,19 @@ public class ExamService {
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle()));
+            // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
+            Double maximumNumberOfPoints = null;
+            if (!exerciseGroup.getExercises().isEmpty()) {
+                maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
+            }
+
+            List<String> containedExercises = new ArrayList<>();
+
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                containedExercises.add(exercise.getTitle().trim());
+            }
+
+            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises));
         }
 
         for (User user : exam.getRegisteredUsers()) {

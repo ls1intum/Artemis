@@ -2,7 +2,7 @@
     <h4>
         {{ examScoreDTO.examTitle }}
         <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
-            {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} students with results
+            {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
         </small>
         <button class="btn btn-primary btn-sm float-right">
             <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
@@ -10,9 +10,47 @@
         </button>
     </h4>
 
-    <div class="table-responsive">
+    <!-- Exercise Groups Statistics Table -->
+    <div class="table-responsive table-bordered table-hover">
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Contained exercises
+                    </th>
+                    <th>
+                        Average points achieved
+                    </th>
+                    <th>
+                        Maximum points achievable
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
+                    <td>{{ exerciseGroup.title }}</td>
+                    <td>
+                        <ul class="list-group list-group-flush">
+                            <li *ngFor="let exerciseTitle of exerciseGroup.containedExercises" class="list-group-item">
+                                {{ exerciseTitle }}
+                            </li>
+                        </ul>
+                    </td>
+                    <td>{{ exerciseGroup.averagePointsAchieved ? exerciseGroup.averagePointsAchieved : '-' }}</td>
+                    <td>{{ exerciseGroup.maxPoints ? exerciseGroup.maxPoints : '-' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Student Result Table -->
+
+    <div class="table-responsive table-bordered table-hover">
         <table class="table table-striped">
-            <thead>
+            <thead class="thead-dark">
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="name">
                         <span jhiTranslate="artemisApp.examScores.name">Name</span>
@@ -31,35 +69,15 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <th>
+                        <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                             <span>{{ exerciseGroup.title }}</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                     </ng-container>
                     <th jhiSortBy="overallPointsAchieved">
                         <span jhiTranslate="artemisApp.examScores.overallPoints">Overall Points</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                </tr>
-                <tr>
-                    <th><span jhiTranslate="artemisApp.examScores.max">Max</span></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <!-- Score in den einzelnen Gruppen immer gleich? -->
-                        <th></th>
-                    </ng-container>
-                    <th>{{ examScoreDTO.maxPoints }}</th>
-                </tr>
-                <tr>
-                    <th><span jhiTranslate="artemisApp.examScores.average">Average</span></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                        <th>{{ exerciseGroup.averagePointsAchieved }}</th>
-                    </ng-container>
-                    <th>{{ examScoreDTO.averagePointsAchieved }}</th>
                 </tr>
             </thead>
             <tbody>

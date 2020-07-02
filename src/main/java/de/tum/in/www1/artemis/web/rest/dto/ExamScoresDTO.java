@@ -32,11 +32,17 @@ public class ExamScoresDTO {
 
         public String title;
 
+        public Double maxPoints;
+
         public Double averagePointsAchieved = null;
 
-        public ExerciseGroup(Long id, String title) {
+        public List<String> containedExercises;
+
+        public ExerciseGroup(Long id, String title, Double maxPoints, List<String> containedExercises) {
             this.id = id;
             this.title = title;
+            this.maxPoints = maxPoints;
+            this.containedExercises = containedExercises;
         }
     }
 
