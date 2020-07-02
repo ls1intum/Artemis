@@ -48,4 +48,17 @@ export class ModelingExerciseService {
     delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
+
+    /**
+     * Imports a modeling exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceModelingExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceModelingExercise: ModelingExercise) {
+        return this.http
+            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, adaptedSourceModelingExercise, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+    }
 }
