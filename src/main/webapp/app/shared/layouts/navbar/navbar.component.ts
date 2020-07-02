@@ -38,7 +38,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    public exam: Exam | undefined;
+    private exam: Exam | undefined;
+    private examId: number | undefined;
 
     constructor(
         private loginService: LoginService,
@@ -57,7 +58,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
 
-        this.loadExamIfAvailable();
+        this.getExamId();
     }
 
     ngOnInit() {
@@ -76,6 +77,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
+
+        this.examParticipationService.currentlyLoadedExam.subscribe((exam) => {
+            this.exam = exam;
+        });
     }
 
     ngOnDestroy(): void {
@@ -142,29 +147,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    loadExamIfAvailable() {
+    /**
+     * get exam id from current route
+     */
+    getExamId() {
         this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event) => {
-            this.exam = undefined;
-            if (event.url.includes('exams') && !event.url.includes('management')) {
-                const routePathParams = of(event).pipe(
-                    map(() => this.route.root),
-                    map((root) => root.firstChild),
-                    switchMap((firstChild) => {
-                        if (firstChild) {
-                            return firstChild?.paramMap.pipe(map((paramMap) => [paramMap.get('courseId'), paramMap.get('examId')]));
-                        } else {
-                            return of(null);
-                        }
-                    }),
-                );
-                routePathParams.subscribe((param) => {
-                    if (param !== null) {
-                        if (param[0] !== null && param[1] !== null) {
-                            this.examParticipationService.loadExam(+param[0], +param[1]).subscribe((loadedExam) => (this.exam = loadedExam));
-                        }
+            const examId = of(event).pipe(
+                map(() => this.route.root),
+                map((root) => root.firstChild),
+                switchMap((firstChild) => {
+                    if (firstChild) {
+                        return firstChild?.paramMap.pipe(map((paramMap) => paramMap.get('examId')));
+                    } else {
+                        return of(null);
                     }
-                });
-            }
+                }),
+            );
+            examId.subscribe((id) => {
+                if (id !== null && !event.url.includes('management')) {
+                    this.examId = +id;
+                } else {
+                    this.examId = undefined;
+                }
+            });
         });
     }
 
@@ -172,7 +177,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * check if exam mode is active
      */
     examModeActive(): boolean {
-        if (this.exam && this.exam.startDate && this.exam.endDate) {
+        if (this.exam && this.exam.id === this.examId && this.exam.startDate && this.exam.endDate) {
             return this.serverDateService.now().isBetween(this.exam.startDate, this.exam.endDate);
         }
         return false;
