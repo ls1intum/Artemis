@@ -9,8 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -49,7 +46,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
@@ -60,7 +56,6 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
@@ -73,6 +68,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TutorDashboardService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -137,7 +133,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final TutorDashboardService tutorDashboardService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -149,9 +145,8 @@ public class CourseResource {
             ExamService examService, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
             ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, SubmissionService submissionService,
-            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository,
-            Optional<VcsUserManagementService> vcsUserManagementService) {
+            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
+            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -170,10 +165,10 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -557,39 +552,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
-    }
-
-    /**
-     * GET /courses/:courseId/exam/:examId:for-exam-tutor-dashboard
-     *
-     * @param courseId the id of the course to retrieve
-     * @param examId the id of the exam that contains the exercises
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
-     */
-    @GetMapping("/courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForExamTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request /courses/{courseId}/exam/{examId}/for-exam-tutor-dashboard");
-
-        // TODO: this method is not implemented in a good way. We should NOT send exam exercises as part of the course into the client
-        Course course = courseService.findOneWithExamExercisesForExamDashboard(courseId, examId);
-        if (course == null) {
-            return notFound();
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
-
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
-        course.setExercises(interestingExercises);
-
-        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-
-        prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
+        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -1085,41 +1048,6 @@ public class CourseResource {
         }
         else {
             return forbidden();
-        }
-    }
-
-    private void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations) {
-        for (Exercise exercise : exercises) {
-
-            DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
-
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
-            }
-            else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            }
-
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-
-            exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-                        return emptyTutorParticipation;
-                    });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
     }
 }

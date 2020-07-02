@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.domain.exam;
 
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -19,9 +22,15 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 
 @Entity
 @Table(name = "exercise_group")
@@ -100,6 +109,12 @@ public class ExerciseGroup implements Serializable {
     public ExerciseGroup removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
         return this;
+    }
+
+    @JsonIgnore
+    public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
+        return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
     }
 
     @Override

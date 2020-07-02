@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
@@ -510,60 +509,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
         courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard() throws Exception {
-        User user = userRepo.findOneByLogin("student1").get();
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
-        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
-                Course.class);
-
-        // Test that the received course has two exercises
-        assertThat(receivedCourse.getExercises().size()).as("Two exercises are returned").isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testGetCourseFerExamDashboard_asStudent_forbidden() throws Exception {
-        User user = userRepo.findOneByLogin("student1").get();
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
-        request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard_beforeDueDate() throws Exception {
-        User user = userRepo.findOneByLogin("student1").get();
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
-        Exam exam = course.getExams().iterator().next();
-        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
-        examRepository.save(exam);
-
-        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
-                Course.class);
-
-        // Test that the received course has two exercises
-        assertThat(receivedCourse.getExercises().size()).as("Two exercises are returned").isEqualTo(0);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard_notFound() throws Exception {
-        request.get("/api/courses/1/exam/1/for-exam-tutor-dashboard", HttpStatus.NOT_FOUND, Course.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor6", roles = "TA")
-    public void testGetCourseForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
-        User user = userRepo.findOneByLogin("student1").get();
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
-        Exam exam = course.getExams().iterator().next();
-        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
-        examRepository.save(exam);
-
-        request.get("/api/courses/" + course.getId() + "/exam/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test

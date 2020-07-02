@@ -174,7 +174,7 @@ export class CourseManagementService {
      * @param examId - Id of the exam when it is in exam mode, otherwise undefined
      */
     getExamWithExercises(courseId: number, examId: number): Observable<ExamEntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exam/${examId}/for-exam-tutor-dashboard`;
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
         return this.http.get<Exam>(url, { observe: 'response' });
         // TODO: convert date from server
         // .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));

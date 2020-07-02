@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -17,7 +14,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -185,41 +181,6 @@ public class CourseService {
     public Course findOneWithExercises(long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findWithEagerExercisesById(courseId);
-    }
-
-    /**
-     * Get one course by id with all exercises for the specified exam if the exam is over, else leave exercises empty
-     *
-     * The exam exercises are added to course.exercises in order to make it compatible with the dashboard
-     *
-     * @param courseId - The id of the entity
-     * @param examId - Id of the exam that contains the exercises
-     * @return the entity
-     */
-    public Course findOneWithExamExercisesForExamDashboard(long courseId, long examId) {
-        log.debug("Request to get Course : {}", courseId);
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-
-        if (optionalCourse.isPresent()) {
-            Course course = optionalCourse.get();
-            Set<Exercise> exercises = new HashSet<>();
-
-            Exam exam = this.examService.findOneWithExerciseGroupsAndExercises(examId);
-
-            // check that exam is over
-            if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
-                // extract all exercises for all the exam
-                List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-                for (ExerciseGroup exerciseGroup : exerciseGroups) {
-                    exercises.addAll(exerciseGroup.getExercises());
-                }
-            }
-
-            // set all exam exercises
-            course.setExercises(exercises);
-            return course;
-        }
-        return null;
     }
 
     public Course findOneWithExercisesAndLectures(long courseId) {

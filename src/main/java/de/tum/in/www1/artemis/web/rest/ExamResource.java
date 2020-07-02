@@ -1,12 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,21 +20,39 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExamAccessService;
+import de.tum.in.www1.artemis.service.ExamService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.TutorDashboardService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Exam.
@@ -61,8 +84,15 @@ public class ExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final TutorParticipationService tutorParticipationService;
+
+    private final TutorDashboardService tutorDashboardService;
+
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
-            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService) {
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -71,6 +101,9 @@ public class ExamResource {
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.authCheckService = authCheckService;
+        this.tutorParticipationService = tutorParticipationService;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -203,6 +236,48 @@ public class ExamResource {
         Exam exam = examService.findOneWithRegisteredUsers(examId);
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/:courseId/exams/:examId:for-exam-tutor-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
+
+        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        Set<Exercise> exercises = new HashSet<>();
+
+        // extract all exercises for all the exam
+        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (ZonedDateTime.now().isAfter(exam.getEndDate())) {
+                exercises.addAll(exerciseGroup.getExercises());
+                exerciseGroup.setExercises(exerciseGroup.getInterestingExercisesForAssessmentDashboards());
+            }
+            else {
+                // clear exercises if exam is not over
+                exerciseGroup.setExercises(new HashSet<>());
+            }
+        }
+
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+
+        return ResponseUtil.wrapOrNotFound(Optional.of(exam));
     }
 
     /**

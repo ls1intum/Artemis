@@ -1,10 +1,16 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,8 +32,14 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -90,6 +102,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
+
+        // Add users that are not in the course
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
     }
 
     @AfterEach
@@ -589,5 +604,61 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard() throws Exception {
+        User user = userRepo.findOneByLogin("student1").get();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
+                Exam.class);
+
+        // Test that the received exam has two text exercises
+        assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Two exercises are returned").isEqualTo(2);
+        // Test that the received exam has zero quiz exercises
+        assertThat(receivedExam.getExerciseGroups().get(1).getExercises().size()).as("Zero exercises are returned").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard_beforeDueDate() throws Exception {
+        User user = userRepo.findOneByLogin("student1").get();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Exam exam = course.getExams().iterator().next();
+        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        examRepository.save(exam);
+
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
+                Exam.class);
+
+        // Test that the received course has no exercises due to exam being not over
+        assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Zero exercises are returned").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetCourseFerExamDashboard_asStudent_forbidden() throws Exception {
+        User user = userRepo.findOneByLogin("student1").get();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForExamDashboard_notFound() throws Exception {
+        request.get("/api/courses/1/exams/1/for-exam-tutor-dashboard", HttpStatus.NOT_FOUND, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor6", roles = "TA")
+    public void testGetCourseForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
+        User user = userRepo.findOneByLogin("student1").get();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Exam exam = course.getExams().iterator().next();
+        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        examRepository.save(exam);
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 }

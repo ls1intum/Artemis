@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -94,7 +94,29 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
             this.courseService.getExamWithExercises(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = res.body!.course;
-                // TODO: populate exercises over exam.exerciseGroups.exercises and reuse some code from below
+
+                // get all exercises
+                const exercises: Exercise[] = [];
+                this.exam.exerciseGroups?.forEach(function (exerciseGroup) {
+                    if (exerciseGroup.exercises) {
+                        exercises.concat(exerciseGroup.exercises);
+                    }
+                });
+
+                if (exercises.length > 0) {
+                    const [finishedExercises, unfinishedExercises] = partition(
+                        exercises,
+                        (exercise) =>
+                            exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                            exercise.numberOfOpenComplaints === 0 &&
+                            exercise.numberOfOpenMoreFeedbackRequests === 0,
+                    );
+                    this.finishedExercises = finishedExercises;
+                    this.unfinishedExercises = unfinishedExercises;
+                    // sort exercises by type to get a better overview in the dashboard
+                    this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
+                    this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
+                }
             });
         } else {
             this.courseService.getForTutors(this.courseId).subscribe(
