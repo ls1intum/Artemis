@@ -21,9 +21,8 @@ export class ArtemisServerDateService {
         let shouldSync = false;
         const now = moment(new Date());
         if (this.recentClientDates.length > 4) {
-             // only if some recent client dates (i.e. recent syncs) are older than 60s
-            shouldSync = this.recentClientDates.some((recentClientDate) => 
-                now.diff(recentClientDate, 's') > 60);
+            // only if some recent client dates (i.e. recent syncs) are older than 60s
+            shouldSync = this.recentClientDates.some((recentClientDate) => now.diff(recentClientDate, 's') > 60);
         } else {
             // definitely sync if we do not have 5 elements yet
             shouldSync = true;
@@ -72,7 +71,9 @@ export class ArtemisServerDateService {
         let offset = this.recentOffsets[0];
         // remove noise from offset if there are 5
         if (this.recentOffsets.length === 5) {
-            const offsetsSorted = this.recentOffsets.sort((a, b) => b - a);
+            // work on copy of array
+            const offsetsCopy = [...this.recentOffsets];
+            const offsetsSorted = offsetsCopy.sort((a, b) => b - a);
             // remove lowest
             offsetsSorted.shift();
             // remove highest
