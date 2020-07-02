@@ -135,3 +135,15 @@ export function getIconTooltip(exerciseType: ExerciseType): string {
 
     return tooltips[exerciseType];
 }
+
+/**
+ * Get the course id for an exercise.
+ * The course id is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
+ * @param exercise the exercise for which the course id should be extracted
+ */
+export function getCourseId(exercise: Exercise): number | undefined {
+    if (exercise.course) {
+        return exercise.course.id;
+    }
+    return exercise.exerciseGroup?.exam?.course.id;
+}

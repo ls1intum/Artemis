@@ -14,6 +14,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { getCourseId } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -137,10 +138,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     previousStatistic() {
         if (this.isQuizStatistic) {
-            this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
+            this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic) {
             if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
+                this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
             } else {
                 // go to previous question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1]);
@@ -156,11 +157,11 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     nextStatistic() {
         if (this.isQuizPointStatistic) {
-            this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
+            this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
         } else if (this.isQuizStatistic) {
             // go to quiz-statistic if the position = last position
             if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
+                this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[0]);
