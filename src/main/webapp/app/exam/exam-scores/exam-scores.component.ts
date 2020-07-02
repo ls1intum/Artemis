@@ -3,6 +3,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
+import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/ExamScoreDTOs';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -10,9 +11,9 @@ import { ExportToCsv } from 'export-to-csv';
     styles: [],
 })
 export class ExamScoresComponent implements OnInit {
-    public examScoreDTO: any;
-    public exerciseGroups: any[];
-    public studentResults: any[];
+    public examScoreDTO: ExamScoreDTO;
+    public exerciseGroups: ExerciseGroup[];
+    public studentResults: StudentResult[];
 
     public predicate = 'id';
     public reverse = false;
@@ -65,7 +66,7 @@ export class ExamScoresComponent implements OnInit {
         csvExporter.generateCsv(data);
     }
 
-    convertToCSVRow(studentResult: any) {
+    convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
             login: studentResult.login ? studentResult.login : '',
