@@ -1,4 +1,4 @@
-<ng-container *ngIf="exam; else noExam">
+<ng-container *ngIf="exam; else noStudentExam">
     <jhi-exam-participation-cover
         [startView]="true"
         [exam]="exam"
@@ -16,7 +16,7 @@
                 <jhi-exam-navigation-bar
                     id="exam-navigation-bar"
                     [exercises]="studentExam.exercises"
-                    [endDate]="exam.endDate"
+                    [endDate]="individualStudentEndDate"
                     (onExerciseChanged)="onExerciseChange($event)"
                 ></jhi-exam-navigation-bar>
                 <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
@@ -91,6 +91,6 @@
         </ng-container>
     </ng-container>
 </ng-container>
-<ng-template #noExam>
-    <p jhiTranslate="artemisApp.examParticipation.noExam"></p>
+<ng-template #noStudentExam>
+    <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>
 </ng-template>
