@@ -191,18 +191,17 @@ public class ExamService {
      * Returns the relevant result of a student participation
      *
      * @param studentParticipation studentParticipation to get relevant result for
-     * @return relevant result of student participation or null if none exists
+     * @return optional of relevant result
      */
-    private Result getRelevantResult(StudentParticipation studentParticipation) {
+    private Optional<Result> getRelevantResult(StudentParticipation studentParticipation) {
         // no participant -> no relevant result
         if (studentParticipation.getParticipant() == null) {
-            return null;
+            return Optional.empty();
         }
 
-        Optional<Result> relevantResult = studentParticipation.getResults().stream().filter(Result::isRated).filter(result -> result.getCompletionDate() != null)
-                .filter(result -> result.getScore() != null).sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).findFirst();
+        return studentParticipation.getResults().stream().filter(Result::isRated).filter(result -> result.getCompletionDate() != null).filter(result -> result.getScore() != null)
+                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).findFirst();
 
-        return relevantResult.orElse(null);
     }
 
     /**
@@ -268,10 +267,10 @@ public class ExamService {
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
-                Result relevantResult = getRelevantResult(studentParticipation);
+                Optional<Result> relevantResult = getRelevantResult(studentParticipation);
 
-                if (relevantResult != null) {
-                    Result result = studentParticipation.getResults().iterator().next();
+                if (relevantResult.isPresent()) {
+                    Result result = relevantResult.get();
                     Double achievedPoints = round((result.getScore() / 100.0 * exercise.getMaxScore()), 2);
 
                     if (studentResult.overallPointsAchieved == null) {
