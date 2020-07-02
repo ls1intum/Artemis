@@ -10,6 +10,8 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 
+import * as moment from 'moment';
+
 @Component({
     selector: 'jhi-student-exams',
     templateUrl: './student-exams.component.html',
@@ -25,6 +27,8 @@ export class StudentExamsComponent implements OnInit {
     paramSub: Subscription;
     isLoading: boolean;
     filteredStudentExamsSize = 0;
+    isExamStarted = false;
+    isExamOver = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -54,6 +58,8 @@ export class StudentExamsComponent implements OnInit {
             });
             this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse) => {
                 this.exam = examResponse.body!;
+                this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
+                this.isExamOver = this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
             });
             this.isLoading = false;
         });
@@ -106,6 +112,31 @@ export class StudentExamsComponent implements OnInit {
                     [],
                 );
                 this.loadAll();
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
+     * Evaluates all the quiz exercises that belong to the exam
+     */
+    evaluateQuizExercises() {
+        this.isLoading = true;
+        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.evaluateQuizExerciseSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
                 this.onError(err.error);

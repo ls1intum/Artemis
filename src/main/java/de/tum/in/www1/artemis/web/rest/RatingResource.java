@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,9 +28,14 @@ import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 /**
  * REST controller for managing Rating.
  */
+@Validated
 @RestController
 @RequestMapping("/api")
 public class RatingResource {
@@ -84,7 +90,10 @@ public class RatingResource {
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) throws URISyntaxException {
+    public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId,
+            @Valid @PathVariable @Min(value = 1, message = "rating has to be between 1 and 5") @Max(value = 5, message = "rating has to be between 1 and 5")
+            Integer ratingValue
+    ) throws URISyntaxException {
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
@@ -102,7 +111,10 @@ public class RatingResource {
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId, @PathVariable Integer ratingValue) {
+    public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId,
+            @Valid @PathVariable @Min(value = 1, message = "rating has to be between 1 and 5") @Max(value = 5, message = "rating has to be between 1 and 5")
+            Integer ratingValue
+    ) {
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }

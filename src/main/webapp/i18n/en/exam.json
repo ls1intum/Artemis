@@ -66,6 +66,7 @@
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
             "startExercises": "Prepare exercise start",
+            "evaluateQuizExercises": "Evaluate quizzes",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "workingTime": "Working time",
@@ -78,7 +79,9 @@
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
-            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
+            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
+            "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
+            "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",
