@@ -1,4 +1,4 @@
-<ng-container *ngIf="exam; else noStudentExam">
+<ng-container *ngIf="exam">
     <jhi-exam-participation-cover
         [startView]="true"
         [exam]="exam"
@@ -6,19 +6,22 @@
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
-    <ng-container *ngIf="studentExam">
-        <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
+    <ng-container *ngIf="studentExam; else alert">
         <!-- exam participation -->
-        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed">
+        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed; else alert">
             <!-- exam nav -->
             <!-- exercises -->
-            <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
+            <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]; else alert">
                 <jhi-exam-navigation-bar
                     id="exam-navigation-bar"
                     [exercises]="studentExam.exercises"
                     [endDate]="individualStudentEndDate"
                     (onExerciseChanged)="onExerciseChange($event)"
+                    (examAboutToEnd)="examEnded()"
                 ></jhi-exam-navigation-bar>
+                <div class="d-flex justify-content-center mt-2 mb-4">
+                    <jhi-alert></jhi-alert>
+                </div>
                 <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
                     <ng-container *ngIf="submissionComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
@@ -53,11 +56,8 @@
             <div *ngIf="!disconnected" class="exam-footer connected">
                 <div class="container">
                     <div class="exam-footer-content">
-                        <p
-                            *ngIf="isProgrammingExerciseWithOfflineIDE() && !isProgrammingExerciseWithCodeEditor(); else standardConnected"
-                            jhiTranslate="artemisApp.examParticipation.ideConnected"
-                            class="mb-0"
-                        ></p>
+                        <!-- Note by SK: this case shows an empty <p> on purpose -->
+                        <p *ngIf="isProgrammingExercise(); else standardConnected" jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0"></p>
                         <ng-template #standardConnected>
                             <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
                         </ng-template>
@@ -89,8 +89,14 @@
                 </div>
             </div>
         </ng-container>
+        <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
+    <ng-template #alert>
+        <div class="d-flex my-2">
+            <jhi-alert></jhi-alert>
+        </div>
+    </ng-template>
 </ng-container>
-<ng-template #noStudentExam>
+<ng-container *ngIf="!loadingExam && !exam">
     <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>
-</ng-template>
+</ng-container>

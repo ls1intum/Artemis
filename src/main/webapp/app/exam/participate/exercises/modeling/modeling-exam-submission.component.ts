@@ -58,6 +58,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
      */
     public hasUnsavedChanges(): boolean {
+        // TODO: we should have a callback by Apollon. Whenever a student changes anything in the model, this will immediately set
+        // this.studentSubmission.isSynced = false, then we can simply write here: return !this.studentSubmission.isSynced!;
         if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
             return false;
         }

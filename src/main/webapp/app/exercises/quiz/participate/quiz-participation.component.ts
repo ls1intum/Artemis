@@ -787,7 +787,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Callback method to be triggered when the user (de-)selects answers
+     * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
         this.applySelection();
