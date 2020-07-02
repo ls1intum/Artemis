@@ -18,9 +18,9 @@
 
 <jhi-alert></jhi-alert>
 
-<div *ngIf="course && !isExamMode">
+<div *ngIf="course">
     <!-- TODO: also support this for the exam mode -->
-    <div id="assessment-statistics" class="guided-tour-assessment-stats">
+    <div *ngIf="!isExamMode" id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="row mt-3 justify-content-around">
             <div class="col-4 text-center">
                 <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
@@ -166,5 +166,5 @@
 
     <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
 
-    <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
 </div>

@@ -96,10 +96,10 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.course = res.body!.course;
 
                 // get all exercises
-                const exercises: Exercise[] = [];
+                let exercises: Exercise[] = [];
                 this.exam.exerciseGroups?.forEach(function (exerciseGroup) {
                     if (exerciseGroup.exercises) {
-                        exercises.concat(exerciseGroup.exercises);
+                        exercises = exercises.concat(exerciseGroup.exercises);
                     }
                 });
 
