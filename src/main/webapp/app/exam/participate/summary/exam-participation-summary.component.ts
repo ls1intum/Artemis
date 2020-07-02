@@ -34,7 +34,7 @@ export class ExamParticipationSummaryComponent {
      */
     printPDF() {
         // expand all exercises before printing
-        this.collapsedSubmissionIds = [];
+        this.collapsedExerciseIds = [];
         setTimeout(() => window.print());
     }
 
