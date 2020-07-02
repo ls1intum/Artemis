@@ -70,7 +70,7 @@ export class ExamParticipationSummaryComponent {
 
     /**
      * @param exerciseId
-     * checks collapse control of exercise cards depending on submissionId
+     * checks collapse control of exercise cards depending on exerciseId
      */
     isCollapsed(exerciseId: number): boolean {
         return this.collapsedExerciseIds.includes(exerciseId);
@@ -78,8 +78,8 @@ export class ExamParticipationSummaryComponent {
 
     /**
      * @param exerciseId
-     * adds collapse control of exercise cards depending on submissionId
-     * @param exercise the exercise for which the submission should be collapsed
+     * adds collapse control of exercise cards depending on exerciseId
+     * @param exerciseId the exercise for which the submission should be collapsed
      */
     toggleCollapseExercise(exerciseId: number): void {
         const collapsed = this.isCollapsed(exerciseId);
