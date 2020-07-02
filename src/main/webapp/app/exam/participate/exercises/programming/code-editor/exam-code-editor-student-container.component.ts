@@ -14,7 +14,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 
 @Component({
@@ -70,5 +70,15 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      */
     onCommitStateChange(commitState: CommitState): void {
         this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
+    }
+
+    /**
+     * Set Submission to unsynced on file changes
+     *
+     * @param $event
+     */
+    onFileChange<F extends FileChange>($event: [string[], F]) {
+        super.onFileChange($event);
+        this.participation.submissions[0].isSynced = false;
     }
 }
