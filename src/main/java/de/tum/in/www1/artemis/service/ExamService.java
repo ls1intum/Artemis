@@ -204,8 +204,8 @@ public class ExamService {
     /**
      * Rounds a double to a specified number of decimal places
      *
-     * @param value
-     * @param places
+     * @param value  the number to round
+     * @param places the number of decimal places to round to
      * @return rounded number
      */
     public static double round(double value, int places) {
