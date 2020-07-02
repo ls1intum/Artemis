@@ -42,6 +42,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     private ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise);
+
         exerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
         return newExercise;
@@ -108,10 +109,11 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
             newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
-            newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
+            if (originalSubmission.getResult() != null) {
+                newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
+            }
             submissionRepository.save(newSubmission);
         }
         return newSubmission;
     }
-
 }

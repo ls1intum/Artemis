@@ -176,7 +176,6 @@
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
                     <button
-                        *ngIf="!isImport"
                         [routerLink]="['/course-management', examCourseId, 'modeling-exercises', modelingExercise.id, 'example-submissions', exampleSubmission.id]"
                         class="btn btn-link"
                         type="button"
