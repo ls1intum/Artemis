@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -13,6 +13,8 @@ import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
+    public currentlyLoadedExam = new Subject<Exam>();
+
     public getResourceURL(courseId: number, examId: number): string {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
@@ -51,7 +53,12 @@ export class ExamParticipationService {
      */
     public loadExam(courseId: number, examId: number): Observable<Exam> {
         const url = this.getResourceURL(courseId, examId) + '/conduction';
-        return this.httpClient.get<Exam>(url).map((exam: Exam) => this.convertExamDateFromServer(exam));
+        const loadedExam = this.httpClient.get<Exam>(url).map((exam: Exam) => {
+            const convertedExam = this.convertExamDateFromServer(exam);
+            this.currentlyLoadedExam.next(convertedExam);
+            return convertedExam;
+        });
+        return loadedExam;
     }
 
     /**
