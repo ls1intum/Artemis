@@ -19,7 +19,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -295,6 +295,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExercise = exercise;
         // if we do not have a valid participation for the exercise -> initialize it
         if (!this.isExerciseParticipationValid(exercise)) {
+            // TODO: after getting online subscribe is not executed, might be a problem of the Observable in crateParticipationForExercise
             this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation !== null) {
                     // for programming exercises -> wait for latest submission before showing exercise
@@ -331,10 +332,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | null> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
-            tap((createdParticipation: StudentParticipation) => {
+            map((createdParticipation: StudentParticipation) => {
                 // if the same participations is not yet present in the exercise -> add it
                 if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
                     // remove because of circular dependency when converting to JSON
+                    // TODO: check this -> debugger sometimes stopped here, might add a check
                     delete createdParticipation.exercise;
                     exercise.studentParticipations.push(createdParticipation);
                     if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
@@ -342,6 +344,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
                 this.generateParticipationStatus.next('success');
+                return createdParticipation;
             }),
             catchError(() => {
                 this.generateParticipationStatus.next('failed');
