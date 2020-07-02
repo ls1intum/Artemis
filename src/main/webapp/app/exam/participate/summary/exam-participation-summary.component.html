@@ -16,14 +16,14 @@
             </h5>
             <button
                 class="btn btn-light question-collapse"
-                (click)="toggleCollapseSubmission(getSubmissionForExercise(exercise).id)"
-                [attr.aria-expanded]="!isCollapsed(getSubmissionForExercise(exercise).id)"
-                [attr.aria-controls]="isCollapsed(getSubmissionForExercise(exercise).id)"
+                (click)="toggleCollapseSubmission(exercise)"
+                [attr.aria-expanded]="!isCollapsed(exercise)"
+                [attr.aria-controls]="isCollapsed(exercise)"
             >
-                <fa-icon size="2x" [icon]="isCollapsed(getSubmissionForExercise(exercise).id) ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(exercise) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
-        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(getSubmissionForExercise(exercise).id)">
+        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
             <h5>{{ exercise.title }}</h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>

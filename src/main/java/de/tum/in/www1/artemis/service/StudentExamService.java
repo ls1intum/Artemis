@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -54,6 +55,19 @@ public class StudentExamService {
     }
 
     /**
+     * Get one optional student exam by exam id and user.
+     *
+     * @param examId    the id of the exam
+     * @param userId    the id of the user
+     * @return the student exam with exercises
+     */
+    @NotNull
+    public Optional<StudentExam> findOneWithExercisesByUserIdAndExamIdOptional(Long userId, Long examId) {
+        log.debug("Request to get optional student exam by userId {} and examId {}", userId, examId);
+        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
+    }
+
+    /**
      * Get one student exam by id with exercises.
      *
      * @param studentExamId the id of the student exam
@@ -92,7 +106,7 @@ public class StudentExamService {
      *
      * @param exerciseId the id of an exam exercise
      * @param userId the id of the student taking the exam
-     * @return the student exam without associated entities 
+     * @return the student exam without associated entities
      */
     @NotNull
     public StudentExam findOneByExerciseIdAndUserId(Long exerciseId, Long userId) {
@@ -115,10 +129,10 @@ public class StudentExamService {
     }
 
     /**
-     * Get all distinct student working times of one exam. 
+     * Get all distinct student working times of one exam.
      *
      * @param examId the id of the exam
-     * @return a set of all distinct working time values among the student exams of an exam. May be empty if no student exams can be found. 
+     * @return a set of all distinct working time values among the student exams of an exam. May be empty if no student exams can be found.
      */
     @NotNull
     public Set<Integer> findAllDistinctWorkingTimesByExamId(Long examId) {
