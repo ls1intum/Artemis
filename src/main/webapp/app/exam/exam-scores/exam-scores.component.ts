@@ -4,6 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
 import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/ExamScoreDTOs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -18,17 +21,20 @@ export class ExamScoresComponent implements OnInit {
     public predicate = 'id';
     public reverse = false;
 
-    constructor(private route: ActivatedRoute, private examService: ExamManagementService, private sortService: SortService) {}
+    constructor(private route: ActivatedRoute, private examService: ExamManagementService, private sortService: SortService, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.examService.getExamScore(params['courseId'], params['examId']).subscribe((examResponse) => {
-                this.examScoreDTO = examResponse.body!;
-                if (this.examScoreDTO) {
-                    this.studentResults = this.examScoreDTO.studentResults;
-                    this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                }
-            });
+            this.examService.getExamScore(params['courseId'], params['examId']).subscribe(
+                (examResponse) => {
+                    this.examScoreDTO = examResponse.body!;
+                    if (this.examScoreDTO) {
+                        this.studentResults = this.examScoreDTO.studentResults;
+                        this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                    }
+                },
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            );
         });
     }
 
