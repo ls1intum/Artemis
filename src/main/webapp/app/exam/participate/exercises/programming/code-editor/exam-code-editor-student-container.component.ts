@@ -69,7 +69,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      * @param commitState current CommitState from CodeEditorActionsComponent
      */
     onCommitStateChange(commitState: CommitState): void {
-        this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
+        if (this.participation.submissions && this.participation.submissions[0]) {
+            this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
+        }
     }
 
     /**
