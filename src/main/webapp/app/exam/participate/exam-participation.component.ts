@@ -125,7 +125,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                     this.loadingExam = false;
                 },
-                (error) => (this.loadingExam = false),
+                () => (this.loadingExam = false),
             );
         });
         this.initLiveMode();
