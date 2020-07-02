@@ -1,8 +1,8 @@
 <div class="row justify-content-between align-items-start exam-navigation sticky-top pt-2">
-    <div class="col-auto d-none d-md-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+    <div class="col-auto d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
         {{ 'artemisApp.examParticipation.progress' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
-    <div class="col-auto d-block d-md-none h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
+    <div class="col-auto d-block d-lg-none h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
         {{ 'artemisApp.examParticipation.progressSmall' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="col">
@@ -41,8 +41,7 @@
     <div class="col-auto">
         <div class="row justify-content-end align-items-start pr-2">
             <div class="col">
-                <!-- Note: for programming exercises, it does not make sense to show a save or continue button -->
-                <button *ngIf="!isProgrammingExercise()" class="btn btn-primary px-3 mb-2" (click)="saveExercise()">
+                <button [class.invisible]="isProgrammingExercise()" class="btn btn-primary px-3 mb-2" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                 </button>
             </div>
