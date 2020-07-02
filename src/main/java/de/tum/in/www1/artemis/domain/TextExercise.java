@@ -7,9 +7,7 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
  * A TextExercise.
@@ -77,22 +75,4 @@ public class TextExercise extends Exercise implements Serializable {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
     }
 
-    /**
-     * Columns for which we allow a pageable search using the {@link de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum TextExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
-
-        private String mappedColumnName;
-
-        TextExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
-    }
 }
