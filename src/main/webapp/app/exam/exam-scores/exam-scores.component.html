@@ -7,10 +7,12 @@
     </div>
 
     <div *ngIf="!isLoading">
-        <h4>
+        <h4 *ngIf="examScoreDTO.title">
             {{ examScoreDTO.title }}
         </h4>
-        <h4 jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">{{ examScoreDTO.maxPoints }} Points achievable</h4>
+        <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
+            {{ examScoreDTO.maxPoints }} Points achievable
+        </h4>
         <h3>
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
                 {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
