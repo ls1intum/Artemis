@@ -32,7 +32,20 @@
             }
         },
         "examScores": {
-            "title": "Klausur Ergebnisse"
+            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "title": "Klausur Ergebnisse",
+            "titleColumn": "Titel",
+            "containedExercisesColumn": "Aufgaben in Gruppe",
+            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
+            "maximumPointsColumn": "Maximal Erreichbare Punkte",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matrikelnummer",
+            "overallPointsColumn": "Erreichte Punkte",
+            "overallScoreColumn": "Erreichtes Ergebnis (%)",
+            "exportCSV": "Exportiere Ergebnisse als CSV",
+            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
         },
         "examParticipation": {
             "timer": "Restzeit: ",

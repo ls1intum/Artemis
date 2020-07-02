@@ -45,11 +45,11 @@ export class ExamScoresComponent implements OnInit {
     }
 
     exportToCsv() {
-        const headers = ['Name', 'Login', 'E-Mail', 'Registration Number'];
+        const headers = ['Name', 'Login', 'E-Mail', 'Matriculation Number'];
         this.exerciseGroups.forEach((exerciseGroup) => {
             headers.push(exerciseGroup.title + ' Assigned Exercise');
             headers.push(exerciseGroup.title + ' Achieved Points');
-            headers.push(exerciseGroup.title + ' Achieved Score');
+            headers.push(exerciseGroup.title + ' Achieved Score (%)');
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
@@ -63,8 +63,8 @@ export class ExamScoresComponent implements OnInit {
             quoteStrings: '"',
             decimalSeparator: '.',
             showLabels: true,
-            showTitle: true,
             title: this.examScoreDTO.title,
+            filename: this.examScoreDTO.title + 'Results',
             useTextFile: false,
             useBom: true,
             headers,
@@ -88,11 +88,11 @@ export class ExamScoresComponent implements OnInit {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? exerciseResult.achievedPoints : '';
-                csvRow[exerciseGroup.title + 'AchievedScore'] = exerciseResult.achievedScore ? exerciseResult.achievedScore : '';
+                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = exerciseResult.achievedScore ? exerciseResult.achievedScore : '';
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
-                csvRow[exerciseGroup.title + 'AchievedScore'] = '';
+                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = '';
             }
         });
 

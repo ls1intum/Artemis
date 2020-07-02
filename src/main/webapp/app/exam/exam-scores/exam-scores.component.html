@@ -10,7 +10,7 @@
         <h4>
             {{ examScoreDTO.title }}
         </h4>
-        <h4>{{ examScoreDTO.maxPoints }} Points achievable</h4>
+        <h4 jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">{{ examScoreDTO.maxPoints }} Points achievable</h4>
         <h3>
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
                 {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
@@ -26,16 +26,17 @@
             <table class="table">
                 <thead class="thead-dark">
                     <tr>
-                        <th>
-                            Name
+                        <th jhiTranslate="artemisApp.examScores.titleColumn">
+                            Title
                         </th>
-                        <th>
+                        <th jhiTranslate="artemisApp.examScores.containedExercisesColumn">
                             Contained exercises
                         </th>
-                        <th>
+
+                        <th jhiTranslate="artemisApp.examScores.averagePointsColumn">
                             Average points achieved
                         </th>
-                        <th>
+                        <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">
                             Maximum points achievable
                         </th>
                     </tr>
@@ -64,19 +65,19 @@
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th jhiSortBy="name">
-                            <span jhiTranslate="artemisApp.examScores.name">Name</span>
+                            <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="login">
-                            <span jhiTranslate="artemisApp.examScores.login">Login</span>
+                            <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="eMail">
-                            <span jhiTranslate="artemisApp.examScores.eMail">E-Mail</span>
+                            <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="registrationNumber">
-                            <span jhiTranslate="artemisApp.examScores.registrationNumber">Registration Number</span>
+                            <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
@@ -86,12 +87,12 @@
                             </th>
                         </ng-container>
                         <th jhiSortBy="overallPointsAchieved">
-                            <span jhiTranslate="artemisApp.examScores.overallPoints">Overall Points</span>
+                            <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
 
-                        <th jhiSortBy="overallPointsAchieved">
-                            <span>Overall Score (%)</span>
+                        <th jhiSortBy="overallScoreAchieved">
+                            <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                     </tr>

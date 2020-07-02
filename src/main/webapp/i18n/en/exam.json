@@ -32,18 +32,20 @@
             }
         },
         "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Points achievable",
             "title": "Exam Scores",
-            "refresh": "Refresh",
-            "searchForStudents": "Search for students by login or name (comma separated)",
-            "name": "Name",
-            "login": "Login",
-            "eMail": "E-Mail",
-            "registrationNumber": "Registration Number",
-            "max": "Max",
-            "average": "Average",
-            "overallPoints": "Overall Points",
-            "exportCSV": " Export Results as CSV",
-            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} students with results"
+            "titleColumn": "Title",
+            "containedExercisesColumn": "Exercises in Group",
+            "averagePointsColumn": "Average Points achieved",
+            "maximumPointsColumn": "Maximum Points achievable",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matriculation Number",
+            "overallPointsColumn": "Overall Points",
+            "overallScoreColumn": "Overall Score (%)",
+            "exportCSV": "Export Results as CSV",
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
         },
         "examParticipation": {
             "timer": "Time Left: ",
