@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -449,9 +448,10 @@ public class ExamResource {
         // still have access to the course.
         examRepository.save(exam);
 
-        // The student exam might not exist
-        try {
-            var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
+        // The student exam might not be generated yet
+        Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
+        if (optionalStudentExam.isPresent()) {
+            StudentExam studentExam = optionalStudentExam.get();
 
             // Optionally delete participations and submissions
             if (withParticipationsAndSubmission) {
@@ -465,10 +465,6 @@ public class ExamResource {
             // Delete the student exam
             studentExamService.deleteStudentExam(studentExam.getId());
         }
-        catch (EntityNotFoundException e) {
-            log.debug("Delete student from exam: Student exam for user " + student.getId() + " does not exist in exam " + exam.getId());
-        }
-
         return ResponseEntity.ok().body(null);
     }
 
