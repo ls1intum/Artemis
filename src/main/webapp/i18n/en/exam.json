@@ -49,7 +49,11 @@
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
-            "points": "points"
+            "points": "points",
+            "syncedAndSubmitted": "Exercise is synchronised to the server and submitted",
+            "syncedAndNotSubmitted": "Exercise is synchronised to the server but not submitted",
+            "notSyncedAndSubmitted": "Exercise is not synchronised to the server but submitted",
+            "notSyncedAndNotSubmitted": "Exercise is not synchronised to the server and not submitted"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

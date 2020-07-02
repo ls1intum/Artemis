@@ -24,7 +24,12 @@
                         i <= exerciseIndex + itemsVisiblePerSide - (exerciseIndex - itemsVisiblePerSide <= 0 ? exerciseIndex - itemsVisiblePerSide : 0)
                     "
                 >
-                    <button class="btn w-100" [ngClass]="setExerciseButtonStatus(i)" (click)="changeExercise(i)">
+                    <button
+                        class="btn w-100"
+                        [ngClass]="setExerciseButtonStatus(i)"
+                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(i) | translate"
+                        (click)="changeExercise(i)"
+                    >
                         <fa-icon [icon]="icon"></fa-icon>
                     </button>
                     <div class="exerciseIndex">{{ i + 1 }}</div>

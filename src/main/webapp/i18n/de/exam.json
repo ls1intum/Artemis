@@ -49,7 +49,11 @@
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
-            "points": "Punkte"
+            "points": "Punkte",
+            "syncedAndSubmitted": "Aufgabe ist mit dem Server synchronisiert und eingereicht",
+            "syncedAndNotSubmitted": "Aufgabe ist mit dem Server synchronisiert aber nicht eingereicht",
+            "notSyncedAndSubmitted": "Aufgabe ist nicht mit dem Server synchronisiert aber eingereicht",
+            "notSyncedAndNotSubmitted": "ufgabe ist nicht mit dem Server synchronisiert und nicht eingereicht"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
