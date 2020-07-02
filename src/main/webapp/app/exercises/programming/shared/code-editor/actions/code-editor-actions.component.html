@@ -43,7 +43,6 @@
         [overwriteDisabled]="
             disableActions ||
             editorState !== EditorState.UNSAVED_CHANGES ||
-            editorState === EditorState.REFRESHING ||
             commitState === CommitState.COMMITTING ||
             commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
             commitState === CommitState.UNDEFINED
