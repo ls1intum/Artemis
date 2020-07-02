@@ -3,9 +3,20 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
         <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
         <button
+            id="modeling-exercise-import-button"
+            *ngIf="course && course.isAtLeastInstructor"
+            class="btn btn-primary float-right jh-create-entity create-modeling-exercise mr-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel">
+                Import Modeling Exercise
+            </span>
+        </button>
+        <button
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastInstructor"
-            class="btn btn-primary float-right jh-create-entity create-modeling-exercise"
+            class="btn btn-primary float-right jh-create-entity create-modeling-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>

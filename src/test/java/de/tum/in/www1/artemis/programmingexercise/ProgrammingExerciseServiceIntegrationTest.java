@@ -214,7 +214,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm("");
-        search.setSortedColumn(ProgrammingExercise.ProgrammingExerciseSearchColumn.ID.name());
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
         search.setSortingOrder(SortingOrder.ASCENDING);
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
