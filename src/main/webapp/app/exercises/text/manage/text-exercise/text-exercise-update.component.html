@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate #editForm="ngForm">
     <div>
         <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">
             Create a new Text Exercise
@@ -163,7 +163,7 @@
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
             <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.textExercise.import.exampleSubmissionsRequireExercise">
-                T
+                To create an example submission, you first need to finish importing the text exercise
             </div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">
@@ -176,13 +176,11 @@
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
 
-        <jhi-button
-            id="save-entity"
-            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
-            [isLoading]="isSaving"
-            [icon]="'save'"
-            [title]="submitButtonTitle"
-        >
-        </jhi-button>
+        <button type="submit" (click)="save()" class="btn btn-primary" id="submit-entity">
+            <fa-icon [icon]="'save'"></fa-icon>
+            <span *ngIf="isImport" jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
+            <span *ngIf="!isImport && textExercise.id" jhiTranslate="artemisApp.textExercise.submitButton.save">Save</span>
+            <span *ngIf="!isImport && !textExercise.id" jhiTranslate="artemisApp.textExercise.submitButton.create">Create</span>
+        </button>
     </div>
 </form>

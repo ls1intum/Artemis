@@ -14,6 +14,8 @@ import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exer
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -128,6 +130,19 @@ export class ExerciseGroupsComponent implements OnInit {
                     () => {},
                 );
                 break;
+            case ExerciseType.MODELING:
+                const modelingImportModalRef = this.modalService.open(ModelingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                modelingImportModalRef.result.then(
+                    (result: ModelingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
         }
     }
 
@@ -156,10 +171,7 @@ export class ExerciseGroupsComponent implements OnInit {
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
             (res) => (this.exerciseGroups = res.body),
-            (err) => {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
-                console.log(err);
-            },
+            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
     }
 }
