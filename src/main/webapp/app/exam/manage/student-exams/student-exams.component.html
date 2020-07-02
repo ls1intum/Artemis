@@ -11,7 +11,13 @@
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
                 </button>
-                <button class="btn btn-primary ml-1" style="height: 40px;" (click)="generateMissingStudentExams()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                <button
+                    class="btn btn-primary ml-1"
+                    style="height: 40px;"
+                    (click)="generateMissingStudentExams()"
+                    *ngIf="course?.isAtLeastInstructor"
+                    [disabled]="isLoading || !hasStudentsWithoutExam"
+                >
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
                 </button>
