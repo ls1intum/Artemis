@@ -96,21 +96,21 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onRefresh() {
-        if (this.commitState !== CommitState.CLEAN || this.editorState !== EditorState.CLEAN) {
+        if (this.editorState !== EditorState.CLEAN) {
             const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
             modal.componentInstance.shouldRefresh.subscribe(() => {
-                this.waitOnRefresh(this.repositoryService.resetRepository());
+                this.executeRefresh();
             });
         } else {
-            this.waitOnRefresh(this.repositoryService.pull());
+            this.executeRefresh();
         }
     }
 
-    waitOnRefresh(refreshOperation: Observable<any>) {
-        this.commitState = CommitState.REFRESHING;
-        refreshOperation.subscribe(() => {
+    executeRefresh() {
+        this.editorState = EditorState.REFRESHING;
+        this.repositoryService.pull().subscribe(() => {
             this.unsavedFiles = {};
-            this.commitState = CommitState.CLEAN;
+            this.editorState = EditorState.CLEAN;
         });
     }
 
