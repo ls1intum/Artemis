@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { timer } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { distinctUntilChanged, map, first } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -20,22 +20,27 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input()
     endDate: Moment;
 
-    @Output() onExerciseChanged = new EventEmitter<Exercise>();
+    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+    @Output() examAboutToEnd = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
 
     exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    displayTime$ = timer(0, 100).pipe(
-        map(() => this.updateDisplayTime()),
+    private timer$ = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
+
+    displayTime$ = this.timer$.pipe(
+        map((timeLeft: moment.Duration) => this.updateDisplayTime(timeLeft)),
         distinctUntilChanged(),
     );
 
     criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {}
+    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {
+        this.timer$.pipe(first((duration: moment.Duration) => duration.asSeconds() <= 1)).subscribe(() => this.examAboutToEnd.emit());
+    }
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -52,30 +57,29 @@ export class ExamNavigationBarComponent implements OnInit {
         });
     }
 
-    changeExercise(i: number) {
+    changeExercise(exerciseIndex: number, force: boolean) {
         // out of index -> do nothing
-        if (i > this.exercises.length - 1 || i < 0) {
+        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
         }
         // set index and emit event
-        this.exerciseIndex = i;
-        this.onExerciseChanged.emit(this.exercises[i]);
-        this.setExerciseButtonStatus(i);
+        this.exerciseIndex = exerciseIndex;
+        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], force });
+        this.setExerciseButtonStatus(exerciseIndex);
     }
 
     saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
         if (newIndex > this.exercises.length - 1) {
-            // if out of range "change" active exercise to current in order to trigger a save
-            this.changeExercise(this.exerciseIndex);
+            // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+            this.changeExercise(this.exerciseIndex, true);
         } else {
-            this.changeExercise(newIndex);
+            this.changeExercise(newIndex, true);
         }
     }
 
-    updateDisplayTime() {
-        const timeDiff = moment.duration(this.endDate.diff(this.serverDateService.now()));
+    updateDisplayTime(timeDiff: moment.Duration) {
         if (!this.criticalTime && timeDiff.asMinutes() < 5) {
             this.criticalTime = true;
         }
@@ -113,6 +117,7 @@ export class ExamNavigationBarComponent implements OnInit {
                 return status;
             } else {
                 // make button yellow
+                this.icon = 'edit';
                 status = 'notSynced';
                 return status;
             }
