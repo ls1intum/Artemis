@@ -41,6 +41,7 @@ export class ExamScoresComponent implements OnInit {
         this.exerciseGroups.forEach((exerciseGroup) => {
             headers.push(exerciseGroup.title + ' Assigned Exercise');
             headers.push(exerciseGroup.title + ' Achieved Points');
+            headers.push(exerciseGroup.title + ' Achieved Score');
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
@@ -79,9 +80,11 @@ export class ExamScoresComponent implements OnInit {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? exerciseResult.achievedPoints : '';
+                csvRow[exerciseGroup.title + 'AchievedScore'] = exerciseResult.achievedScore ? exerciseResult.achievedScore : '';
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
+                csvRow[exerciseGroup.title + 'AchievedScore'] = '';
             }
         });
 

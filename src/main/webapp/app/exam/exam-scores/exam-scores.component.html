@@ -99,6 +99,8 @@
                             {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
                             :
                             {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints }}
+
+                            ({{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore }} %)
                         </td>
                         <ng-template #empty>
                             <td>
