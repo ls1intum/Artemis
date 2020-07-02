@@ -226,8 +226,10 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
+        // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
+        // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
             Double maximumNumberOfPoints = null;
@@ -244,6 +246,7 @@ public class ExamService {
             scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises));
         }
 
+        // Adding registered student information to DTO
         for (User user : exam.getRegisteredUsers()) {
             scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(),
                     user.getRegistrationNumber() != null ? user.getRegistrationNumber().trim() : ""));
@@ -252,6 +255,7 @@ public class ExamService {
         List<StudentParticipation> studentParticipations = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream)
                 .map(Exercise::getStudentParticipations).flatMap(Collection::stream).collect(Collectors.toList());
 
+        // Adding student results information to DTO
         for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
             // ToDo Support Team Exercises
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
@@ -279,6 +283,14 @@ public class ExamService {
             }
         }
 
+        // Updating student result information in DTO
+        for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
+            if (studentResult.overallPointsAchieved != null) {
+                studentResult.overallScoreAchieved = round((studentResult.overallPointsAchieved / scores.maxPoints) * 100.0, 2);
+            }
+        }
+
+        // Updating exerciseGroup information in DTO
         for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
             Double noOfFoundResults = 0.0;
             Double sumOfPoints = 0.0;
@@ -296,6 +308,7 @@ public class ExamService {
             }
         }
 
+        // Uptading exam information in DTO
         Double sumOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null)
                 .map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
 

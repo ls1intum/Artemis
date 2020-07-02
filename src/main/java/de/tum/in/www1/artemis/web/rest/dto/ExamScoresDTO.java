@@ -61,6 +61,8 @@ public class ExamScoresDTO {
 
         public Double overallPointsAchieved = null;
 
+        public Double overallScoreAchieved = null;
+
         public Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
 
         public StudentResult(Long id, String name, String eMail, String login, String registrationNumber) {

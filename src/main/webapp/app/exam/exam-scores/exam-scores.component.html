@@ -7,7 +7,7 @@
         <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
             {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
         </small>
-        <button class="btn btn-primary btn-sm float-right">
+        <button (click)="exportToCsv()" class="btn btn-primary btn-sm float-right">
             <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
             <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
@@ -81,6 +81,11 @@
                         <span jhiTranslate="artemisApp.examScores.overallPoints">Overall Points</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+
+                    <th jhiSortBy="overallPointsAchieved">
+                        <span>Overall Score (%)</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -102,6 +107,7 @@
                         </ng-template>
                     </ng-container>
                     <td>{{ studentResult.overallPointsAchieved ? studentResult.overallPointsAchieved : '-' }}</td>
+                    <td>{{ studentResult.overallScoreAchieved ? studentResult.overallScoreAchieved : '-' }}</td>
                 </tr>
             </tbody>
         </table>
