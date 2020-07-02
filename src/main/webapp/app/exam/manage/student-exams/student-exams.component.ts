@@ -14,6 +14,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
+import * as moment from 'moment';
+
 @Component({
     selector: 'jhi-student-exams',
     templateUrl: './student-exams.component.html',
@@ -30,6 +32,8 @@ export class StudentExamsComponent implements OnInit {
     paramSub: Subscription;
     isLoading: boolean;
     filteredStudentExamsSize = 0;
+    isExamStarted = false;
+    isExamOver = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -55,10 +59,15 @@ export class StudentExamsComponent implements OnInit {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
-
             const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(tap((res) => this.setStudentExams(res.body)));
 
-            const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(tap((examResponse) => (this.exam = examResponse.body!)));
+            const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
+                tap((examResponse) => {
+                    this.exam = examResponse.body!;
+                    this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
+                    this.isExamOver = this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
+                }),
+            );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
             forkJoin(studentExamObservable, examObservable).subscribe(() => {
@@ -158,6 +167,31 @@ export class StudentExamsComponent implements OnInit {
                     [],
                 );
                 this.loadAll();
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
+     * Evaluates all the quiz exercises that belong to the exam
+     */
+    evaluateQuizExercises() {
+        this.isLoading = true;
+        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.evaluateQuizExerciseSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
                 this.onError(err.error);

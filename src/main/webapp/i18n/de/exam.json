@@ -33,10 +33,10 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
-            "connected": "Verbunden. Deine Antworten werden alle 60s gespeichert.",
-            "ideConnected": "Verbunden.",
+            "connected": "Deine Antworten werden alle 30s gespeichert.",
+            "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
-            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du die Repository klonst.",
+            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du das Repository klonst.",
             "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code Editor weiterarbeiten zu können.",
             "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
@@ -49,7 +49,9 @@
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
-            "points": "Punkte"
+            "points": "Punkte",
+            "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
+            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -61,6 +63,7 @@
             "generateStudentExams": "Individuelle Klausuren erstellen",
             "generateStudentMissingExams": "Fehlende individuelle Klausuren erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
+            "evaluateQuizExercises": "Quizzes auswerten",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
@@ -76,6 +79,8 @@
             "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
             "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
             "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
+            "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
+            "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Wenn Sie fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
             "studentExamStatusSuccess": "Alle registrierten Studenten haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studenten haben eine Klausur",

@@ -388,6 +388,29 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises : Evaluate the quiz exercises of the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the id of the exam
+     * @return ResponsEntity the number of evaluated quiz exercises
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to evaluate quiz exercises of exam {}", examId);
+
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
+
+        log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
+
+        return ResponseEntity.ok().body(numOfEvaluatedExercises);
+    }
+
+    /**
      * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported

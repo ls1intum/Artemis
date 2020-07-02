@@ -33,8 +33,8 @@
         },
         "examParticipation": {
             "timer": "Time Left: ",
-            "connected": "Connected. Your answers will be saved every 60s.",
-            "ideConnected": "Connected.",
+            "connected": "Your answers will be saved every 30s.",
+            "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
             "disconnectedCodeEditorAndOfflineIDE": "You are disconnected. Please check your Internet connection. You can still work offline by cloning the repository.",
             "disconnectedCodeEditorNoOfflineIDE": "You are disconnected. Please reconnect in order to continue working in the online code editor.",
@@ -49,7 +49,9 @@
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
-            "points": "points"
+            "points": "points",
+            "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
+            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -79,7 +81,9 @@
             "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
-            "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students"
+            "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
+            "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
+            "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",
@@ -115,8 +119,7 @@
                 "email": "Email",
                 "registrationNumber": "Matriculation number",
                 "removeFromExam": {
-                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam? His individual exam will be deleted.",
-                    "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"
+                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?"
                 },
                 "importStudents": {
                     "buttonLabel": "Import students",

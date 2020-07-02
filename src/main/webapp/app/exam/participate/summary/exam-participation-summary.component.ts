@@ -33,7 +33,9 @@ export class ExamParticipationSummaryComponent {
      * called for exportPDF Button
      */
     printPDF() {
-        window.print();
+        // expand all exercises before printing
+        this.collapsedSubmissionIds = [];
+        setTimeout(() => window.print());
     }
 
     /**
