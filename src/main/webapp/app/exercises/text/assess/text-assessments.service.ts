@@ -181,7 +181,9 @@ export class TextAssessmentsService {
      */
     public trackFeedback(result: Result) {
         if (result.participation?.trackingToken) {
-            this.http.post(`${SERVER_API_URL}/tracking/result/${result.id}`, result, { headers: { 'X-Athene-Tracking-Authorization': result.participation.trackingToken } });
+            this.http
+                .post(`${SERVER_API_URL}/tracking/result/${result.id}`, result, { headers: { 'X-Athene-Tracking-Authorization': result.participation.trackingToken } })
+                .subscribe();
         }
     }
 }
