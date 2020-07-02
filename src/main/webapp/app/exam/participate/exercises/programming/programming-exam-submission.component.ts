@@ -41,7 +41,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         }
     }
 
-    updateSubmissionFromView(intervalSave: boolean): void { // eslint-disable-line no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updateSubmissionFromView(intervalSave: boolean): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorComponent.actions.onSave();
     }
