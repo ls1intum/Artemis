@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,8 +27,10 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -68,7 +71,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    ParticipationTestRepository participationRepository;
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ParticipationTestRepository participationTestRepository;
 
     @SpyBean
     ExamAccessService examAccessService;
@@ -222,7 +228,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(textExercise));
@@ -280,7 +286,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(modelingExercise));
@@ -459,6 +465,126 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudent() throws Exception {
+        // Create an exam with registered students
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+
+        // Remove student1 from the exam
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student1", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student1 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student1);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(3);
+
+        // Create individual student exams
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).hasSize(storedExam.getRegisteredUsers().size());
+
+        // Start the exam to create participations
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+
+        // Get the student exam of student2
+        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
+        assertThat(optionalStudent1Exam.get()).isNotNull();
+        var studentExam2 = optionalStudent1Exam.get();
+
+        // Remove student2 from the exam
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student2 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student2);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(2);
+
+        // Ensure that the student exam of student2 was deleted
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
+        assertThat(studentExams).doesNotContain(studentExam2);
+
+        // Ensure that the participations were not deleted
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        List<StudentParticipation> participationsStudent2 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student2.getId(),
+                studentExam2.getExercises());
+        assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
+        // Create an exam with registered students
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        var student1 = database.getUserByLogin("student1");
+
+        // Create individual student exams
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+
+        // Get the student exam of student1
+        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student1)).findFirst();
+        assertThat(optionalStudent1Exam.get()).isNotNull();
+        var studentExam1 = optionalStudent1Exam.get();
+
+        // Start the exam to create participations
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        List<StudentParticipation> participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(),
+                studentExam1.getExercises());
+        assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        // Remove student1 from the exam and his participations
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student1", HttpStatus.OK, params);
+
+        // Get the exam with all registered users
+        params = new LinkedMultiValueMap<>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student1 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student1);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(3);
+
+        // Ensure that the student exam of student1 was deleted
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
+        assertThat(studentExams).doesNotContain(studentExam1);
+
+        // Ensure that the participations of student1 were deleted
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(), studentExam1.getExercises());
+        assertThat(participationsStudent1).isEmpty();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudentThatDoesNotExist() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
     }
 
     @Test
