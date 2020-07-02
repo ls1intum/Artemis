@@ -10,6 +10,11 @@
             "import": {
                 "exampleSubmissionsRequireExercise": "Um die Beispielabgaben zu bearbeiten, musst du zunächst den Import der Textaufgabe abschließen."
             },
+            "submitButton": {
+                "create": "Erstellen",
+                "import": "Importieren",
+                "save": "Speichern"
+            },
             "wordCount": "Anzahl der Wörter: {{ count }}",
             "characterCount": "Anzahl der Zeichen: {{ count }}",
             "created": "Textaufgabe mit ID {{ param }} erstellt",

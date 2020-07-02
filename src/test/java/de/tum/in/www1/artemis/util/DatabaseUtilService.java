@@ -321,7 +321,7 @@ public class DatabaseUtilService {
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         examRepository.deleteAll();
-        assertThat(examRepository.findAll()).as("result data has been cleared").isEmpty();
+        assertThat(examRepository.findAll()).as("exam data has been cleared").isEmpty();
         exerciseGroupRepository.deleteAll();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();

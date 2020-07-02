@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -19,13 +19,20 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/alert/alert.service';
+import { Subject } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
 })
-export class ExamParticipationComponent implements OnInit, OnDestroy {
+export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)
     currentSubmissionComponents: QueryList<ExamSubmissionComponent>;
 
@@ -42,7 +49,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
+    examTitle = '';
     studentExam: StudentExam;
+
+    individualStudentEndDate: Moment;
 
     activeExercise: Exercise;
     unsavedChanges = false;
@@ -72,6 +82,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
+    private synchronizationAlert$ = new Subject();
+
+    loadingExam: boolean;
+
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -82,7 +96,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         private textSubmissionService: TextSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
-    ) {}
+        private translateService: TranslateService,
+        private alertService: AlertService,
+    ) {
+        // show only one synchronization error every 5s
+        this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
+    }
 
     /**
      * initializes courseId and course
@@ -91,16 +110,42 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe((exam) => {
-                this.exam = exam;
-                if (this.isOver()) {
-                    this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-                        this.studentExam = studentExam;
-                    });
-                }
-            });
+            if (!!window.history.state.exam) {
+                this.examTitle = window.history.state.exam?.title;
+            }
+            this.loadingExam = true;
+            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
+                (exam) => {
+                    this.exam = exam;
+                    this.individualStudentEndDate = exam.endDate ? exam.endDate : this.serverDateService.now();
+                    if (this.isOver()) {
+                        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+                            this.studentExam = studentExam;
+                        });
+                    }
+                    this.loadingExam = false;
+                },
+                (error) => (this.loadingExam = false),
+            );
         });
         this.initLiveMode();
+    }
+
+    canDeactivate() {
+        // TODO: also handle the case when the student wants to finish the exam early
+        return this.isOver();
+    }
+
+    get canDeactivateWarning() {
+        return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
+    }
+
+    // displays the alert for confirming leaving the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any): void {
+        if (!this.isOver()) {
+            $event.returnValue = this.canDeactivateWarning;
+        }
     }
 
     get activeExerciseIndex(): number {
@@ -122,6 +167,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
             // init studentExam and activeExercise
             this.studentExam = studentExam;
             this.activeExercise = studentExam.exercises[0];
+            // set endDate with workingTime
+            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             this.submissionComponentVisited[0] = true;
@@ -174,20 +221,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 60) {
-                this.triggerSave(true);
+            if (this.autoSaveTimer >= 30) {
+                this.triggerSave(true, false);
             }
         }, 1000);
+    }
+
+    examEnded() {
+        this.triggerSave(false, true);
+        window.clearInterval(this.autoSaveInterval);
     }
 
     /**
      * check if exam is over
      */
     isOver(): boolean {
-        if (!this.exam) {
-            return false;
-        }
-        return this.exam.endDate ? this.exam.endDate.isBefore(this.serverDateService.now()) : false;
+        return this.individualStudentEndDate.isBefore(this.serverDateService.now());
     }
 
     /**
@@ -232,11 +281,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * update the current exercise from the navigation
-     * @param {Exercise} exercise
+     * @param exerciseChange
      */
-    onExerciseChange(exercise: Exercise): void {
-        this.triggerSave(false);
-        this.activeExercise = exercise;
+    onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        this.triggerSave(false, exerciseChange.force);
+        this.activeExercise = exerciseChange.exercise;
         this.submissionComponentVisited[this.activeExerciseIndex] = true;
         if (this.activeSubmissionComponent) {
             this.activeSubmissionComponent.onActivate();
@@ -244,20 +293,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * We support 3 different cases here:
+     * We support 4 different cases here:
      * 1) Navigate between two exercises
      * 2) Click on Save & Continue
-     * 3) The 60s timer was triggered
+     * 3) The 30s timer was triggered
+     * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *
      * @param intervalSave is set to true, if the save was triggered from the interval timer
+     * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
-    triggerSave(intervalSave: boolean) {
+    triggerSave(intervalSave: boolean, force: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if (this.activeSubmissionComponent?.hasUnsavedChanges()) {
+        if ((this.activeSubmissionComponent && force) || this.activeSubmissionComponent?.hasUnsavedChanges()) {
+            // this will lead to a save below, because isSynced will be set to false
             this.activeSubmissionComponent.updateSubmissionFromView(intervalSave);
         }
 
@@ -274,31 +326,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
         });
 
         // if no connection available -> don't try to sync
-        if (!this.disconnected) {
+        if (force || !this.disconnected) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
-                        this.textSubmissionService
-                            .update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            (error) => this.onSaveSubmissionError(error),
+                        );
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        // TODO: works differently than other services
-                        // this.fileUploadSubmissionService;
+                        // nothing to do
                         break;
                     case ExerciseType.MODELING:
-                        this.modelingSubmissionService
-                            .update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            (error) => this.onSaveSubmissionError(error),
+                        );
                         break;
                     case ExerciseType.PROGRAMMING:
-                        // TODO: works differently than other services
-                        // this.programmingSubmissionService;
+                        // nothing to do
                         break;
                     case ExerciseType.QUIZ:
-                        this.examParticipationService
-                            .updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission)
-                            .subscribe(() => (submissionToSync.submission.isSynced = true));
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission).subscribe(
+                            () => (submissionToSync.submission.isSynced = true),
+                            (error) => this.onSaveSubmissionError(error),
+                        );
                         break;
                 }
             });
@@ -306,5 +359,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy {
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private onSaveSubmissionError(error: string) {
+        // show an only one error for 5s - see constructor
+        this.synchronizationAlert$.next();
+        console.error(error);
     }
 }
