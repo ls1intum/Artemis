@@ -47,6 +47,7 @@
                 *ngIf="question.type === MULTIPLE_CHOICE"
                 [question]="question"
                 [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
+                [fnOnSelection]="onSelectionChanged.bind(this)"
                 [submittedQuizExercise]="exercise"
                 [questionIndex]="i + 1"
             ></jhi-multiple-choice-question>
@@ -55,6 +56,7 @@
                 *ngIf="question.type === DRAG_AND_DROP"
                 [question]="question"
                 [(mappings)]="dragAndDropMappings[question.id]"
+                [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
             ></jhi-drag-and-drop-question>
             <jhi-short-answer-question
@@ -62,6 +64,7 @@
                 *ngIf="question.type === SHORT_ANSWER"
                 [question]="question"
                 [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+                [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
             ></jhi-short-answer-question>
         </div>
