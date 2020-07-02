@@ -85,7 +85,7 @@ public abstract class ExerciseImportService {
      * @param newSubmission The submission in which we link the result clone
      * @return The cloned result
      */
-    Result copyResult(Result originalResult, Submission newSubmission) {
+    Result copyExampleResult(Result originalResult, Submission newSubmission) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());

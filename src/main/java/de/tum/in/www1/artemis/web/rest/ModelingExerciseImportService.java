@@ -92,7 +92,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     }
 
     /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
-     * To copy the submission results this function calls {@link #copyResult(Result, Submission)} respectively.
+     * To copy the submission results this function calls {@link #copyExampleResult(Result, Submission)} respectively.
      *
      * @param originalSubmission The original submission to be copied.
      * @return The cloned submission
@@ -110,7 +110,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
             newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
             if (originalSubmission.getResult() != null) {
-                newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
+                newSubmission.setResult(copyExampleResult(originalSubmission.getResult(), newSubmission));
             }
             submissionRepository.save(newSubmission);
         }

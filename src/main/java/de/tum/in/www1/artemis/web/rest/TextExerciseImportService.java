@@ -114,7 +114,7 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
      * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(List, TextSubmission)} and
-     * {@link #copyResult(Result, Submission)} respectively.
+     * {@link #copyExampleResult(Result, Submission)} respectively.
      *
      * @param originalSubmission The original submission to be copied.
      * @return The cloned submission
@@ -131,7 +131,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.setResult(copyResult(originalSubmission.getResult(), newSubmission));
+            newSubmission.setResult(copyExampleResult(originalSubmission.getResult(), newSubmission));
             submissionRepository.save(newSubmission);
         }
         return newSubmission;
