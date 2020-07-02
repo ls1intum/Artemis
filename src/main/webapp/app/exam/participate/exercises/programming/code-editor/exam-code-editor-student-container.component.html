@@ -25,6 +25,7 @@
             [(commitState)]="commitState"
             (onSavedFiles)="onSavedFiles($event)"
             (onError)="onError($event)"
+            (commitStateChange)="onCommitStateChange($event)"
         ></jhi-code-editor-actions>
     </div>
     <jhi-code-editor-file-browser

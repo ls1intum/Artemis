@@ -14,7 +14,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 
 @Component({
@@ -60,5 +60,15 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
         const participation = { ...this.participation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+    }
+
+    /**
+     * Update Submission.isSynced based on the CommitState.
+     * The submission is only synced, if all changes are committed (CommitState.CLEAN).
+     *
+     * @param commitState current CommitState from CodeEditorActionsComponent
+     */
+    onCommitStateChange(commitState: CommitState): void {
+        this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
     }
 }
