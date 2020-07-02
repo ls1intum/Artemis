@@ -608,7 +608,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard() throws Exception {
+    public void testGetExamForExamDashboard() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
@@ -622,7 +622,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard_beforeDueDate() throws Exception {
+    public void testGetExamForExamDashboard_beforeDueDate() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().iterator().next();
@@ -638,7 +638,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testGetCourseFerExamDashboard_asStudent_forbidden() throws Exception {
+    public void testGetExamFerExamDashboard_asStudent_forbidden() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
@@ -646,13 +646,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForExamDashboard_notFound() throws Exception {
+    public void testGetExamForExamDashboard_notFound() throws Exception {
         request.get("/api/courses/1/exams/1/for-exam-tutor-dashboard", HttpStatus.NOT_FOUND, Course.class);
     }
 
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
-    public void testGetCourseForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
+    public void testGetExamForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().iterator().next();
