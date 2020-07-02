@@ -71,7 +71,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithEagerExercises(studentExamId)));
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithExercises(studentExamId)));
     }
 
     /**
@@ -87,6 +87,32 @@ public class StudentExamResource {
         log.debug("REST request to get all student exams for exam : {}", examId);
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
+    }
+
+    /**
+     * PATCH /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime : Update the working time of the student exam
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the id of the student exam to find
+     * @param workingTime   the new working time in seconds
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestBody Integer workingTime) {
+        log.debug("REST request to update the working time of student exam : {}", studentExamId);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+        if (workingTime < 0) {
+            return badRequest();
+        }
+        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        studentExam.setWorkingTime(workingTime);
+        return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
     /**

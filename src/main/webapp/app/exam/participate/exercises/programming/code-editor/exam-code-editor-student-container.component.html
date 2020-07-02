@@ -1,4 +1,3 @@
-<h4>Online Code Editor</h4>
 <jhi-alert></jhi-alert>
 <jhi-code-editor-grid #grid [exerciseTitle]="exercise?.title" [exerciseMaxScore]="exercise?.maxScore">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
@@ -25,6 +24,7 @@
             [(commitState)]="commitState"
             (onSavedFiles)="onSavedFiles($event)"
             (onError)="onError($event)"
+            (commitStateChange)="onCommitStateChange($event)"
         ></jhi-code-editor-actions>
     </div>
     <jhi-code-editor-file-browser
