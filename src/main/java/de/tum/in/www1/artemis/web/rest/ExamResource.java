@@ -440,7 +440,7 @@ public class ExamResource {
     /**
      * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
      * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
-     * Also deletes
+     * Optionally, also deletes participations and submissions of the student in the student exam.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
