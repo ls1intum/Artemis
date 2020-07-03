@@ -87,7 +87,7 @@ public class StudentExamResource {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
-            studentExam.getExercises());
+                studentExam.getExercises());
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
