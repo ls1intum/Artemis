@@ -93,17 +93,7 @@ public class StudentExamResource {
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
             filterForExam(exercise, participations);
-
-            // Filter attributes of exercises that should not be visible to the student
-            // Note: sensitive information for quizzes was already removed in the for loop above
-            if (!(exercise instanceof QuizExercise)) {
-                // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
-                exercise.filterSensitiveInformation();
-            }
         }
-
-        // not needed
-        studentExam.getExam().setCourse(null);
 
         return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExam));
     }
