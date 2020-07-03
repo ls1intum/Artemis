@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -353,7 +351,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
         List<ProgrammingExerciseStudentParticipation> failedOperations = new LinkedList<>();
 
-        int index = 0;
         for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
 
@@ -362,18 +359,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 continue;
             }
 
-            // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
-                try {
-                    log.info("Sleep for {}s during invokeOperationOnAllParticipationsThatSatisfy", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing during '" + operationName + "' for exercise " + programmingExerciseId, ex);
-                }
-            }
-
             try {
+                // this actually invokes the operation
                 operation.accept(programmingExercise.get(), programmingExerciseStudentParticipation);
             }
             catch (Exception e) {
@@ -381,7 +368,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         + studentParticipation.getId(), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
-            index++;
         }
         return failedOperations;
     }
