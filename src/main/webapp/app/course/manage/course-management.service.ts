@@ -25,7 +25,6 @@ import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { Exam } from 'app/entities/exam.model';
 
-export type ExamEntityResponseType = HttpResponse<Exam>;
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
@@ -165,17 +164,6 @@ export class CourseManagementService {
         const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
         return this.http
             .get<Course>(url, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    /**
-     * returns the course with the provided unique identifier for the tutor dashboard
-     * @param courseId - the id of the course
-     * @param examId - Id of the exam when it is in exam mode, otherwise undefined
-     */
-    getExamWithExercises(courseId: number, examId: number): Observable<ExamEntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
-        return this.http.get<Exam>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

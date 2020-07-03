@@ -15,6 +15,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -59,6 +60,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     constructor(
         private courseService: CourseManagementService,
+        private examManagementService: ExamManagementService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
@@ -91,7 +93,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         const examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.isExamMode = !!examId;
         if (this.isExamMode) {
-            this.courseService.getExamWithExercises(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
+            this.examManagementService.getExamForTutorDashboard(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = res.body!.course;
 
@@ -99,7 +101,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 let exercises: Exercise[] = [];
                 this.exam.exerciseGroups?.forEach(function (exerciseGroup) {
                     if (exerciseGroup.exercises) {
-                        exercises = exercises.concat(exerciseGroup.exercises);
+                        exercises.push(...exerciseGroup.exercises);
                     }
                 });
 
