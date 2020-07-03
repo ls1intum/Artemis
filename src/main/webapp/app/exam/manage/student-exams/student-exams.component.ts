@@ -29,6 +29,7 @@ export class StudentExamsComponent implements OnInit {
     filteredStudentExamsSize = 0;
     isExamStarted = false;
     isExamOver = false;
+    longestWorkingTime: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -52,6 +53,8 @@ export class StudentExamsComponent implements OnInit {
         this.paramSub = this.route.params.subscribe(() => {
             this.studentExamService.findAllForExam(this.courseId, this.examId).subscribe((res) => {
                 this.setStudentExams(res.body);
+                this.longestWorkingTime = Math.max.apply(this.studentExams.map((studentExam) => studentExam.workingTime));
+                this.calculateIsExamOver();
             });
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
@@ -59,10 +62,17 @@ export class StudentExamsComponent implements OnInit {
             this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse) => {
                 this.exam = examResponse.body!;
                 this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
-                this.isExamOver = this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
+                this.calculateIsExamOver();
             });
             this.isLoading = false;
         });
+    }
+
+    calculateIsExamOver() {
+        if (this.longestWorkingTime && this.exam) {
+            const examEndDate = moment(this.exam.startDate).add(this.longestWorkingTime, 'seconds');
+            this.isExamOver = examEndDate.isBefore(moment());
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -139,8 +149,8 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
                 this.isLoading = false;
+                this.onError(err.error);
             },
         );
     }
