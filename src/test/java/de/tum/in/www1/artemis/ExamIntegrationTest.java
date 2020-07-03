@@ -16,10 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -37,6 +34,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -684,4 +682,68 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamScore() throws Exception {
+
+        // TODO avoid duplicated code with StudentExamIntegrationTest
+
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+
+        // register user
+        exam.setRegisteredUsers(new HashSet<>(users));
+        exam.setNumberOfExercisesInExam(2);
+        exam.setRandomizeExerciseOrder(false);
+        exam = examRepository.save(exam);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+
+        assertThat(studentExamRepository.findAll()).hasSize(users.size()); // we generate two additional student exams in the @Before method
+
+        // start exercises
+
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
+
+        // TODO: we already have a bunch of submissions, we now just need to assign results to them and their participations
+
+        for (var studentExam : studentExams) {
+            for (var exercise : studentExam.getExercises()) {
+                for (var participation : exercise.getStudentParticipations()) {
+                    if (!participation.getParticipant().equals(studentExam.getUser())) {
+                        continue;
+                    }
+                    // There should only be one submission for text, quiz, modeling and file upload
+                    var submission = participation.getSubmissions().iterator().next();
+                    // TODO: handle that there won't be a submission for programming exercises
+
+                    var result = new Result().score(100L).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
+                    submission.setResult(result);
+                    result.setParticipation(participation);
+                    // TODO: save result and submission
+                }
+            }
+        }
+
+        var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
+
+        // TODO: check that the scores for the participants are correct based on the created results above
+
+        // change back to instructor user
+        database.changeUser("instructor1");
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
 }
