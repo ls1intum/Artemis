@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import inet.ipaddr.IPAddressString;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -142,6 +143,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             final HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", "foo");
             headers.set("X-Artemis-Client-Fingerprint", "bar");
+            headers.set("X-Forwarded-For", "10.0."+studentExam.getId()+".1");
             var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.getExercises().size()).isEqualTo(2);
@@ -191,8 +193,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(examSession.getSessionToken()).isNotNull();
             assertThat(examSession.getUserAgent()).isNull();
             assertThat(examSession.getBrowserFingerprintHash()).isNull();
+            assertThat(examSession.getIpAddress()).isNull();
             assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
             assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
+            assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0."+studentExam.getId()+".1");
 
             // TODO: add other exercises, programming, modeling and file upload
 

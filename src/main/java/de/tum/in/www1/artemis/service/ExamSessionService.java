@@ -5,6 +5,7 @@ import java.util.Base64;
 
 import javax.annotation.Nullable;
 
+import inet.ipaddr.IPAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class ExamSessionService {
      * @param instanceId the instance id of the client, can be null
      * @return the newly create exam session
      */
-    public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId) {
+    public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId, @Nullable IPAddress ipAddress) {
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
@@ -44,6 +45,7 @@ public class ExamSessionService {
         examSession.setBrowserFingerprintHash(fingerprint);
         examSession.setUserAgent(userAgent);
         examSession.setInstanceId(instanceId);
+        examSession.setIpAddress(ipAddress);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }

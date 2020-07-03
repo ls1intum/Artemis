@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -37,6 +39,9 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
 
     @Column(name = "instance_id")
     private String instanceId;
+
+    @Column(name = "ip_address")
+    private String ipAddress;
 
     public ExamSession() {
     }
@@ -89,10 +94,20 @@ public class ExamSession extends AbstractAuditingEntity implements Serializable 
         this.instanceId = instanceId;
     }
 
+    public IPAddress getIpAddress() {
+        return ipAddress != null ? new IPAddressString(ipAddress).getAddress() : null;
+    }
+
+    public void setIpAddress(IPAddress ipAddress) {
+        this.ipAddress = ipAddress != null ? ipAddress.toCanonicalString() : null;
+
+    }
+
     public void hideDetails() {
         setUserAgent(null);
         setBrowserFingerprintHash(null);
         setInstanceId(null);
+        setIpAddress(null);
     }
 
     @Override
