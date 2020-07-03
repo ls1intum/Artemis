@@ -531,7 +531,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        const keysToCompare = ['title', 'difficulty', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
+        const keysToCompare = ['title', 'difficulty', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice', 'randomizeQuestionOrder'];
 
         // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
