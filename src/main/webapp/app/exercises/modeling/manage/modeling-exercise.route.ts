@@ -11,10 +11,12 @@ import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
-    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService) {}
+    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
@@ -22,10 +24,17 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
                 map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
             );
         } else if (route.params['courseId']) {
-            return this.courseService.find(route.params['courseId']).pipe(
-                filter((res) => !!res.body),
-                map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body!)),
-            );
+            if (route.params['examId'] && route.params['groupId']) {
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
+                    filter((res) => !!res.body),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, null, exerciseGroup.body!)),
+                );
+            } else {
+                return this.courseService.find(route.params['courseId']).pipe(
+                    filter((res) => !!res.body),
+                    map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body!, null)),
+                );
+            }
         }
         return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram));
     }
@@ -53,6 +62,18 @@ export const routes: Routes = [
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/import',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
     },

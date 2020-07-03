@@ -622,6 +622,62 @@ public class DatabaseUtilService {
         return studentQuestions;
     }
 
+    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {
+        var exam = ModelFactory.generateExam(course);
+        exam.setNumberOfExercisesInExam(4);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam = examRepository.save(exam);
+
+        // add exercise groups: 3 mandatory, 2 optional
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        exam = examRepository.save(exam);
+
+        // TODO: also add other exercise types
+
+        // add exercises
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+
+        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
+
+        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
+
+        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
+
+        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
+
+        // register user
+        var student1 = getUserByLogin("student1");
+        var student2 = getUserByLogin("student2");
+        var student3 = getUserByLogin("student3");
+        var student4 = getUserByLogin("student4");
+        var registeredUsers = Set.of(student1, student2, student3, student4);
+
+        exam.setRegisteredUsers(registeredUsers);
+        exam = examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course) {
         Exam exam = ModelFactory.generateExam(course);
         examRepository.save(exam);

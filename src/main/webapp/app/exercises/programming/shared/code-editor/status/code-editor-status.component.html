@@ -12,6 +12,10 @@
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true" ngbTooltip="{{ 'artemisApp.editor.savingChangesTooltip' | translate }}"></fa-icon>
             <span class="text-info">{{ 'artemisApp.editor.savingChanges' | translate }}</span>
         </div>
+        <div *ngSwitchCase="EditorState.REFRESHING">
+            <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true" ngbTooltip="{{ 'artemisApp.editor.refreshingFilesTooltip' | translate }}"></fa-icon>
+            <span class="text-info">{{ 'artemisApp.editor.refreshingFiles' | translate }}</span>
+        </div>
     </div>
     <div id="commit_state" [ngSwitch]="commitState">
         <div *ngSwitchCase="CommitState.UNDEFINED">

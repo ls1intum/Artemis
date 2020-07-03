@@ -8,7 +8,9 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
-                "exportPDF": "Als PDF exportieren"
+                "exportPDF": "Als PDF exportieren",
+                "lastCommitHash": "Hash des letzten Commits",
+                "noCommitHash": "Lade neu, um den Commit Hash zu sehen."
             },
             "title": "Klausur",
             "startExam": "Klausur starten",
@@ -50,6 +52,10 @@
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
             "points": "Punkte",
+            "synced": "Aufgabe gespeichert",
+            "notSynced": "Aufgabe nicht gespeichert",
+            "submitted": "Aufgabe eingereicht",
+            "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
         },
@@ -61,12 +67,13 @@
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
+            "generateStudentMissingExams": "Fehlende individuelle Klausuren erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
-            "workingTime": "Bearbeitungszeit",
+            "workingTime": "Bearbeitungszeit (mm:ss)",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
@@ -74,10 +81,16 @@
             "exam": "Klausur",
             "studentExamGenerationSuccess": "{{number}} individuelle Klausuren erfolgreich generiert!",
             "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
+            "missingStudentExamGenerationSuccess": "{{number}} fehlende individuelle Klausuren erfolgreich generiert!",
+            "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
             "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
             "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
             "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
-            "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}"
+            "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Wenn Sie fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
+            "studentExamStatusSuccess": "Alle registrierten Studenten haben eine Klausur",
+            "studentExamStatusWarning": "Nicht alle registrierten Studenten haben eine Klausur",
+            "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",
@@ -112,8 +125,9 @@
                 "lastName": "Nachname",
                 "email": "E-Mail",
                 "visibleRegistrationNumber": "Matrikelnummer",
-                "removeFromGroup": {
-                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden?"
+                "removeFromExam": {
+                    "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
+                    "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
                 },
                 "importStudents": {
                     "buttonLabel": "Studenten importieren",
@@ -150,6 +164,7 @@
                 "addTextExercise": "Textaufgabe hinzufügen",
                 "addQuizExercise": "Quiz hinzufügen",
                 "addFileUploadExercise": "Datei Upload Aufgabe hinzufügen",
+                "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
