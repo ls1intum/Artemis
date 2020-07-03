@@ -24,7 +24,7 @@
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
-            <h5>{{ exercise.title }}</h5>
+            <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>

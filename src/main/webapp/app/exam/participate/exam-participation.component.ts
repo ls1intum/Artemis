@@ -110,9 +110,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            if (!!window.history.state.exam) {
-                this.examTitle = window.history.state.exam?.title;
-            }
+            // TODO: the following approach is error prone. Instead get the exam from a service that has a reference
+            // if (!!window.history.state.exam) {
+            //     this.examTitle = window.history.state.exam?.title;
+            // }
             this.loadingExam = true;
             this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
                 (exam) => {
