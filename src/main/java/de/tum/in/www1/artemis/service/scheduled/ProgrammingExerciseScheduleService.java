@@ -214,12 +214,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates;
-                BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation;
-
-                individualDueDates = new HashSet<>();
+                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
                 // This operation unlocks the repositories and collects all individual due dates
-                unlockAndCollectOperation = (programmingExercise, participation) -> {
+                BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
                     var dueDate = participationService.getIndividualDueDate(programmingExercise, participation);
                     individualDueDates.add(new Tuple<>(dueDate, participation));
                     unlockStudentRepository(programmingExercise, participation);

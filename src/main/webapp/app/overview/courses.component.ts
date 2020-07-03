@@ -151,6 +151,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
      */
     openExam(): void {
         this.router.navigate(['courses', this.nextRelevantCourseForExam.id, 'exams', this.nextRelevantExam!.id]);
+        // TODO: store the (plain) selected exam in the some service so that it can be obtained on other pages
+        // also make sure that the exam objects does not contain the course and all exercises
     }
 
     /**

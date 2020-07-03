@@ -77,7 +77,7 @@
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
-            "workingTime": "Bearbeitungszeit",
+            "workingTime": "Bearbeitungszeit (mm:ss)",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",

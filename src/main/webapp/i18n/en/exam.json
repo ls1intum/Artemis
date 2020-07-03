@@ -76,7 +76,7 @@
             "evaluateQuizExercises": "Evaluate quizzes",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
-            "workingTime": "Working time",
+            "workingTime": "Working time (mm:ss)",
             "result": "Result",
             "created": "Created",
             "view": "View",
