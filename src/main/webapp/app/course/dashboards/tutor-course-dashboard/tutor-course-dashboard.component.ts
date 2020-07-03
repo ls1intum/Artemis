@@ -98,8 +98,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.course = res.body!.course;
 
                 // get all exercises
-                let exercises: Exercise[] = [];
-                this.exam.exerciseGroups?.forEach(function (exerciseGroup) {
+                const exercises: Exercise[] = [];
+                this.exam.exerciseGroups?.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
                     }

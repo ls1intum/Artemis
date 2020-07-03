@@ -23,7 +23,6 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { Exam } from 'app/entities/exam.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
