@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.ExamSessionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import inet.ipaddr.IPAddressString;
 
 public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -86,9 +85,8 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void storeUserAgentOnStartExamSession_asStudent() {
-        final Long id = examSessionService
-                .startExamSession(studentExam1, null, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15", null, null)
-                .getId();
+        final Long id = examSessionService.startExamSession(studentExam1, null,
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15", null, null).getId();
 
         final var examSessionById = examSessionRepository.findById(id);
         assertThat(examSessionById).isPresent();
@@ -100,28 +98,22 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "student1", roles = "USER")
     public void storeIPv4OnStartExamSession_asStudent() {
         final var ipAddress = new IPAddressString("192.0.2.235").getAddress();
-        final Long id = examSessionService
-            .startExamSession(studentExam1, null, null, null, ipAddress)
-            .getId();
+        final Long id = examSessionService.startExamSession(studentExam1, null, null, null, ipAddress).getId();
 
         final var examSessionById = examSessionRepository.findById(id);
         assertThat(examSessionById).isPresent();
-        assertThat(examSessionById.get().getIpAddress().toCanonicalString())
-            .isEqualTo("192.0.2.235");
+        assertThat(examSessionById.get().getIpAddress().toCanonicalString()).isEqualTo("192.0.2.235");
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void storeIPv6OnStartExamSession_asStudent() {
         final var ipAddress = new IPAddressString("2001:db8:0:0:0:8a2e:370:7334").getAddress();
-        final Long id = examSessionService
-            .startExamSession(studentExam1, null, null, null, ipAddress)
-            .getId();
+        final Long id = examSessionService.startExamSession(studentExam1, null, null, null, ipAddress).getId();
 
         final var examSessionById = examSessionRepository.findById(id);
         assertThat(examSessionById).isPresent();
-        assertThat(examSessionById.get().getIpAddress().toCanonicalString())
-            .isEqualTo("2001:db8::8a2e:370:7334");
+        assertThat(examSessionById.get().getIpAddress().toCanonicalString()).isEqualTo("2001:db8::8a2e:370:7334");
     }
 
 }

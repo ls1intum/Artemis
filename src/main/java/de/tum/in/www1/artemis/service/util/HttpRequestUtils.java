@@ -1,26 +1,18 @@
 package de.tum.in.www1.artemis.service.util;
 
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
-import org.jetbrains.annotations.NotNull;
-
-import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.jetbrains.annotations.NotNull;
+
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
+
 public class HttpRequestUtils {
-    private static final String[] IP_HEADER_CANDIDATES = {
-        "X-Forwarded-For",
-        "Proxy-Client-IP",
-        "WL-Proxy-Client-IP",
-        "HTTP_X_FORWARDED_FOR",
-        "HTTP_X_FORWARDED",
-        "HTTP_X_CLUSTER_CLIENT_IP",
-        "HTTP_CLIENT_IP",
-        "HTTP_FORWARDED_FOR",
-        "HTTP_FORWARDED",
-        "HTTP_VIA",
-        "REMOTE_ADDR"
-    };
+
+    private static final String[] IP_HEADER_CANDIDATES = { "X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_X_FORWARDED_FOR", "HTTP_X_FORWARDED",
+            "HTTP_X_CLUSTER_CLIENT_IP", "HTTP_CLIENT_IP", "HTTP_FORWARDED_FOR", "HTTP_FORWARDED", "HTTP_VIA", "REMOTE_ADDR" };
 
     /**
      * Extract Client IP Address from Http Request as String
