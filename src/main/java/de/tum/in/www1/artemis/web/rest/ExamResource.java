@@ -244,7 +244,11 @@ public class ExamResource {
         log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
 
         Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
-        Course course = courseService.findOne(courseId);
+        Course course = exam.getCourse();
+        if (!exam.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
@@ -252,12 +256,11 @@ public class ExamResource {
         }
 
         Set<Exercise> exercises = new HashSet<>();
-
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (ZonedDateTime.now().isAfter(exam.getEndDate())) {
-                exercises.addAll(exerciseGroup.getExercises());
                 exerciseGroup.setExercises(exerciseGroup.getInterestingExercisesForAssessmentDashboards());
+                exercises.addAll(exerciseGroup.getExercises());
             }
             else {
                 // clear exercises if exam is not over
