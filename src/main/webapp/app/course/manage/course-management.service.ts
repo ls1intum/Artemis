@@ -175,9 +175,8 @@ export class CourseManagementService {
      */
     getExamWithExercises(courseId: number, examId: number): Observable<ExamEntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
-        return this.http.get<Exam>(url, { observe: 'response' });
-        // TODO: convert date from server
-        // .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
