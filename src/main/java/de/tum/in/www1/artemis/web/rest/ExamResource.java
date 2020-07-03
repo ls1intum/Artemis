@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Exam.
@@ -261,6 +260,8 @@ public class ExamResource {
             if (ZonedDateTime.now().isAfter(exam.getEndDate())) {
                 exerciseGroup.setExercises(exerciseGroup.getInterestingExercisesForAssessmentDashboards());
                 exercises.addAll(exerciseGroup.getExercises());
+                // Break serialization loop
+                exerciseGroup.setExam(null);
             }
             else {
                 // clear exercises if exam is not over
@@ -272,7 +273,7 @@ public class ExamResource {
 
         tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
 
-        return ResponseUtil.wrapOrNotFound(Optional.of(exam));
+        return ResponseEntity.ok(exam);
     }
 
     /**
