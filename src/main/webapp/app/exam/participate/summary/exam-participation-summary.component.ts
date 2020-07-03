@@ -55,23 +55,31 @@ export class ExamParticipationSummaryComponent {
     }
 
     /**
-     * @param submissionId
      * checks collapse control of exercise cards depending on submissionId
      */
-    isCollapsed(submissionId: number): boolean {
-        return this.collapsedSubmissionIds.includes(submissionId);
+    isCollapsed(exercise: Exercise): boolean {
+        const submission = this.getSubmissionForExercise(exercise);
+        if (submission && submission.id) {
+            const submissionId = submission.id;
+            return this.collapsedSubmissionIds.includes(submissionId);
+        }
+        return false;
     }
 
     /**
-     * @param submissionId
      * adds collapse control of exercise cards depending on submissionId
+     * @param exercise the exercise for which the submission should be collapsed
      */
-    toggleCollapseSubmission(submissionId: number): void {
-        const collapsed = this.isCollapsed(submissionId);
-        if (collapsed) {
-            this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
-        } else {
-            this.collapsedSubmissionIds.push(submissionId);
+    toggleCollapseSubmission(exercise: Exercise): void {
+        const submission = this.getSubmissionForExercise(exercise);
+        if (submission && submission.id) {
+            const submissionId = submission.id;
+            const collapsed = this.isCollapsed(exercise);
+            if (collapsed) {
+                this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
+            } else {
+                this.collapsedSubmissionIds.push(submissionId);
+            }
         }
     }
 }

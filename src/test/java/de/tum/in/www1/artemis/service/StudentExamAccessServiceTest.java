@@ -86,10 +86,10 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testExamExists() {
-        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), 55L, users.get(0));
+        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), 1255L, users.get(0));
         assertThat(accessFailure1.isPresent()).isTrue();
         assertThat(accessFailure1.get()).isEqualTo(notFound());
-        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), 55L, studentExam1.getId());
+        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), 1255L, studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(notFound());
     }

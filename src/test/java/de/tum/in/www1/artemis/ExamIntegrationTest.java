@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,8 +27,10 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -68,7 +71,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    ParticipationTestRepository participationRepository;
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ParticipationTestRepository participationTestRepository;
 
     @SpyBean
     ExamAccessService examAccessService;
@@ -85,7 +91,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(4, 5, 1);
+        users = database.addUsers(6, 5, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -102,7 +108,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testRegisterUsersInExam() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        var exam = createExam();
+        var exam = ModelFactory.generateExam(course1);
         var savedExam = examRepository.save(exam);
         var student1 = database.getUserByLogin("student1");
         var student2 = database.getUserByLogin("student2");
@@ -111,8 +117,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var registrationNumber2 = "1111112";
         var registrationNumber3 = "1111113";
         var registrationNumber3WithTypo = registrationNumber3 + "0";
-        var registrationNumber6 = "1111116";
-        var registrationNumber7 = "1111117";
+        var registrationNumber99 = "1111199";
+        var registrationNumber100 = "1111100";
         student1.setRegistrationNumber(registrationNumber1);
         student2.setRegistrationNumber(registrationNumber2);
         student3.setRegistrationNumber(registrationNumber3);
@@ -122,24 +128,25 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // mock the ldap service
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithTypo);
-        var ldapUser7Dto = new LdapUserDto().registrationNumber(registrationNumber7).firstName("Student7").lastName("Student7").username("student7").email("student7@tum.de");
-        doReturn(Optional.of(ldapUser7Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber7);
+        var ldapUser100Dto = new LdapUserDto().registrationNumber(registrationNumber100).firstName("Student100").lastName("Student100").username("student100")
+                .email("student100@tum.de");
+        doReturn(Optional.of(ldapUser100Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber100);
 
-        // first mocked call expected to add student 6 to course student
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 6
-        // second mocked call expected to create student 7
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser7Dto.getUsername(), ldapUser7Dto.getFirstName() + " " + ldapUser7Dto.getLastName(),
-                ldapUser7Dto.getEmail());
-        // thirs mocked call expected to add student 7 to course student group
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 7
+        // first mocked call expected to add student 99 to course student
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 99
+        // second mocked call expected to create student 100
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser100Dto.getUsername(), ldapUser100Dto.getFirstName() + " " + ldapUser100Dto.getLastName(),
+                ldapUser100Dto.getEmail());
+        // thirs mocked call expected to add student 100 to course student group
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());  // expect once for student 100
 
-        var student6 = ModelFactory.generateActivatedUser("student6");     // not registered for the course
-        student6.setRegistrationNumber(registrationNumber6);
-        student6 = userRepo.save(student6);
-        student6 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student6").get();
-        assertThat(student6.getGroups()).doesNotContain(course1.getStudentGroupName());
+        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        student99.setRegistrationNumber(registrationNumber99);
+        student99 = userRepo.save(student99);
+        student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
+        assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
-        // Note: student7 is not yet a user of Artemis and should be retrieved from the LDAP
+        // Note: student100 is not yet a user of Artemis and should be retrieved from the LDAP
 
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
@@ -155,9 +162,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
         var studentDto2 = new StudentDTO().registrationNumber(registrationNumber2);
         var studentDto3 = new StudentDTO().registrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure later
-        var studentDto6 = new StudentDTO().registrationNumber(registrationNumber6);
-        var studentDto7 = new StudentDTO().registrationNumber(registrationNumber7);
-        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto6, studentDto7);
+        var studentDto99 = new StudentDTO().registrationNumber(registrationNumber99);
+        var studentDto100 = new StudentDTO().registrationNumber(registrationNumber100);
+        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto99, studentDto100);
 
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
@@ -165,10 +172,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto3);
         storedExam = examRepository.findWithRegisteredUsersById(savedExam.getId()).get();
 
-        // now a new user student7 should exist
-        var student7 = database.getUserByLogin("student7");
+        // now a new user student100 should exist
+        var student100 = database.getUserByLogin("student100");
 
-        assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student6, student7);
+        assertThat(storedExam.getRegisteredUsers()).containsExactlyInAnyOrder(student1, student2, student99, student100);
 
         for (var user : storedExam.getRegisteredUsers()) {
             // all registered users must have access to the course
@@ -221,7 +228,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(textExercise));
@@ -279,7 +286,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise().equals(modelingExercise));
@@ -301,63 +308,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExams() throws Exception {
-        var exam = createExam();
-        exam.setNumberOfExercisesInExam(4);
-        exam.setRandomizeExerciseOrder(true);
-        exam.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam.setEndDate(ZonedDateTime.now().plusHours(4));
-        exam = examRepository.save(exam);
-
-        // add exercise groups: 3 mandatory, 2 optional
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(false, exam);
-        ModelFactory.generateExerciseGroup(false, exam);
-        exam = examRepository.save(exam);
-
-        // TODO: also add other exercise types
-
-        // add exercises
-        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
-        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
-        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
-        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
-
-        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
-        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
-        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
-        exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
-
-        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
-        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
-        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
-        exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
-
-        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
-        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
-        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
-        exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
-
-        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
-        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
-        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
-        exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
-
-        // register user
-        var student1 = database.getUserByLogin("student1");
-        var student2 = database.getUserByLogin("student2");
-        var student3 = database.getUserByLogin("student3");
-        var student4 = database.getUserByLogin("student4");
-        var registeredUsers = Set.of(student1, student2, student3, student4);
-
-        exam.setRegisteredUsers(registeredUsers);
-        exam = examRepository.save(exam);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
         // invoke generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(registeredUsers.size());
+        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
         for (StudentExam studentExam : studentExams) {
             assertThat(studentExam.getWorkingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
         }
@@ -372,22 +328,40 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
-    public Exam createExam() {
-        ZonedDateTime currentTime = ZonedDateTime.now();
-        Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime);
-        exam.setEndDate(currentTime);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(false);
-        exam.setCourse(course1);
-        return exam;
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateMissingStudentExams() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        // Generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+
+        // Register two new students
+        var student5 = database.getUserByLogin("student5");
+        var student6 = database.getUserByLogin("student6");
+        exam.getRegisteredUsers().addAll(Set.of(student5, student6));
+        examRepository.save(exam);
+
+        // Generate individual exams for the two missing students
+        List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(missingStudentExams).hasSize(2);
+
+        // Fetch student exams
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(exam.getRegisteredUsers().size());
+
+        // Another request should not create any exams
+        missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        assertThat(missingStudentExams).hasSize(0);
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(exam.getRegisteredUsers().size());
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -491,6 +465,126 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudent() throws Exception {
+        // Create an exam with registered students
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        var student1 = database.getUserByLogin("student1");
+        var student2 = database.getUserByLogin("student2");
+
+        // Remove student1 from the exam
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student1", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student1 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student1);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(3);
+
+        // Create individual student exams
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).hasSize(storedExam.getRegisteredUsers().size());
+
+        // Start the exam to create participations
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+
+        // Get the student exam of student2
+        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
+        assertThat(optionalStudent1Exam.get()).isNotNull();
+        var studentExam2 = optionalStudent1Exam.get();
+
+        // Remove student2 from the exam
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student2 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student2);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(2);
+
+        // Ensure that the student exam of student2 was deleted
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
+        assertThat(studentExams).doesNotContain(studentExam2);
+
+        // Ensure that the participations were not deleted
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        List<StudentParticipation> participationsStudent2 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student2.getId(),
+                studentExam2.getExercises());
+        assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
+        // Create an exam with registered students
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        var student1 = database.getUserByLogin("student1");
+
+        // Create individual student exams
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+
+        // Get the student exam of student1
+        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student1)).findFirst();
+        assertThat(optionalStudent1Exam.get()).isNotNull();
+        var studentExam1 = optionalStudent1Exam.get();
+
+        // Start the exam to create participations
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        List<StudentParticipation> participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(),
+                studentExam1.getExercises());
+        assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        // Remove student1 from the exam and his participations
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student1", HttpStatus.OK, params);
+
+        // Get the exam with all registered users
+        params = new LinkedMultiValueMap<>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+
+        // Ensure that student1 was removed from the exam
+        assertThat(storedExam.getRegisteredUsers()).doesNotContain(student1);
+        assertThat(storedExam.getRegisteredUsers()).hasSize(3);
+
+        // Ensure that the student exam of student1 was deleted
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
+        assertThat(studentExams).doesNotContain(studentExam1);
+
+        // Ensure that the participations of student1 were deleted
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(), studentExam1.getExercises());
+        assertThat(participationsStudent1).isEmpty();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteStudentThatDoesNotExist() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
     }
 
     @Test
