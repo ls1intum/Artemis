@@ -96,9 +96,12 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.course = res.body!.course;
 
                 // get all exercises
-                const exercises = this.exam.exerciseGroups?.
-                	.filter((exerciseGroup) => !!exerciseGroup.exercises)
-                	.reduce((exercises, exerciseGroup) => exercises.concat(exerciseGroup.exercises), []);
+                let exercises: Exercise[] = [];
+                this.exam.exerciseGroups?.forEach(function (exerciseGroup) {
+                    if (exerciseGroup.exercises) {
+                        exercises = exercises.concat(exerciseGroup.exercises);
+                    }
+                });
 
                 if (exercises.length > 0) {
                     const [finishedExercises, unfinishedExercises] = partition(
