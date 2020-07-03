@@ -366,7 +366,8 @@ public class ExamResource {
 
         if (examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
             // Quizzes should only be evaluated if no exams are running
-            return badRequest();
+            return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
+                    "There are still exams running, quizzes can only be evaluated once all exams are finished.");
         }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
