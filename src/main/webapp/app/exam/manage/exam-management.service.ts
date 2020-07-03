@@ -81,9 +81,9 @@ export class ExamManagementService {
     }
 
     /**
-     * returns the course with the provided unique identifier for the tutor dashboard
+     * Returns the exam with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
-     * @param examId - Id of the exam when it is in exam mode, otherwise undefined
+     * @param examId - the id of the exam
      */
     getExamForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
