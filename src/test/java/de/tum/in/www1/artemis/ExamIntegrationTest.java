@@ -712,11 +712,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setEndDate(now().plusWeeks(1));
         examRepository.save(exam);
 
-        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
-                Exam.class);
-
-        // Test that the received course has no exercises due to exam being not over
-        assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Zero exercises are returned").isEqualTo(0);
+        request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
