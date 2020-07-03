@@ -253,12 +253,12 @@ public class Exam implements Serializable {
         this.registeredUsers = registeredUsers;
     }
 
-    public Exam addUser(User user) {
+    public Exam addRegisteredUser(User user) {
         this.registeredUsers.add(user);
         return this;
     }
 
-    public Exam removeUser(User user) {
+    public Exam removeRegisteredUser(User user) {
         this.registeredUsers.remove(user);
         return this;
     }

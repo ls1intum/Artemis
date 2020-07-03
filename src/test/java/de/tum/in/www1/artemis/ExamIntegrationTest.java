@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis;
 
+import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -208,9 +208,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var registeredUsers = Set.of(student1, student2);
         exam2.setRegisteredUsers(registeredUsers);
         // setting dates
-        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
-        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+        exam2.setStartDate(now().plusHours(2));
+        exam2.setEndDate(now().plusHours(3));
+        exam2.setVisibleDate(now().plusHours(1));
 
         // creating exercise
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
@@ -267,9 +267,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var registeredUsers = Set.of(student1, student2);
         exam2.setRegisteredUsers(registeredUsers);
         // setting dates
-        exam2.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam2.setEndDate(ZonedDateTime.now().plusHours(3));
-        exam2.setVisibleDate(ZonedDateTime.now().plusHours(1));
+        exam2.setStartDate(now().plusHours(2));
+        exam2.setEndDate(now().plusHours(3));
+        exam2.setVisibleDate(now().plusHours(1));
 
         // creating exercise
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
@@ -463,7 +463,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        var now = ZonedDateTime.now();
+        var now = now();
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
@@ -626,18 +626,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
         exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
 
-        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup1);
-        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup1);
-        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup2);
-        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup3);
-        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup3);
-        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now().plusHours(5), ZonedDateTime.now().plusHours(6), ZonedDateTime.now().plusHours(10),
-                exerciseGroup3);
+        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
+        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
+        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup2);
+        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
+        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
+        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
         exercise1_1 = textExerciseRepository.save(exercise1_1);
         exercise1_2 = textExerciseRepository.save(exercise1_2);
         exercise2_1 = textExerciseRepository.save(exercise2_1);
@@ -698,13 +692,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamForExamDashboard() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        // we need an exam from the past, otherwise the tutor won't have access
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
                 Exam.class);
 
         // Test that the received exam has two text exercises
         assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Two exercises are returned").isEqualTo(2);
-        // Test that the received exam has zero quiz exercises
+        // Test that the received exam has zero quiz exercises, because quiz exercises do not need to be corrected manually
         assertThat(receivedExam.getExerciseGroups().get(1).getExercises().size()).as("Zero exercises are returned").isEqualTo(0);
     }
 
@@ -714,7 +709,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().iterator().next();
-        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        exam.setEndDate(now().plusWeeks(1));
         examRepository.save(exam);
 
         Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.OK,
@@ -744,7 +739,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().iterator().next();
-        exam.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        exam.setEndDate(now().plusWeeks(1));
         examRepository.save(exam);
 
         request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);

@@ -547,7 +547,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
@@ -654,7 +654,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {

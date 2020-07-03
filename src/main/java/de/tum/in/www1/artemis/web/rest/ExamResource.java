@@ -254,19 +254,19 @@ public class ExamResource {
             return forbidden();
         }
 
+        if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // tutors cannot access the exercises before the exam ends
+            return forbidden();
+        }
+
         Set<Exercise> exercises = new HashSet<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (ZonedDateTime.now().isAfter(exam.getEndDate())) {
-                exerciseGroup.setExercises(exerciseGroup.getInterestingExercisesForAssessmentDashboards());
-                exercises.addAll(exerciseGroup.getExercises());
-                // Break serialization loop
-                exerciseGroup.setExam(null);
-            }
-            else {
-                // clear exercises if exam is not over
-                exerciseGroup.setExercises(new HashSet<>());
-            }
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exercises.addAll(exerciseGroup.getExercises());
+
+            // Break serialization loop
+            exerciseGroup.setExam(null);
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
@@ -353,7 +353,7 @@ public class ExamResource {
         if (student.isEmpty()) {
             return notFound();
         }
-        exam.addUser(student.get());
+        exam.addRegisteredUser(student.get());
         // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
         // has access to the course of the exam.
         // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
@@ -528,7 +528,7 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         User student = optionalStudent.get();
-        exam.removeUser(student);
+        exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
         // still have access to the course.
