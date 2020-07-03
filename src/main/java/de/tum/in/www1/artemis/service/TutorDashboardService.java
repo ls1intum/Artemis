@@ -44,6 +44,12 @@ public class TutorDashboardService {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
+    /**
+     * Prepares the exercises for the tutor dashboard by setting the tutor participations and statistics
+     *
+     * @param exercises exercises to be prepared for the tutor dashboard
+     * @param tutorParticipations participations of the tutors
+     */
     public void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations) {
         for (Exercise exercise : exercises) {
 
