@@ -212,8 +212,9 @@ public class ExamService {
      * @return rounded number
      */
     public static double round(double value, int places) {
-        if (places < 0)
+        if (places < 0) {
             throw new IllegalArgumentException();
+        }
 
         BigDecimal bd = BigDecimal.valueOf(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
