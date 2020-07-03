@@ -10,7 +10,8 @@
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
                 "exportPDF": "Export PDF",
                 "lastCommitHash": "Last Commit Hash",
-                "noCommitHash": "Reload to get the commit hash."
+                "noCommitHash": "Reload to get the commit hash.",
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
             },
             "title": "Exam",
             "startExam": "Start Exam",

@@ -10,7 +10,8 @@
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Lade neu, um den Commit Hash zu sehen."
+                "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
             },
             "title": "Klausur",
             "startExam": "Klausur starten",

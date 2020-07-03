@@ -21,6 +21,9 @@ export class ExamParticipationSummaryComponent {
     @Input()
     studentExam: StudentExam;
 
+    @Input()
+    instructorView = false;
+
     collapsedSubmissionIds: number[] = [];
 
     constructor() {}
