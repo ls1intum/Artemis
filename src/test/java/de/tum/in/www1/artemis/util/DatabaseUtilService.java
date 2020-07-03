@@ -460,9 +460,17 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
+        Course course = createCourse();
+        Exam exam = addExam(course, user, visible, start, end);
+        course.addExam(exam);
+        addExerciseGroupsAndExercisesToExam(exam, start, end);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
         Course course = createCourse();
-        Exam exam = addExam(course, user, ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now());
+        Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1));
         return courseRepo.save(course);
@@ -686,7 +694,7 @@ public class DatabaseUtilService {
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
-        exam.addUser(user);
+        exam.addRegisteredUser(user);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
@@ -714,7 +722,7 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
-        exam.addUser(user);
+        exam.addRegisteredUser(user);
         examRepository.save(exam);
         return exam;
     }

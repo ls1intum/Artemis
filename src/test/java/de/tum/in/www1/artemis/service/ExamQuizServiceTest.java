@@ -108,7 +108,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addUser(users.get(i));
+            exam.addRegisteredUser(users.get(i));
         }
 
         exam = examRepository.save(exam);
@@ -145,7 +145,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz_twice() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addUser(users.get(i));
+            exam.addRegisteredUser(users.get(i));
         }
 
         exam = examRepository.save(exam);
