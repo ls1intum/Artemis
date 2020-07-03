@@ -60,13 +60,18 @@ export class StudentExamsComponent implements OnInit {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
-            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(tap((res) => this.setStudentExams(res.body)));
+            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(
+                tap((res) => {
+                    this.setStudentExams(res.body);
+                    this.longestWorkingTime = Math.max.apply(this.studentExams.map((studentExam) => studentExam.workingTime));
+                    this.calculateIsExamOver();
+                }),
+            );
 
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
                     this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
-                    this.longestWorkingTime = Math.max.apply(this.studentExams.map((studentExam) => studentExam.workingTime));
                     this.calculateIsExamOver();
                 }),
             );
