@@ -71,7 +71,41 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithExercises(studentExamId)));
+
+        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        // we reload the quiz exercise because we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used in
+        for (int i = 0; i < studentExam.getExercises().size(); i++) {
+            var exercise = studentExam.getExercises().get(i);
+            if (exercise instanceof QuizExercise) {
+                // reload and replace the quiz exercise
+                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                quizExercise.filterForStudentsDuringQuiz();
+                studentExam.getExercises().set(i, quizExercise);
+            }
+        }
+
+        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
+            studentExam.getExercises());
+
+        // connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            filterForExam(exercise, participations);
+
+            // Filter attributes of exercises that should not be visible to the student
+            // Note: sensitive information for quizzes was already removed in the for loop above
+            if (!(exercise instanceof QuizExercise)) {
+                // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
+                exercise.filterSensitiveInformation();
+            }
+        }
+
+        // not needed
+        studentExam.getExam().setCourse(null);
+
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExam));
     }
 
     /**
