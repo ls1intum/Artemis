@@ -43,9 +43,12 @@
                 :
                 <input formControlName="seconds" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" max="59" step="1" required />
             </div>
-            <button type="submit" class="btn btn-primary" [disabled]="workingTimeForm.invalid || isSavingWorkingTime">
+            <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime">
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
+            </button>
+            <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'../summary'">
+                <span jhiTranslate="artemisApp.exam.summary">Summary</span>
             </button>
         </form>
     </div>
@@ -115,4 +118,3 @@
         </div>
     </div>
 </div>
-<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true"></jhi-exam-participation-summary>
