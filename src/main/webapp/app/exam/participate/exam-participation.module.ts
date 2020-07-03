@@ -69,8 +69,6 @@ const ENTITY_STATES = [...examParticipationState];
         ExamNavigationBarComponent,
         ExamCodeEditorStudentContainerComponent,
     ],
-    exports: [
-        ExamParticipationSummaryComponent
-    ]
+    exports: [ExamParticipationSummaryComponent],
 })
 export class ArtemisExamParticipationModule {}
