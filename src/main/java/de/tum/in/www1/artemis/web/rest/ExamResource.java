@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -362,6 +363,11 @@ public class ExamResource {
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
+
+        if (examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+            // Quizzes should only be evaluated if no exams are running
+            return badRequest();
+        }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
 
