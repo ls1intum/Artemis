@@ -47,7 +47,7 @@
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'../summary'">
+            <button *ngIf="isAtLeastInstructor" class="btn btn-primary" [routerLink]="'../summary'">
                 <span jhiTranslate="artemisApp.exam.summary">Summary</span>
             </button>
         </form>

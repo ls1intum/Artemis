@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -22,6 +23,7 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
+    isAtLeastInstructor = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -29,6 +31,7 @@ export class StudentExamDetailComponent implements OnInit {
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -49,6 +52,7 @@ export class StudentExamDetailComponent implements OnInit {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user;
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
     }
 
     /**
