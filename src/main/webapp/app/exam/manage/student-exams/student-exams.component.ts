@@ -63,7 +63,10 @@ export class StudentExamsComponent implements OnInit {
             const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(
                 tap((res) => {
                     this.setStudentExams(res.body);
-                    this.longestWorkingTime = Math.max.apply(this.studentExams.map((studentExam) => studentExam.workingTime));
+                    this.longestWorkingTime = Math.max.apply(
+                        null,
+                        this.studentExams.map((studentExam) => studentExam.workingTime),
+                    );
                     this.calculateIsExamOver();
                 }),
             );
@@ -88,7 +91,8 @@ export class StudentExamsComponent implements OnInit {
 
     calculateIsExamOver() {
         if (this.longestWorkingTime && this.exam) {
-            const examEndDate = moment(this.exam.startDate).add(this.longestWorkingTime, 'seconds');
+            const examEndDate = moment(this.exam.startDate);
+            examEndDate.add(this.longestWorkingTime, 'seconds');
             this.isExamOver = examEndDate.isBefore(moment());
         }
     }
