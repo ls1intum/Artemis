@@ -245,7 +245,7 @@ public class ExamResource {
 
         Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
         Course course = exam.getCourse();
-        if (!exam.getCourse().getId().equals(courseId)) {
+        if (!course.getId().equals(courseId)) {
             return conflict();
         }
 
