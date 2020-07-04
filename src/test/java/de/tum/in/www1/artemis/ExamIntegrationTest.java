@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,10 +74,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
+    SubmissionRepository submissionRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
     ParticipationTestRepository participationTestRepository;
 
     @SpyBean
     ExamAccessService examAccessService;
+
+    // Tolerated absolute difference for floating-point number comparisons
+    private final Double EPSILON = 0000.1;
 
     private List<User> users;
 
@@ -699,7 +710,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(2);
+        exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -716,29 +727,130 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
-        // TODO: we already have a bunch of submissions, we now just need to assign results to them and their participations
+        // Fetch the created participations and assign them to the exercises
+        Integer participationCounter = 0;
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises()).flatMap(Collection::stream)
+                .collect(Collectors.toList());
+        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
+        for (var exercise : exercisesInExam) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId());
+            exercise.setStudentParticipations(new HashSet<>(participations));
+            participationCounter += exercise.getStudentParticipations().size();
+        }
+        assertEquals(participationCounter, noGeneratedParticipations);
 
-        for (var studentExam : studentExams) {
-            for (var exercise : studentExam.getExercises()) {
-                for (var participation : exercise.getStudentParticipations()) {
-                    if (!participation.getParticipant().equals(studentExam.getUser())) {
-                        continue;
-                    }
-                    // There should only be one submission for text, quiz, modeling and file upload
-                    var submission = participation.getSubmissions().iterator().next();
-                    // TODO: handle that there won't be a submission for programming exercises
+        // Score used for all exercise results
+        Long resultScore = 75L;
 
-                    var result = new Result().score(100L).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
-                    submission.setResult(result);
-                    result.setParticipation(participation);
-                    // TODO: save result and submission
+        // Assign results to participations and submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                // Programming exercises don't have a submission yet
+                if (exercise instanceof ProgrammingExercise) {
+                    assertThat(participation.getSubmissions()).hasSize(0);
+                    submission = new ProgrammingSubmission();
+                    submission.setParticipation(participation);
+                    submission = submissionRepository.save(submission);
                 }
+                else {
+                    // There should only be one submission for text, quiz, modeling and file upload
+                    assertThat(participation.getSubmissions()).hasSize(1);
+                    submission = participation.getSubmissions().iterator().next();
+                }
+                // Create results
+                var result = new Result().score(resultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
+                result.setParticipation(participation);
+                result.setSubmission(submission);
+                resultRepository.save(result);
             }
         }
-
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
-        // TODO: check that the scores for the participants are correct based on the created results above
+        // Compare generated results to data in ExamScoresDTO
+        // Compare top-level DTO properties
+        assertThat(response.maxPoints).isEqualTo(exam.getMaxPoints());
+
+        // For calculation assume that all exercises within an exerciseGroups have the same max points
+        Double calculatedAverageScore = 0.0;
+        for (var exerciseGroup : exam.getExerciseGroups()) {
+            var exercise = exerciseGroup.getExercises().stream().findAny().get();
+            calculatedAverageScore += exercise.getMaxScore() * resultScore / 100.00;
+        }
+        assertEquals(response.averagePointsAchieved, calculatedAverageScore);
+        assertThat(response.title).isEqualTo(exam.getTitle());
+        assertThat(response.id).isEqualTo(exam.getId());
+
+        // Ensure that all exerciseGroups of the exam are present in the DTO
+        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
+        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getId()).collect(Collectors.toList());
+        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
+
+        // Compare exerciseGroups in DTO to exam exerciseGroups
+        for (var exerciseGroupDTO : response.exerciseGroups) {
+            // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
+            ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
+            // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
+            var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
+            assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
+
+            // Assume that all exercises in a group have the same max score
+            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
+            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
+            assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
+
+            // Collect titles of all exercises in the exam group
+            List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
+            assertThat(exerciseGroupDTO.containedExercises).isEqualTo(exerciseTitlesInGroupFromExam);
+        }
+
+        // Ensure that all registered students have a StudentResult
+        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
+        List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
+        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
+
+        // Compare StudentResult with the generated results
+        for (var studentResult : response.studentResults) {
+            // Find the original user using the id in StudentResult
+            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.id)).findFirst().get();
+            StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().get();
+
+            assertThat(studentResult.name).isEqualTo(originalUser.getName());
+            assertThat(studentResult.eMail).isEqualTo(originalUser.getEmail());
+            assertThat(studentResult.login).isEqualTo(originalUser.getLogin());
+            // TODO: Why does the server not return null if we don't have a registration number
+            assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber() != null ? originalUser.getRegistrationNumber() : "");
+
+            // Calculate overall points achieved
+            var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getMaxScore()).reduce(0.0,
+                    (total, maxScore) -> total + maxScore * resultScore / 100);
+            assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
+
+            // Calculate overall score achieved
+            // TODO: Server assumes that maxPoints of the exam are set correctly but in reality exercise max scores are set independently
+            var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
+            assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
+
+            // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
+            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
+                    .collect(Collectors.toList());
+            List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
+            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
+            for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
+                var exerciseResult = entry.getValue();
+
+                // Find the original exercise using the id in ExerciseResult
+                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.id)).findFirst().get();
+
+                // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
+                assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
+
+                assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
+                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxScore());
+                assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
+                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxScore() * resultScore / 100, EPSILON);
+            }
+        }
 
         // change back to instructor user
         database.changeUser("instructor1");

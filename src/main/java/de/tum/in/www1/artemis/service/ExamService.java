@@ -312,7 +312,7 @@ public class ExamService {
             }
         }
 
-        // Uptading exam information in DTO
+        // Updating exam information in DTO
         Double sumOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null)
                 .map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
 
