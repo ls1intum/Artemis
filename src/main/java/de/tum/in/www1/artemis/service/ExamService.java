@@ -278,11 +278,8 @@ public class ExamService {
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
                 }
             }
-        }
 
-        // Updating student result information in DTO
-        for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
-            if (studentResult.overallPointsAchieved != null) {
+            if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = round((studentResult.overallPointsAchieved / scores.maxPoints) * 100.0, 2);
             }
         }
@@ -306,13 +303,12 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        Double sumOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null)
-                .map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
+        Double sumOverallPoints = scores.studentResults.stream().map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
 
-        Long numberOfStudentResultsWithOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null).count();
+        int numberOfStudentResults = scores.studentResults.size();
 
-        if (numberOfStudentResultsWithOverallPoints != 0) {
-            scores.averagePointsAchieved = round((sumOverallPoints / numberOfStudentResultsWithOverallPoints), 2);
+        if (numberOfStudentResults != 0) {
+            scores.averagePointsAchieved = round((sumOverallPoints / numberOfStudentResults), 2);
         }
 
         return scores;
