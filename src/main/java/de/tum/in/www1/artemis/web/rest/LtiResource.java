@@ -84,7 +84,16 @@ public class LtiResource {
     public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        log.debug("Launch request : {}", launchRequest);
+        if (this.LTI_OAUTH_SECRET.isEmpty() || this.LTI_ID.isEmpty() || this.LTI_OAUTH_KEY.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "LTI not configure on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
+        }
+
+        if (!request.getRequestURL().toString().startsWith("https")) {
+            log.error("The request url " + request.getRequestURL().toString() + " does not start with 'https'. Verification of the request will most probably fail."
+                    + "Please double check your loadbalancer (e.g. nginx) configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header "
+                    + "X-Forwarded-Proto and forward-headers-strategy: native");
+        }
 
         // Verify request
         String error = ltiService.verifyRequest(request);
@@ -107,7 +116,7 @@ public class LtiResource {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         }
         catch (Exception ex) {
-            log.error("Error during LIT launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: ", ex);
+            log.error("Error during LTI launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: ", ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }

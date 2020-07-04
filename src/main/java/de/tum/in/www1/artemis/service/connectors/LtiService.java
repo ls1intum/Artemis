@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,9 +7,6 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import net.oauth.OAuthMessage;
-import net.oauth.server.OAuthServlet;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
@@ -36,7 +32,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -52,7 +47,6 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 @Service
-@Transactional
 public class LtiService {
 
     public static final String TUMX = "TUMx";
@@ -67,17 +61,17 @@ public class LtiService {
     @Value("${artemis.lti.oauth-secret:#{null}}")
     private Optional<String> OAUTH_SECRET;
 
-    @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "edx";
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> USER_PREFIX_EDX;
 
-    @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "u4i";
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> USER_PREFIX_U4I;
 
-    @Value("${artemis.lti.user-group-name-edx}")
-    private String USER_GROUP_NAME_EDX = "edx";
+    @Value("${artemis.lti.user-group-name-edx:#{null}}")
+    private Optional<String> USER_GROUP_NAME_EDX;
 
-    @Value("${artemis.lti.user-group-name-u4i}")
-    private String USER_GROUP_NAME_U4I = "u4i";
+    @Value("${artemis.lti.user-group-name-u4i:#{null}}")
+    private Optional<String> USER_GROUP_NAME_U4I;
 
     private final UserService userService;
 
@@ -222,7 +216,7 @@ public class LtiService {
             // check if an user with this email address exists
             final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
             if (usernameLookupByEmail.isPresent()) {
-                return loginUserByEmail(usernameLookupByEmail.get(), email, fullname);
+                return loginUserByEmail(launchRequest, usernameLookupByEmail.get(), email, fullname);
             }
         }
 
@@ -240,16 +234,16 @@ public class LtiService {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
-            if (TUMX.equals(launchRequest.getContext_label())) {
-                groups.add(USER_GROUP_NAME_EDX);
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX, fullname, email, null, null, "en");
+            if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
+                groups.add(USER_GROUP_NAME_EDX.get());
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en");
             }
-            else if (U4I.equals(launchRequest.getContext_label())) {
-                groups.add(USER_GROUP_NAME_U4I);
-                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I, fullname, email, null, null, "en");
+            else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
+                groups.add(USER_GROUP_NAME_U4I.get());
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en");
             }
             else {
-                throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+                throw new InternalAuthenticationServiceException("User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
             }
 
             return newUser;
@@ -265,9 +259,16 @@ public class LtiService {
                 .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
     }
 
-    private Optional<Authentication> loginUserByEmail(String username, String email, String fullname) {
+    private Optional<Authentication> loginUserByEmail(LtiLaunchRequestDTO launchRequest, String username, String email, String fullname) {
         log.info("Signing in as {}", username);
-        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), USER_GROUP_NAME_EDX, fullname, email, true);
+        var firstName = "";
+        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
+            firstName = USER_GROUP_NAME_EDX.get();
+        }
+        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
+            firstName = USER_GROUP_NAME_U4I.get();
+        }
+        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
 
         return Optional
                 .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
@@ -276,11 +277,11 @@ public class LtiService {
     @NotNull
     private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         final String username;
-        if (TUMX.equals(launchRequest.getContext_label())) {
-            username = this.USER_PREFIX_EDX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
+            username = this.USER_PREFIX_EDX.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
-        else if (U4I.equals(launchRequest.getContext_label())) {
-            username = this.USER_PREFIX_U4I + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
+            username = this.USER_PREFIX_U4I.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
         else {
             throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
@@ -380,17 +381,14 @@ public class LtiService {
         try {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, this.OAUTH_SECRET.get());
             if (!ltiResult.getSuccess()) {
-                OAuthMessage oam = OAuthServlet.getMessage(request, OAuthServlet.getRequestURL(request));
-                String requestBodyAsString = oam.readBodyAsString();
                 String requestString = httpServletRequestToString(request);
                 log.error("LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
                         + ltiResult.getLtiLaunchResult());
                 log.error("Request: " + requestString);
-                log.error("Body: " + requestBodyAsString);
                 return "Lti signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError();
             }
         }
-        catch (LtiVerificationException | IOException e) {
+        catch (LtiVerificationException e) {
             log.error("Lti signature verification failed. ", e);
             return "Lti signature verification failed; " + e.getMessage();
         }
@@ -491,8 +489,6 @@ public class LtiService {
 
             // clean up
             launchRequestForSession.remove(sessionId);
-
         }
     }
-
 }

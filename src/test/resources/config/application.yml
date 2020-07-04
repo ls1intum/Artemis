@@ -97,6 +97,7 @@ spring:
 server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
+    forward-headers-strategy: native
 
 management:
     endpoints:

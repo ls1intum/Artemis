@@ -62,7 +62,7 @@ artemis:
     lti: # only important for online courses that use LTI, can typically be ignored
         id: artemis_lti
         oauth-key: artemis_lti_key
-        oauth-secret: nychpC7yWsXH7aZqLcAdNX
+        oauth-secret: <secret>
         user-prefix-edx: edx_
         user-prefix-u4i: u4i_
         user-group-name-edx: edx
