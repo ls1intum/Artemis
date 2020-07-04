@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class ExamScoresDTO {
 
+    // examId
     public Long id;
 
     public String title;
@@ -49,6 +50,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class StudentResult {
 
+        // userId
         public Long id;
 
         public String name;
@@ -77,6 +79,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class ExerciseResult {
 
+        // exerciseId
         public Long id;
 
         public String title;
