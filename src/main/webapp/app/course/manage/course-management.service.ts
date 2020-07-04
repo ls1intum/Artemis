@@ -159,7 +159,7 @@ export class CourseManagementService {
      * returns the course with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
      */
-    getForTutors(courseId: number): Observable<EntityResponseType> {
+    getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
         return this.http
             .get<Course>(url, { observe: 'response' })
@@ -293,6 +293,11 @@ export class CourseManagementService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
     }
 
+    checkAndSetCourseRights(course: Course) {
+        course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+    }
+
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
             startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
@@ -339,8 +344,7 @@ export class CourseManagementService {
 
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
-            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body);
+            this.checkAndSetCourseRights(res.body);
         }
         return res;
     }
@@ -348,8 +352,7 @@ export class CourseManagementService {
     private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-                course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.checkAndSetCourseRights(course);
             });
         }
         return res;

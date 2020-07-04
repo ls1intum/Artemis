@@ -85,7 +85,7 @@ export class ExamManagementService {
      * @param courseId - the id of the course
      * @param examId - the id of the exam
      */
-    getExamForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
         return this.http
             .get<Exam>(url, { observe: 'response' })
