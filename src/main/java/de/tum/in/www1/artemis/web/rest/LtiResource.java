@@ -86,7 +86,7 @@ public class LtiResource {
 
         if (this.LTI_OAUTH_SECRET.isEmpty() || this.LTI_ID.isEmpty() || this.LTI_OAUTH_KEY.isEmpty()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                    "LTI not configure on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
+                    "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
         }
 
         if (!request.getRequestURL().toString().startsWith("https")) {
