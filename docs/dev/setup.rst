@@ -111,10 +111,10 @@ have to configure the file ``application-artemis.yml`` in the folder
            id: artemis_lti
            oauth-key: artemis_lti_key
            oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-           user-prefix_edx: edx_
-           user-prefix_u4i: u4i_
-           user-group-name_edx: edx
-           user-group-name_u4i: u4i
+           user-prefix-edx: edx_
+           user-prefix-u4i: u4i_
+           user-group-name-edx: edx
+           user-group-name-u4i: u4i
        git:
            name: Artemis
            email: artemis@in.tum.de
@@ -335,7 +335,7 @@ Other useful commands:
 Text Assessment Clustering Service
 ----------------------------------
 
-The semi-automatic text assessment relies on the Athene_ service.  
+The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
 Enable the ``automaticText`` Spring profile:

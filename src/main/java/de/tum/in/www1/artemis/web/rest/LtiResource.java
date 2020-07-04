@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -23,11 +26,11 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -40,14 +43,14 @@ public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
-    @Value("${artemis.lti.id}")
-    private String LTI_ID;
+    @Value("${artemis.lti.id:#{null}}")
+    private Optional<String> LTI_ID;
 
-    @Value("${artemis.lti.oauth-key}")
-    private String LTI_OAUTH_KEY;
+    @Value("${artemis.lti.oauth-key:#{null}}")
+    private Optional<String> LTI_OAUTH_KEY;
 
-    @Value("${artemis.lti.oauth-secret}")
-    private String LTI_OAUTH_SECRET;
+    @Value("${artemis.lti.oauth-secret:#{null}}")
+    private Optional<String> LTI_OAUTH_SECRET;
 
     private final LtiService ltiService;
 
@@ -57,11 +60,15 @@ public class LtiResource {
 
     private final TokenProvider tokenProvider;
 
-    public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider) {
+    private final AuthorizationCheckService authCheckService;
+
+    public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
+            AuthorizationCheckService authCheckService) {
         this.ltiService = ltiService;
         this.userService = userService;
         this.exerciseRepository = exerciseRepository;
         this.tokenProvider = tokenProvider;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -80,8 +87,10 @@ public class LtiResource {
         log.debug("Launch request : {}", launchRequest);
 
         // Verify request
-        if (!ltiService.verifyRequest(request)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bad or expired request. Please try again.");
+        String error = ltiService.verifyRequest(request);
+        if (error != null) {
+            log.warn("Failed verification for launch request : {}", launchRequest);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, error + ". Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
             return;
         }
 
@@ -134,17 +143,25 @@ public class LtiResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if (exercise.isEmpty()) {
+            return notFound();
+        }
+        if (authCheckService.isAtLeastInstructorForExercise(exercise.get(), null)) {
+            return forbidden();
+        }
+        if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
+            log.warn(
+                    "lti/configuration is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were specified in the yml configuration");
+            return forbidden();
+        }
 
-        return exercise.map(result -> {
-            String launchUrl = request.getScheme() + // "http"
-            "://" +                                // "://"
-            request.getServerName() +              // "myhost" // ":"
-            (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.get().getId();
+        String launchUrl = request.getScheme() + // "https"
+                "://" +                                // "://"
+                request.getServerName() +              // "myhost" // ":"
+                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.get().getId();
 
-            String ltiId = LTI_ID;
-            String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;
-            return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
-        }).orElse(ResponseUtil.notFound());
+        String ltiId = LTI_ID.get();
+        String ltiPassport = ltiId + ":" + LTI_OAUTH_KEY.get() + ":" + LTI_OAUTH_SECRET.get();
+        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
     }
-
 }

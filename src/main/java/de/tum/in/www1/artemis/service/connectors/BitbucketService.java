@@ -55,10 +55,10 @@ public class BitbucketService extends AbstractVersionControlService {
     private String BITBUCKET_PASSWORD;
 
     @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    private String USER_PREFIX_EDX = "edx";
 
     @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
+    private String USER_PREFIX_U4I = "u4i";
 
     @Value("${artemis.git.name}")
     private String ARTEMIS_GIT_NAME;

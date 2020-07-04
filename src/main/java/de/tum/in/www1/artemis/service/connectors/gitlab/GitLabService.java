@@ -49,10 +49,10 @@ public class GitLabService extends AbstractVersionControlService {
     private URL GITLAB_SERVER_URL;
 
     @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    private String USER_PREFIX_EDX = "edx";
 
     @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
+    private String USER_PREFIX_U4I = "u4i";
 
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
