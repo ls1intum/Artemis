@@ -12,6 +12,10 @@ public class DueDateStat {
     // The statistic component after the due-date
     private Long late;
 
+    public DueDateStat() {
+        // default constructor for our beloved Jackson serializer :-*
+    }
+
     public DueDateStat(Long inTime, Long late) {
         this.inTime = inTime;
         this.late = late;
