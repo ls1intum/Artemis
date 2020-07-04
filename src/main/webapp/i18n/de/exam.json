@@ -8,7 +8,9 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
-                "exportPDF": "Als PDF exportieren"
+                "exportPDF": "Als PDF exportieren",
+                "lastCommitHash": "Hash des letzten Commits",
+                "noCommitHash": "Lade neu, um den Commit Hash zu sehen."
             },
             "title": "Klausur",
             "startExam": "Klausur starten",
@@ -50,6 +52,10 @@
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
             "points": "Punkte",
+            "synced": "Aufgabe gespeichert",
+            "notSynced": "Aufgabe nicht gespeichert",
+            "submitted": "Aufgabe eingereicht",
+            "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
         },
@@ -67,7 +73,7 @@
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
-            "workingTime": "Bearbeitungszeit",
+            "workingTime": "Bearbeitungszeit (mm:ss)",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
@@ -165,7 +171,8 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            }
+            },
+            "tutorDashboard": "Tutor Klausur Dashboard"
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",

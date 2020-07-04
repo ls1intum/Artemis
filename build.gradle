@@ -35,7 +35,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.2.8"
+version = "4.2.9"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -246,6 +246,7 @@ dependencies {
 
     implementation "org.zalando:problem-spring-web:0.25.2"
     implementation "com.ibm.icu:icu4j:67.1"
+    implementation 'com.github.seancfoley:ipaddress:5.3.1'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"

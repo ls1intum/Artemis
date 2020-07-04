@@ -449,9 +449,13 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Navigates back to the tutor dashboard
+     * Navigates back to the tutor (exam) dashboard
      */
     back() {
-        this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        if (this.exercise?.course) {
+            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        } else {
+            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+        }
     }
 }

@@ -83,7 +83,7 @@ public class Exam implements Serializable {
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "exercise_group_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exam")
+    @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
     // TODO: add a big fat warning in case instructor delete exams where student exams already exist
@@ -253,12 +253,12 @@ public class Exam implements Serializable {
         this.registeredUsers = registeredUsers;
     }
 
-    public Exam addUser(User user) {
+    public Exam addRegisteredUser(User user) {
         this.registeredUsers.add(user);
         return this;
     }
 
-    public Exam removeUser(User user) {
+    public Exam removeRegisteredUser(User user) {
         this.registeredUsers.remove(user);
         return this;
     }
