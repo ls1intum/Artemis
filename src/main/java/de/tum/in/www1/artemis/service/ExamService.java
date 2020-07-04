@@ -252,8 +252,7 @@ public class ExamService {
 
         // Adding registered student information to DTO
         for (User user : exam.getRegisteredUsers()) {
-            scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(),
-                    user.getRegistrationNumber() != null ? user.getRegistrationNumber().trim() : ""));
+            scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
         }
 
         List<StudentParticipation> studentParticipations = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream)
@@ -265,6 +264,7 @@ public class ExamService {
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId() == studentResult.id).collect(Collectors.toList());
 
+            studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
@@ -273,14 +273,7 @@ public class ExamService {
                 if (relevantResult.isPresent()) {
                     Result result = relevantResult.get();
                     Double achievedPoints = round((result.getScore() / 100.0 * exercise.getMaxScore()), 2);
-
-                    if (studentResult.overallPointsAchieved == null) {
-                        studentResult.overallPointsAchieved = achievedPoints;
-                    }
-                    else {
-                        studentResult.overallPointsAchieved = studentResult.overallPointsAchieved + achievedPoints;
-                    }
-
+                    studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
                 }
@@ -296,7 +289,7 @@ public class ExamService {
 
         // Updating exerciseGroup information in DTO
         for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
-            Double noOfFoundResults = 0.0;
+            int noOfFoundResults = 0;
             Double sumOfPoints = 0.0;
 
             for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
@@ -307,7 +300,7 @@ public class ExamService {
                 }
             }
 
-            if (noOfFoundResults != 0.0) {
+            if (noOfFoundResults != 0) {
                 exerciseGroup.averagePointsAchieved = round((sumOfPoints / noOfFoundResults), 2);
             }
         }
@@ -318,7 +311,7 @@ public class ExamService {
 
         Long numberOfStudentResultsWithOverallPoints = scores.studentResults.stream().filter(studentResult -> studentResult.overallPointsAchieved != null).count();
 
-        if (numberOfStudentResultsWithOverallPoints != 0.0) {
+        if (numberOfStudentResultsWithOverallPoints != 0) {
             scores.averagePointsAchieved = round((sumOverallPoints / numberOfStudentResultsWithOverallPoints), 2);
         }
 
