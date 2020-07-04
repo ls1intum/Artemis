@@ -14,7 +14,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -515,7 +514,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
 
         // Get the exam with all registered users
-        params = new LinkedMultiValueMap<String, String>();
+        params = new LinkedMultiValueMap<>();
         params.add("withStudents", "true");
         storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
 
@@ -536,6 +535,43 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamWithOptions() throws Exception {
+        User user = userRepo.findOneByLogin("student1").get();
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(course.getExams().iterator().next().getId()).get();
+        // Get the exam with all registered users
+        // 1. without options
+        var exam1 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
+        assertThat(exam1.getRegisteredUsers()).isEmpty();
+        assertThat(exam1.getExerciseGroups()).isEmpty();
+
+        // 2. with students, without exercise groups
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        var exam2 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(exam2.getRegisteredUsers()).hasSize(1);
+        assertThat(exam2.getExerciseGroups()).isEmpty();
+
+        // 3. with students, with exercise groups
+        params.add("withExerciseGroups", "true");
+        var exam3 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(exam3.getRegisteredUsers()).hasSize(1);
+        assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
+        assertThat(exam3.getExerciseGroups().get(0).getExercises()).hasSize(exam.getExerciseGroups().get(0).getExercises().size());
+        assertThat(exam3.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
+
+        // 4. without students, with exercise groups
+        params = new LinkedMultiValueMap<>();
+        params.add("withExerciseGroups", "true");
+        var exam4 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(exam4.getRegisteredUsers()).isEmpty();
+        assertThat(exam4.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
+        assertThat(exam4.getExerciseGroups().get(0).getExercises()).hasSize(exam.getExerciseGroups().get(0).getExercises().size());
+        assertThat(exam4.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
     }
 
     @Test
@@ -689,7 +725,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
     }
 
-    @Disabled("Disabled as requestUtil is somehow not able to de-serialize the request response.")
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamForExamDashboard() throws Exception {

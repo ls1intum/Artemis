@@ -156,7 +156,6 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties(value = "exercises", allowSetters = true)
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

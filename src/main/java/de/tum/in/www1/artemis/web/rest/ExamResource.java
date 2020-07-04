@@ -258,13 +258,9 @@ public class ExamResource {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
-
-            // Break serialization loop
-            exerciseGroup.setExam(null);
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-
         tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
 
         return ResponseEntity.ok(exam);
