@@ -374,7 +374,7 @@ public class LtiService {
         LtiVerifier ltiVerifier = new LtiOauthVerifier();
         if (this.OAUTH_SECRET.isEmpty()) {
             // this means Artemis does not support this
-            String message = "verifyRequest for LTI is not supported on this Artemis instance, not artemis.lti.oauth-secret was specified in the yml configuration";
+            String message = "verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration";
             log.warn(message);
             return message;
         }
