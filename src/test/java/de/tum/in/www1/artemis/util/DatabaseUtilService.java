@@ -262,12 +262,6 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
-
-    @Autowired
-    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-
-    @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
@@ -277,63 +271,19 @@ public class DatabaseUtilService {
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
-    private TextClusterRepository textClusterRepository;
-
-    @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
     private StudentExamRepository studentExamRepository;
 
     @Autowired
-    private ExamSessionRepository examSessionRepository;
-
-    @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private DatabaseCleanupService databaseCleanupService;
+
     public void resetDatabase() {
-
-        conflictRepo.deleteAll();
-        conflictingResultRepo.deleteAll();
-        complaintResponseRepo.deleteAll();
-        complaintRepo.deleteAll();
-        resultRepo.deleteAll();
-        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
-        feedbackRepo.deleteAll();
-        tutorParticipationRepo.deleteAll();
-        exampleSubmissionRepo.deleteAll();
-        modelingSubmissionRepo.deleteAll();
-        textSubmissionRepo.deleteAll();
-        textClusterRepository.deleteAll();
-        fileUploadSubmissionRepo.deleteAll();
-        programmingSubmissionRepo.deleteAll();
-        submissionRepository.deleteAll();
-        submissionVersionRepository.deleteAll();
-        studentQuestionRepository.deleteAll();
-        studentParticipationRepo.deleteAll();
-        assertThat(studentParticipationRepo.findAll()).as("participation data has been cleared").isEmpty();
-        teamRepo.deleteAll();
-        ltiOutcomeUrlRepository.deleteAll();
-        programmingExerciseRepository.deleteAll();
-        groupNotificationRepository.deleteAll();
-        examSessionRepository.deleteAll();
-        studentExamRepository.deleteAll();
-        exerciseRepo.deleteAll();
-        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
-        examRepository.deleteAll();
-        assertThat(examRepository.findAll()).as("exam data has been cleared").isEmpty();
-        exerciseGroupRepository.deleteAll();
-        attachmentRepo.deleteAll();
-        lectureRepo.deleteAll();
-        courseRepo.deleteAll();
-
-        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
-        assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
-        ltiUserIdRepository.deleteAll();
-        userRepo.deleteAll();
-        authorityRepository.deleteAll();
-        assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
-        assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
+        databaseCleanupService.clearDatabase();
     }
 
     // TODO: this should probably be moved into another service
