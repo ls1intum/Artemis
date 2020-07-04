@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -35,13 +36,13 @@ export class StudentExamDetailComponent implements OnInit {
      * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
-        this.loadAll();
+        this.loadStudentExam();
     }
 
     /**
      * Load the course and the student exam
      */
-    loadAll() {
+    loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
@@ -107,8 +108,29 @@ export class StudentExamDetailComponent implements OnInit {
         const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl(parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), [Validators.min(0), Validators.required]),
-            seconds: new FormControl(parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), [Validators.min(0), Validators.max(59), Validators.required]),
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.required,
+            ]),
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.max(59),
+                Validators.required,
+            ]),
         });
+    }
+
+    examIsVisible(): boolean {
+        if (this.studentExam.exam) {
+            return moment(this.studentExam.exam.visibleDate).isBefore(moment());
+        }
+        // if the exam is not visible, we rather disable the form
+        return true;
+    }
+
+    getWorkingTimeToolTip(): string {
+        return this.examIsVisible()
+            ? 'You cannot change the individual working time after the exam has become visible.'
+            : 'You can change the individual working time of the student here.';
     }
 }

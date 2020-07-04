@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -13,10 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
 
@@ -45,9 +48,11 @@ public class StudentExamResource {
 
     private final ParticipationService participationService;
 
+    private final ExamRepository examRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -56,6 +61,7 @@ public class StudentExamResource {
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -107,7 +113,12 @@ public class StudentExamResource {
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
-        if (workingTime < 0) {
+        if (workingTime <= 0) {
+            return badRequest();
+        }
+        Exam exam = examRepository.findById(examId).get();
+        // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
+        if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
             return badRequest();
         }
         StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
