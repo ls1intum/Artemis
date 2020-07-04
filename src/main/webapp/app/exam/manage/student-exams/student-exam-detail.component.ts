@@ -124,7 +124,7 @@ export class StudentExamDetailComponent implements OnInit {
         if (this.studentExam.exam) {
             return moment(this.studentExam.exam.visibleDate).isBefore(moment());
         }
-        // if the exam is not visible, we rather disable the form
+        // if the exam is not visible to students yet, we disable the form to edit the working time
         return true;
     }
 
