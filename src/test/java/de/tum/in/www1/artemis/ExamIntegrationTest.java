@@ -818,8 +818,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentResult.name).isEqualTo(originalUser.getName());
             assertThat(studentResult.eMail).isEqualTo(originalUser.getEmail());
             assertThat(studentResult.login).isEqualTo(originalUser.getLogin());
-            // TODO: Why does the server not return null if we don't have a registration number
-            assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber() != null ? originalUser.getRegistrationNumber() : "");
+            assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber());
 
             // Calculate overall points achieved
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getMaxScore()).reduce(0.0,
@@ -827,7 +826,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
 
             // Calculate overall score achieved
-            // TODO: Server assumes that maxPoints of the exam are set correctly but in reality exercise max scores are set independently
             var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
             assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
 
