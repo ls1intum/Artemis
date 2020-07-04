@@ -624,6 +624,7 @@ public class DatabaseUtilService {
         ModelFactory.generateExerciseGroup(true, exam);
         ModelFactory.generateExerciseGroup(true, exam);
         ModelFactory.generateExerciseGroup(true, exam);
+        exam.setNumberOfExercisesInExam(4);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
