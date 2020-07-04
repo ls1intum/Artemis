@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -133,16 +136,12 @@ public class StudentExamResource {
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
-     * @param browserFingerprint the browser fingerprint reported by the client, can be null
-     * @param userAgent the user agent of the client, can be null
-     * @param instanceId the instance of the client
+     * @param request   the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestHeader(name = "X-Artemis-Client-Fingerprint", required = false) String browserFingerprint,
-            @RequestHeader(name = "User-Agent", required = false) String userAgent, @RequestHeader(name = "X-Artemis-Client-Instance-ID", required = false) String instanceId) {
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
@@ -189,7 +188,11 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId);
+        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+        final String userAgent = request.getHeader("User-Agent");
+        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         studentExam.setExamSessions(Set.of(examSession));
 
