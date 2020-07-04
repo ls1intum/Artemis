@@ -201,6 +201,80 @@ export class StudentExamsComponent implements OnInit {
     }
 
     /**
+     * Unlock all repositories immediately. Asks for confirmation.
+     */
+    handleUnlockAllRepositories() {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
+        modalRef.componentInstance.text = 'artemisApp.studentExams.unlockAllRepositoriesModalText';
+        modalRef.result.then(() => {
+            this.unlockAllRepositories();
+        });
+    }
+
+    /**
+     * Unlocks all programming exercises that belong to the exam
+     */
+    private unlockAllRepositories() {
+        this.isLoading = true;
+        this.examManagementService.unlockAllRepositories(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.unlockAllRepositoriesSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
+     * Unlock all repositories immediately. Asks for confirmation.
+     */
+    handleLockAllRepositories() {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
+        modalRef.componentInstance.text = 'artemisApp.studentExams.lockAllRepositoriesModalText';
+        modalRef.result.then(() => {
+            this.lockAllRepositories();
+        });
+    }
+
+    /**
+     * Unlocks all programming exercises that belong to the exam
+     */
+    private lockAllRepositories() {
+        this.isLoading = true;
+        this.examManagementService.lockAllRepositories(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.lockAllRepositoriesSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
      * Update the number of filtered participations
      *
      * @param filteredStudentExamsSize Total number of participations after filters have been applied

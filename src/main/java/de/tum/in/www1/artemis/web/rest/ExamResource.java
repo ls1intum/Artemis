@@ -392,7 +392,7 @@ public class ExamResource {
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the id of the exam
-     * @return ResponsEntity the number of evaluated quiz exercises
+     * @return ResponseEntity the number of evaluated quiz exercises
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -408,6 +408,52 @@ public class ExamResource {
         log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
 
         return ResponseEntity.ok().body(numOfEvaluatedExercises);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the id of the exam
+     * @return the number of unlocked exercises
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to unlock all repositories of exam {}", examId);
+
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        Integer numOfUnlockedExercises = examService.unlockAllRepositories(examId);
+
+        log.info("Unlocked {} programming exercises of exam {}", numOfUnlockedExercises, examId);
+
+        return ResponseEntity.ok().body(numOfUnlockedExercises);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the id of the exam
+     * @return the number of locked exercises
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to lock all repositories of exam {}", examId);
+
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        Integer numOfLockedExercises = examService.lockAllRepositories(examId);
+
+        log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
+
+        return ResponseEntity.ok().body(numOfLockedExercises);
     }
 
     /**

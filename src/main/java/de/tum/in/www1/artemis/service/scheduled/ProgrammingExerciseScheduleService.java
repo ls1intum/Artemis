@@ -172,8 +172,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
+    /**
+     * Returns a runnable that, once executed, will lock all student repositories.
+     *
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be locked
+     * @return a Runnable that will lock the repositories once it is executed
+     */
     @NotNull
-    private Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
+    public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
         return lockStudentRepositories(exercise, participation -> true);
     }
 
@@ -206,8 +214,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
+    /**
+     * Returns a runnable that, once executed, will unlock all student repositories and will schedule all repository lock tasks.
+     * The unlock tasks will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     *
+     * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be unlocked
+     * @return a Runnable that will unlock the repositories once it is executed
+     */
     @NotNull
-    private Runnable unlockAllStudentRepositoriesForExam(ProgrammingExercise exercise) {
+    public Runnable unlockAllStudentRepositoriesForExam(ProgrammingExercise exercise) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -230,11 +247,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
                 if (numberOfFailedUnlockOperations > 0) {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
+                            Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
                 }
                 else {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
 
                 // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
