@@ -89,7 +89,7 @@
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
-            "workingTime": "Bearbeitungszeit",
+            "workingTime": "Bearbeitungszeit (mm:ss)",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
@@ -187,7 +187,8 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            }
+            },
+            "tutorDashboard": "Tutor Klausur Dashboard"
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",

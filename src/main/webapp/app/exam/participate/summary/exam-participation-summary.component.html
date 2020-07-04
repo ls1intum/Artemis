@@ -24,7 +24,7 @@
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
-            <h5>{{ exercise.title }}</h5>
+            <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
@@ -34,7 +34,7 @@
             </ng-container>
             <!-- Modeling Exercise -->
             <ng-container *ngIf="exercise.type === MODELING">
-                <jhi-modeling-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+                <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
             </ng-container>
             <!-- Quiz Exercise -->
             <ng-container *ngIf="exercise.type === QUIZ">

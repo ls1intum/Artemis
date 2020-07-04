@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 public final class ResponseUtil implements io.github.jhipster.web.util.ResponseUtil {
 
+    // TODO: This is always null because spring does not allow static field injection
     @Value("${jhipster.clientApp.name}")
     private static String applicationName;
 
@@ -18,6 +19,10 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
     }
 
     public static <X> ResponseEntity<X> forbidden(String entityName, String errorKey, String message) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
+    }
+
+    public static <X> ResponseEntity<X> forbidden(String applicationName, String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
