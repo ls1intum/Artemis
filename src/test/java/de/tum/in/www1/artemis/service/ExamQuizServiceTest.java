@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
@@ -105,6 +106,17 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "USER")
+    public void evaluateQuiz_notOver_forbidden() throws Exception {
+        exam = examRepository.save(exam);
+        exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -123,6 +135,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             database.changeUser("student" + (i + 1));
             QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+        }
+
+        // All exams should be over before evaluation
+        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+            studentExam.setWorkingTime(0);
+            studentExamRepository.save(studentExam);
         }
 
         database.changeUser("instructor1");
@@ -160,6 +178,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             database.changeUser("student" + (i + 1));
             QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+        }
+
+        // All exams should be over before evaluation
+        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+            studentExam.setWorkingTime(0);
+            studentExamRepository.save(studentExam);
         }
 
         database.changeUser("instructor1");

@@ -1,17 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -465,6 +459,12 @@ public class ExamResource {
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
+
+        if (examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+            // Quizzes should only be evaluated if no exams are running
+            return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
+                    "There are still exams running, quizzes can only be evaluated once all exams are finished.");
+        }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
 
