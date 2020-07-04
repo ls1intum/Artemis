@@ -15,7 +15,6 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
     imports: [ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule, ArtemisModelingEditorModule, ArtemisFullscreenModule],
     declarations: [
         ExamParticipationSummaryComponent,
-        ExamParticipationSummaryComponent,
         ProgrammingExamSummaryComponent,
         ModelingExamSummaryComponent,
         FileUploadExamSummaryComponent,
