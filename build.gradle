@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.4.0"
+    id "com.diffplug.gradle.spotless" version "4.5.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.2.9"
+version = "4.2.10"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -189,9 +189,9 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
-    implementation "com.hazelcast:hazelcast:4.0.1"
+    implementation "com.hazelcast:hazelcast:4.0.2"
     implementation "com.hazelcast:hazelcast-hibernate53:2.0.0"
-    implementation "com.hazelcast:hazelcast-spring:4.0.1"
+    implementation "com.hazelcast:hazelcast-spring:4.0.2"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.5"

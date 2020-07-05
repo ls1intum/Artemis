@@ -62,7 +62,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void init() {
         /* We mock the following methods because we don't have the OAuth secret for edx */
-        doReturn(true).when(ltiService).verifyRequest(any());
+        doReturn(null).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
         database.addUsers(1, 1, 0);
@@ -108,7 +108,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders());
 
-        doReturn(false).when(ltiService).verifyRequest(any());
+        doReturn("error").when(ltiService).verifyRequest(any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.UNAUTHORIZED, new HttpHeaders());
     }
 

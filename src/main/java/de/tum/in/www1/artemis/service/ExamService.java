@@ -182,7 +182,7 @@ public class ExamService {
      * @return only the visible exams
      */
     public Set<Exam> filterVisibleExams(Set<Exam> exams) {
-        return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
+        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
     }
 
     /**
@@ -315,9 +315,6 @@ public class ExamService {
 
         // StudentExams are saved in the called method
         List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
-
-        // TODO: make sure the student exams still contain non proxy users
-
         return studentExams;
     }
 
