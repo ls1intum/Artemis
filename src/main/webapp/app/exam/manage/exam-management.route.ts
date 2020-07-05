@@ -28,6 +28,7 @@ import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/ma
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
+import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -387,6 +388,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/tutor-exam-dashboard',
+        component: TutorCourseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],
     },

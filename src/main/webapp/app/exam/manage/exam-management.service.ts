@@ -81,6 +81,18 @@ export class ExamManagementService {
     }
 
     /**
+     * Returns the exam with the provided unique identifier for the tutor dashboard
+     * @param courseId - the id of the course
+     * @param examId - the id of the exam
+     */
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+        return this.http
+            .get<Exam>(url, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
+    /**
      * Delete an exam on the server using a DELETE request.
      * @param courseId The course id.
      * @param examId The id of the exam to delete.
