@@ -80,6 +80,9 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
 
         StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
 
@@ -96,7 +99,7 @@ public class StudentExamResource {
             filterForExam(exercise, participations);
         }
 
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExam));
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
