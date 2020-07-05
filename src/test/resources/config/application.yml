@@ -26,7 +26,6 @@ spring:
     jackson:
         serialization:
             indent-output: true
-            write-durations-as-timestamps: false
     jmx:
         enabled: false
     jpa:

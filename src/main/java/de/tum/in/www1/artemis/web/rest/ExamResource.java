@@ -5,9 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -67,9 +67,16 @@ public class ExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final TutorParticipationService tutorParticipationService;
+
+    private final TutorDashboardService tutorDashboardService;
+
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
             ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
-            StudentExamService studentExamService, ParticipationService participationService) {
+            StudentExamService studentExamService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -80,6 +87,9 @@ public class ExamResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.studentExamService = studentExamService;
         this.participationService = participationService;
+        this.authCheckService = authCheckService;
+        this.tutorParticipationService = tutorParticipationService;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -215,6 +225,48 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/:courseId/exams/:examId:for-exam-tutor-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
+
+        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Course course = exam.getCourse();
+        if (!course.getId().equals(courseId)) {
+            return conflict();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // tutors cannot access the exercises before the exam ends
+            return forbidden();
+        }
+
+        Set<Exercise> exercises = new HashSet<>();
+        // extract all exercises for all the exam
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exercises.addAll(exerciseGroup.getExercises());
+        }
+
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
      * GET /courses/{courseId}/exams : Find all exams for the given course.
      *
      * @param courseId  the course to which the exam belongs
@@ -291,7 +343,7 @@ public class ExamResource {
         if (student.isEmpty()) {
             return notFound();
         }
-        exam.addUser(student.get());
+        exam.addRegisteredUser(student.get());
         // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
         // has access to the course of the exam.
         // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
@@ -518,7 +570,7 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         User student = optionalStudent.get();
-        exam.removeUser(student);
+        exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
         // still have access to the course.
