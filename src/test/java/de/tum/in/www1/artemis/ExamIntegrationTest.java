@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,10 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -40,6 +38,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -77,6 +76,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
+    ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
     StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -84,6 +86,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @SpyBean
     ExamAccessService examAccessService;
+
+    @SpyBean
+    ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private List<User> users;
 
@@ -723,6 +728,98 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exerciseGroupsOrder", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void lockAllRepositories_noInstructor() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories",
+                Optional.empty(), Integer.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void lockAllRepositories() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseGroup1.addExercise(programmingExercise);
+
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                exerciseGroup1);
+        programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
+        exerciseGroup1.addExercise(programmingExercise2);
+
+        exerciseGroupRepository.save(exerciseGroup1);
+
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numOfLockedExercises).isEqualTo(2);
+
+        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositories(programmingExercise2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void unlockAllRepositories_noInstructor() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
+                Optional.empty(), Integer.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void unlockAllRepositories() throws Exception {
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course1);
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseGroup1.addExercise(programmingExercise);
+
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                exerciseGroup1);
+        programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
+        exerciseGroup1.addExercise(programmingExercise2);
+
+        exerciseGroupRepository.save(exerciseGroup1);
+
+        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numOfUnlockedExercises).isEqualTo(2);
+
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise);
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise2);
     }
 
     @Test

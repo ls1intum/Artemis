@@ -10,7 +10,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
             </button>
         </div>
         <div class="modal-body">
-            <p>{{ text | translate }}</p>
+            <p style="white-space: pre-line">{{ text | translate }}</p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')" jhiTranslate="global.form.cancel">Cancel</button>
