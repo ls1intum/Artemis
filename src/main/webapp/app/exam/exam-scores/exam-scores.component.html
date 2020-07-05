@@ -7,13 +7,13 @@
     </div>
 
     <div *ngIf="!isLoading">
-        <h4 *ngIf="examScoreDTO.title">
+        <h3 *ngIf="examScoreDTO.title">
             {{ examScoreDTO.title }}
-        </h4>
+        </h3>
         <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
             {{ examScoreDTO.maxPoints }} Points achievable
         </h4>
-        <h3>
+        <h4>
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
                 {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
             </small>
@@ -21,7 +21,7 @@
                 <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
-        </h3>
+        </h4>
 
         <!-- Exercise Groups Statistics Table -->
         <div class="table-responsive table-bordered table-hover">
@@ -34,7 +34,6 @@
                         <th jhiTranslate="artemisApp.examScores.containedExercisesColumn">
                             Contained exercises
                         </th>
-
                         <th jhiTranslate="artemisApp.examScores.averagePointsColumn">
                             Average points achieved
                         </th>
@@ -61,7 +60,6 @@
         </div>
 
         <!-- Student Result Table -->
-
         <div class="table-responsive table-bordered table-hover">
             <table class="table table-striped">
                 <thead class="thead-dark">
