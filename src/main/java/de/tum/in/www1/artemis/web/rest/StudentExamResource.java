@@ -76,16 +76,8 @@ public class StudentExamResource {
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
-        // we reload the quiz exercise because we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used in
-        for (int i = 0; i < studentExam.getExercises().size(); i++) {
-            var exercise = studentExam.getExercises().get(i);
-            if (exercise instanceof QuizExercise) {
-                // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
-                quizExercise.filterForStudentsDuringQuiz();
-                studentExam.getExercises().set(i, quizExercise);
-            }
-        }
+
+        loadExercisesForStudentExam(studentExam);
 
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
@@ -171,17 +163,7 @@ public class StudentExamResource {
         }
         var studentExam = optionalStudentExam.get();
 
-        // we reload the quiz exercise because we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used in
-        // studentExamRepository.findWithExercisesByUserIdAndExamId
-        for (int i = 0; i < studentExam.getExercises().size(); i++) {
-            var exercise = studentExam.getExercises().get(i);
-            if (exercise instanceof QuizExercise) {
-                // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
-                quizExercise.filterForStudentsDuringQuiz();
-                studentExam.getExercises().set(i, quizExercise);
-            }
-        }
+        loadExercisesForStudentExam(studentExam);
 
         // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
@@ -252,6 +234,23 @@ public class StudentExamResource {
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    /**
+     * we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used
+     *
+     * @param studentExam the studentExam for which to load exercises
+     */
+    public void loadExercisesForStudentExam(StudentExam studentExam) {
+        for (int i = 0; i < studentExam.getExercises().size(); i++) {
+            var exercise = studentExam.getExercises().get(i);
+            if (exercise instanceof QuizExercise) {
+                // reload and replace the quiz exercise
+                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                quizExercise.filterForStudentsDuringQuiz();
+                studentExam.getExercises().set(i, quizExercise);
+            }
         }
     }
 }
