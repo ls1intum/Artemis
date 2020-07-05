@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -820,7 +821,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise);
         verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesForExam(programmingExercise2);
     }
-  
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamForExamDashboard() throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
