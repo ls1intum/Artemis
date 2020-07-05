@@ -10,7 +10,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/ExamScoreDTOs';
+import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -59,7 +59,12 @@ export class ExamManagementService {
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
-    getExamScore(courseId: number, examId: number): Observable<HttpResponse<ExamScoreDTO>> {
+    /**
+     * Find all scores of an exam.
+     * @param courseId The id of the course.
+     * @param examId The id of the exam.
+     */
+    getExamScores(courseId: number, examId: number): Observable<HttpResponse<ExamScoreDTO>> {
         return this.http.get<ExamScoreDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/scores`, { observe: 'response' });
     }
 

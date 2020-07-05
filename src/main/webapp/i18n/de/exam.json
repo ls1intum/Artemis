@@ -39,7 +39,7 @@
             "titleColumn": "Titel",
             "containedExercisesColumn": "Aufgaben in Gruppe",
             "averagePointsColumn": "Durchschnittlich erreichte Punkte",
-            "maximumPointsColumn": "Maximal Erreichbare Punkte",
+            "maximumPointsColumn": "Maximal erreichbare Punkte",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",

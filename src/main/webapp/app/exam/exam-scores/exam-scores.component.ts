@@ -3,7 +3,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
-import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/ExamScoreDTOs';
+import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -26,7 +26,7 @@ export class ExamScoresComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.examService.getExamScore(params['courseId'], params['examId']).subscribe(
+            this.examService.getExamScores(params['courseId'], params['examId']).subscribe(
                 (examResponse) => {
                     this.examScoreDTO = examResponse.body!;
                     if (this.examScoreDTO) {
@@ -40,8 +40,12 @@ export class ExamScoresComponent implements OnInit {
         });
     }
 
+    /**
+     * Helper function to make actually rounding possible
+     * @param value
+     * @param exp
+     */
     round(value: any, exp: number) {
-        // helper function to make actually rounding possible
         if (typeof exp === 'undefined' || +exp === 0) {
             return Math.round(value);
         }
@@ -97,7 +101,7 @@ export class ExamScoresComponent implements OnInit {
         csvExporter.generateCsv(data);
     }
 
-    convertToCSVRow(studentResult: StudentResult) {
+    private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
             login: studentResult.login ? studentResult.login : '',

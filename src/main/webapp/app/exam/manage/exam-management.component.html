@@ -81,7 +81,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
-                                    type="submit"
+                                    type="button"
                                     *ngIf="isAtLeastInstructor"
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
