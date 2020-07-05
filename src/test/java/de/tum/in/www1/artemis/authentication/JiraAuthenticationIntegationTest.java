@@ -99,7 +99,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(true).when(ltiService).verifyRequest(any());
+        doReturn(null).when(ltiService).verifyRequest(any());
 
         final var userAuthority = new Authority(AuthoritiesConstants.USER);
         final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
