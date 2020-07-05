@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -34,7 +32,6 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -578,12 +575,6 @@ public class Course implements Serializable {
                 + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
                 + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
                 + ", presentationScore='" + getPresentationScore() + "}";
-    }
-
-    @JsonIgnore
-    public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
-        return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

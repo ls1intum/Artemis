@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -14,6 +14,8 @@ import { Course } from 'app/entities/course.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -24,6 +26,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     readonly TeamFilterProp = TeamFilterProp;
 
     course: Course;
+    exam: Exam;
     courseId: number;
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
@@ -53,8 +56,11 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseForGuidedTour: Exercise | null;
 
+    isExamMode: boolean;
+
     constructor(
         private courseService: CourseManagementService,
+        private examManagementService: ExamManagementService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
@@ -84,57 +90,83 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
-        this.courseService.getForTutors(this.courseId).subscribe(
-            (res: HttpResponse<Course>) => {
-                this.course = Course.from(res.body!);
-                this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
-                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+        const examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.isExamMode = !!examId;
+        if (this.isExamMode) {
+            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
+                this.exam = res.body!;
+                this.course = Course.from(this.exam.course);
+                this.courseService.checkAndSetCourseRights(this.course);
 
-                if (this.course.exercises && this.course.exercises.length > 0) {
-                    const [finishedExercises, unfinishedExercises] = partition(
-                        this.course.exercises,
-                        (exercise) =>
-                            exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
-                            exercise.numberOfOpenComplaints === 0 &&
-                            exercise.numberOfOpenMoreFeedbackRequests === 0,
-                    );
-                    this.finishedExercises = finishedExercises;
-                    this.unfinishedExercises = unfinishedExercises;
-                    // sort exercises by type to get a better overview in the dashboard
-                    this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
-                    this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
-                }
-            },
-            (response: string) => this.onError(response),
-        );
+                // get all exercises
+                const exercises: Exercise[] = [];
+                // eslint-disable-next-line chai-friendly/no-unused-expressions
+                this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+                    if (exerciseGroup.exercises) {
+                        exercises.push(...exerciseGroup.exercises);
+                    }
+                });
 
-        this.courseService.getStatsForTutors(this.courseId).subscribe(
-            (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = StatsForDashboard.from(res.body!);
-                this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                this.numberOfAssessments = this.stats.numberOfAssessments;
-                this.numberOfComplaints = this.stats.numberOfComplaints;
-                this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
-                this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
-                this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
-                this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
-                const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
-                if (tutorLeaderboardEntry) {
-                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
-                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
-                } else {
-                    this.numberOfTutorAssessments = 0;
-                    this.numberOfTutorComplaints = 0;
-                    this.numberOfTutorMoreFeedbackRequests = 0;
-                }
+                this.extractExercises(exercises);
 
-                if (this.numberOfSubmissions.total > 0) {
-                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
-                }
-            },
-            (response: string) => this.onError(response),
-        );
+                // TODO: implement some tutor stats here similar to the ones below but based on the exam and not the course
+            });
+        } else {
+            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
+                (res: HttpResponse<Course>) => {
+                    this.course = Course.from(res.body!);
+                    this.courseService.checkAndSetCourseRights(this.course);
+                    const exercises = this.course.exercises;
+                    this.extractExercises(exercises);
+                },
+                (response: string) => this.onError(response),
+            );
+
+            this.courseService.getStatsForTutors(this.courseId).subscribe(
+                (res: HttpResponse<StatsForDashboard>) => {
+                    this.stats = StatsForDashboard.from(res.body!);
+                    this.numberOfSubmissions = this.stats.numberOfSubmissions;
+                    this.numberOfAssessments = this.stats.numberOfAssessments;
+                    this.numberOfComplaints = this.stats.numberOfComplaints;
+                    this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
+                    this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
+                    this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
+                    this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
+                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
+                    if (tutorLeaderboardEntry) {
+                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                        this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
+                        this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
+                    } else {
+                        this.numberOfTutorAssessments = 0;
+                        this.numberOfTutorComplaints = 0;
+                        this.numberOfTutorMoreFeedbackRequests = 0;
+                    }
+
+                    if (this.numberOfSubmissions.total > 0) {
+                        this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                    }
+                },
+                (response: string) => this.onError(response),
+            );
+        }
+    }
+
+    private extractExercises(exercises: Exercise[]) {
+        if (exercises && exercises.length > 0) {
+            const [finishedExercises, unfinishedExercises] = partition(
+                exercises,
+                (exercise) =>
+                    exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                    exercise.numberOfOpenComplaints === 0 &&
+                    exercise.numberOfOpenMoreFeedbackRequests === 0,
+            );
+            this.finishedExercises = finishedExercises;
+            this.unfinishedExercises = unfinishedExercises;
+            // sort exercises by type to get a better overview in the dashboard
+            this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
+            this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
+        }
     }
 
     /**
@@ -163,7 +195,11 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * Navigate back to the course management page.
      */
     back() {
-        this.router.navigate(['course-management']);
+        if (this.isExamMode) {
+            this.router.navigate(['course-management', this.course.id, 'exams']);
+        } else {
+            this.router.navigate(['course-management']);
+        }
     }
 
     sortRows() {

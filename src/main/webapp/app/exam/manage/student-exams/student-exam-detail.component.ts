@@ -50,9 +50,9 @@ export class StudentExamDetailComponent implements OnInit {
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
         });
         this.student = this.studentExam.user;
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
     }
 
     /**
