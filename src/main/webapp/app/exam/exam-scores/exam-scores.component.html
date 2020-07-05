@@ -52,7 +52,7 @@
                                 </li>
                             </ul>
                         </td>
-                        <td>{{ exerciseGroup.averagePointsAchieved ? exerciseGroup.averagePointsAchieved : '-' }}</td>
+                        <td>{{ exerciseGroup.averagePointsAchieved ? round(exerciseGroup.averagePointsAchieved, 2) : '-' }}</td>
                         <td>{{ exerciseGroup.maxPoints ? exerciseGroup.maxPoints : '-' }}</td>
                     </tr>
                 </tbody>
@@ -107,9 +107,9 @@
                             <td *ngIf="studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
                                 {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
                                 :
-                                {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints }}
+                                {{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
 
-                                ({{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore }} %)
+                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }} %)
                             </td>
                             <ng-template #empty>
                                 <td>
@@ -117,8 +117,8 @@
                                 </td>
                             </ng-template>
                         </ng-container>
-                        <td>{{ studentResult.overallPointsAchieved ? studentResult.overallPointsAchieved : '-' }}</td>
-                        <td>{{ studentResult.overallScoreAchieved ? studentResult.overallScoreAchieved : '-' }}</td>
+                        <td>{{ studentResult.overallPointsAchieved ? round(studentResult.overallPointsAchieved, 2) : '-' }}</td>
+                        <td>{{ studentResult.overallScoreAchieved ? round(studentResult.overallScoreAchieved, 2) : '-' }}</td>
                     </tr>
                 </tbody>
             </table>

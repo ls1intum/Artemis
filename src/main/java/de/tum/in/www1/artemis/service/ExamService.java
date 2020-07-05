@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -205,23 +203,6 @@ public class ExamService {
     }
 
     /**
-     * Rounds a double to a specified number of decimal places
-     *
-     * @param value  the number to round
-     * @param places the number of decimal places to round to
-     * @return rounded number
-     */
-    public static double round(double value, int places) {
-        if (places < 0) {
-            throw new IllegalArgumentException();
-        }
-
-        BigDecimal bd = BigDecimal.valueOf(value);
-        bd = bd.setScale(places, RoundingMode.HALF_UP);
-        return bd.doubleValue();
-    }
-
-    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam
@@ -272,7 +253,7 @@ public class ExamService {
 
                 if (relevantResult.isPresent()) {
                     Result result = relevantResult.get();
-                    Double achievedPoints = round((result.getScore() / 100.0 * exercise.getMaxScore()), 1);
+                    Double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
@@ -280,7 +261,7 @@ public class ExamService {
             }
 
             if (scores.maxPoints != null) {
-                studentResult.overallScoreAchieved = round((studentResult.overallPointsAchieved / scores.maxPoints) * 100.0, 1);
+                studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
             }
         }
 
@@ -298,7 +279,7 @@ public class ExamService {
             }
 
             if (noOfFoundResults != 0) {
-                exerciseGroup.averagePointsAchieved = round((sumOfPoints / noOfFoundResults), 2);
+                exerciseGroup.averagePointsAchieved = sumOfPoints / noOfFoundResults;
             }
         }
 
@@ -308,7 +289,7 @@ public class ExamService {
         int numberOfStudentResults = scores.studentResults.size();
 
         if (numberOfStudentResults != 0) {
-            scores.averagePointsAchieved = round((sumOverallPoints / numberOfStudentResults), 2);
+            scores.averagePointsAchieved = sumOverallPoints / numberOfStudentResults;
         }
 
         return scores;

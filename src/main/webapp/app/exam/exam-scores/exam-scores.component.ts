@@ -40,6 +40,28 @@ export class ExamScoresComponent implements OnInit {
         });
     }
 
+    round(value: any, exp: number) {
+        // helper function to make actually rounding possible
+        if (typeof exp === 'undefined' || +exp === 0) {
+            return Math.round(value);
+        }
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(exp % 1 === 0)) {
+            return NaN;
+        }
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
+    }
+
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
     }
@@ -87,8 +109,8 @@ export class ExamScoresComponent implements OnInit {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
-                csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? exerciseResult.achievedPoints : '';
-                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = exerciseResult.achievedScore ? exerciseResult.achievedScore : '';
+                csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? this.round(exerciseResult.achievedPoints, 1) : '';
+                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = exerciseResult.achievedScore ? this.round(exerciseResult.achievedScore, 2) : '';
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
@@ -96,8 +118,8 @@ export class ExamScoresComponent implements OnInit {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved ? studentResult.overallPointsAchieved : '';
-        csvRow.overAllScore = studentResult.overallScoreAchieved ? studentResult.overallScoreAchieved : '';
+        csvRow.overAllPoints = studentResult.overallPointsAchieved ? this.round(studentResult.overallPointsAchieved, 2) : '';
+        csvRow.overAllScore = studentResult.overallScoreAchieved ? this.round(studentResult.overallScoreAchieved, 2) : '';
 
         return csvRow;
     }
