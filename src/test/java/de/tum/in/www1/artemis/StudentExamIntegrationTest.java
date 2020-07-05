@@ -123,7 +123,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -151,7 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
             var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
-            assertThat(response.getExercises().size()).isEqualTo(2);
+            assertThat(response.getExercises().size()).isEqualTo(4);
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
             assertThat(textExercise.getStudentParticipations().size()).isEqualTo(1);
@@ -250,7 +249,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 

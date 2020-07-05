@@ -19,17 +19,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -188,9 +191,119 @@ public class ExamService {
     }
 
     /**
+     * Returns the relevant result of a student participation
+     *
+     * @param studentParticipation studentParticipation to get relevant result for
+     * @return optional of relevant result
+     */
+    private Optional<Result> getRelevantResult(StudentParticipation studentParticipation) {
+        // no participant -> no relevant result
+        if (studentParticipation.getParticipant() == null) {
+            return Optional.empty();
+        }
+
+        return studentParticipation.getResults().stream().filter(Result::isRated).filter(result -> result.getCompletionDate() != null).filter(result -> result.getScore() != null)
+                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).findFirst();
+
+    }
+
+    /**
+     * Puts students, result and exerciseGroups together for ExamScoresDTO
+     *
+     * @param examId the id of the exam
+     * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
+     */
+    public ExamScoresDTO getExamScore(Long examId) {
+        Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        // Adding exam information to DTO
+        ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
+
+        // Adding exercise group information to DTO
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
+            Double maximumNumberOfPoints = null;
+            if (!exerciseGroup.getExercises().isEmpty()) {
+                maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
+            }
+
+            List<String> containedExercises = new ArrayList<>();
+
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                containedExercises.add(exercise.getTitle().trim());
+            }
+
+            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises));
+        }
+
+        // Adding registered student information to DTO
+        for (User user : exam.getRegisteredUsers()) {
+            scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
+        }
+
+        List<StudentParticipation> studentParticipations = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream)
+                .map(Exercise::getStudentParticipations).flatMap(Collection::stream).collect(Collectors.toList());
+
+        // Adding student results information to DTO
+        for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
+            // ToDo Support Team Exercises
+            List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId() == studentResult.id).collect(Collectors.toList());
+
+            studentResult.overallPointsAchieved = 0.0;
+            for (StudentParticipation studentParticipation : participationsOfStudent) {
+                Exercise exercise = studentParticipation.getExercise();
+
+                Optional<Result> relevantResult = getRelevantResult(studentParticipation);
+
+                if (relevantResult.isPresent()) {
+                    Result result = relevantResult.get();
+                    Double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
+                    studentResult.overallPointsAchieved += achievedPoints;
+                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
+                }
+            }
+
+            if (scores.maxPoints != null) {
+                studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+            }
+        }
+
+        // Updating exerciseGroup information in DTO
+        for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
+            int noOfFoundResults = 0;
+            Double sumOfPoints = 0.0;
+
+            for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
+                if (studentResult.exerciseGroupIdToExerciseResult.containsKey(exerciseGroup.id)) {
+                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult.get(exerciseGroup.id);
+                    noOfFoundResults++;
+                    sumOfPoints = sumOfPoints + exerciseResult.achievedPoints;
+                }
+            }
+
+            if (noOfFoundResults != 0) {
+                exerciseGroup.averagePointsAchieved = sumOfPoints / noOfFoundResults;
+            }
+        }
+
+        // Updating exam information in DTO
+        Double sumOverallPoints = scores.studentResults.stream().map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
+
+        int numberOfStudentResults = scores.studentResults.size();
+
+        if (numberOfStudentResults != 0) {
+            scores.averagePointsAchieved = sumOverallPoints / numberOfStudentResults;
+        }
+
+        return scores;
+    }
+
+    /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param examId        the id of the exam
+     * @param examId the id of the exam
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(Long examId) {

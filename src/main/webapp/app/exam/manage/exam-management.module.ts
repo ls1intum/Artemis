@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
+import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
@@ -36,6 +37,7 @@ const ENTITY_STATES = [...examManagementState];
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
+        ArtemisExamScoresModule,
         ArtemisSharedModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,

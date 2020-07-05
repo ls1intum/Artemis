@@ -34,6 +34,22 @@
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
             }
         },
+        "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "title": "Klausur Ergebnisse",
+            "titleColumn": "Titel",
+            "containedExercisesColumn": "Aufgaben in Gruppe",
+            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
+            "maximumPointsColumn": "Maximal erreichbare Punkte",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matrikelnummer",
+            "overallPointsColumn": "Erreichte Punkte",
+            "overallScoreColumn": "Erreichtes Ergebnis (%)",
+            "exportCSV": "Exportiere Ergebnisse als CSV",
+            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
+        },
         "examParticipation": {
             "timer": "Restzeit: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",

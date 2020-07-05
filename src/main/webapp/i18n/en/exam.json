@@ -34,6 +34,22 @@
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
             }
         },
+        "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Points achievable",
+            "title": "Exam Scores",
+            "titleColumn": "Title",
+            "containedExercisesColumn": "Exercises in Group",
+            "averagePointsColumn": "Average Points achieved",
+            "maximumPointsColumn": "Maximum Points achievable",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matriculation Number",
+            "overallPointsColumn": "Overall Points",
+            "overallScoreColumn": "Overall Score (%)",
+            "exportCSV": "Export Results as CSV",
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
+        },
         "examParticipation": {
             "timer": "Time Left: ",
             "connected": "Your answers will be saved every 30s.",
