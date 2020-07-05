@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -53,14 +55,17 @@ public class ExamService {
 
     private final ExamQuizService examQuizService;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, @Lazy ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
         this.examQuizService = examQuizService;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
     }
 
     @Autowired
@@ -492,6 +497,62 @@ public class ExamService {
         quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
 
         return quizExercises.size();
+    }
+
+    /**
+     * Unlocks all repositories of an exam
+     *
+     * @param examId id of the exam for which the repositories should be unlocked
+     * @return number of exercises for which the repositories are unlocked
+     */
+    public Integer unlockAllRepositories(Long examId) {
+        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        // Collect all programming exercises for the given exam
+        Set<ProgrammingExercise> programmingExercises = new HashSet<>();
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    programmingExercises.add((ProgrammingExercise) exercise);
+                }
+            }
+        }
+
+        for (ProgrammingExercise programmingExercise : programmingExercises) {
+            // Run the runnable immediately so that the repositories are unlocked as fast as possible
+            programmingExerciseScheduleService.unlockAllStudentRepositoriesForExam(programmingExercise).run();
+        }
+
+        return programmingExercises.size();
+    }
+
+    /**
+     * Locks all repositories of an exam
+     *
+     * @param examId id of the exam for which the repositories should be locked
+     * @return number of exercises for which the repositories are locked
+     */
+    public Integer lockAllRepositories(Long examId) {
+        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        // Collect all programming exercises for the given exam
+        Set<ProgrammingExercise> programmingExercises = new HashSet<>();
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    programmingExercises.add((ProgrammingExercise) exercise);
+                }
+            }
+        }
+
+        for (ProgrammingExercise programmingExercise : programmingExercises) {
+            // Run the runnable immediately so that the repositories are locked as fast as possible
+            programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+        }
+
+        return programmingExercises.size();
     }
 
     /**
