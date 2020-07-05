@@ -9,7 +9,6 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
-import { AccountService } from 'app/core/auth/account.service';
 import * as moment from 'moment';
 
 @Component({
@@ -24,7 +23,6 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
-    isAtLeastInstructor = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -32,7 +30,6 @@ export class StudentExamDetailComponent implements OnInit {
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
-        private accountService: AccountService,
     ) {}
 
     /**
@@ -51,7 +48,6 @@ export class StudentExamDetailComponent implements OnInit {
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
         });
         this.student = this.studentExam.user;
     }
