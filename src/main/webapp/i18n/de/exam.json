@@ -75,6 +75,7 @@
             "student": "Student",
             "result": "Ergebnis",
             "workingTime": "Bearbeitungszeit (mm:ss)",
+            "summary": "Zusammenfassung für den Studierenden",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",

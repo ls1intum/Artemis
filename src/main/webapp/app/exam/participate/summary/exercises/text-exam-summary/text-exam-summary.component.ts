@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Component({
     selector: 'jhi-text-exam-summary',
-    template: '{{ submission.text }}',
+    templateUrl: './text-exam-summary.component.html',
     styles: [
         `
             :host {
@@ -14,6 +14,8 @@ import { TextSubmission } from 'app/entities/text-submission.model';
         `,
     ],
 })
-export class TextExamSummaryComponent {
+export class TextExamSummaryComponent implements OnInit {
     @Input() submission: TextSubmission;
+
+    ngOnInit(): void {}
 }

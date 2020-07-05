@@ -15,7 +15,5 @@ export class ProgrammingExamSummaryComponent {
     @Input()
     participation: ProgrammingExerciseStudentParticipation;
 
-    @Input()
-    submission: ProgrammingSubmission;
     constructor() {}
 }

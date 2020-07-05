@@ -47,11 +47,7 @@
             </ng-container>
             <!-- Programming Exercise -->
             <ng-container *ngIf="exercise.type === PROGRAMMING">
-                <jhi-programming-exam-summary
-                    [exercise]="exercise"
-                    [participation]="getParticipationForProgrammingExercise(exercise)"
-                    [submission]="getSubmissionForExercise(exercise)"
-                ></jhi-programming-exam-summary>
+                <jhi-programming-exam-summary [exercise]="exercise" [participation]="getParticipationForProgrammingExercise(exercise)"></jhi-programming-exam-summary>
             </ng-container>
             <!-- File Upload Exercise -->
             <ng-container *ngIf="exercise.type === FILE_UPLOAD">
