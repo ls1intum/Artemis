@@ -272,7 +272,7 @@ public class ExamService {
 
                 if (relevantResult.isPresent()) {
                     Result result = relevantResult.get();
-                    Double achievedPoints = round((result.getScore() / 100.0 * exercise.getMaxScore()), 2);
+                    Double achievedPoints = round((result.getScore() / 100.0 * exercise.getMaxScore()), 1);
                     studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
@@ -280,7 +280,7 @@ public class ExamService {
             }
 
             if (scores.maxPoints != null) {
-                studentResult.overallScoreAchieved = round((studentResult.overallPointsAchieved / scores.maxPoints) * 100.0, 2);
+                studentResult.overallScoreAchieved = round((studentResult.overallPointsAchieved / scores.maxPoints) * 100.0, 1);
             }
         }
 
