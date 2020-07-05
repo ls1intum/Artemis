@@ -43,11 +43,18 @@
                 :
                 <input formControlName="seconds" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" max="59" step="1" required />
             </div>
-            <button type="submit" class="btn btn-primary" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
+            <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
                 <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
         </form>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
+        <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'../summary'">
+            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+        </button>
     </div>
 
     <div class="mb-3">

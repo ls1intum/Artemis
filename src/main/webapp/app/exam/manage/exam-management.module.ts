@@ -26,6 +26,8 @@ import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
 import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
+import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
+import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -45,6 +47,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisProgrammingExerciseManagementModule,
         ArtemisQuizManagementModule,
         MomentModule,
+        ArtemisParticipationSummaryModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -60,6 +63,7 @@ const ENTITY_STATES = [...examManagementState];
         StudentsExamImportButtonComponent,
         StudentExamDetailComponent,
         DurationPipe,
+        StudentExamSummaryComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

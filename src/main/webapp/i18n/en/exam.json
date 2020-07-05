@@ -10,7 +10,8 @@
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
                 "exportPDF": "Export PDF",
                 "lastCommitHash": "Last Commit Hash",
-                "noCommitHash": "Reload to get the commit hash."
+                "noCommitHash": "Reload to get the commit hash.",
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
             },
             "title": "Exam",
             "startExam": "Start Exam",
@@ -77,6 +78,7 @@
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "workingTime": "Working time (mm:ss)",
+            "summary": "Student Summary",
             "result": "Result",
             "created": "Created",
             "view": "View",
