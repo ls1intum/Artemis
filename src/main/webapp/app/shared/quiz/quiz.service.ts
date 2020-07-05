@@ -6,7 +6,6 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisQuizService {
-
     /**
      * Randomize the order of the questions
      * (and answerOptions or dragItems within each question)
