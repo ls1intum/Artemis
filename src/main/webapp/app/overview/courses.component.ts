@@ -85,7 +85,9 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         });
                     }
                 });
-                this.nextRelevantExams = this.exams.filter((exam) => moment(exam.endDate!).isAfter(this.serverDateService.now()));
+                this.nextRelevantExams = this.exams.filter(
+                    (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
+                );
             },
             (response: string) => this.onError(response),
         );
