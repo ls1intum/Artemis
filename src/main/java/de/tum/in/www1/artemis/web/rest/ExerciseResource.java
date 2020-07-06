@@ -107,7 +107,7 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
-        if (exercise.hasExerciseGroup() && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.hasExerciseGroup() && (exercise.getDueDate().isAfter(ZonedDateTime.now())) || exercise.getDueDate() == null) {
             // Exam Exercise
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
