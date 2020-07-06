@@ -1,18 +1,13 @@
 <div class="btn-group flex-btn-group-container">
-    <button
-        *ngIf="examMode || exercise.isAtLeastTutor"
-        type="submit"
-        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']"
-        class="btn btn-info btn-sm mr-1"
-    >
+    <button *ngIf="course.isAtLeastTutor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </button>
 
     <button
         type="submit"
-        *ngIf="(examMode || exercise.isAtLeastInstructor) && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
-        [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']"
+        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
+        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -20,9 +15,9 @@
     </button>
 
     <button
-        *ngIf="examMode || exercise.isAtLeastTutor"
+        *ngIf="course.isAtLeastTutor"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
+        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -30,9 +25,9 @@
     </button>
 
     <button
-        *ngIf="examMode && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastTutor && exercise.type === exerciseType.QUIZ"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
+        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'signal'"></fa-icon>
@@ -41,8 +36,8 @@
 
     <button
         type="submit"
-        *ngIf="!examMode && exercise.teamMode && exercise.isAtLeastTutor"
-        [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
+        *ngIf="course.isAtLeastTutor && exercise.teamMode"
+        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="'users'"></fa-icon>
@@ -51,8 +46,8 @@
 
     <button
         type="submit"
-        *ngIf="examMode && exercise.type === exerciseType.PROGRAMMING"
-        [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'test-cases']"
+        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+        [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'test-cases']"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -60,9 +55,19 @@
     </button>
 
     <button
-        *ngIf="(examMode || exercise.isAtLeastTutor) && exercise.type !== exerciseType.QUIZ"
         type="submit"
-        [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id]"
+        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+        [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor']"
+        class="btn btn-info btn-sm mr-1 mb-1"
+    >
+        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+    </button>
+
+    <button
+        *ngIf="course.isAtLeastTutor && exercise.type !== exerciseType.QUIZ"
+        type="submit"
+        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
@@ -70,9 +75,9 @@
     </button>
 
     <button
-        *ngIf="examMode && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastTutor && exercise.type === exerciseType.QUIZ"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 'preview']"
+        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm mr-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
@@ -80,22 +85,27 @@
     </button>
 
     <button
-        *ngIf="examMode && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastTutor && exercise.type === exerciseType.QUIZ"
         type="submit"
-        [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 'solution']"
+        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm mr-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
     </button>
 
-    <button *ngIf="examMode || exercise.isAtLeastInstructor" type="submit" [routerLink]="createRouterLink('edit')" class="btn btn-primary btn-sm mr-1">
+    <button
+        *ngIf="course.isAtLeastInstructor"
+        type="submit"
+        [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
+        class="btn btn-primary btn-sm mr-1"
+    >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </button>
 
     <button
-        *ngIf="(examMode || exercise.isAtLeastInstructor) && exercise.type !== exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING"
         jhiDeleteButton
         [entityTitle]="exercise.title"
         deleteQuestion="artemisApp.exercise.delete.question"
@@ -107,7 +117,7 @@
     </button>
 
     <button
-        *ngIf="exercise.type === exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         jhiDeleteButton
         [entityTitle]="exercise.title"
         deleteQuestion="artemisApp.programmingExercise.delete.question"

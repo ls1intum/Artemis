@@ -8,15 +8,15 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
 })
 export class ExamExerciseRowButtonsComponent {
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() examMode = false;
     @Input() examId: number;
     @Input() exerciseGroupId: number;
     @Output() onDeleteExercise = new EventEmitter<void>();
@@ -121,24 +121,5 @@ export class ExamExerciseRowButtonsComponent {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
-    }
-
-    /**
-     * Assemble the router link for editing the exercise.
-     */
-    createRouterLink(type: string): any[] {
-        let link;
-        if (this.examMode) {
-            link = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', this.exerciseGroupId, `${this.exercise.type}-exercises`];
-        } else {
-            link = ['/course-management', this.courseId, `${this.exercise.type}-exercises`];
-        }
-
-        switch (type) {
-            case 'edit':
-                link = link.concat([this.exercise.id, 'edit']);
-                break;
-        }
-        return link;
     }
 }
