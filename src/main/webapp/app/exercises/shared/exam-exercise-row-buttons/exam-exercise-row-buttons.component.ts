@@ -10,8 +10,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 @Component({
-    selector: 'jhi-exercise-row-buttons',
-    templateUrl: './exercise-row-buttons.component.html',
+    selector: 'jhi-exam-exercise-row-buttons',
+    templateUrl: './exam-exercise-row-buttons.component.html',
 })
 export class ExamExerciseRowButtonsComponent {
     @Input() courseId: number;

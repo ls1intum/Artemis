@@ -147,14 +147,14 @@
                             {{ exercise.dueDate | artemisDate }}
                         </td>
                         <td class="d-flex justify-content-end">
-                            <jhi-exercise-row-buttons
+                            <jhi-exam-exercise-row-buttons
                                 [courseId]="courseId"
                                 [exercise]="exercise"
                                 [examMode]="true"
                                 [examId]="examId"
                                 [exerciseGroupId]="exerciseGroup.id"
                                 (onDeleteExercise)="loadExerciseGroups()"
-                            ></jhi-exercise-row-buttons>
+                            ></jhi-exam-exercise-row-buttons>
                         </td>
                     </tr>
                 </tbody>
