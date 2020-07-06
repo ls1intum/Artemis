@@ -13,7 +13,7 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
     selector: 'jhi-exercise-row-buttons',
     templateUrl: './exercise-row-buttons.component.html',
 })
-export class ExerciseRowButtonsComponent {
+export class ExamExerciseRowButtonsComponent {
     @Input() courseId: number;
     @Input() exercise: Exercise;
     @Input() examMode = false;
