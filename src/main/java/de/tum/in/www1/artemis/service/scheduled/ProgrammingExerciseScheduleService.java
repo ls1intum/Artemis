@@ -113,7 +113,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 scheduleExamExercise(exercise);
             }
             else {
-                scheduleRegularExercise(exercise);
+                scheduleCourseExercise(exercise);
             }
         }
         catch (Exception e) {
@@ -121,7 +121,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
     }
 
-    private void scheduleRegularExercise(ProgrammingExercise exercise) {
+    private void scheduleCourseExercise(ProgrammingExercise exercise) {
         // TODO: there is small logic error here. When build and run test date is after the due date, the lock operation might be executed even if it is not necessary.
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockAllStudentRepositories(exercise));
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
