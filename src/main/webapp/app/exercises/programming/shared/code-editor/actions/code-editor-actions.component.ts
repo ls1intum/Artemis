@@ -116,7 +116,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     onSave() {
         this.saveChangedFiles()
-            .pipe(catchError(() => of()))
+            .pipe(
+                catchError((err) => {
+                    this.editorState = EditorState.UNSAVED_CHANGES;
+                    return of(err);
+                }),
+            )
             .subscribe();
     }
 
