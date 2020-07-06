@@ -126,6 +126,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      */
     saveChangedFiles(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
+            setTimeout(() => {
+                if (this.editorState === EditorState.SAVING) {
+                    this.editorState = EditorState.UNSAVED_CHANGES;
+                    return throwError('saving failed');
+                }
+            }, 4000);
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
