@@ -80,4 +80,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     get isActive(): boolean {
         return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    modelChanged(model: UMLModel) {
+        this.studentSubmission.isSynced = false;
+    }
 }
