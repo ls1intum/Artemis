@@ -130,6 +130,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 if (this.editorState === EditorState.SAVING) {
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     const error = new Error('Connection timeout. Saving Failed.');
+                    error.name = 'timeout';
                     this.onError.emit(error.message);
                 }
             }, 8000);
