@@ -19,11 +19,9 @@ export class CourseExamDetailComponent {
      * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        this.router.navigate(['courses', this.course.id, 'exams', this.exam.id], {
-            state: {
-                exam: this.exam,
-            },
-        });
+        this.router.navigate(['courses', this.course.id, 'exams', this.exam.id]);
+        // TODO: store the (plain) selected exam in the some service so that it can be obtained on other pages
+        // also make sure that the exam objects does not contain the course and all exercises
     }
 
     /**

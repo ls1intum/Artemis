@@ -11,7 +11,7 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -24,7 +24,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
-    submitButtonTitle: string;
     examCourseId: number;
     checkedFlag: boolean;
     isExamMode: boolean;
@@ -101,6 +100,11 @@ export class TextExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                             );
                         }
+                    } else {
+                        // Lock individual mode for exam exercises
+                        this.textExercise.mode = ExerciseMode.INDIVIDUAL;
+                        this.textExercise.teamAssignmentConfig = null;
+                        this.textExercise.teamMode = false;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
@@ -129,15 +133,6 @@ export class TextExerciseUpdateComponent implements OnInit {
             .subscribe();
         this.isSaving = false;
         this.notificationText = null;
-
-        // Set submit button text depending on component state
-        if (this.isImport) {
-            this.submitButtonTitle = 'entity.action.import';
-        } else if (this.textExercise.id) {
-            this.submitButtonTitle = 'entity.action.save';
-        } else {
-            this.submitButtonTitle = 'entity.action.generate';
-        }
     }
 
     /**

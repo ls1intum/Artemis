@@ -10,6 +10,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -59,6 +60,15 @@ export class ExamManagementService {
     }
 
     /**
+     * Find all scores of an exam.
+     * @param courseId The id of the course.
+     * @param examId The id of the exam.
+     */
+    getExamScores(courseId: number, examId: number): Observable<HttpResponse<ExamScoreDTO>> {
+        return this.http.get<ExamScoreDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/scores`, { observe: 'response' });
+    }
+
+    /**
      * Query exams of the given course via get request.
      * @param courseId The course id.
      * @param req The query request options.
@@ -78,6 +88,18 @@ export class ExamManagementService {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * Returns the exam with the provided unique identifier for the tutor dashboard
+     * @param courseId - the id of the course
+     * @param examId - the id of the exam
+     */
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+        return this.http
+            .get<Exam>(url, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
     /**
@@ -116,8 +138,9 @@ export class ExamManagementService {
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
      */
-    removeStudentFromExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
+        const options = createRequestOption({ withParticipationsAndSubmission });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { params: options, observe: 'response' });
     }
 
     /**
@@ -131,6 +154,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Generate missing student exams for newly added students of the exam.
+     * @param courseId
+     * @param examId
+     * @returns a list with the generate student exams
+     */
+    generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
+    }
+
+    /**
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
@@ -138,6 +171,36 @@ export class ExamManagementService {
      */
     startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Evaluate all the quiz exercises belonging to the exam
+     * @param courseId id of the course to which the exam belongs
+     * @param examId id of the exam for which the quiz exercises should be evaluated
+     * @returns number of evaluated exercises
+     */
+    evaluateQuizExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Unlock all the programming exercises belonging to the exam
+     * @param courseId id of the course to which the exam belongs
+     * @param examId id of the exam for which the programming exercises should be unlocked
+     * @returns number of exercises for which the repositories were unlocked
+     */
+    unlockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/unlock-all-repositories`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Lock all the programming exercises belonging to the exam
+     * @param courseId id of the course to which the exam belongs
+     * @param examId id of the exam for which the programming exercises should be locked
+     * @returns number of exercises for which the repositories were locked
+     */
+    lockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**

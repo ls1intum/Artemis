@@ -129,7 +129,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
                 <dd>
-                    <a [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/lti-configuration' } }]">LTI Configuration</a>
+                    <a [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'lti-configuration']">LTI Configuration</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>

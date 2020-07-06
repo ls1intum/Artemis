@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
@@ -8,7 +8,7 @@ import { UMLModel } from '@ls1intum/apollon';
     templateUrl: './modeling-exam-summary.component.html',
     styles: [],
 })
-export class ModelingExamSummaryComponent implements OnChanges {
+export class ModelingExamSummaryComponent implements OnInit {
     @Input()
     exercise: ModelingExercise;
 
@@ -19,8 +19,8 @@ export class ModelingExamSummaryComponent implements OnChanges {
 
     constructor() {}
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.submission.currentValue !== changes.submission.previousValue) {
+    ngOnInit() {
+        if (this.submission) {
             this.umlModel = JSON.parse(this.submission.model);
         }
     }

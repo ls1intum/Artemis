@@ -20,14 +20,39 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequestsView;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardAssessmentViewRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintResponsesViewRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintsViewRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardMoreFeedbackRequestsViewRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -86,6 +111,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
+
+    @Autowired
+    ExamRepository examRepository;
 
     private final int numberOfStudents = 4;
 

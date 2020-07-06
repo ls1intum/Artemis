@@ -156,7 +156,6 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties(value = "exercises")
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -928,6 +927,25 @@ public abstract class Exercise implements Serializable {
             this.gradingCriteria.forEach(gradingCriterion -> {
                 gradingCriterion.setExercise(this);
             });
+        }
+    }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum ExerciseSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
+
+        private String mappedColumnName;
+
+        ExerciseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
         }
     }
 

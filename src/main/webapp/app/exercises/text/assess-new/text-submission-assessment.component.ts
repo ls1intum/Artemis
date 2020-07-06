@@ -30,6 +30,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 export class TextSubmissionAssessmentComponent implements OnInit {
     private userId: number | null;
     exerciseId: number;
+    courseId: number;
     participation: StudentParticipation | null;
     submission: TextSubmission | null;
     exercise: TextExercise | null;
@@ -104,6 +105,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.canOverride = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.courseId = 0;
     }
 
     /**
@@ -133,7 +135,12 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course!);
+        this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
+
+        // case distinction for exam mode
+        const course = this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course!);
+
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
@@ -150,7 +157,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
+                .createUrlTree(['course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
                 .toString();
             this.location.go(newUrl);
         }
@@ -224,7 +231,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        await this.router.navigate(['/course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
@@ -251,11 +258,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
+        if (this.exercise && this.exercise.teamMode && this.courseId && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
-        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
-            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/courses/${this.courseId}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.courseId) {
+            this.router.navigateByUrl(`/course-management/${this.courseId}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }

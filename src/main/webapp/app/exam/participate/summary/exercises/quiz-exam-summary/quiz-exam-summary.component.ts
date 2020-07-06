@@ -48,7 +48,7 @@ export class QuizExamSummaryComponent implements OnInit {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise.quizQuestions) {
+        if (this.exercise.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
             this.exercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist

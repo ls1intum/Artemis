@@ -4,7 +4,8 @@
             "home": {
                 "title": "Modellierungsaufgaben",
                 "createLabel": "Neue Modellierungsaufgabe erstellen",
-                "editLabel": "Modellierungsaufgabe bearbeiten"
+                "editLabel": "Modellierungsaufgabe bearbeiten",
+                "importLabel": "Modellierungsaufgabe importieren"
             },
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",

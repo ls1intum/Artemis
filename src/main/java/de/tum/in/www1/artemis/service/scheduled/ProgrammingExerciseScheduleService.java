@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -174,8 +172,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
+    /**
+     * Returns a runnable that, once executed, will lock all student repositories.
+     *
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be locked
+     * @return a Runnable that will lock the repositories once it is executed
+     */
     @NotNull
-    private Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
+    public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
         return lockStudentRepositories(exercise, participation -> true);
     }
 
@@ -208,18 +214,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         };
     }
 
+    /**
+     * Returns a runnable that, once executed, will unlock all student repositories and will schedule all repository lock tasks.
+     * The unlock tasks will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     *
+     * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be unlocked
+     * @return a Runnable that will unlock the repositories once it is executed
+     */
     @NotNull
-    private Runnable unlockAllStudentRepositoriesForExam(ProgrammingExercise exercise) {
+    public Runnable unlockAllStudentRepositoriesForExam(ProgrammingExercise exercise) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates;
-                BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation;
-
-                individualDueDates = new HashSet<>();
+                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates = new HashSet<>();
                 // This operation unlocks the repositories and collects all individual due dates
-                unlockAndCollectOperation = (programmingExercise, participation) -> {
+                BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
                     var dueDate = participationService.getIndividualDueDate(programmingExercise, participation);
                     individualDueDates.add(new Tuple<>(dueDate, participation));
                     unlockStudentRepository(programmingExercise, participation);
@@ -235,11 +247,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
                 if (numberOfFailedUnlockOperations > 0) {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
+                            Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
                 }
                 else {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
 
                 // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
@@ -356,7 +368,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
         List<ProgrammingExerciseStudentParticipation> failedOperations = new LinkedList<>();
 
-        int index = 0;
         for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
 
@@ -365,18 +376,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 continue;
             }
 
-            // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
-                try {
-                    log.info("Sleep for {}s during invokeOperationOnAllParticipationsThatSatisfy", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing during '" + operationName + "' for exercise " + programmingExerciseId, ex);
-                }
-            }
-
             try {
+                // this actually invokes the operation
                 operation.accept(programmingExercise.get(), programmingExerciseStudentParticipation);
             }
             catch (Exception e) {
@@ -384,7 +385,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         + studentParticipation.getId(), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
-            index++;
         }
         return failedOperations;
     }

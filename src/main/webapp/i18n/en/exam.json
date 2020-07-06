@@ -8,7 +8,10 @@
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
-                "exportPDF": "Export PDF"
+                "exportPDF": "Export PDF",
+                "lastCommitHash": "Last Commit Hash",
+                "noCommitHash": "Reload to get the commit hash.",
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
             },
             "title": "Exam",
             "startExam": "Start Exam",
@@ -31,10 +34,26 @@
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
             }
         },
+        "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Points achievable",
+            "title": "Exam Scores",
+            "titleColumn": "Title",
+            "containedExercisesColumn": "Exercises in Group",
+            "averagePointsColumn": "Average Points achieved",
+            "maximumPointsColumn": "Maximum Points achievable",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matriculation Number",
+            "overallPointsColumn": "Overall Points",
+            "overallScoreColumn": "Overall Score (%)",
+            "exportCSV": "Export Results as CSV",
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
+        },
         "examParticipation": {
             "timer": "Time Left: ",
-            "connected": "Connected. Your answers will be saved every 60s.",
-            "ideConnected": "Connected.",
+            "connected": "Your answers will be saved every 30s.",
+            "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
             "disconnectedCodeEditorAndOfflineIDE": "You are disconnected. Please check your Internet connection. You can still work offline by cloning the repository.",
             "disconnectedCodeEditorNoOfflineIDE": "You are disconnected. Please reconnect in order to continue working in the online code editor.",
@@ -44,12 +63,18 @@
             "finishExam": "Finish exam",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noExam": "Exam could not be loaded. Please contact your instructor.",
+            "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
             "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
-            "points": "points"
+            "points": "points",
+            "synced": "Exercise saved",
+            "notSynced": "Exercise not saved",
+            "submitted": "Exercise submitted",
+            "notSubmitted": "Exercise not submitted",
+            "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
+            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -59,10 +84,17 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
+            "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
+            "evaluateQuizExercises": "Evaluate quizzes",
+            "unlockAllRepositories": "Unlock all repositories",
+            "lockAllRepositories": "Lock all repositories",
+            "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed once the exam is set to visible, therefore this operation should only be used manually if the automatic unlock failed!",
+            "lockAllRepositoriesModalText": "All repositories will be immediately locked! Students will be no longer be able to push even if the exam is still running!\nThis will also affect students with extended working time!\n\nThis operation is automatically performed once the exam is over, therefore this operation should only be used manually if the automatic lock failed!",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
-            "workingTime": "Working time",
+            "workingTime": "Working time (mm:ss)",
+            "summary": "Student Summary",
             "result": "Result",
             "created": "Created",
             "view": "View",
@@ -71,8 +103,20 @@
             "exam": "Exam",
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
+            "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
+            "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
-            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}"
+            "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamStatusSuccess": "All registered students have an individual exam",
+            "studentExamStatusWarning": "Not all registered students have an individual exam",
+            "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
+            "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
+            "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
+            "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
+            "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
+            "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
+            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",
@@ -108,7 +152,8 @@
                 "email": "Email",
                 "registrationNumber": "Matriculation number",
                 "removeFromExam": {
-                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?"
+                    "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
+                    "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"
                 },
                 "importStudents": {
                     "buttonLabel": "Import students",
@@ -142,16 +187,18 @@
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
-                "addTextExercise": "Add text exercise",
-                "addQuizExercise": "Add quiz",
-                "addFileUploadExercise": "Add file upload exercise",
-                "addProgrammingExercise": "Add programming exercise",
+                "addTextExercise": "Add Text Exercise",
+                "addQuizExercise": "Add Quiz",
+                "addFileUploadExercise": "Add File Upload Exercise",
+                "addModelingExercise": "Add Modeling Exercise",
+                "addProgrammingExercise": "Add Programming Exercise",
                 "orderCouldNotBeSaved": "The order could not be saved"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
-            }
+            },
+            "tutorDashboard": "Tutor Exam Dashboard"
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",
@@ -169,7 +216,9 @@
             "reviewer": "Reviewer",
             "openSubmission": "Open Submission",
             "openAssessment": " Open Assessment",
-            "cancelAssessment": " Cancel Assessment"
+            "cancelAssessment": " Cancel Assessment",
+            "workingTimeCouldNotBeSaved": "The working time could not be saved.",
+            "saveWorkingTimeSuccessful": "The working time was saved successfully."
         }
     }
 }

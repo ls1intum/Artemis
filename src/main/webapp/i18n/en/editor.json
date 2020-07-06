@@ -28,6 +28,8 @@
             "submittingChangesTooltip": "Submitting changes.",
             "preparingForSubmit": "Preparing...",
             "preparingForSubmitTooltip": "Preparing for submit.",
+            "refreshingFiles": "Refreshing...",
+            "refreshingFilesTooltip": "Refreshing all files in the editor.",
             "submit": "Submit",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
@@ -37,6 +39,7 @@
             "downloadBuildResult": "Download Build Result",
             "saving": "Saving",
             "saveFiles": "Save",
+            "refreshing": "Refreshing",
             "loadingFile": "Loading selected file",
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
@@ -46,6 +49,11 @@
                 "conflictExplanationShort": "Resolve the conflict state of your repository.",
                 "conflictExplanationLong": "Your repository is in a conflict state. This can happen when you work both locally and in the Artemis online editor. If you are familiar with git, the state of your repository is a merge or checkout conflict. You can click the button below to reset your repository to the last commit.",
                 "conflictWarning": "This will delete all uncommitted changes (the changes from your last submit in the online editor)!"
+            },
+            "refresh": {
+                "performRefresh": "Refresh files",
+                "refreshExplanationShort": "Refresh and load all files from your repository.",
+                "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
             "fileBrowser": {
                 "fileBrowser": "File browser",

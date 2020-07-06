@@ -701,6 +701,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
+    // TODO: This test seems to be flaky. Maybe double comparisons cause that
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {

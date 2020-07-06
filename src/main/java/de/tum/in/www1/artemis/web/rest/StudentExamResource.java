@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +16,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -45,9 +51,11 @@ public class StudentExamResource {
 
     private final ParticipationService participationService;
 
+    private final ExamRepository examRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -56,6 +64,7 @@ public class StudentExamResource {
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -71,7 +80,26 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findOneWithEagerExercises(studentExamId)));
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+
+        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+
+        loadExercisesForStudentExam(studentExam);
+
+        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
+                studentExam.getExercises());
+
+        // connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            filterForExam(exercise, participations);
+        }
+
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
@@ -90,22 +118,49 @@ public class StudentExamResource {
     }
 
     /**
+     * PATCH /courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime : Update the working time of the student exam
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the id of the student exam to find
+     * @param workingTime   the new working time in seconds
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/workingTime")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestBody Integer workingTime) {
+        log.debug("REST request to update the working time of student exam : {}", studentExamId);
+        Optional<ResponseEntity<StudentExam>> accessFailure = examAccessService.checkCourseAndExamAndStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+        if (workingTime <= 0) {
+            return badRequest();
+        }
+        Exam exam = examRepository.findById(examId).get();
+        // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
+        if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+            return badRequest();
+        }
+        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        studentExam.setWorkingTime(workingTime);
+        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
-     * @param browserFingerprint the browser fingerprint reported by the client, can be null
-     * @param userAgent the user agent of the client, can be null
-     * @param instanceId the instance of the client
+     * @param request   the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestHeader(name = "X-Artemis-Client-Fingerprint", required = false) String browserFingerprint,
-            @RequestHeader(name = "User-Agent", required = false) String userAgent, @RequestHeader(name = "X-Artemis-Client-Instance-ID", required = false) String instanceId) {
+    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, HttpServletRequest request) {
         long start = System.currentTimeMillis();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
@@ -122,17 +177,7 @@ public class StudentExamResource {
         }
         var studentExam = optionalStudentExam.get();
 
-        // we reload the quiz exercise because we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used in
-        // studentExamRepository.findWithExercisesByUserIdAndExamId
-        for (int i = 0; i < studentExam.getExercises().size(); i++) {
-            var exercise = studentExam.getExercises().get(i);
-            if (exercise instanceof QuizExercise) {
-                // reload and replace the quiz exercise
-                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
-                quizExercise.filterForStudentsDuringQuiz();
-                studentExam.getExercises().set(i, quizExercise);
-            }
-        }
+        loadExercisesForStudentExam(studentExam);
 
         // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
@@ -152,7 +197,11 @@ public class StudentExamResource {
             }
         }
 
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId);
+        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+        final String userAgent = request.getHeader("User-Agent");
+        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         studentExam.setExamSessions(Set.of(examSession));
 
@@ -199,6 +248,23 @@ public class StudentExamResource {
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    /**
+     * we also need the quiz questions and it is not possible to load them in a generic way with the entity graph used
+     *
+     * @param studentExam the studentExam for which to load exercises
+     */
+    public void loadExercisesForStudentExam(StudentExam studentExam) {
+        for (int i = 0; i < studentExam.getExercises().size(); i++) {
+            var exercise = studentExam.getExercises().get(i);
+            if (exercise instanceof QuizExercise) {
+                // reload and replace the quiz exercise
+                var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                quizExercise.filterForStudentsDuringQuiz();
+                studentExam.getExercises().set(i, quizExercise);
+            }
         }
     }
 }
