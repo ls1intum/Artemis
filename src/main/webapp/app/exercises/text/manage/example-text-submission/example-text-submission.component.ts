@@ -370,7 +370,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      */
     async back() {
         // check if exam exercise
-        if (this.exercise.course == null) {
+        if (this.exercise.course == null || !this.exercise.course) {
             const courseId = this.exercise.exerciseGroup?.exam?.course.id;
             const examId = this.exercise.exerciseGroup?.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup?.id;

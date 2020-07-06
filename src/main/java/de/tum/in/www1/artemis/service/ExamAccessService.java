@@ -94,7 +94,7 @@ public class ExamAccessService {
      */
     public <T> Optional<ResponseEntity<T>> checkCourseAccess(Long courseId) {
         Course course = courseService.findOne(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return Optional.of(forbidden());
         }
         return Optional.empty();
