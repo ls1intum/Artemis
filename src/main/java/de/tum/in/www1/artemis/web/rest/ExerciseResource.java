@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -106,7 +107,7 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
-        if (exercise.hasExerciseGroup()) {
+        if (exercise.hasExerciseGroup() && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
             // Exam Exercise
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
