@@ -29,6 +29,7 @@ import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/stud
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
+import { ExerciseRowButtonsComponent } from 'app/exercises/shared/exercise-row-buttons/exercise-row-buttons.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -58,6 +59,7 @@ const ENTITY_STATES = [...examManagementState];
         ExerciseGroupsComponent,
         ExerciseGroupUpdateComponent,
         ExerciseGroupDetailComponent,
+        ExerciseRowButtonsComponent,
         ExamStudentsComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
