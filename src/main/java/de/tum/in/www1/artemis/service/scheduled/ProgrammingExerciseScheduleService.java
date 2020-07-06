@@ -93,6 +93,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     /**
      * Will cancel a scheduled task if the buildAndTestAfterDueDate is null or has passed already.
      *
+     * // TODO: the method name and logic is really hard to understand, we should improve this
      * @param exercise ProgrammingExercise
      */
     @Override
@@ -100,10 +101,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // TODO: also take exercises with manual assessments into account here and deal better with exams
         if (!isExamExercise(exercise)
                 && (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null || exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now()))) {
+            // this only cancels a schedule, but does not schedule one
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
             return;
         }
+        // exam exercises are always scheduled, course exercises are only scheduled if buildAndTestStudentSubmissionsAfterDueDate is set and in the future
         scheduleExercise(exercise);
     }
 
