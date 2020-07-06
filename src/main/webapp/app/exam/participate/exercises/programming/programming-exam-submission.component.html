@@ -23,10 +23,10 @@
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
-    <div class="mb-1">
-        <span class="editor-statusbar__title">{{ exercise.title }}</span>
-        <span class="text-muted">[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
-    </div>
+    <h4 class="mb-1">
+        <span>{{ exercise.title }}</span>
+        <span>&nbsp;[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+    </h4>
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end;">
