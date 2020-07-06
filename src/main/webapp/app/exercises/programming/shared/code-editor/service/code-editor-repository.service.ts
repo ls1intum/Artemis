@@ -200,7 +200,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     }
                     this.fileUpdateSubject.next(fileSubmission);
                 }),
-                catchError(() => of()),
+                catchError((err) => of(err)),
             )
             .subscribe();
         this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
