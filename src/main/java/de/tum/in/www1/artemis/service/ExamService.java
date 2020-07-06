@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -58,17 +57,17 @@ public class ExamService {
 
     private final ExamQuizService examQuizService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, @Lazy ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, InstanceMessageSendService instanceMessageSendService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
         this.examQuizService = examQuizService;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     @Autowired
@@ -634,7 +633,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            programmingExerciseScheduleService.unlockAllStudentRepositoriesForExam(programmingExercise).run();
+            instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -662,7 +661,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+            instanceMessageSendService.sendLockAllRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();

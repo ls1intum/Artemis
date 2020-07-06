@@ -46,6 +46,8 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("text-exercise-schedule-cancel").addMessageListener(message -> processTextExerciseScheduleCancel((message.getMessageObject())));
         hazelcastInstance.<Long>getTopic("text-exercise-schedule-instant-clustering")
                 .addMessageListener(message -> processTextExerciseInstantClustering((message.getMessageObject())));
+        hazelcastInstance.<Long>getTopic("programming-exercise-unlock-repositories").addMessageListener(message -> processUnlockAllRepositories((message.getMessageObject())));
+        hazelcastInstance.<Long>getTopic("programming-exercise-lock-repositories").addMessageListener(message -> processLockAllRepositories((message.getMessageObject())));
     }
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
@@ -69,5 +71,19 @@ public class InstanceMessageReceiveService {
         log.info("Received schedule instant clustering for text exercise " + exerciseId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForInstantClustering(textExercise));
+    }
+
+    public void processUnlockAllRepositories(Long exerciseId) {
+        log.info("Received unlock all repositories for programming exercise " + exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesForExam(programmingExercise).run();
+    }
+
+    public void processLockAllRepositories(Long exerciseId) {
+        log.info("Received lock all repositories for programming exercise " + exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }
 }
