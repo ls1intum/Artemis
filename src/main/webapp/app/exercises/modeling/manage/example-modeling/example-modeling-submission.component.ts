@@ -297,13 +297,15 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         let courseId;
         if (this.exercise.course) {
             courseId = this.exercise.course!.id;
+        } else {
+            courseId = this.exercise.exerciseGroup!.exam!.course.id;
         }
         if (this.readOnly || this.toComplete) {
             await this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
         } else if (this.isExamMode) {
             await this.router.navigate([
                 '/course-management',
-                this.exercise.exerciseGroup!.exam!.course.id,
+                courseId,
                 'exams',
                 this.exercise.exerciseGroup!.exam!.id,
                 'exercise-groups',
