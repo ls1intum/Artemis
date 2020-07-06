@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
@@ -15,6 +16,7 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
 
 @NgModule({
     imports: [
+        RouterModule,
         ArtemisSharedCommonModule,
         ArtemisSharedModule,
         ArtemisQuizQuestionTypesModule,
