@@ -19,6 +19,10 @@
                 &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
+            <div *ngIf="true">
+                <!-- TODO change to after publishResultDate-->
+                <jhi-result [participation]="exercise.studentParticipations[0]"></jhi-result>
+            </div>
             <button
                 class="btn btn-light question-collapse"
                 (click)="toggleCollapseSubmission(exercise)"
@@ -29,6 +33,11 @@
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
+            <div *ngIf="exercise.type !== QUIZ">
+                <!-- TODO add after publishResultDate-->
+                <!-- <button class="btn btn-primary float-right" [routerLink]="generateLink(exercise)"> -->
+                <button class="btn btn-primary float-right"><fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span>&nbsp;View Result</span></button>
+            </div>
             <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>

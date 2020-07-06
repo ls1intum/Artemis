@@ -41,6 +41,12 @@ export class ExamParticipationSummaryComponent {
         setTimeout(() => window.print());
     }
 
+    generateLink(exercise: Exercise) {
+        // TODO parse courseId
+        const link = '/courses/11/' + exercise.type + '-exercises/' + exercise.id + '/participate/' + exercise.studentParticipations[0].id;
+        return link;
+    }
+
     /**
      * @param exercise
      * returns the students submission for the specific exercise
