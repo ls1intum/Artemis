@@ -89,7 +89,8 @@
                 "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
                 "failedToLoadBuildLogs": "The build logs could not be retrieved.",
                 "repositoryInConflict": "Your repository has entered a conflict state.",
-                "notAllowedExam": "You must not submit (anymore)"
+                "notAllowedExam": "You must not submit (anymore)",
+                "connectionTimeout": "Connection timeout. Saving failed."
             },
             "testStatusLabels": {
                 "noResult": "No results",
