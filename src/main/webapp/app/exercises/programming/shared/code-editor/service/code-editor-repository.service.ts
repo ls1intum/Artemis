@@ -195,17 +195,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                         // Checkout conflict handling.
                         if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
                             this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        } else if (checkIfSubmissionIsError(fileSubmission)) {
-                            console.log('Error');
-                            throw new Error('saving failed');
-                            // throwError('saving failed');
                         }
                         return;
                     }
                     this.fileUpdateSubject.next(fileSubmission);
                 }),
                 catchError((err) => {
-                    console.log('catching errors');
                     return throwError(err);
                 }),
             )
