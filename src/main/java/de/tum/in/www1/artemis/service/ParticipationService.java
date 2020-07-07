@@ -925,14 +925,6 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
-
-        log.debug("findByExamIdWithRelevantResultSTART");
-        for (StudentParticipation studentParticipation : participations) {
-            log.debug(participations.toString());
-        }
-
-        log.debug("findByExamIdWithRelevantResultEND");
-
         return filterParticipationsWithRelevantResults(participations);
     }
 
@@ -953,7 +945,7 @@ public class ParticipationService {
      * @return the filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
-        List<StudentParticipation> list = participations.stream()
+        return participations.stream()
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -968,14 +960,10 @@ public class ParticipationService {
                     for (Result result : participation.getResults()) {
                         // this should not happen because the database call above only retrieves rated results
                         if (Boolean.FALSE.equals(result.isRated())) {
-                            log.debug("HIT NOT RATED");
-                            log.debug(result.toString());
                             continue;
                         }
                         if (result.getCompletionDate() == null || result.getScore() == null) {
                             // we are only interested in results with completion date and with score
-                            log.debug("HIT NO COMPLETION DATE OR NO SCORE");
-                            log.debug(result.toString());
                             continue;
                         }
                         relevantResults.add(result);
@@ -990,12 +978,6 @@ public class ParticipationService {
                     }
                     participation.setResults(new HashSet<>(relevantResults));
                 }).collect(Collectors.toList());
-        log.debug("AFTER FILTER START");
-        for (StudentParticipation studentParticipation : list) {
-            log.debug(studentParticipation.toString());
-        }
-        log.debug("AFTER FILTER END");
-        return list;
     }
 
     /**

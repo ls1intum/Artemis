@@ -234,16 +234,9 @@ public class ExamService {
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
 
-            log.debug(participationsOfStudent.toString());
-
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
-
-                log.debug(studentParticipation.toString());
-                for (Result result : studentParticipation.getResults()) {
-                    log.debug(result.toString());
-                }
 
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
