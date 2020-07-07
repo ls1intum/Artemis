@@ -113,8 +113,10 @@ export class ExamScoresComponent implements OnInit {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
-                csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? this.round(exerciseResult.achievedPoints, 1) : '';
-                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = exerciseResult.achievedScore ? this.round(exerciseResult.achievedScore, 2) : '';
+                csvRow[exerciseGroup.title + 'AchievedPoints'] =
+                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null ? '' : this.round(exerciseResult.achievedPoints, 1);
+                csvRow[exerciseGroup.title + 'AchievedScore(%)'] =
+                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null ? '' : this.round(exerciseResult.achievedScore, 2);
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';

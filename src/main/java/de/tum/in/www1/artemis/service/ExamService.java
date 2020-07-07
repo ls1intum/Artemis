@@ -201,8 +201,17 @@ public class ExamService {
             return Optional.empty();
         }
 
-        return studentParticipation.getResults().stream().filter(Result::isRated).filter(result -> result.getCompletionDate() != null).filter(result -> result.getScore() != null)
-                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).findFirst();
+        if (studentParticipation.getResults() == null) {
+            return Optional.empty();
+        }
+
+        if (studentParticipation.getResults().size() == 0) {
+            return Optional.empty();
+        }
+
+        // Take the latest rated result with score and completion date
+        return studentParticipation.getResults().stream().filter(Objects::nonNull).filter(Result::isRated).filter(result -> result.getCompletionDate() != null)
+                .filter(result -> result.getScore() != null).max(Comparator.comparing(Result::getCompletionDate));
 
     }
 
@@ -213,7 +222,9 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
     public ExamScoresDTO getExamScore(Long examId) {
-        Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -240,9 +251,6 @@ public class ExamService {
             scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
         }
 
-        List<StudentParticipation> studentParticipations = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream)
-                .map(Exercise::getStudentParticipations).flatMap(Collection::stream).collect(Collectors.toList());
-
         // Adding student results information to DTO
         for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
             // ToDo Support Team Exercises
@@ -253,11 +261,12 @@ public class ExamService {
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
+                // TODO: this was already filtered before and should not be necessary any more
                 Optional<Result> relevantResult = getRelevantResult(studentParticipation);
 
                 if (relevantResult.isPresent()) {
                     Result result = relevantResult.get();
-                    Double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
+                    double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
@@ -272,7 +281,7 @@ public class ExamService {
         // Updating exerciseGroup information in DTO
         for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
             int noOfFoundResults = 0;
-            Double sumOfPoints = 0.0;
+            double sumOfPoints = 0.0;
 
             for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
                 if (studentResult.exerciseGroupIdToExerciseResult.containsKey(exerciseGroup.id)) {

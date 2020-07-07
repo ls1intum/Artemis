@@ -234,6 +234,10 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
+            Exercise exercise = exerciseService.findOne(exerciseId);
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise, null)) {
+                return forbidden();
+            }
             programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
             return ResponseEntity.ok().build();
         }
@@ -299,7 +303,7 @@ public class ProgrammingSubmissionResource {
      * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
      * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
      * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
-     * 
+     *
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
