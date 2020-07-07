@@ -90,7 +90,7 @@
                 "failedToLoadBuildLogs": "The build logs could not be retrieved.",
                 "repositoryInConflict": "Your repository has entered a conflict state.",
                 "notAllowedExam": "You must not submit (anymore)",
-                "connectionTimeout": "Connection timeout. Saving failed."
+                "connectionTimeout": ".Saving failed. Please make sure you have a stable internet connection and try again."
             },
             "testStatusLabels": {
                 "noResult": "No results",
