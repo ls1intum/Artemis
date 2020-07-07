@@ -42,36 +42,43 @@ public class InstanceMessageReceiveService {
         this.textExerciseService = textExerciseService;
         this.textClusteringScheduleService = textClusteringScheduleService;
 
-        hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> processScheduleProgrammingExercise((message.getMessageObject())));
-        hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> processScheduleTextExercise((message.getMessageObject())));
-        hazelcastInstance.<Long>getTopic("text-exercise-schedule-cancel").addMessageListener(message -> processTextExerciseScheduleCancel((message.getMessageObject())));
-        hazelcastInstance.<Long>getTopic("text-exercise-schedule-instant-clustering")
-                .addMessageListener(message -> processTextExerciseInstantClustering((message.getMessageObject())));
+        hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleProgrammingExercise((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleTextExercise((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("text-exercise-schedule-cancel").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processTextExerciseScheduleCancel((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("text-exercise-schedule-instant-clustering").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processTextExerciseInstantClustering((message.getMessageObject()));
+        });
     }
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
         log.info("Received schedule update for programming exercise " + exerciseId);
-        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise " + exerciseId);
-        SecurityUtils.setAuthorizationObject();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise " + exerciseId);
-        SecurityUtils.setAuthorizationObject();
         textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(exerciseId));
     }
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
         log.info("Received schedule instant clustering for text exercise " + exerciseId);
-        SecurityUtils.setAuthorizationObject();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForInstantClustering(textExercise));
     }
