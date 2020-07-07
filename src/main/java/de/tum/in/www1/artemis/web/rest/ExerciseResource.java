@@ -107,14 +107,14 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
-        if (exercise.hasExerciseGroup() && (exercise.getDueDate() == null || exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now()))) {
-            // Exam Exercise
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        // Exam exercise
+        if (exercise.hasExerciseGroup()) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
                 return forbidden();
             }
         }
+        // Normal exercise
         else {
-            // Normal Exercise
             if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
                 return forbidden();
             }
@@ -122,6 +122,7 @@ public class ExerciseResource {
                 exercise.filterSensitiveInformation();
             }
         }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
