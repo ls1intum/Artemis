@@ -4,9 +4,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -25,10 +25,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -66,9 +68,16 @@ public class ExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final TutorParticipationService tutorParticipationService;
+
+    private final TutorDashboardService tutorDashboardService;
+
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
             ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
-            StudentExamService studentExamService, ParticipationService participationService) {
+            StudentExamService studentExamService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -79,6 +88,9 @@ public class ExamResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.studentExamService = studentExamService;
         this.participationService = participationService;
+        this.authCheckService = authCheckService;
+        this.tutorParticipationService = tutorParticipationService;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -214,9 +226,72 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/scores : Find scores for an exam by id.
+     *
+     * @param courseId              the course to which the exam belongs
+     * @param examId                the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/scores")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get score for exam : {}", examId);
+        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+        ExamScoresDTO examScoresDTO = examService.getExamScore(examId);
+        log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
+        return ResponseEntity.ok(examScoresDTO);
+    }
+
+    /**
+     * GET /courses/:courseId/exams/:examId:for-exam-tutor-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
+
+        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Course course = exam.getCourse();
+        if (!course.getId().equals(courseId)) {
+            return conflict();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // tutors cannot access the exercises before the exam ends
+            return forbidden();
+        }
+
+        Set<Exercise> exercises = new HashSet<>();
+        // extract all exercises for all the exam
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exercises.addAll(exerciseGroup.getExercises());
+        }
+
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
      * GET /courses/{courseId}/exams : Find all exams for the given course.
      *
-     * @param courseId  the course to which the exam belongs
+     * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams")
@@ -290,7 +365,7 @@ public class ExamResource {
         if (student.isEmpty()) {
             return notFound();
         }
-        exam.addUser(student.get());
+        exam.addRegisteredUser(student.get());
         // NOTE: we intentionally add the user to the course group, because the user only has access to the exam of a course, if the student also
         // has access to the course of the exam.
         // we only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course)
@@ -392,7 +467,7 @@ public class ExamResource {
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the id of the exam
-     * @return ResponsEntity the number of evaluated quiz exercises
+     * @return ResponseEntity the number of evaluated quiz exercises
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -403,11 +478,63 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
+        if (examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+            // Quizzes should only be evaluated if no exams are running
+            return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
+                    "There are still exams running, quizzes can only be evaluated once all exams are finished.");
+        }
+
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);
 
         log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
 
         return ResponseEntity.ok().body(numOfEvaluatedExercises);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the id of the exam
+     * @return the number of unlocked exercises
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to unlock all repositories of exam {}", examId);
+
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        Integer numOfUnlockedExercises = examService.unlockAllRepositories(examId);
+
+        log.info("Unlocked {} programming exercises of exam {}", numOfUnlockedExercises, examId);
+
+        return ResponseEntity.ok().body(numOfUnlockedExercises);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the id of the exam
+     * @return the number of locked exercises
+     */
+    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to lock all repositories of exam {}", examId);
+
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent())
+            return courseAndExamAccessFailure.get();
+
+        Integer numOfLockedExercises = examService.lockAllRepositories(examId);
+
+        log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
+
+        return ResponseEntity.ok().body(numOfLockedExercises);
     }
 
     /**
@@ -465,7 +592,7 @@ public class ExamResource {
         }
         var exam = examService.findOneWithRegisteredUsers(examId);
         User student = optionalStudent.get();
-        exam.removeUser(student);
+        exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "deregistered" from the exam, but should
         // still have access to the course.

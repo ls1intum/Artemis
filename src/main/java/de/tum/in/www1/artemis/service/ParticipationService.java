@@ -920,14 +920,33 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations belonging to exam with relevant results.
+     *
+     * @param examId the id of the exam
+     * @return list of participations belonging to course
+     */
+    public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
+        return filterParticipationsWithRelevantResults(participations);
+    }
+
+    /**
      * Get all participations belonging to course with relevant results.
      *
-     * @param courseId the id of the exercise
+     * @param courseId the id of the course
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
+        return filterParticipationsWithRelevantResults(participations);
+    }
 
+    /**
+     * filters the relevant results by removing all irrelevent ones (
+     * @param participations the participations to get filtered
+     * @return the filtered participations
+     */
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
         return participations.stream()
 
                 // Filter out participations without Students

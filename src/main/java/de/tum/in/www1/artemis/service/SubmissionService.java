@@ -262,10 +262,15 @@ public class SubmissionService {
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+        if (dueDate == null) {
+            // this is an edge case, then basically all submissions are before due date
+            return submissions;
+        }
 
-        boolean hasInTimeSubmissions = submissions.stream().anyMatch(s -> s.getSubmissionDate().isBefore(dueDate));
+        boolean hasInTimeSubmissions = submissions.stream().anyMatch(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate));
         if (hasInTimeSubmissions) {
-            return submissions.stream().filter(s -> s.getSubmissionDate().isBefore(dueDate)).collect(Collectors.toList());
+            return submissions.stream().filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate))
+                    .collect(Collectors.toList());
         }
         else {
             return submissions;

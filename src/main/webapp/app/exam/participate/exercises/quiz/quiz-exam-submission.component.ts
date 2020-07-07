@@ -15,6 +15,7 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { cloneDeep } from 'lodash';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -48,7 +49,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor() {
+    constructor(private quizService: ArtemisQuizService) {
         super();
         smoothscroll.polyfill();
     }
@@ -65,6 +66,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * Initialize the selections / mappings for each question with an empty array
      */
     initQuiz() {
+        // randomize order
+        this.quizService.randomizeOrder(this.exercise);
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();

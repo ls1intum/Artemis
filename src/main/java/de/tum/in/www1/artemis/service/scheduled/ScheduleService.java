@@ -47,7 +47,7 @@ public class ScheduleService {
      */
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled for clustering more than once.
+        // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise, lifecycle);
         ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
         addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
@@ -58,11 +58,11 @@ public class ScheduleService {
      *
      * @param exercise Exercise
      * @param lifecycle ExerciseLifecycle
-     * @param task Runnable tasks to be executed at the associated ZonedDateTimes
+     * @param tasks Runnable tasks to be executed at the associated ZonedDateTimes
      */
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled for clustering more than once.
+        // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise, lifecycle);
         Set<ScheduledFuture<?>> scheduledTasks = exerciseLifecycleService.scheduleMultipleTasks(exercise, lifecycle, tasks);
         addScheduledTask(exercise, lifecycle, scheduledTasks);

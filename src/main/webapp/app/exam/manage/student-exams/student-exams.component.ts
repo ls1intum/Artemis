@@ -34,6 +34,7 @@ export class StudentExamsComponent implements OnInit {
     filteredStudentExamsSize = 0;
     isExamStarted = false;
     isExamOver = false;
+    longestWorkingTime: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -59,13 +60,22 @@ export class StudentExamsComponent implements OnInit {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
-            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(tap((res) => this.setStudentExams(res.body)));
+            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(
+                tap((res) => {
+                    this.setStudentExams(res.body);
+                    this.longestWorkingTime = Math.max.apply(
+                        null,
+                        this.studentExams.map((studentExam) => studentExam.workingTime),
+                    );
+                    this.calculateIsExamOver();
+                }),
+            );
 
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
                     this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
-                    this.isExamOver = this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
+                    this.calculateIsExamOver();
                 }),
             );
 
@@ -77,6 +87,14 @@ export class StudentExamsComponent implements OnInit {
                 }
             });
         });
+    }
+
+    calculateIsExamOver() {
+        if (this.longestWorkingTime && this.exam) {
+            const examEndDate = moment(this.exam.startDate);
+            examEndDate.add(this.longestWorkingTime, 'seconds');
+            this.isExamOver = examEndDate.isBefore(moment());
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -186,6 +204,80 @@ export class StudentExamsComponent implements OnInit {
                     {
                         type: 'success',
                         msg: 'artemisApp.studentExams.evaluateQuizExerciseSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.isLoading = false;
+                this.onError(err.error);
+            },
+        );
+    }
+
+    /**
+     * Unlock all repositories immediately. Asks for confirmation.
+     */
+    handleUnlockAllRepositories() {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
+        modalRef.componentInstance.text = 'artemisApp.studentExams.unlockAllRepositoriesModalText';
+        modalRef.result.then(() => {
+            this.unlockAllRepositories();
+        });
+    }
+
+    /**
+     * Unlocks all programming exercises that belong to the exam
+     */
+    private unlockAllRepositories() {
+        this.isLoading = true;
+        this.examManagementService.unlockAllRepositories(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.unlockAllRepositoriesSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.error);
+                this.isLoading = false;
+            },
+        );
+    }
+
+    /**
+     * Unlock all repositories immediately. Asks for confirmation.
+     */
+    handleLockAllRepositories() {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
+        modalRef.componentInstance.text = 'artemisApp.studentExams.lockAllRepositoriesModalText';
+        modalRef.result.then(() => {
+            this.lockAllRepositories();
+        });
+    }
+
+    /**
+     * Unlocks all programming exercises that belong to the exam
+     */
+    private lockAllRepositories() {
+        this.isLoading = true;
+        this.examManagementService.lockAllRepositories(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.lockAllRepositoriesSuccess',
                         params: { number: res?.body },
                         timeout: 10000,
                     },

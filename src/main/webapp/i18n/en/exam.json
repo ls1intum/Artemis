@@ -11,7 +11,8 @@
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
-                "noCommitHash": "Reload to get the commit hash."
+                "noCommitHash": "Reload to get the commit hash.",
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
             },
             "title": "Exam",
             "startExam": "Start Exam",
@@ -33,6 +34,22 @@
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
             }
+        },
+        "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Points achievable",
+            "title": "Exam Scores",
+            "titleColumn": "Title",
+            "containedExercisesColumn": "Exercises in Group",
+            "averagePointsColumn": "Average Points achieved",
+            "maximumPointsColumn": "Maximum Points achievable",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matriculation Number",
+            "overallPointsColumn": "Overall Points",
+            "overallScoreColumn": "Overall Score (%)",
+            "exportCSV": "Export Results as CSV",
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
         },
         "examParticipation": {
             "timer": "Time Left: ",
@@ -74,9 +91,14 @@
             "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
             "evaluateQuizExercises": "Evaluate quizzes",
+            "unlockAllRepositories": "Unlock all repositories",
+            "lockAllRepositories": "Lock all repositories",
+            "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed once the exam is set to visible, therefore this operation should only be used manually if the automatic unlock failed!",
+            "lockAllRepositoriesModalText": "All repositories will be immediately locked! Students will be no longer be able to push even if the exam is still running!\nThis will also affect students with extended working time!\n\nThis operation is automatically performed once the exam is over, therefore this operation should only be used manually if the automatic lock failed!",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "workingTime": "Working time (mm:ss)",
+            "summary": "Student Summary",
             "result": "Result",
             "created": "Created",
             "view": "View",
@@ -94,7 +116,11 @@
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
-            "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}"
+            "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
+            "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
+            "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
+            "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
+            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}"
         },
         "examManagement": {
             "title": "Exam Management",
@@ -175,7 +201,8 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
-            }
+            },
+            "tutorDashboard": "Tutor Exam Dashboard"
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",

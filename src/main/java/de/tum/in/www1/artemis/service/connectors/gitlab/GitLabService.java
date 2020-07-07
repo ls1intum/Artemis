@@ -48,11 +48,11 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL GITLAB_SERVER_URL;
 
-    @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> USER_PREFIX_EDX;
 
-    @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> USER_PREFIX_U4I;
 
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
@@ -86,7 +86,7 @@ public class GitLabService extends AbstractVersionControlService {
             String username = user.getLogin();
 
             // Automatically created users
-            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
+            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
                 if (!userExists(username)) {
                     gitLabUserManagementService.importUser(user);
                 }

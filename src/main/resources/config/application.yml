@@ -149,6 +149,7 @@ server:
             cookie:
                 http-only: true
     shutdown: graceful
+    forward-headers-strategy: native
 
 # Properties to be exposed on the /info management endpoint
 info:

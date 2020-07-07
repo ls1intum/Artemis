@@ -11,4 +11,7 @@ export class StudentExam implements BaseEntity {
     public exam: Exam;
     public exercises: Exercise[];
     public examSessions: ExamSession[];
+
+    // helper attributes (calculated by the server at the time of the last request)
+    public ended = false;
 }

@@ -11,7 +11,8 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Lade neu, um den Commit Hash zu sehen."
+                "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
             },
             "title": "Klausur",
             "startExam": "Klausur starten",
@@ -33,6 +34,22 @@
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
             }
+        },
+        "examScores": {
+            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "title": "Klausur Ergebnisse",
+            "titleColumn": "Titel",
+            "containedExercisesColumn": "Aufgaben in Gruppe",
+            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
+            "maximumPointsColumn": "Maximal erreichbare Punkte",
+            "nameColumn": "Name",
+            "loginColumn": "Login",
+            "eMailColumn": "E-Mail",
+            "registrationNumberColumn": "Matrikelnummer",
+            "overallPointsColumn": "Erreichte Punkte",
+            "overallScoreColumn": "Erreichtes Ergebnis (%)",
+            "exportCSV": "Exportiere Ergebnisse als CSV",
+            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -74,10 +91,15 @@
             "generateStudentMissingExams": "Fehlende individuelle Klausuren erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
+            "unlockAllRepositories": "Alle Repositories entsperren",
+            "lockAllRepositories": "Alle Repositories sperren",
+            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort klonen & pushen, auch wenn die Klausur noch nicht gestartet wurde!\n\nDiese Operation wird automatisch mit dem Sichtbar-Setzen der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Entsperren nicht korrekt ausgeführt wurde!",
+            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studenten mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "result": "Ergebnis",
             "workingTime": "Bearbeitungszeit (mm:ss)",
+            "summary": "Zusammenfassung für den Studierenden",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
@@ -94,7 +116,11 @@
             "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Wenn Sie fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
             "studentExamStatusSuccess": "Alle registrierten Studenten haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studenten haben eine Klausur",
-            "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren"
+            "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
+            "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
+            "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
+            "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
+            "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}"
         },
         "examManagement": {
             "title": "Klausur Verwaltung",
@@ -175,7 +201,8 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            }
+            },
+            "tutorDashboard": "Tutor Klausur Dashboard"
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",
