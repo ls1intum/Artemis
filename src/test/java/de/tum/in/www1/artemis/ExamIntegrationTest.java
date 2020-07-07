@@ -1011,7 +1011,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
             // Calculate overall points achieved
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getMaxScore()).reduce(0.0,
-            (total, maxScore) -> total + maxScore * resultScore / 100);
+                    (total, maxScore) -> total + maxScore * resultScore / 100);
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
 
             // Calculate overall score achieved
@@ -1020,7 +1020,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
             List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
-            .collect(Collectors.toList());
+                    .collect(Collectors.toList());
             List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
             assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
             for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
