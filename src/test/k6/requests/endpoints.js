@@ -17,11 +17,13 @@ export const COMMIT = (participationId) => `/repository/${participationId}/commi
 export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;
 export const PARTICIPATION_WITH_RESULT = (participationId) => `/participations/${participationId}/withLatestResult`;
 export const SUBMIT_QUIZ_LIVE = (exerciseId) => `/exercises/${exerciseId}/submissions/live`;
+export const SUBMIT_QUIZ_EXAM = (exerciseId) => `/exercises/${exerciseId}/submissions/exam`;
 export const EXAMS = (courseId) => `${COURSE(courseId)}/exams`;
 export const EXAM = (courseId, examId) => EXAMS(courseId) + `/${examId}`;
 export const EXERCISE_GROUPS = (courseId, examId) => `${EXAM(courseId, examId)}/exerciseGroups`;
 export const TEXT_EXERCISE = '/text-exercises';
 export const EXAM_STUDENTS = (courseId, examId, username) => `${EXAM(courseId, examId)}/students/${username}`;
 export const GENERATE_STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/generate-student-exams`;
-export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/start-exercises`;
+export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/start-exercises`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
+export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;

@@ -25,7 +25,7 @@ export function newExam(artemis, course) {
         startDate: startDate,
         endDate: endDate,
         maxPoints: 10,
-        numberOfExercisesInExam: 1,
+        numberOfExercisesInExam: 2,
         randomizeExerciseOrder: false,
         started: false,
         title: 'exam' + nextAlphanumeric(5),
@@ -89,17 +89,17 @@ export function newTextExercise(artemis, exerciseGroup) {
 
 export function addUserToStudentsInExam(artemis, username, exam) {
     const res = artemis.post(EXAM_STUDENTS(exam.course.id, exam.id, username));
-    console.log('Add user ' + username + ' to students in exam ' + exam.id, +' status: ' + res[0].status);
+    console.log('Add user ' + username + ' to students in exam ' + exam.id + ' status: ' + res[0].status);
 }
 
 export function generateExams(artemis, exam) {
     const res = artemis.post(GENERATE_STUDENT_EXAMS(exam.course.id, exam.id));
-    console.log('Generated student exams in exam ' + exam.id, +' status: ' + res[0].status);
+    console.log('Generated student exams in exam ' + exam.id + ' status: ' + res[0].status);
 }
 
 export function startExercises(artemis, exam) {
     const res = artemis.post(START_EXERCISES(exam.course.id, exam.id));
-    console.log('Start exercises for exam ' + exam.id, +' status: ' + res[0].status);
+    console.log('Start exercises for exam ' + exam.id + ' status: ' + res[0].status);
 }
 
 export function getExamForUser(artemis, courseId, examId) {

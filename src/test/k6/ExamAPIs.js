@@ -3,8 +3,9 @@ import { group, sleep } from 'k6';
 import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { createQuizExercise, deleteQuizExercise, waitForQuizStartAndStart } from './requests/quiz.js';
+import { createQuizExercise, deleteQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
 import { newExam, newExerciseGroup, newTextExercise, addUserToStudentsInExam, generateExams, startExercises, getExamForUser } from './requests/exam.js';
+import { submitRandomTextAnswerExam } from './requests/text.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -32,7 +33,7 @@ export function setup() {
     console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
 
-    let artemis, exerciseId, course, userId, exam, exerciseGroup1, textExercise, quizExercise;
+    let artemis, exerciseId, course, userId, textExercise, quizExercise;
 
     const iterations = parseInt(__ENV.ITERATIONS);
 
@@ -60,13 +61,14 @@ export function setup() {
         }
 
         // Create new exam
-        exam = newExam(artemis, course);
+        let exam = newExam(artemis, course);
 
-        exerciseGroup1 = newExerciseGroup(artemis, exam);
+        let exerciseGroup1 = newExerciseGroup(artemis, exam);
+        let exerciseGroup2 = newExerciseGroup(artemis, exam);
 
-        textExercise = newTextExercise(artemis, exerciseGroup1);
+        let textExercise = newTextExercise(artemis, exerciseGroup1);
 
-        quizExercise = createQuizExercise(artemis, null, exerciseGroup1, false);
+        let quizExercise = createQuizExercise(artemis, null, exerciseGroup2, false);
 
         for (let i = 1; i <= iterations; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
@@ -102,11 +104,41 @@ export default function (data) {
 
         const studentExam = getExamForUser(artemis, data.courseId, data.examId);
 
-        /*const parsedStartDate = new Date(Date.parse(studentExam.startDate));
+        console.log(studentExam.exam.startDate);
+        const parsedStartDate = new Date(Date.parse(studentExam.exam.startDate));
 
-        console.log(parsedStartDate);*/
+        console.log(parsedStartDate);
 
-        console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
+        const currentTime = Date.now();
+        const differenceInMilliSeconds = parsedStartDate - currentTime;
+        const timeUntilExamStart = differenceInMilliSeconds / 1000;
+
+        console.log(`Waiting ${timeUntilExamStart}s for exam start`);
+        sleep(1 + timeUntilExamStart);
+
+        for (const exercise of studentExam.exercises) {
+            console.log(`Exercise is of type ${exercise.type}`);
+            switch (exercise.type) {
+                case 'quiz':
+                    const studentParticipations = exercise.studentParticipations;
+                    const submissions = studentParticipations[0].submissions;
+                    const submissionId = submissions[0].id;
+                    for (let i = 1; i <= exercise.quizQuestions.length; i++) {
+                        submitRandomAnswerRESTExam(artemis, exercise, i, submissionId);
+                        sleep(1);
+                    }
+                    break;
+
+                case 'text':
+                    for (let i = 0; i <= 10; i++) {
+                        submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                        sleep(1);
+                    }
+                    break;
+            }
+        }
+
+        // console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
     });
 
     return data;

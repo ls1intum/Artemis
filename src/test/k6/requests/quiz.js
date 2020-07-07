@@ -1,7 +1,7 @@
 import { PARTICIPATION, QUIZ_EXERCISES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue, extractDestination, extractMessageContent } from '../util/utils.js';
-import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE } from './endpoints.js';
+import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE, SUBMIT_QUIZ_EXAM } from './endpoints.js';
 
 export function createQuizExercise(artemis, course, exerciseGroup = null, startQuiz = true) {
     let res;
@@ -117,6 +117,36 @@ export function getQuizQuestions(artemis, courseId, exerciseId) {
     return JSON.parse(res[0].body).exercise.quizQuestions;
 }
 
+export function submitRandomAnswerRESTExam(artemis, exercise, numberOfQuestions, submissionId) {
+    const answer = {
+        id: submissionId,
+        isSynced: false,
+        submissionExerciseType: 'quiz',
+        submitted: true,
+        submittedAnswers: exercise.quizQuestions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
+    };
+
+    console.log(JSON.stringify(answer));
+
+    let res = artemis.put(SUBMIT_QUIZ_EXAM(exercise.id), answer);
+    if (res[0].status !== 200) {
+        console.log('ERROR when submitting quiz (Exam) via REST. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('ERROR: Could not submit quiz (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+}
+
+export function generateAnswer(question) {
+    const randAnswer = randomArrayValue(question.answerOptions);
+    return {
+        type: question.type,
+        quizQuestion: question,
+        selectedOptions: [randAnswer],
+    };
+}
+
 export function simulateQuizWork(artemis, exerciseId, questions, timeout, currentUsername) {
     artemis.websocket(function (socket) {
         function subscribe() {
@@ -150,15 +180,6 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                 }
                 fail('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
             }
-        }
-
-        function generateAnswer(question) {
-            const randAnswer = randomArrayValue(question.answerOptions);
-            return {
-                type: question.type,
-                quizQuestion: question,
-                selectedOptions: [randAnswer],
-            };
         }
 
         // Subscribe to callback response from server (response after submitted answer
