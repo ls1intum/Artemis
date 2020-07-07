@@ -235,12 +235,14 @@ public class ExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/scores")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get score for exam : {}", examId);
         Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
         ExamScoresDTO examScoresDTO = examService.getExamScore(examId);
+        log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(examScoresDTO);
     }
 

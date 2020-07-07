@@ -22,19 +22,19 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
-    Optional<Exam> findWithExerciseGroupsById(Long id);
+    Optional<Exam> findWithExerciseGroupsById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithExerciseGroupsAndExercisesById(Long id);
+    Optional<Exam> findWithExerciseGroupsAndExercisesById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
-    Optional<Exam> findWithRegisteredUsersById(Long id);
+    Optional<Exam> findWithRegisteredUsersById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long id);
+    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams" })
-    Optional<Exam> findWithStudentExamsById(Long id);
+    Optional<Exam> findWithStudentExamsById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.studentParticipations",
             "studentExams.exercises.studentParticipations.submissions" })
@@ -44,11 +44,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "registeredUsers", "studentExams" })
-    Optional<Exam> findWithExercisesRegisteredUsersStudentExamsById(Long id);
-
-    @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
-            "exerciseGroups.exercises.studentParticipations.results" })
-    Optional<Exam> findForScoreCalculationById(Long id);
+    Optional<Exam> findWithExercisesRegisteredUsersStudentExamsById(Long examId);
 
     /**
      * Checks if the user is registered for the exam.

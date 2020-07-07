@@ -141,13 +141,13 @@ public class LtiService {
             }
             if (sessionId == null) {
                 WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
-                log.debug("Remembering launchRequest for session ID {}", authDetails.getSessionId());
+                log.info("Remembering launchRequest for session ID {}", authDetails.getSessionId());
                 sessionId = authDetails.getSessionId();
             }
 
             // Found it. Remember the launch request for later login.
             if (sessionId != null) {
-                log.debug("Remembering launchRequest for session ID {}", sessionId);
+                log.info("Remembering launchRequest for session ID {}", sessionId);
                 launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
             }
         }
@@ -243,18 +243,22 @@ public class LtiService {
                 newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en");
             }
             else {
-                throw new InternalAuthenticationServiceException("User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+                String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+                log.error(message);
+                throw new InternalAuthenticationServiceException(message);
             }
-
+            log.info("Created new user " + newUser);
             return newUser;
         });
+
+        log.info("createNewUserFromLaunchRequest: " + user);
 
         // Make sure the user is activated
         if (!user.getActivated()) {
             userService.activateRegistration(user.getActivationKey());
         }
 
-        log.debug("Signing in as {}", username);
+        log.info("Signing in as {}", username);
         return Optional
                 .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
     }
@@ -393,6 +397,7 @@ public class LtiService {
             return "Lti signature verification failed; " + e.getMessage();
         }
         // this is the success case
+        log.info("LTI Oauth Request Verification successful");
         return null;
     }
 
@@ -480,7 +485,7 @@ public class LtiService {
     public void handleLaunchRequestForSession(String sessionId) {
         if (launchRequestForSession.containsKey(sessionId)) {
 
-            log.debug("Found LTI launchRequest for session ID {}", sessionId);
+            log.info("Found LTI launchRequest for session ID {}", sessionId);
 
             LtiLaunchRequestDTO launchRequest = launchRequestForSession.get(sessionId).getLeft();
             Exercise exercise = launchRequestForSession.get(sessionId).getRight();
