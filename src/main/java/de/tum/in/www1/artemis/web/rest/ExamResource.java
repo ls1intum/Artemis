@@ -127,7 +127,7 @@ public class ExamResource {
             return forbidden();
         }
 
-        Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
+        Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccessForInstructor(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
         }
@@ -167,7 +167,7 @@ public class ExamResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, updatedExam.getId());
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, updatedExam.getId());
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -207,7 +207,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
             @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
-        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -237,7 +237,7 @@ public class ExamResource {
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get score for exam : {}", examId);
-        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<ExamScoresDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -298,7 +298,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
-        Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccess(courseId);
+        Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccessForInstructor(courseId);
         return courseAccessFailure.orElseGet(() -> {
             List<Exam> exams = examService.findAllByCourseId(courseId);
             examService.setNumberOfRegisteredUsersForExams(exams);
@@ -318,7 +318,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -353,7 +353,7 @@ public class ExamResource {
     public ResponseEntity<Void> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
 
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -388,7 +388,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate student exams for exam {}", examId);
 
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -420,7 +420,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -451,7 +451,7 @@ public class ExamResource {
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
@@ -474,7 +474,7 @@ public class ExamResource {
     public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to evaluate quiz exercises of exam {}", examId);
 
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
@@ -503,7 +503,7 @@ public class ExamResource {
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to unlock all repositories of exam {}", examId);
 
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
@@ -526,7 +526,7 @@ public class ExamResource {
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to lock all repositories of exam {}", examId);
 
-        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
@@ -555,7 +555,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
-        Optional<ResponseEntity<List<StudentDTO>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<StudentDTO>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -581,7 +581,7 @@ public class ExamResource {
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
         log.debug("REST request to remove {} as student from exam : {}", studentLogin, examId);
 
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -647,7 +647,7 @@ public class ExamResource {
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
 
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }

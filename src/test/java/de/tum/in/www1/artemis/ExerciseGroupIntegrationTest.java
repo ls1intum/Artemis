@@ -97,7 +97,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         exerciseGroup = ModelFactory.generateExerciseGroup(true, exam2);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
-        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam2.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
     }
 
     @Test
@@ -123,7 +123,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseGroupsForExam_asInstructor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccess(course1.getId(), exam1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getExercises().size()).isEqualTo(1);
         assertThat(result.get(0).getExercises()).contains(textExercise1);
