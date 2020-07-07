@@ -81,4 +81,12 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         super.onFileChange($event);
         this.participation.submissions[0].isSynced = false;
     }
+
+    /**
+     * When the content of a file changes, set the submission status to unsynchronised.
+     */
+    onFileContentChange($event: { file: string; fileContent: string }) {
+        super.onFileContentChange($event);
+        this.participation.submissions[0].isSynced = false;
+    }
 }
