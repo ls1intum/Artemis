@@ -52,8 +52,8 @@
                                 </li>
                             </ul>
                         </td>
-                        <td>{{ exerciseGroup.averagePointsAchieved ? round(exerciseGroup.averagePointsAchieved, 2) : '-' }}</td>
-                        <td>{{ exerciseGroup.maxPoints ? exerciseGroup.maxPoints : '-' }}</td>
+                        <td>{{ exerciseGroup.averagePointsAchieved == null ? '-' : round(exerciseGroup.averagePointsAchieved, 2) }}</td>
+                        <td>{{ exerciseGroup.maxPoints == null ? '-' : exerciseGroup.maxPoints }}</td>
                     </tr>
                 </tbody>
             </table>
