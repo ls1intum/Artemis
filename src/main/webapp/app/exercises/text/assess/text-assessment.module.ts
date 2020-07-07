@@ -12,6 +12,8 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
+import { TextSubmissionExportButtonComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-button.component';
+import { TextSubmissionExportDialogComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-dialog.component';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
@@ -25,7 +27,14 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         AssessmentInstructionsModule,
         TextSharedModule,
     ],
-    declarations: [TextAssessmentEditorComponent, TextAssessmentDashboardComponent, ResizableInstructionsComponent, HighlightedTextAreaComponent],
-    exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
+    declarations: [
+        TextAssessmentEditorComponent,
+        TextAssessmentDashboardComponent,
+        ResizableInstructionsComponent,
+        HighlightedTextAreaComponent,
+        TextSubmissionExportButtonComponent,
+        TextSubmissionExportDialogComponent,
+    ],
+    exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent, TextSubmissionExportButtonComponent],
 })
 export class ArtemisTextExerciseAssessmentModule {}

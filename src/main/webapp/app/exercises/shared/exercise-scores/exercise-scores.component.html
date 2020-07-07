@@ -53,6 +53,7 @@
                     [exerciseId]="exercise.id"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
+                <jhi-text-exercise-submission-export *ngIf="exercise.type === ExerciseType.TEXT" [exerciseId]="exercise.id" class="mr-1"></jhi-text-exercise-submission-export>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
                     <fa-icon [icon]="'sync'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
