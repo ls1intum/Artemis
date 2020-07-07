@@ -109,7 +109,8 @@
                                 :
                                 {{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
 
-                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }} %)
+                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }}
+                                %)
                             </td>
                             <ng-template #empty>
                                 <td>
@@ -117,8 +118,8 @@
                                 </td>
                             </ng-template>
                         </ng-container>
-                        <td>{{ studentResult.overallPointsAchieved ? round(studentResult.overallPointsAchieved, 2) : '-' }}</td>
-                        <td>{{ studentResult.overallScoreAchieved ? round(studentResult.overallScoreAchieved, 2) : '-' }}</td>
+                        <td>{{ round(studentResult.overallPointsAchieved, 1) }}</td>
+                        <td>{{ round(studentResult.overallScoreAchieved, 2) }}</td>
                     </tr>
                 </tbody>
             </table>

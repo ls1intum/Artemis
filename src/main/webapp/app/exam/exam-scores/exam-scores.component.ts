@@ -124,9 +124,10 @@ export class ExamScoresComponent implements OnInit {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved ? this.round(studentResult.overallPointsAchieved, 2) : '';
-        csvRow.overAllScore = studentResult.overallScoreAchieved ? this.round(studentResult.overallScoreAchieved, 2) : '';
-
+        csvRow.overAllPoints =
+            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : this.round(studentResult.overallPointsAchieved, 1);
+        csvRow.overAllScore =
+            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : this.round(studentResult.overallScoreAchieved, 2);
         return csvRow;
     }
 }
