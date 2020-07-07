@@ -18,3 +18,5 @@ export const NEW_FILE = (participationId) => `/repository/${participationId}/fil
 export const PARTICIPATION_WITH_RESULT = (participationId) => `/participations/${participationId}/withLatestResult`;
 export const SUBMIT_QUIZ_LIVE = (exerciseId) => `/exercises/${exerciseId}/submissions/live`;
 export const EXAMS = (courseId) => `${COURSE(courseId)}/exams`;
+export const EXERCISE_GROUPS = (courseId, examId) => `${EXAMS(courseId)}/${examId}/exerciseGroups`;
+export const TEXT_EXERCISE = '/text-exercises';

@@ -1,7 +1,6 @@
-import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS } from './endpoints.js';
+import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, EXAMS, EXERCISE_GROUPS, TEXT_EXERCISE } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
-import { EXAMS } from './endpoints';
 
 export function newExam(artemis, course) {
     const exam = {
@@ -13,7 +12,7 @@ export function newExam(artemis, course) {
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,
-        title: 'test' + nextAlphanumeric(5),
+        title: 'exam' + nextAlphanumeric(5),
         visible: false,
     };
 
@@ -26,6 +25,48 @@ export function newExam(artemis, course) {
         fail('ERROR: Could not create exam (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new exam');
+
+    return JSON.parse(res[0].body);
+}
+
+export function newExerciseGroup(artemis, exam, mandatory = true) {
+    const exerciseGroup = {
+        exam: exam,
+        isMandatory: mandatory,
+        title: 'group' + nextAlphanumeric(5),
+    };
+
+    const res = artemis.post(EXERCISE_GROUPS(exam.course.id, exam.id), exerciseGroup);
+    if (res[0].status !== 201) {
+        console.log('ERROR when creating a new exercise group. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('ERROR: Could not create exercise group (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    console.log('SUCCESS: Generated new exercise group');
+
+    return JSON.parse(res[0].body);
+}
+
+export function newTextExercise(artemis, exerciseGroup) {
+    const textExercise = {
+        exerciseGroup: exerciseGroup,
+        maxScore: 1,
+        title: 'text' + nextAlphanumeric(5),
+        type: 'text',
+        mode: 'INDIVIDUAL',
+    };
+
+    const res = artemis.post(TEXT_EXERCISE, textExercise);
+    if (res[0].status !== 201) {
+        console.log('ERROR when creating a new text exercise. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('ERROR: Could not create text exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    console.log('SUCCESS: Generated new text exercise');
 
     return JSON.parse(res[0].body);
 }

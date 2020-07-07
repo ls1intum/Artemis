@@ -3,7 +3,7 @@ import { fail, sleep } from 'k6';
 import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue, extractDestination, extractMessageContent } from '../util/utils.js';
 import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE } from './endpoints.js';
 
-export function createQuizExercise(artemis, course) {
+export function createQuizExercise(artemis, course, exerciseGroup = null, startQuiz = true) {
     let res;
 
     // The actual exercise
@@ -24,6 +24,7 @@ export function createQuizExercise(artemis, course) {
         isVisibleBeforeStart: false,
         mode: 'INDIVIDUAL',
         course: course,
+        exerciseGroup: exerciseGroup,
         quizQuestions: generateQuizQuestions(10),
     };
 
@@ -38,16 +39,18 @@ export function createQuizExercise(artemis, course) {
     const exerciseId = JSON.parse(res[0].body).id;
     console.log('CREATED new quiz exercise, ID=' + exerciseId);
 
-    console.log('Setting quiz to visible');
-    res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/set-visible');
-    if (res[0].status !== 200) {
-        fail('Could not set quiz to visible (' + res[0].status + ')! Response was + ' + res[0].body);
-    }
+    if (startQuiz) {
+        console.log('Setting quiz to visible');
+        res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/set-visible');
+        if (res[0].status !== 200) {
+            fail('Could not set quiz to visible (' + res[0].status + ')! Response was + ' + res[0].body);
+        }
 
-    console.log('Starting quiz');
-    res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/start-now');
-    if (res[0].status !== 200) {
-        fail('Could not start quiz (' + res[0].status + ')! Response was + ' + res[0].body);
+        console.log('Starting quiz');
+        res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/start-now');
+        if (res[0].status !== 200) {
+            fail('Could not start quiz (' + res[0].status + ')! Response was + ' + res[0].body);
+        }
     }
 
     return exerciseId;
