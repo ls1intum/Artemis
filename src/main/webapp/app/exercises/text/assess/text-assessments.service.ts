@@ -179,18 +179,22 @@ export class TextAssessmentsService {
     /**
      * Track the change of the Feedback in Athene
      *
-     * @param submission - The submission object that is tracked
+     * @param submission - The submission object that holds the data that is tracked
      */
     public trackFeedback(submission: TextSubmission | null) {
         // clone submission and resolve circular json properties
         const submissionForSending = cloneDeep(submission);
-        submissionForSending!.result.submission = null;
-        submissionForSending!.result.participation = null;
         submissionForSending!.participation.submissions = [];
+        submissionForSending!.participation.results.map((result) => {
+            result.participation = null;
+            result.submission = null;
+        });
+
+        const sendObject = { textBlocks: submissionForSending?.blocks, participation: submissionForSending?.participation };
 
         if (submission!.participation?.trackingToken) {
             this.http
-                .post(`${SERVER_API_URL}/tracking/result/${submission!.result.id}`, submissionForSending, {
+                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, sendObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission!.participation.trackingToken },
                 })
                 .subscribe();
