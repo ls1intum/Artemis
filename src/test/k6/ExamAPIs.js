@@ -4,7 +4,7 @@ import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { createQuizExercise, deleteQuizExercise, waitForQuizStartAndStart } from './requests/quiz.js';
-import { newExam, newExerciseGroup, newTextExercise } from './requests/exam.js';
+import { newExam, newExerciseGroup, newTextExercise, addUserToStudentsInExam, generateExams, startExercises } from './requests/exam.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -33,6 +33,8 @@ export function setup() {
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
 
     let artemis, exerciseId, course, userId, exam, exerciseGroup1, textExercise, quizExercise;
+
+    const iterations = parseInt(__ENV.ITERATIONS);
 
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new course and exercise as no parameters are given');
@@ -65,6 +67,14 @@ export function setup() {
         textExercise = newTextExercise(artemis, exerciseGroup1);
 
         quizExercise = createQuizExercise(artemis, null, exerciseGroup1, false);
+
+        for (let i = 1; i <= iterations; i++) {
+            addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
+        }
+
+        generateExams(artemis, exam);
+
+        startExercises(artemis, exam);
 
         sleep(2);
 

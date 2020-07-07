@@ -1,15 +1,20 @@
-import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, EXAMS, EXERCISE_GROUPS, TEXT_EXERCISE } from './endpoints.js';
+import { COURSE, COURSE_STUDENTS, COURSE_INSTRUCTORS, EXAMS, EXERCISE_GROUPS, TEXT_EXERCISE, EXAM_STUDENTS, GENERATE_STUDENT_EXAMS, START_EXERCISES } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
 
 export function newExam(artemis, course) {
+    const currentDate = new Date();
+    const visibleDate = new Date(currentDate.getTime() + 30000); // Visible in 30 secs
+    const startDate = new Date(currentDate.getTime() + 60000); // Starting in 30 secs
+    const endDate = new Date(currentDate.getTime() + 120000); // Ending in 120 secs
+
     const exam = {
         course: course,
-        visibleDate: '2020-07-07T13:20:00.000Z',
-        startDate: '2020-07-07T13:25:00.000Z',
-        endDate: '2020-07-07T13:35:00.000Z',
+        visibleDate: visibleDate,
+        startDate: startDate,
+        endDate: endDate,
         maxPoints: 10,
-        numberOfExercisesInExam: 4,
+        numberOfExercisesInExam: 1,
         randomizeExerciseOrder: false,
         started: false,
         title: 'exam' + nextAlphanumeric(5),
@@ -71,9 +76,19 @@ export function newTextExercise(artemis, exerciseGroup) {
     return JSON.parse(res[0].body);
 }
 
-export function addUserToStudentsInCourse(artemis, username, courseId) {
-    const res = artemis.post(COURSE_STUDENTS(courseId, username));
-    console.log('Add user ' + username + ' to students in course ' + courseId + ' status: ' + res[0].status);
+export function addUserToStudentsInExam(artemis, username, exam) {
+    const res = artemis.post(EXAM_STUDENTS(exam.course.id, exam.id, username));
+    console.log('Add user ' + username + ' to students in exam ' + exam.id, +' status: ' + res[0].status);
+}
+
+export function generateExams(artemis, exam) {
+    const res = artemis.post(GENERATE_STUDENT_EXAMS(exam.course.id, exam.id));
+    console.log('Generated student exams in exam ' + exam.id, +' status: ' + res[0].status);
+}
+
+export function startExercises(artemis, exam) {
+    const res = artemis.post(START_EXERCISES(exam.course.id, exam.id));
+    console.log('Start exercises for exam ' + exam.id, +' status: ' + res[0].status);
 }
 
 export function removeUserFromStudentsInCourse(artemis, username, courseId) {
