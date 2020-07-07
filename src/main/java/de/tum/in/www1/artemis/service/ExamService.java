@@ -232,7 +232,7 @@ public class ExamService {
 
             // ToDo Support Team Exercises
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId() == studentResult.id).collect(Collectors.toList());
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
 
             log.debug(participationsOfStudent.toString());
 
