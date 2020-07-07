@@ -130,7 +130,7 @@
             "endDate": "End of working time",
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewStart": "Begin of Student Review",
-            "examStudentReviewEnd: ": "End of Student Review",
+            "examStudentReviewEnd": "End of Student Review",
             "maxPoints": "Maximum number of points in exam",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
