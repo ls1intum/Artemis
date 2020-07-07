@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -106,14 +107,14 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
 
+        // Exam exercise
         if (exercise.hasExerciseGroup()) {
-            // Exam Exercise
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
                 return forbidden();
             }
         }
+        // Normal exercise
         else {
-            // Normal Exercise
             if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
                 return forbidden();
             }
@@ -121,6 +122,7 @@ public class ExerciseResource {
                 exercise.filterSensitiveInformation();
             }
         }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
