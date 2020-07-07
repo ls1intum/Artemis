@@ -29,4 +29,16 @@ public interface InstanceMessageSendService {
      * @param exerciseId the id of the exercise that should be clustered
      */
     void sendTextExerciseInstantClustering(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all repositories of an exercise should be instantly unlocked
+     * @param exerciseId the id of the exercise that should be unlocked
+     */
+    void sendUnlockAllRepositories(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all repositories of an exercise should be instantly locked
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllRepositories(Long exerciseId);
 }
