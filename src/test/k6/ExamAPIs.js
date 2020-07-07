@@ -4,7 +4,7 @@ import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { createQuizExercise, deleteQuizExercise, waitForQuizStartAndStart } from './requests/quiz.js';
-import { newExam, newExerciseGroup, newTextExercise, addUserToStudentsInExam, generateExams, startExercises } from './requests/exam.js';
+import { newExam, newExerciseGroup, newTextExercise, addUserToStudentsInExam, generateExams, startExercises, getExamForUser } from './requests/exam.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -78,7 +78,7 @@ export function setup() {
 
         sleep(2);
 
-        return { exerciseId: exerciseId, courseId: course.id };
+        return { courseId: exam.course.id, examId: exam.id };
     } else {
         console.log('Using existing course and exercise');
         return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
@@ -92,20 +92,21 @@ export default function (data) {
     const delay = Math.floor(__VU / 50);
     sleep(delay);
 
-    group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
+    group('Artemis Exam Stresstest', function () {
         const userId = parseInt(__VU) + userOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
 
-        const remainingTime = websocketConnectionTime - delay;
-        const startTime = new Date().getTime();
-        if (waitQuizStart) {
-            waitForQuizStartAndStart(artemis, data.exerciseId, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername, data.courseId);
-        } else {
-            const questions = getQuizQuestions(artemis, data.courseId, data.exerciseId);
-            simulateQuizWork(artemis, data.exerciseId, questions, parseInt(__ENV.TIMEOUT_PARTICIPATION), currentUsername);
-        }
+        sleep(30);
+
+        const studentExam = getExamForUser(artemis, data.courseId, data.examId);
+
+        /*const parsedStartDate = new Date(Date.parse(studentExam.startDate));
+
+        console.log(parsedStartDate);*/
+
+        console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
     });
 
     return data;

@@ -1,4 +1,15 @@
-import { COURSE, COURSE_STUDENTS, COURSE_INSTRUCTORS, EXAMS, EXERCISE_GROUPS, TEXT_EXERCISE, EXAM_STUDENTS, GENERATE_STUDENT_EXAMS, START_EXERCISES } from './endpoints.js';
+import {
+    COURSE,
+    COURSE_STUDENTS,
+    COURSE_INSTRUCTORS,
+    EXAMS,
+    EXERCISE_GROUPS,
+    TEXT_EXERCISE,
+    EXAM_STUDENTS,
+    GENERATE_STUDENT_EXAMS,
+    START_EXERCISES,
+    EXAM_CONDUCTION,
+} from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
 
@@ -89,6 +100,13 @@ export function generateExams(artemis, exam) {
 export function startExercises(artemis, exam) {
     const res = artemis.post(START_EXERCISES(exam.course.id, exam.id));
     console.log('Start exercises for exam ' + exam.id, +' status: ' + res[0].status);
+}
+
+export function getExamForUser(artemis, courseId, examId) {
+    const res = artemis.get(EXAM_CONDUCTION(courseId, examId));
+    console.log('Retrieved student exam for exam ' + examId + ' status: ' + res[0].status);
+
+    return JSON.parse(res[0].body);
 }
 
 export function removeUserFromStudentsInCourse(artemis, username, courseId) {

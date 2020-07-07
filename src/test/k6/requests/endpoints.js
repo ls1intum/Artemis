@@ -24,3 +24,4 @@ export const TEXT_EXERCISE = '/text-exercises';
 export const EXAM_STUDENTS = (courseId, examId, username) => `${EXAM(courseId, examId)}/students/${username}`;
 export const GENERATE_STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/generate-student-exams`;
 export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/start-exercises`;
+export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
