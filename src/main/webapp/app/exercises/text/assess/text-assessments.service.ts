@@ -190,7 +190,10 @@ export class TextAssessmentsService {
             result.submission = null;
         });
 
-        const sendObject = { textBlocks: submissionForSending?.blocks, participation: submissionForSending?.participation };
+        const sendObject = {
+            textBlocks: submissionForSending?.blocks,
+            participation: submissionForSending?.participation,
+        };
 
         if (submission!.participation?.trackingToken) {
             this.http
