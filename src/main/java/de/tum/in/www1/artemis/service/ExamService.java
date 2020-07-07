@@ -237,7 +237,7 @@ public class ExamService {
                 Exercise exercise = studentParticipation.getExercise();
 
                 // Relevant Result is already calculated
-                if (studentParticipation.getResults() != null & !studentParticipation.getResults().isEmpty()) {
+                if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += achievedPoints;
@@ -245,6 +245,7 @@ public class ExamService {
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
 
                 }
+
             }
 
             if (scores.maxPoints != null) {
