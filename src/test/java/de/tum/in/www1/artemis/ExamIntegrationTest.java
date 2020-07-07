@@ -966,78 +966,78 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         // TODO: the rest of the test is flaky and does not pass. We should investigate and fix this!!
 
-        // assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
-        // assertThat(response.title).isEqualTo(exam.getTitle());
-        // assertThat(response.id).isEqualTo(exam.getId());
-        //
-        // // Ensure that all exerciseGroups of the exam are present in the DTO
-        // List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
-        // List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
-        // assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
-        //
-        // // Compare exerciseGroups in DTO to exam exerciseGroups
-        // for (var exerciseGroupDTO : response.exerciseGroups) {
-        // // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
-        // ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
-        // // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
-        // var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
-        // assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
-        //
-        // // Assume that all exercises in a group have the same max score
-        // Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
-        // assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
-        // assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
-        //
-        // // Collect titles of all exercises in the exam group
-        // List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
-        // assertThat(exerciseGroupDTO.containedExercises).isEqualTo(exerciseTitlesInGroupFromExam);
-        // }
-        //
-        // // Ensure that all registered students have a StudentResult
-        // List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
-        // List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
-        // assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
-        //
-        // // Compare StudentResult with the generated results
-        // for (var studentResult : response.studentResults) {
-        // // Find the original user using the id in StudentResult
-        // User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.id)).findFirst().get();
-        // StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().get();
-        //
-        // assertThat(studentResult.name).isEqualTo(originalUser.getName());
-        // assertThat(studentResult.eMail).isEqualTo(originalUser.getEmail());
-        // assertThat(studentResult.login).isEqualTo(originalUser.getLogin());
-        // assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber());
-        //
-        // // Calculate overall points achieved
-        // var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getMaxScore()).reduce(0.0,
-        // (total, maxScore) -> total + maxScore * resultScore / 100);
-        // assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
-        //
-        // // Calculate overall score achieved
-        // var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
-        // assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
-        //
-        // // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-        // List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
-        // .collect(Collectors.toList());
-        // List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
-        // assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
-        // for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
-        // var exerciseResult = entry.getValue();
-        //
-        // // Find the original exercise using the id in ExerciseResult
-        // Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.id)).findFirst().get();
-        //
-        // // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
-        // assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
-        //
-        // assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
-        // assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxScore());
-        // assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
-        // assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxScore() * resultScore / 100, EPSILON);
-        // }
-        // }
+        assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
+        assertThat(response.title).isEqualTo(exam.getTitle());
+        assertThat(response.id).isEqualTo(exam.getId());
+
+        // Ensure that all exerciseGroups of the exam are present in the DTO
+        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
+        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
+        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
+
+        // Compare exerciseGroups in DTO to exam exerciseGroups
+        for (var exerciseGroupDTO : response.exerciseGroups) {
+            // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
+            ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
+            // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
+            var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
+            assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
+
+            // Assume that all exercises in a group have the same max score
+            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
+            assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
+            assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
+
+            // Collect titles of all exercises in the exam group
+            List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
+            assertThat(exerciseGroupDTO.containedExercises).isEqualTo(exerciseTitlesInGroupFromExam);
+        }
+
+        // Ensure that all registered students have a StudentResult
+        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
+        List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
+        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
+
+        // Compare StudentResult with the generated results
+        for (var studentResult : response.studentResults) {
+            // Find the original user using the id in StudentResult
+            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.id)).findFirst().get();
+            StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().get();
+
+            assertThat(studentResult.name).isEqualTo(originalUser.getName());
+            assertThat(studentResult.eMail).isEqualTo(originalUser.getEmail());
+            assertThat(studentResult.login).isEqualTo(originalUser.getLogin());
+            assertThat(studentResult.registrationNumber).isEqualTo(originalUser.getRegistrationNumber());
+
+            // Calculate overall points achieved
+            var calculatedOverallPoints = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getMaxScore()).reduce(0.0,
+            (total, maxScore) -> total + maxScore * resultScore / 100);
+            assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
+
+            // Calculate overall score achieved
+            var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
+            assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
+
+            // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
+            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
+            .collect(Collectors.toList());
+            List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
+            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
+            for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
+                var exerciseResult = entry.getValue();
+
+                // Find the original exercise using the id in ExerciseResult
+                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.id)).findFirst().get();
+
+                // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
+                assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
+
+                assertThat(exerciseResult.title).isEqualTo(originalExercise.getTitle());
+                assertThat(exerciseResult.maxScore).isEqualTo(originalExercise.getMaxScore());
+                assertThat(exerciseResult.achievedScore).isEqualTo(resultScore);
+                assertEquals(exerciseResult.achievedPoints, originalExercise.getMaxScore() * resultScore / 100, EPSILON);
+            }
+        }
 
         // change back to instructor user
         database.changeUser("instructor1");
