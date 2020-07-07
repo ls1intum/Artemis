@@ -37,10 +37,10 @@
         </div>
     </div>
     <div class="quiz-content container" *ngIf="exercise">
-        <h2>
+        <h4>
             {{ exercise.title }}
-            <span class="text-muted">[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
-        </h2>
+            <span>[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+        </h4>
         <div *ngFor="let question of exercise.quizQuestions; let i = index">
             <jhi-multiple-choice-question
                 id="question{{ i }}"
