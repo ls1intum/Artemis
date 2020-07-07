@@ -191,32 +191,6 @@ public class ExamService {
     }
 
     /**
-     * Returns the relevant result of a student participation
-     *
-     * @param studentParticipation studentParticipation to get relevant result for
-     * @return optional of relevant result
-     */
-    private Optional<Result> getRelevantResult(StudentParticipation studentParticipation) {
-        // no participant -> no relevant result
-        if (studentParticipation.getParticipant() == null) {
-            return Optional.empty();
-        }
-
-        if (studentParticipation.getResults() == null) {
-            return Optional.empty();
-        }
-
-        if (studentParticipation.getResults().size() == 0) {
-            return Optional.empty();
-        }
-
-        // Take the latest rated result with score and completion date
-        return studentParticipation.getResults().stream().filter(Objects::nonNull).filter(Result::isRated).filter(result -> result.getCompletionDate() != null)
-                .filter(result -> result.getScore() != null).max(Comparator.comparing(Result::getCompletionDate));
-
-    }
-
-    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam
@@ -262,15 +236,14 @@ public class ExamService {
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
-                // TODO: this was already filtered before and should not be necessary any more
-                Optional<Result> relevantResult = getRelevantResult(studentParticipation);
-
-                if (relevantResult.isPresent()) {
-                    Result result = relevantResult.get();
-                    double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
+                // Relevant Result is already calculated
+                if (studentParticipation.getResults() != null & !studentParticipation.getResults().isEmpty()) {
+                    Result relevantResult = studentParticipation.getResults().iterator().next();
+                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
+                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
+
                 }
             }
 
