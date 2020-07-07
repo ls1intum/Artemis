@@ -41,4 +41,16 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processTextExerciseInstantClustering(exerciseId);
     }
+
+    @Override
+    public void sendUnlockAllRepositories(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processUnlockAllRepositories(exerciseId);
+    }
+
+    @Override
+    public void sendLockAllRepositories(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processLockAllRepositories(exerciseId);
+    }
 }
