@@ -206,12 +206,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         getExamExercise();
     }
 
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExamExercise_asTutor_forbidden() throws Exception {
-        getExamExercise();
-    }
-
     private void getExamExercise() throws Exception {
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         request.get("/api/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
