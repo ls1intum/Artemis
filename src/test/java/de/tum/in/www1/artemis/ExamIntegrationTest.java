@@ -394,6 +394,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
+        Exam exam = ModelFactory.generateExam(course1);
+        request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
@@ -407,7 +409,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
-        request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", null, HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
@@ -461,7 +462,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamsForCourse_asInstructor() throws Exception {
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAccessForInstructor(course1.getId());
+        verify(examAccessService, times(1)).checkCourseAccessForTeachingAssistant(course1.getId());
     }
 
     @Test
