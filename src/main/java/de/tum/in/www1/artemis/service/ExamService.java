@@ -229,9 +229,12 @@ public class ExamService {
 
         // Adding student results information to DTO
         for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
+
             // ToDo Support Team Exercises
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId() == studentResult.id).collect(Collectors.toList());
+
+            log.debug(participationsOfStudent.toString());
 
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
