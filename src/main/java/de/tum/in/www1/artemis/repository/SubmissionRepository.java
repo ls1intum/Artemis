@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +61,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsByParticipationId(long participationId);
 
     List<Submission> findByParticipationId(long participationId);
+
+
+
+    /**
+     * @param participationId the participation id we are interested in
+     * @param date the latest allowed date
+     * @return the number of submissions belonging to the participation id, which have the submitted date before the provided date
+     */
+    @Query("select distinct submission from Submission submission where submission.participation.id = :#{#participationId} and (:#{#date} is NULL or dasubmission.submissionDate < :#{#date}) order by submission.submissionDate desc")
+    Optional<Submission> findLatestSubmissionByParticipationIdBefore(long participationId, ZonedDateTime date);
 
     /**
      * @param courseId the course id we are interested in
