@@ -2,13 +2,12 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { RepositoryExportOptions, TextSubmissionExportService } from './text-submission-export.service';
 
 @Component({
     selector: 'jhi-text-exercise-submission-export-dialog',
@@ -17,12 +16,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 })
 export class TextSubmissionExportDialogComponent implements OnInit {
     @Input() exerciseId: number;
-    // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
-    // Priority: participationId >> participantIdentifier.
-    @Input() participationIdList: number[];
-    @Input() participantIdentifierList: string; // TODO: Should be a list and not a comma separated string.
-    @Input() singleParticipantMode = false;
-    readonly FeatureToggle = FeatureToggle;
+
     exercise: Exercise;
     exportInProgress: boolean;
     repositoryExportOptions: RepositoryExportOptions;
@@ -31,7 +25,7 @@ export class TextSubmissionExportDialogComponent implements OnInit {
     constructor(
         private $window: WindowRef,
         private exerciseService: ExerciseService,
-        private repoExportService: ProgrammingAssessmentRepoExportService,
+        private submissionExportService: TextSubmissionExportService,
         public activeModal: NgbActiveModal,
         private jhiAlertService: AlertService,
     ) {}
@@ -43,9 +37,7 @@ export class TextSubmissionExportDialogComponent implements OnInit {
             exportAllParticipants: false,
             filterLateSubmissions: false,
             filterLateSubmissionsDate: null,
-            addParticipantName: true,
-            combineStudentCommits: false,
-            normalizeCodeStyle: false, // disabled by default because it is rather unstable
+            participantIdentifierList: '',
         };
         this.exerciseService
             .find(this.exerciseId)
@@ -70,23 +62,9 @@ export class TextSubmissionExportDialogComponent implements OnInit {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        // The inputted participation ids take priority over the participant identifiers (student login or team names).
-        if (this.participationIdList) {
-            // We anonymize the assessment process ("double-blind").
-            this.repositoryExportOptions.addParticipantName = false;
-            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
-                this.exportInProgress = false;
-            });
-            return;
-        }
-        const participantIdentifierList =
-            this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
-
-        this.repoExportService
-            .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions)
-            .subscribe(this.handleExportRepoResponse, () => {
-                this.exportInProgress = false;
-            });
+        this.submissionExportService.exportSubmissionsByParticipantIdentifiers(exerciseId, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
+            this.exportInProgress = false;
+        });
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {

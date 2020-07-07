@@ -12,6 +12,7 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercise-scores/exercise-scores-routing.module';
+import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercis
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
+        ArtemisTextExerciseAssessmentModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
     ],

@@ -34,6 +34,7 @@
             "timeWarning": "<b>Caution:</b> This action can take several minutes depending on number and size of repositories."
         },
         "exportCSV": "Export as CSV",
+        "exportSubmissions": "Export Submissions",
         "loadingStudents": "Loading the results of all students..."
     }
 }

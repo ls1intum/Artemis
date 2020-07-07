@@ -1,8 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { TextSubmissionExportDialogComponent } from './text-submission-export-dialog.component';
 
 @Component({
     selector: 'jhi-text-exercise-submission-export',
@@ -12,22 +11,17 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [icon]="'download'"
-            [title]="'instructorDashboard.exportRepos.title'"
-            (onClick)="openRepoExportDialog($event)"
+            [title]="'instructorDashboard.exportSubmissions'"
+            (onClick)="openSubmissionExportDialog($event)"
         ></jhi-button>
     `,
 })
 export class TextSubmissionExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
-    readonly FeatureToggle = FeatureToggle;
 
     @Input() exerciseId: number;
-    @Input() participationIdList: number[];
-    @Input() participantIdentifierList: string; // comma separated
-    @Input() singleParticipantMode = false;
 
     constructor(private modalService: NgbModal) {}
 
@@ -36,12 +30,9 @@ export class TextSubmissionExportButtonComponent {
      * of the modalRef with this instance's values
      * @param {MouseEvent} event - Mouse event
      */
-    openRepoExportDialog(event: MouseEvent) {
+    openSubmissionExportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(TextSubmissionExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
-        modalRef.componentInstance.participationIdList = this.participationIdList;
-        modalRef.componentInstance.participantIdentifierList = this.participantIdentifierList;
-        modalRef.componentInstance.singleParticipantMode = this.singleParticipantMode;
     }
 }
