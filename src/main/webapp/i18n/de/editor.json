@@ -86,7 +86,8 @@
                 "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden.",
                 "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand.",
                 "notAllowedExam": "Du kannst (nicht mehr) abgeben",
-                "connectionTimeout": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal."
+                "connectionTimeoutSave": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
+                "connectionTimeoutRefresh": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",

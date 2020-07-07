@@ -108,6 +108,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     executeRefresh() {
         this.editorState = EditorState.REFRESHING;
+        setTimeout(() => {
+            if (this.editorState === EditorState.REFRESHING) {
+                this.editorState = EditorState.UNSAVED_CHANGES;
+                const error = new Error('connectionTimeoutRefresh');
+                this.onError.emit(error.message);
+            }
+        }, 8000);
         this.repositoryService.pull().subscribe(() => {
             this.unsavedFiles = {};
             this.editorState = EditorState.CLEAN;
@@ -129,7 +136,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             setTimeout(() => {
                 if (this.editorState === EditorState.SAVING) {
                     this.editorState = EditorState.UNSAVED_CHANGES;
-                    const error = new Error('connectionTimeout');
+                    const error = new Error('connectionTimeoutSave');
                     this.onError.emit(error.message);
                 }
             }, 8000);
