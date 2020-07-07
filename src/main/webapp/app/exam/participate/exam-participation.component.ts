@@ -301,7 +301,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExercise = exercise;
         // if we do not have a valid participation for the exercise -> initialize it
         if (!this.isExerciseParticipationValid(exercise)) {
-            // TODO: after getting online subscribe is not executed, might be a problem of the Observable in crateParticipationForExercise
+            // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
             this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation !== null) {
                     // for programming exercises -> wait for latest submission before showing exercise
@@ -398,7 +398,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -407,7 +407,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -416,7 +416,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -426,6 +426,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private onSaveSubmissionSuccess(submission: Submission) {
+        submission.isSynced = true;
+        submission.submitted = true;
     }
 
     private onSaveSubmissionError(error: string) {
