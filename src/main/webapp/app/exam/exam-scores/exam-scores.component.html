@@ -13,7 +13,7 @@
         <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
             {{ examScoreDTO.maxPoints }} Points achievable
         </h4>
-        <h4>
+        <h4 *ngIf="exerciseGroups && studentResults">
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
                 {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
             </small>
