@@ -900,6 +900,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
+        exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
 
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
@@ -915,9 +916,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
         // Fetch the created participations and assign them to the exercises
-        Integer participationCounter = 0;
-        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises()).flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        int participationCounter = 0;
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
         SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         for (var exercise : exercisesInExam) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId());
@@ -959,18 +959,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response.maxPoints).isEqualTo(exam.getMaxPoints());
 
         // For calculation assume that all exercises within an exerciseGroups have the same max points
-        Double calculatedAverageScore = 0.0;
+        double calculatedAverageScore = 0.0;
         for (var exerciseGroup : exam.getExerciseGroups()) {
             var exercise = exerciseGroup.getExercises().stream().findAny().get();
             calculatedAverageScore += exercise.getMaxScore() * resultScore / 100.00;
         }
-        assertEquals(response.averagePointsAchieved, calculatedAverageScore);
+        // TODO: the rest of the test is flaky and does not pass. We should investigate and fix this!!
+
+        assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
         assertThat(response.title).isEqualTo(exam.getTitle());
         assertThat(response.id).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
         List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
-        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getId()).collect(Collectors.toList());
+        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
         assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
 
         // Compare exerciseGroups in DTO to exam exerciseGroups

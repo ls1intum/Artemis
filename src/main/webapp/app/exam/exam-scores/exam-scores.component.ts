@@ -113,8 +113,10 @@ export class ExamScoresComponent implements OnInit {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
-                csvRow[exerciseGroup.title + 'AchievedPoints'] = exerciseResult.achievedPoints ? this.round(exerciseResult.achievedPoints, 1) : '';
-                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = exerciseResult.achievedScore ? this.round(exerciseResult.achievedScore, 2) : '';
+                csvRow[exerciseGroup.title + 'AchievedPoints'] =
+                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null ? '' : this.round(exerciseResult.achievedPoints, 1);
+                csvRow[exerciseGroup.title + 'AchievedScore(%)'] =
+                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null ? '' : this.round(exerciseResult.achievedScore, 2);
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
@@ -122,9 +124,10 @@ export class ExamScoresComponent implements OnInit {
             }
         });
 
-        csvRow.overAllPoints = studentResult.overallPointsAchieved ? this.round(studentResult.overallPointsAchieved, 2) : '';
-        csvRow.overAllScore = studentResult.overallScoreAchieved ? this.round(studentResult.overallScoreAchieved, 2) : '';
-
+        csvRow.overAllPoints =
+            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : this.round(studentResult.overallPointsAchieved, 1);
+        csvRow.overAllScore =
+            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : this.round(studentResult.overallScoreAchieved, 2);
         return csvRow;
     }
 }
