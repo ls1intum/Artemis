@@ -199,6 +199,7 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
         List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
 
         // Adding exam information to DTO
@@ -235,6 +236,11 @@ public class ExamService {
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
+
+                log.debug(studentParticipation.toString());
+                for (Result result : studentParticipation.getResults()) {
+                    log.debug(result.toString());
+                }
 
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
