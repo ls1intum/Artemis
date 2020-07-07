@@ -92,6 +92,9 @@ public class LtiResource {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
         }
 
+        log.info("Request header X-Forwarded-Proto: " + request.getHeader("X-Forwarded-Proto"));
+        log.info("Request header X-Forwarded-For: " + request.getHeader("X-Forwarded-For"));
+
         if (!request.getRequestURL().toString().startsWith("https")) {
             log.error("The request url " + request.getRequestURL().toString() + " does not start with 'https'. Verification of the request will most probably fail."
                     + "Please double check your loadbalancer (e.g. nginx) configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header "
