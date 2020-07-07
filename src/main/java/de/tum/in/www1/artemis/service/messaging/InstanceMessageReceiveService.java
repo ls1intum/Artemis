@@ -11,6 +11,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
@@ -52,23 +53,27 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
         log.info("Received schedule update for programming exercise " + exerciseId);
+        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise " + exerciseId);
+        SecurityUtils.setAuthorizationObject();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise " + exerciseId);
+        SecurityUtils.setAuthorizationObject();
         textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(exerciseId));
     }
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
         log.info("Received schedule instant clustering for text exercise " + exerciseId);
+        SecurityUtils.setAuthorizationObject();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForInstantClustering(textExercise));
     }

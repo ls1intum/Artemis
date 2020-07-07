@@ -19,6 +19,10 @@ public class ExamScoresDTO {
 
     public Double averagePointsAchieved = null;
 
+    public ExamScoresDTO() {
+        // default constructor for our beloved Jackson :-*
+    }
+
     public ExamScoresDTO(Long id, String title, Integer maxPoints) {
         this.id = id;
         this.title = title;
@@ -41,6 +45,10 @@ public class ExamScoresDTO {
         public Double averagePointsAchieved = null;
 
         public List<String> containedExercises;
+
+        public ExerciseGroup() {
+            // default constructor for our beloved Jackson :-*
+        }
 
         public ExerciseGroup(Long id, String title, Double maxPoints, List<String> containedExercises) {
             this.id = id;
@@ -70,6 +78,10 @@ public class ExamScoresDTO {
 
         public Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
 
+        public StudentResult() {
+            // default constructor for our beloved Jackson :-*
+        }
+
         public StudentResult(Long id, String name, String eMail, String login, String registrationNumber) {
             this.id = id;
             this.eMail = eMail;
@@ -92,6 +104,10 @@ public class ExamScoresDTO {
         public Long achievedScore;
 
         public Double achievedPoints;
+
+        public ExerciseResult() {
+            // default constructor for our beloved Jackson :-*
+        }
 
         public ExerciseResult(Long id, String title, Double maxScore, Long achievedScore, Double achievedPoints) {
             this.id = id;
