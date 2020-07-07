@@ -38,6 +38,18 @@
                         <span>{{ 'artemisApp.exam.endDate' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th jhiSortBy="publishResultsDate">
+                        <span>{{ 'artemisApp.exam.publishResultsDate' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="examStudentReviewStart">
+                        <span>{{ 'artemisApp.exam.examStudentReviewStart' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="examStudentReviewEnd">
+                        <span>{{ 'artemisApp.exam.examStudentReviewEnd' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th>
                         <span>{{ 'artemisApp.exam.duration' | translate }}</span>
                     </th>
@@ -62,6 +74,9 @@
                     <td>{{ exam.visibleDate | artemisDate }}</td>
                     <td>{{ exam.startDate | artemisDate }}</td>
                     <td>{{ exam.endDate | artemisDate }}</td>
+                    <td>{{ exam.publishResultsDate | artemisDate }}</td>
+                    <td>{{ exam.examStudentReviewStart | artemisDate }}</td>
+                    <td>{{ exam.examStudentReviewEnd | artemisDate }}</td>
                     <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
                     <td>{{ exam.numberOfRegisteredUsers }}</td>
                     <td class="text-right">
