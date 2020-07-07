@@ -62,7 +62,7 @@ export class TextSubmissionExportDialogComponent implements OnInit {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        this.submissionExportService.exportSubmissionsByParticipantIdentifiers(exerciseId, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
+        this.submissionExportService.exportSubmissions(exerciseId, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
             this.exportInProgress = false;
         });
     }

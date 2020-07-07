@@ -20,11 +20,10 @@ export class TextSubmissionExportService {
     /**
      * Exports submissions to the server by their participant identifiers
      * @param {number} exerciseId - Id of the exercise
-     * @param {string[]} participantIdentifiers - Identifiers of participants
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
-    exportSubmissionsByParticipantIdentifiers(exerciseId: number, repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-submissions-by-participant-identifiers`, repositoryExportOptions, {
+    exportSubmissions(exerciseId: number, repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-submissions`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });

@@ -2,14 +2,23 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,6 +61,8 @@ public class TextExerciseResource {
 
     private final TextExerciseImportService textExerciseImportService;
 
+    private final TextExerciseExportService textExerciseExportService;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -75,7 +86,7 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+            TextExerciseExportService textExerciseExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
             TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
@@ -87,6 +98,7 @@ public class TextExerciseResource {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
+        this.textExerciseExportService = textExerciseExportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
@@ -479,4 +491,69 @@ public class TextExerciseResource {
         return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((TextExercise) newExercise);
     }
+
+
+    /**
+     * POST /text-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param submissionExportOptions the options that should be used for the export
+     * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zipped
+     */
+    @PostMapping("/text-exercises/{exerciseId}/export-submissions-by-participation-ids")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        // Select the participations that should be exported
+        List<StudentParticipation> exportedStudentParticipations;
+
+        if (submissionExportOptions.isExportAllParticipants()) {
+            exportedStudentParticipations = new ArrayList<>(textExercise.getStudentParticipations());
+        } else {
+            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(",")))
+                .stream()
+                .map(String::trim)
+                .map(Long::parseLong)
+                .collect(Collectors.toSet());
+
+            exportedStudentParticipations = textExercise.getStudentParticipations().stream()
+                .filter(participation -> participationIdSet.contains(participation.getId()))
+                .collect(Collectors.toList());
+        }
+
+        if (exportedStudentParticipations.isEmpty()) {
+            return ResponseEntity.badRequest()
+                .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                .body(null);
+        }
+
+        ZonedDateTime filterLateSubmissionsDate = null;
+        if (submissionExportOptions.isFilterLateSubmissions()) {
+            if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
+                filterLateSubmissionsDate = textExercise.getDueDate();
+            } else {
+                filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
+            }
+        }
+
+        File zipFile = textExerciseExportService.exportStudentSubmissions(exerciseId, exportedStudentParticipations, filterLateSubmissionsDate);
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
 }
