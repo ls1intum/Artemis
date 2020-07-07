@@ -13,7 +13,7 @@
         <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
             {{ examScoreDTO.maxPoints }} Points achievable
         </h4>
-        <h4>
+        <h4 *ngIf="exerciseGroups && studentResults">
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
                 {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
             </small>
@@ -52,8 +52,8 @@
                                 </li>
                             </ul>
                         </td>
-                        <td>{{ exerciseGroup.averagePointsAchieved ? round(exerciseGroup.averagePointsAchieved, 2) : '-' }}</td>
-                        <td>{{ exerciseGroup.maxPoints ? exerciseGroup.maxPoints : '-' }}</td>
+                        <td>{{ exerciseGroup.averagePointsAchieved == null ? '-' : round(exerciseGroup.averagePointsAchieved, 2) }}</td>
+                        <td>{{ exerciseGroup.maxPoints == null ? '-' : exerciseGroup.maxPoints }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -109,7 +109,8 @@
                                 :
                                 {{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
 
-                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }} %)
+                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }}
+                                %)
                             </td>
                             <ng-template #empty>
                                 <td>
@@ -117,8 +118,8 @@
                                 </td>
                             </ng-template>
                         </ng-container>
-                        <td>{{ studentResult.overallPointsAchieved ? round(studentResult.overallPointsAchieved, 2) : '-' }}</td>
-                        <td>{{ studentResult.overallScoreAchieved ? round(studentResult.overallScoreAchieved, 2) : '-' }}</td>
+                        <td>{{ round(studentResult.overallPointsAchieved, 1) }}</td>
+                        <td>{{ round(studentResult.overallScoreAchieved, 2) }}</td>
                     </tr>
                 </tbody>
             </table>
