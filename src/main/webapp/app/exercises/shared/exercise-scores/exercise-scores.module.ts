@@ -14,6 +14,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercise-scores/exercise-scores-routing.module';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission-export/submission-export-dialog.component';
 
 @NgModule({
     imports: [
@@ -30,6 +31,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ProgrammingExerciseUtilsModule,
         ArtemisSharedComponentModule,
     ],
-    declarations: [ExerciseScoresComponent, SubmissionExportButtonComponent],
+    declarations: [ExerciseScoresComponent, SubmissionExportButtonComponent, SubmissionExportDialogComponent],
 })
 export class ArtemisExerciseScoresModule {}
