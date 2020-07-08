@@ -296,7 +296,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 });
 
                 const otherAssessedSubmissions = submissions.filter(
-                    (submission) => submission.result && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
+                    (submission) => submission.result && submission.result.assessor && submission.result.completionDate && submission.result.assessor.id !== this.tutor?.id,
                 );
                 this.otherSubmissions = otherAssessedSubmissions.map((submission) => {
                     submission.participation.submissions = [submission];

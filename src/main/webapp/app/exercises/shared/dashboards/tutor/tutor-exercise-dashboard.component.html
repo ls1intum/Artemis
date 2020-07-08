@@ -327,12 +327,13 @@
                 </ng-template>
             </div>
             <!-- Start all assessed submissions only for exam mode -->
-            <h4 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                {{ 'artemisApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
-            </h4>
-            <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                <table class="table table-striped exercise-table" *ngIf="otherSubmissions.length > 0; else noSubmissions">
-                    <thead>
+            <div *ngIf="!!exercise.exerciseGroup && (tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED)">
+                <h4 >
+                    {{ 'artemisApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-striped exercise-table" *ngIf="otherSubmissions.length > 0; else noSubmissions">
+                        <thead>
                         <tr>
                             <th>#</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</th>
@@ -343,8 +344,8 @@
                             <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
                             <th>Assessor</th>
                         </tr>
-                    </thead>
-                    <tbody>
+                        </thead>
+                        <tbody>
                         <tr *ngFor="let submission of otherSubmissions; let i = index">
                             <td>{{ i + 1 }}</td>
                             <td>{{ submission.submissionDate | artemisDate }}</td>
@@ -385,23 +386,24 @@
                                 </ng-template>
                             </td>
                             <td>
-                                <span *ngIf="submission.result.assessor">{{ submission.result.assessor }}</span>
+                                <span *ngIf="submission.result.assessor">{{ submission.result.assessor.name }}</span>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
-                <!-- TODO remove team mode for exam -->
-                <ng-template #noSubmissions>
-                    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
-                    <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
-                        {{ 'artemisApp.tutorExerciseDashboard.noSubmissions' | translate }}
-                    </div>
-                    <ng-template #teamAssessmentInfo>
-                        <div class="alert alert-warning">
-                            {{ 'artemisApp.tutorExerciseDashboard.startAssessmentFromTeamPages' | translate }}
+                        </tbody>
+                    </table>
+                    <!-- TODO remove team mode for exam -->
+                    <ng-template #noSubmissions>
+                        <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+                        <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
+                            {{ 'artemisApp.tutorExerciseDashboard.noSubmissions' | translate }}
                         </div>
+                        <ng-template #teamAssessmentInfo>
+                            <div class="alert alert-warning">
+                                {{ 'artemisApp.tutorExerciseDashboard.startAssessmentFromTeamPages' | translate }}
+                            </div>
+                        </ng-template>
                     </ng-template>
-                </ng-template>
+                </div>
             </div>
             <!-- End all assessed submissions for exam mode-->
             <!-- Complaints -->
