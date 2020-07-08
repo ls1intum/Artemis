@@ -104,27 +104,7 @@ public class TextExerciseExportService {
         writer.write(submission.getText());
         writer.close();
     }
-
-    /**
-     * Creates one single zip archive containing all zipped repositories found under the given paths
-     *
-     * @param programmingExercise The programming exercise to which all repos belong to
-     * @param pathsToZippedRepos The paths to all zipped repositories
-     * @return
-     * @throws IOException
-     */
-    private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
-        log.debug("Create zip file for all repositories");
-        final var programmingExerciseId = programmingExercise.getId();
-        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-            + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
-        createZipFile(zipFilePath, pathsToZippedRepos);
-        scheduleForDeletion(zipFilePath, 15);
-        log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
-
-        return new File(zipFilePath.toString());
-    }
-
+    
     /**
      * Create a zipfile of the given paths and save it in the zipFilePath
      *
