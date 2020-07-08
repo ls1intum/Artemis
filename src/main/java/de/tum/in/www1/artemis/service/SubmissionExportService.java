@@ -3,9 +3,12 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nullable;
@@ -17,10 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -48,9 +48,51 @@ public abstract class SubmissionExportService {
     @Value("${artemis.submission-export-path}")
     private String SUBMISSION_EXPORT_PATH;
 
-    public File exportStudentSubmissions(Long exerciseId, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) {
+    public File exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
-        Exercise exercise = exerciseRepository.findById(exerciseId).get();
+        Optional<Exercise> exerciseOpt = exerciseRepository.findById(exerciseId);
+
+        if (exerciseOpt.isEmpty())
+            return null;
+
+        Exercise exercise = exerciseOpt.get();
+
+        // Select the participations that should be exported
+        List<StudentParticipation> exportedStudentParticipations;
+
+        if (submissionExportOptions.isExportAllParticipants()) {
+            exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
+        } else {
+            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(",")))
+                .stream()
+                .map(String::trim)
+                .map(Long::parseLong)
+                .collect(Collectors.toSet());
+
+            exportedStudentParticipations = exercise.getStudentParticipations().stream()
+                .filter(participation -> participationIdSet.contains(participation.getId()))
+                .collect(Collectors.toList());
+        }
+
+        if (exportedStudentParticipations.isEmpty()) {
+            return null;
+        }
+
+        ZonedDateTime filterLateSubmissionsDate = null;
+        if (submissionExportOptions.isFilterLateSubmissions()) {
+            if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
+                filterLateSubmissionsDate = exercise.getDueDate();
+            } else {
+                filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
+            }
+        }
+
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate);
+
+    }
+
+    private File createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) throws IOException {
+
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getTitle()+"-"+exercise.getTitle()+"-submissions";
@@ -88,12 +130,11 @@ public abstract class SubmissionExportService {
 
         try {
             createZipFile(zipFilePath, submissionFilePaths);
-            scheduleForDeletion(zipFilePath, 15);
-        } catch (IOException e) {
-            e.printStackTrace();
         } finally {
             deleteTempFiles(submissionFilePaths);
         }
+
+        scheduleForDeletion(zipFilePath, 15);
 
         return zipFilePath.toFile();
     }
@@ -101,26 +142,6 @@ public abstract class SubmissionExportService {
 
     protected abstract void saveSubmissionToFile(Submission submission, File file) throws IOException;
     protected abstract String getFileEndingForSubmission(Submission submission);
-
-    /**
-     * Creates one single zip archive containing all zipped repositories found under the given paths
-     *
-     * @param programmingExercise The programming exercise to which all repos belong to
-     * @param pathsToZippedRepos The paths to all zipped repositories
-     * @return
-     * @throws IOException
-     */
-    private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
-        log.debug("Create zip file for all repositories");
-        final var programmingExerciseId = programmingExercise.getId();
-        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-            + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
-        createZipFile(zipFilePath, pathsToZippedRepos);
-        scheduleForDeletion(zipFilePath, 15);
-        log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
-
-        return new File(zipFilePath.toString());
-    }
 
     /**
      * Create a zipfile of the given paths and save it in the zipFilePath

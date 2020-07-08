@@ -504,6 +504,7 @@ public class TextExerciseResource {
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
         if (optionalTextExercise.isEmpty()) {
             return notFound();
@@ -514,46 +515,22 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // Select the participations that should be exported
-        List<StudentParticipation> exportedStudentParticipations;
+        try {
+            File zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
 
-        if (submissionExportOptions.isExportAllParticipants()) {
-            exportedStudentParticipations = new ArrayList<>(textExercise.getStudentParticipations());
-        } else {
-            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(",")))
-                .stream()
-                .map(String::trim)
-                .map(Long::parseLong)
-                .collect(Collectors.toSet());
-
-            exportedStudentParticipations = textExercise.getStudentParticipations().stream()
-                .filter(participation -> participationIdSet.contains(participation.getId()))
-                .collect(Collectors.toList());
-        }
-
-        if (exportedStudentParticipations.isEmpty()) {
-            return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                .body(null);
-        }
-
-        ZonedDateTime filterLateSubmissionsDate = null;
-        if (submissionExportOptions.isFilterLateSubmissions()) {
-            if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
-                filterLateSubmissionsDate = textExercise.getDueDate();
-            } else {
-                filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
+            if (zipFile == null) {
+                return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .body(null);
             }
-        }
 
-        File zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, exportedStudentParticipations, filterLateSubmissionsDate);
-        if (zipFile == null) {
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+            return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+
+        } catch (IOException e) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                 "There was an error on the server and the zip file could not be created.")).body(null);
         }
-
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
 }
