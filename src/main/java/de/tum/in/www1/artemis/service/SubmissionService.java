@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,13 +39,16 @@ public class SubmissionService {
 
     protected AuthorizationCheckService authCheckService;
 
+    private final ExamService examService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ExamService examService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+        this.examService = examService;
     }
 
     /**
@@ -274,6 +278,29 @@ public class SubmissionService {
         }
         else {
             return submissions;
+        }
+    }
+
+    /**
+     * Checks if the user is allowed to access all or only self-assessed submissions of an exercise
+     * 
+     * @param exercise the exercise (access to the exercise itself is not checked here)
+     * @param getOnlyOwnAssessments true if the user requests to get only submissions assessed by themselves
+     */
+    public void checkGetAllSubmissionAllowance(Exercise exercise, boolean getOnlyOwnAssessments) {
+        boolean isExamExercise = exercise.hasExerciseGroup();
+        // allow tutors to access submissions of their own normal exercise assessments or all exam exercise submissions
+        if (getOnlyOwnAssessments || isExamExercise) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+            // don't allow access to submissions to tutors while the exam is still running
+            if (isExamExercise && examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam()).isAfter(ZonedDateTime.now())) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 }

@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -196,14 +195,7 @@ public class FileUploadSubmissionResource {
         final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
+        fileUploadSubmissionService.checkGetAllSubmissionAllowance(exercise, assessedByTutor);
 
         final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {

@@ -1,24 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -27,9 +24,12 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -171,14 +171,8 @@ public class ModelingSubmissionResource {
         log.debug("REST request to get all ModelingSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
+
+        modelingSubmissionService.checkGetAllSubmissionAllowance(exercise, assessedByTutor);
 
         final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {

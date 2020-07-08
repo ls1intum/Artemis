@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE;
-import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -32,7 +28,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -352,9 +347,8 @@ public class ProgrammingSubmissionResource {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
+        // we don't pass assessedByTutor here and only false, because the logic here allowed all tutors access to all submissions
+        programmingSubmissionService.checkGetAllSubmissionAllowance(exercise, false);
 
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
