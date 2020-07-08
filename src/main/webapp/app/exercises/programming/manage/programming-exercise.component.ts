@@ -63,8 +63,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course || exercise.exerciseGroup!.exam!.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course || exercise.exerciseGroup!.exam!.course);
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
