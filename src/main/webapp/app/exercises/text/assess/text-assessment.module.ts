@@ -15,7 +15,7 @@ import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextSubmissionExportButtonComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-button.component';
 import { TextSubmissionExportDialogComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-dialog.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import {FormDateTimePickerModule} from "app/shared/date-time-picker/date-time-picker.module";
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({

@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -522,14 +521,10 @@ public class TextExerciseResource {
             exportedStudentParticipations = new ArrayList<>(textExercise.getStudentParticipations());
         }
         else {
-            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(","))
-                .map(String::trim)
-                .collect(Collectors.toList());
+            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toList());
 
-            exportedStudentParticipations = textExercise.getStudentParticipations()
-                .stream()
-                .filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
-                .collect(Collectors.toList());
+            exportedStudentParticipations = textExercise.getStudentParticipations().stream()
+                    .filter(participation -> participantIds.contains(participation.getParticipantIdentifier())).collect(Collectors.toList());
         }
 
         if (exportedStudentParticipations.isEmpty()) {
