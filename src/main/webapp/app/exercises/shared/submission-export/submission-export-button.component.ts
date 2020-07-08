@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { TextSubmissionExportDialogComponent } from './text-submission-export-dialog.component';
+import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
+import {ExerciseType} from "app/entities/exercise.model";
 
 @Component({
-    selector: 'jhi-text-exercise-submission-export',
+    selector: 'jhi-exercise-submission-export',
     template: `
         <jhi-button
             [disabled]="!exerciseId"
@@ -17,11 +18,12 @@ import { TextSubmissionExportDialogComponent } from './text-submission-export-di
         ></jhi-button>
     `,
 })
-export class TextSubmissionExportButtonComponent {
+export class SubmissionExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
     @Input() exerciseId: number;
+    @Input() exerciseType: ExerciseType;
 
     constructor(private modalService: NgbModal) {}
 
@@ -32,7 +34,8 @@ export class TextSubmissionExportButtonComponent {
      */
     openSubmissionExportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef = this.modalService.open(TextSubmissionExportDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(SubmissionExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.exerciseType = this.exerciseType;
     }
 }

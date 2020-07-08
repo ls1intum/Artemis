@@ -1,4 +1,4 @@
-<form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportRepos(exercise.id)" #exportForm="ngForm">
+<form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id)" #exportForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.exportRepos.title">Confirm export operation</h4>
         <button type="button" class="close" data-dismiss="modal" (click)="clear()">&times;</button>
@@ -11,9 +11,9 @@
         <textarea
             name="studentIds"
             class="export-textarea"
-            [(ngModel)]="repositoryExportOptions.participantIdentifierList"
+            [(ngModel)]="submissionExportOptions.participantIdentifierList"
             required
-            [disabled]="repositoryExportOptions.exportAllParticipants"
+            [disabled]="submissionExportOptions.exportAllParticipants"
         ></textarea>
 
         <!--
@@ -22,7 +22,7 @@
         <ng-container>
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
+                    <input type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
                     <strong [jhiTranslate]="'artemisApp.programmingExercise.export.downloadAllStudents'">
                         Or download the submissions of all students }}
                     </strong>
@@ -32,7 +32,7 @@
         <ng-container>
             <div class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
+                    <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions">Filter late submissions</strong>
                 </label>
             </div>
@@ -41,8 +41,8 @@
                     >Date for filter late submissions (defaults to exercise due date if not set)</strong
                 >
                 <jhi-date-time-picker
-                    [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
-                    [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
+                    [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
+                    [disabled]="!this.submissionExportOptions.filterLateSubmissions"
                     name="filterLateSubmissionsDate"
                 ></jhi-date-time-picker>
             </div>
@@ -54,7 +54,7 @@
         </button>
         <button
             type="submit"
-            [disabled]="!repositoryExportOptions.participantIdentifierList && !repositoryExportOptions.exportAllParticipants && !exportInProgress"
+            [disabled]="!submissionExportOptions.participantIdentifierList && !submissionExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
         >
             <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>

@@ -5,27 +5,29 @@ import { WindowRef } from 'app/core/websocket/window.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise.model';
+import {Exercise, ExerciseType} from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { RepositoryExportOptions, TextSubmissionExportService } from './text-submission-export.service';
+import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 
 @Component({
-    selector: 'jhi-text-exercise-submission-export-dialog',
-    templateUrl: './text-submission-export-dialog.component.html',
+    selector: 'jhi-exercise-submission-export-dialog',
+    templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
 })
-export class TextSubmissionExportDialogComponent implements OnInit {
+export class SubmissionExportDialogComponent implements OnInit {
+
     @Input() exerciseId: number;
+    @Input() exerciseType: ExerciseType;
 
     exercise: Exercise;
     exportInProgress: boolean;
-    repositoryExportOptions: RepositoryExportOptions;
+    submissionExportOptions: SubmissionExportOptions;
     isLoading = false;
 
     constructor(
         private $window: WindowRef,
         private exerciseService: ExerciseService,
-        private submissionExportService: TextSubmissionExportService,
+        private submissionExportService: SubmissionExportService,
         public activeModal: NgbActiveModal,
         private jhiAlertService: AlertService,
     ) {}
@@ -33,7 +35,7 @@ export class TextSubmissionExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading = true;
         this.exportInProgress = false;
-        this.repositoryExportOptions = {
+        this.submissionExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
             filterLateSubmissionsDate: null,
@@ -60,9 +62,9 @@ export class TextSubmissionExportDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    exportRepos(exerciseId: number) {
+    exportSubmissions(exerciseId: number) {
         this.exportInProgress = true;
-        this.submissionExportService.exportSubmissions(exerciseId, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
+        this.submissionExportService.exportSubmissions(exerciseId, exerciseType, this.submissionExportOptions).subscribe(this.handleExportRepoResponse, () => {
             this.exportInProgress = false;
         });
     }

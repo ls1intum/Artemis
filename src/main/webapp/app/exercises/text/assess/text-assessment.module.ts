@@ -12,8 +12,6 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
-import { TextSubmissionExportButtonComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-button.component';
-import { TextSubmissionExportDialogComponent } from 'app/exercises/text/assess/submission-export/text-submission-export-dialog.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
@@ -33,10 +31,8 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         TextAssessmentEditorComponent,
         TextAssessmentDashboardComponent,
         ResizableInstructionsComponent,
-        HighlightedTextAreaComponent,
-        TextSubmissionExportButtonComponent,
-        TextSubmissionExportDialogComponent,
+        HighlightedTextAreaComponent
     ],
-    exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent, TextSubmissionExportButtonComponent],
+    exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
 export class ArtemisTextExerciseAssessmentModule {}

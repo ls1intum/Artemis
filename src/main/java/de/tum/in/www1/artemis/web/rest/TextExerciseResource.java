@@ -61,7 +61,7 @@ public class TextExerciseResource {
 
     private final TextExerciseImportService textExerciseImportService;
 
-    private final TextExerciseExportService textExerciseExportService;
+    private final SubmissionExportService submissionExportService;
 
     private final UserService userService;
 
@@ -84,10 +84,10 @@ public class TextExerciseResource {
     private final InstanceMessageSendService instanceMessageSendService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
-            UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            TextExerciseExportService textExerciseExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
+                                UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
+                                ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
+                                SubmissionExportService submissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+                                TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -98,7 +98,7 @@ public class TextExerciseResource {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
-        this.textExerciseExportService = textExerciseExportService;
+        this.submissionExportService = submissionExportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
@@ -546,7 +546,7 @@ public class TextExerciseResource {
             }
         }
 
-        File zipFile = textExerciseExportService.exportStudentSubmissions(exerciseId, exportedStudentParticipations, filterLateSubmissionsDate);
+        File zipFile = submissionExportService.exportStudentSubmissions(exerciseId, exportedStudentParticipations, filterLateSubmissionsDate);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                 "There was an error on the server and the zip file could not be created.")).body(null);

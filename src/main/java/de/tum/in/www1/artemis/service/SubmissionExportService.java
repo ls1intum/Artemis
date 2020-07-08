@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
@@ -31,18 +30,18 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @Repository
-public class TextExerciseExportService {
+public abstract class SubmissionExportService {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseExportService.class);
+    private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final ExerciseRepository exerciseRepository;
 
     private final SubmissionRepository submissionRepository;
 
-    public TextExerciseExportService(
-        TextExerciseRepository textExerciseRepository,
+    public SubmissionExportService(
+        ExerciseRepository exerciseRepository,
         SubmissionRepository submissionRepository) {
-        this.textExerciseRepository = textExerciseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.submissionRepository = submissionRepository;
     }
 
@@ -51,14 +50,14 @@ public class TextExerciseExportService {
 
     public File exportStudentSubmissions(Long exerciseId, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) {
 
-        TextExercise textExercise = textExerciseRepository.findById(exerciseId).get();
-        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        Exercise exercise = exerciseRepository.findById(exerciseId).get();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        String zipGroupName = course.getTitle()+"-"+textExercise.getTitle()+"-submissions";
+        String zipGroupName = course.getTitle()+"-"+exercise.getTitle()+"-submissions";
         String zipFileName = zipGroupName+"-"+ZonedDateTime.now().toString()+".zip";
 
-        Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedTextExercises", zipGroupName);
-        Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedTextExercises", zipFileName);
+        Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmission", zipGroupName);
+        Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
 
         // Save all Submissions
         List<Path> submissionFilePaths = participations.stream()
@@ -68,13 +67,13 @@ public class TextExerciseExportService {
                 if (submission.isEmpty())
                     return Optional.<Path>empty();
 
-                String submissionFileName = textExercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-"
-                    + submission.get().getId() + ".txt";
+                String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-"
+                    + submission.get().getId() + this.getFileEndingForSubmission(submission.get());
                 Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
                 try {
 
-                    saveSubmissionToFile((TextSubmission)submission.get(), submissionFilePath.toFile());
+                    this.saveSubmissionToFile(submission.get(), submissionFilePath.toFile());
                     return Optional.of(submissionFilePath);
 
                 } catch (IOException ioException) {
@@ -99,11 +98,9 @@ public class TextExerciseExportService {
         return zipFilePath.toFile();
     }
 
-    private void saveSubmissionToFile(TextSubmission submission, File file) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.write(submission.getText());
-        writer.close();
-    }
+
+    protected abstract void saveSubmissionToFile(Submission submission, File file) throws IOException;
+    protected abstract String getFileEndingForSubmission(Submission submission);
 
     /**
      * Creates one single zip archive containing all zipped repositories found under the given paths
