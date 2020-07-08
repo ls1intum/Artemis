@@ -69,8 +69,8 @@ public abstract class SubmissionExportService {
         else {
             List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toList());
 
-            exportedStudentParticipations = exercise.getStudentParticipations().stream()
-                .filter(participation -> participantIds.contains(participation.getParticipantIdentifier())).collect(Collectors.toList());
+            exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
+                    .collect(Collectors.toList());
         }
 
         if (exportedStudentParticipations.isEmpty()) {
