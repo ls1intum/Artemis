@@ -504,7 +504,7 @@ public class TextExerciseResource {
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
         if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
