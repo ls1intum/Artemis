@@ -112,6 +112,7 @@ public class AssessmentService {
      */
     public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
+        final boolean isExamExercise = exercise.hasExerciseGroup();
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAllowedToBeAssessor || isAtLeastInstructor;
@@ -119,6 +120,12 @@ public class AssessmentService {
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
         var assessmentDueDate = exercise.getAssessmentDueDate();
         final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        // this is the case for exam exercise submissions that are assessed and submitted
+        if(isExamExercise) {
+            var exam = exercise.getExerciseGroup().getExam();
+            // TODO use exam assessment due date from PR 1830 here instead
+            return isBeforeAssessmentDueDate || isAtLeastInstructor;
+        }
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
