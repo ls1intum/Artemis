@@ -27,6 +27,17 @@
             >
                 <fa-icon size="2x" [icon]="isCollapsed(exercise) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
+            <jhi-complaint-interactions
+                class="mb-2 mt-2 ml-3"
+                [exercise]="exercise"
+                [participation]="exercise.studentParticipations[exercise.studentParticipations.length - 1]"
+                [result]="
+                    exercise.studentParticipations[exercise.studentParticipations.length - 1].results[
+                        exercise.studentParticipations[exercise.studentParticipations.length - 1].results.length - 1
+                    ]
+                "
+            >
+            </jhi-complaint-interactions>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
             <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>

@@ -10,9 +10,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 
 @NgModule({
-    imports: [ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule, ArtemisModelingEditorModule, ArtemisFullscreenModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule, ArtemisModelingEditorModule, ArtemisFullscreenModule, ArtemisComplaintsModule],
     declarations: [
         ExamParticipationSummaryComponent,
         ProgrammingExamSummaryComponent,
