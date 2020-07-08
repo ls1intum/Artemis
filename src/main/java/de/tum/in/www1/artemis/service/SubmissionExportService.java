@@ -131,6 +131,12 @@ public abstract class SubmissionExportService {
 
             try {
 
+                File parent = submissionFilePath.getParent().toFile();
+                if (!parent.exists() && !parent.mkdirs()) {
+                    log.error("Couldn't create dir: " + parent);
+                    return Optional.<Path>empty();
+                }
+
                 this.saveSubmissionToFile(latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
 
@@ -143,6 +149,12 @@ public abstract class SubmissionExportService {
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         try {
+
+            File parent = zipFilePath.getParent().toFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                log.error("Couldn't create dir: " + parent);
+            }
+
             createZipFile(zipFilePath, submissionFilePaths);
         }
         finally {
