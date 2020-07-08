@@ -501,7 +501,7 @@ public class TextExerciseResource {
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zipped
      */
-    @PostMapping("/text-exercises/{exerciseId}/export-submissions-by-participation-ids")
+    @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
