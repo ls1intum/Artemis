@@ -2,6 +2,7 @@
     (navigateBack)="navigateBack()"
     [isLoading]="isLoading"
     [isTeamMode]="exercise?.teamMode"
+    [isExamMode]="!!exercise?.exerciseGroup"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"

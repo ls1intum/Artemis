@@ -24,6 +24,7 @@ export class AssessmentHeaderComponent {
     @Input() nextSubmissionBusy: boolean;
 
     @Input() isTeamMode: boolean;
+    @Input() isExamMode: boolean;
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;

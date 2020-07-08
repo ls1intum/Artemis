@@ -28,7 +28,7 @@
         <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
             You have the lock for this assessment
         </span>
-        <ng-container *ngIf="!result?.completionDate">
+        <ng-container *ngIf="!result?.completionDate || ">
             <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <fa-icon [icon]="'save'"></fa-icon>

@@ -393,8 +393,13 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = moment().isBefore(this.exercise?.assessmentDueDate!);
+        let isExamMode = false;
+        if (this.exercise !== null) {
+            isExamMode = !!this.exercise.exerciseGroup;
+        }
         // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        // additionally, tutors are allowed to re-assess exam exercises.
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor || (isExamMode && isBeforeAssessmentDueDate);
     }
 
     private handleError(error: HttpErrorResponse): void {
