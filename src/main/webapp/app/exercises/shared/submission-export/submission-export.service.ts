@@ -14,7 +14,7 @@ export type SubmissionExportOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionExportService {
-    public resourceUrl = SERVER_API_URL + 'api/';
+    public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
