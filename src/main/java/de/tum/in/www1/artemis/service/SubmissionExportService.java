@@ -44,6 +44,13 @@ public abstract class SubmissionExportService {
     @Value("${artemis.submission-export-path}")
     private String SUBMISSION_EXPORT_PATH;
 
+    /**
+     * Exports student submissions to a zip file for an exercise
+     * @param exerciseId the id of the exercise to be exported
+     * @param submissionExportOptions the options for the expot
+     * @return a reference to the zipped file
+     * @throws IOException
+     */
     public File exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
@@ -84,6 +91,14 @@ public abstract class SubmissionExportService {
 
     }
 
+    /**
+     * Creates a zip file from a list of participations for an exercise
+     * @param exercise the exercise in question
+     * @param participations a list of participations to include
+     * @param lateSubmissionFilter an optional date filter for submissions
+     * @return the zipped file
+     * @throws IOException
+     */
     private File createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
