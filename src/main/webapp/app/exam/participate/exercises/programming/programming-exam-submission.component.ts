@@ -37,7 +37,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     onActivate(): void {
         if (this.codeEditorComponent) {
-            this.codeEditorComponent.ngOnInit();
+            this.codeEditorComponent.reload();
         }
     }
 
