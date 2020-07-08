@@ -109,8 +109,18 @@ public class ExerciseResource {
 
         // Exam exercise
         if (exercise.hasExerciseGroup()) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return forbidden();
+
+            if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                // instructors and admins should always be able to see exam exercises
+                // continue
+            }
+            else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                // tutors should only be able to see exam exercises when the exercise has finished
+                // TODO: we should rather take the max end date of the exam
+                if (exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                    // When there is no due date or the due date is in the future, we return forbidden here
+                    return forbidden();
+                }
             }
         }
         // Normal exercise
