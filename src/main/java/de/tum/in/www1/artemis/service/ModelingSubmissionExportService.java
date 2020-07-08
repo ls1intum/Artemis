@@ -5,15 +5,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
+@Service
 public class ModelingSubmissionExportService extends SubmissionExportService {
 
-    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository) {
-        super(exerciseRepository, submissionRepository);
+    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository) {
+        super(exerciseRepository);
     }
 
     @Override
