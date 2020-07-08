@@ -17,6 +17,7 @@ import {
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
+import { createProgrammingExercise } from './requests/programmingExercise.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -67,7 +68,7 @@ export function setup() {
         // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
         const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
         if (timeoutExercise > 0) {
-            console.log('Wait ' + timeoutExercise + 's before creating the quiz exercise so that the setup can finish properly');
+            console.log('Wait ' + timeoutExercise + 's before creating the exam so that the setup can finish properly');
             sleep(timeoutExercise);
         }
 
@@ -77,12 +78,15 @@ export function setup() {
         let exerciseGroup1 = newExerciseGroup(artemis, exam);
         let exerciseGroup2 = newExerciseGroup(artemis, exam);
         let exerciseGroup3 = newExerciseGroup(artemis, exam);
+        let exerciseGroup4 = newExerciseGroup(artemis, exam);
 
         let textExercise = newTextExercise(artemis, exerciseGroup1);
 
         let quizExercise = createQuizExercise(artemis, null, exerciseGroup2, false);
 
         let modelingExercise = newModelingExercise(artemis, exerciseGroup3);
+
+        let programmingExercise = createProgrammingExercise(artemis, null, 'JAVA', exerciseGroup4);
 
         for (let i = 1; i <= iterations; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
@@ -144,44 +148,41 @@ export default function (data) {
 
         console.log('Individual end date: ' + individualEndDate.toISOString());
 
-        let studentParticipations, submissions, submissionId;
+        console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
 
-        while (individualEndDate.getTime() - Date.now() > 5000) {
-            console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
-            for (const exercise of studentExam.exercises) {
-                console.log(`Exercise is of type ${exercise.type}`);
-                switch (exercise.type) {
-                    case 'quiz':
-                        studentParticipations = exercise.studentParticipations;
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        for (let i = 1; i <= exercise.quizQuestions.length && individualEndDate.getTime() - Date.now() > 5000; i++) {
-                            submitRandomAnswerRESTExam(artemis, exercise, i, submissionId);
-                            sleep(1);
-                        }
-                        break;
-
-                    case 'text':
-                        studentParticipations = exercise.studentParticipations;
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        for (let i = 0; i <= 10 && individualEndDate.getTime() - Date.now() > 5000; i++) {
-                            submitRandomTextAnswerExam(artemis, exercise, submissionId);
-                            sleep(1);
-                        }
-                        break;
-
-                    case 'modeling':
-                        studentParticipations = exercise.studentParticipations;
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        for (let i = 0; i <= 10 && individualEndDate.getTime() - Date.now() > 5000; i++) {
-                            submitRandomModelingAnswerExam(artemis, exercise, submissionId);
-                            sleep(1);
-                        }
-                        break;
-                }
+        let submissions, submissionId;
+        for (const exercise of studentExam.exercises) {
+            if (individualEndDate.getTime() - Date.now() < 5000) {
+                break;
             }
+            console.log(`Exercise is of type ${exercise.type}`);
+            let studentParticipations = exercise.studentParticipations;
+
+            switch (exercise.type) {
+                case 'quiz':
+                    submissions = studentParticipations[0].submissions;
+                    submissionId = submissions[0].id;
+                    submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
+                    break;
+
+                case 'text':
+                    submissions = studentParticipations[0].submissions;
+                    submissionId = submissions[0].id;
+                    submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                    break;
+
+                case 'modeling':
+                    submissions = studentParticipations[0].submissions;
+                    submissionId = submissions[0].id;
+                    submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+                    break;
+
+                case 'programming':
+                    let simulationParticipation = studentParticipations[0];
+
+                    break;
+            }
+            sleep(1);
         }
 
         // console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
