@@ -39,7 +39,8 @@
             "downloadAllStudents": "Oder lade die Abgaben aller Studenten herunter",
             "question": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
             "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
-            "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)"
+            "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
+            "successMessage": "Die Abgaben wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
         },
         "loadingStudents": "Lade die Ergebnisse aller Studenten..."
     }

@@ -63,13 +63,13 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     exportSubmissions(exerciseId: number) {
         this.exportInProgress = true;
-        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe(this.handleExportRepoResponse, () => {
+        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe(this.handleExportResponse, () => {
             this.exportInProgress = false;
         });
     }
 
-    handleExportRepoResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
+    handleExportResponse = (response: HttpResponse<Blob>) => {
+        this.jhiAlertService.success('instructorDashboard.exportSubmissions.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         if (response.body) {
