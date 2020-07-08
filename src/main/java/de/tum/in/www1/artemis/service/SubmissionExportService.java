@@ -109,7 +109,7 @@ public abstract class SubmissionExportService {
         String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
         String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".zip";
 
-        Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmission", zipGroupName);
+        Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
 
         // Save all Submissions
