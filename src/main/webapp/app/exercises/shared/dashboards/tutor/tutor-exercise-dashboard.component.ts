@@ -67,8 +67,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: Submission[] = [];
-    otherSubmissions: Submission[] = [];
+    assessedSubmissions: Submission[] = [];
+    otherAssessedSubmissions: Submission[] = [];
     unassessedSubmission: Submission | null;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
@@ -282,26 +282,25 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
-                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                /*
-                this.submissions = submissions.map((submission) => {
-                    submission.participation.submissions = [submission];
-                    return submission;
-                }); */
+                // Get the assessed submission of one tutor
                 const ownAssessedSubmissions = submissions.filter((submission) => submission.result?.assessor?.id === this.tutor?.id);
-                // todo: rename this.submissions to ownAssessedSubmissions
-                this.submissions = ownAssessedSubmissions.map((submission) => {
+                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                this.assessedSubmissions = ownAssessedSubmissions.map((submission) => {
                     submission.participation.submissions = [submission];
                     return submission;
                 });
 
-                const otherAssessedSubmissions = submissions.filter(
-                    (submission) => submission.result && submission.result.assessor && submission.result.completionDate && submission.result.assessor.id !== this.tutor?.id,
-                );
-                this.otherSubmissions = otherAssessedSubmissions.map((submission) => {
-                    submission.participation.submissions = [submission];
-                    return submission;
-                });
+                if (!getOnlyTutorsOwnAssessments) {
+                    // Get the assessed submissions for all other tutors (needed for 2nd correction of exam exercises)
+                    const otherAssessedSubmissions = submissions.filter(
+                        (submission) => this.calculateStatus(submission) === 'DONE' && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
+                    );
+                    // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                    this.otherAssessedSubmissions = otherAssessedSubmissions.map((submission) => {
+                        submission.participation.submissions = [submission];
+                        return submission;
+                    });
+                }
             });
     }
 
