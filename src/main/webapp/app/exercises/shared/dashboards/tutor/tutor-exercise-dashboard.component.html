@@ -336,24 +336,25 @@
                         <thead>
                         <tr>
                             <th>#</th>
+                            <th>ID</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
-                            <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
+                            <th>Assessor</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</th>
                             <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
-                            <th>Assessor</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr *ngFor="let submission of otherSubmissions; let i = index">
                             <td>{{ i + 1 }}</td>
+                            <td>{{ submission.id }}</td>
                             <td>{{ submission.submissionDate | artemisDate }}</td>
                             <td>
                                 <jhi-result [participation]="submission.participation"></jhi-result>
                             </td>
                             <td>
-                                {{ calculateStatus(submission) }}
+                                <span *ngIf="submission.result.assessor">{{ submission.result.assessor.name }}</span>
                             </td>
                             <td>
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
@@ -384,9 +385,6 @@
                                         (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
-                            </td>
-                            <td>
-                                <span *ngIf="submission.result.assessor">{{ submission.result.assessor.name }}</span>
                             </td>
                         </tr>
                         </tbody>
