@@ -46,7 +46,7 @@ public abstract class SubmissionExportService {
 
     public File exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
-        Optional<Exercise> exerciseOpt = exerciseRepository.findById(exerciseId);
+        Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
         if (exerciseOpt.isEmpty())
             return null;
@@ -96,18 +96,28 @@ public abstract class SubmissionExportService {
 
         // Save all Submissions
         List<Path> submissionFilePaths = participations.stream().map((participation) -> {
-            Optional<Submission> submission = submissionRepository.findLatestSubmissionByParticipationIdBefore(participation.getId(), lateSubmissionFilter);
 
-            if (submission.isEmpty())
+            Set<Submission> submissions = participation.getSubmissions();
+            Submission latestSubmission = null;
+
+            for (Submission s : submissions) {
+                if (lateSubmissionFilter == null || s.getSubmissionDate().isBefore(lateSubmissionFilter)) {
+                    if (latestSubmission == null || s.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
+                        latestSubmission = s;
+                    }
+                }
+            }
+
+            if (latestSubmission == null)
                 return Optional.<Path>empty();
 
-            String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + submission.get().getId()
-                    + this.getFileEndingForSubmission(submission.get());
+            String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
+                    + this.getFileEndingForSubmission(latestSubmission);
             Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
             try {
 
-                this.saveSubmissionToFile(submission.get(), submissionFilePath.toFile());
+                this.saveSubmissionToFile(latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
 
             }

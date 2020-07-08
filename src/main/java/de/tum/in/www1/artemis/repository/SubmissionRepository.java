@@ -63,14 +63,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findByParticipationId(long participationId);
 
     /**
-     * @param participationId the participation id we are interested in
-     * @param date the latest allowed date
-     * @return the number of submissions belonging to the participation id, which have the submitted date before the provided date
-     */
-    @Query("select distinct submission from Submission submission where submission.participation.id = :#{#participationId} and (:#{#date} is NULL or submission.submissionDate < :#{#date}) order by submission.submissionDate desc")
-    Optional<Submission> findLatestSubmissionByParticipationIdBefore(long participationId, ZonedDateTime date);
-
-    /**
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
