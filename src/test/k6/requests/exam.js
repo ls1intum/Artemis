@@ -27,7 +27,7 @@ export function newExam(artemis, course) {
         startDate: startDate,
         endDate: endDate,
         maxPoints: 10,
-        numberOfExercisesInExam: 2,
+        numberOfExercisesInExam: 3,
         randomizeExerciseOrder: false,
         started: false,
         title: 'exam' + nextAlphanumeric(5),

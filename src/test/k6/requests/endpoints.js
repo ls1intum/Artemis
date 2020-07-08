@@ -29,3 +29,5 @@ export const STUDENT_EXAM_WORKINGTIME = (courseId, examId, studentExamId) => `${
 export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/start-exercises`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
 export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
+export const MODELING_EXERCISE = '/modeling-exercises';
+export const SUBMIT_MODELING_EXAM = (exerciseId) => `/exercises/${exerciseId}/modeling-submissions`;

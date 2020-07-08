@@ -16,6 +16,7 @@ import {
     updateWorkingTime,
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
+import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -75,10 +76,13 @@ export function setup() {
 
         let exerciseGroup1 = newExerciseGroup(artemis, exam);
         let exerciseGroup2 = newExerciseGroup(artemis, exam);
+        let exerciseGroup3 = newExerciseGroup(artemis, exam);
 
         let textExercise = newTextExercise(artemis, exerciseGroup1);
 
         let quizExercise = createQuizExercise(artemis, null, exerciseGroup2, false);
+
+        let modelingExercise = newModelingExercise(artemis, exerciseGroup3);
 
         for (let i = 1; i <= iterations; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
@@ -163,6 +167,16 @@ export default function (data) {
                         submissionId = submissions[0].id;
                         for (let i = 0; i <= 10 && individualEndDate.getTime() - Date.now() > 5000; i++) {
                             submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                            sleep(1);
+                        }
+                        break;
+
+                    case 'modeling':
+                        studentParticipations = exercise.studentParticipations;
+                        submissions = studentParticipations[0].submissions;
+                        submissionId = submissions[0].id;
+                        for (let i = 0; i <= 10 && individualEndDate.getTime() - Date.now() > 5000; i++) {
+                            submitRandomModelingAnswerExam(artemis, exercise, submissionId);
                             sleep(1);
                         }
                         break;
