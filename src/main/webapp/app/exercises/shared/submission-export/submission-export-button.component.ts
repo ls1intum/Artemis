@@ -13,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [icon]="'download'"
-            [title]="'instructorDashboard.exportSubmissions'"
+            [title]="'instructorDashboard.exportSubmissions.title'"
             (onClick)="openSubmissionExportDialog($event)"
         ></jhi-button>
     `,
