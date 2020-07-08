@@ -359,7 +359,7 @@ public class ModelingExerciseResource {
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
-    @PostMapping("/text-exercises/{exerciseId}/export-submissions")
+    @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
