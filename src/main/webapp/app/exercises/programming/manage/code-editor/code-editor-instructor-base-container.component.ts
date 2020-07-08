@@ -2,6 +2,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { OnDestroy, OnInit, Component } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -79,6 +80,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private exerciseHintService: ExerciseHintService,
+        private location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -113,6 +115,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
                                 this.selectParticipationDomainById(nextAvailableParticipation.id);
+
+                                // Show a consistent route in the browser
+                                if (nextAvailableParticipation.id !== participationId) {
+                                    const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                                    this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                                }
                             } else {
                                 throwError('participationNotFound');
                             }
