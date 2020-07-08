@@ -60,11 +60,10 @@ public abstract class SubmissionExportService {
             exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
         }
         else {
-            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(","))).stream().map(String::trim)
-                    .map(Long::parseLong).collect(Collectors.toSet());
+            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toList());
 
-            exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participationIdSet.contains(participation.getId()))
-                    .collect(Collectors.toList());
+            exportedStudentParticipations = exercise.getStudentParticipations().stream()
+                .filter(participation -> participantIds.contains(participation.getParticipantIdentifier())).collect(Collectors.toList());
         }
 
         if (exportedStudentParticipations.isEmpty()) {
