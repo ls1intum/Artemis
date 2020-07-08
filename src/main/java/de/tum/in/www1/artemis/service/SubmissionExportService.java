@@ -20,25 +20,24 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
-@Repository
+@Service
 public abstract class SubmissionExportService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
     private final ExerciseRepository exerciseRepository;
 
-    private final SubmissionRepository submissionRepository;
-
-    public SubmissionExportService(ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository) {
+    public SubmissionExportService(ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     @Value("${artemis.submission-export-path}")
