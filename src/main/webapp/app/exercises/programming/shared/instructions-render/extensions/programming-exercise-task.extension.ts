@@ -103,7 +103,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     });
                 this.testsForTaskSubject.next(testsForTask);
                 // Emit new found elements that need to be injected into html after it is rendered.
-                this.injectableElementsFoundSubject.next(() => this.injectTasks(testsForTask));
+                this.injectableElementsFoundSubject.next(() => {
+                    this.injectTasks(testsForTask);
+                });
                 return testsForTask.reduce(
                     (acc: string, { completeString: task }, index: number): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
