@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -9,9 +12,14 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import io.swagger.models.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,6 +60,8 @@ public class ModelingExerciseResource {
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
+    private final SubmissionExportService modelingSubmissionExportService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final CompassService compassService;
@@ -60,10 +70,12 @@ public class ModelingExerciseResource {
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
+            SubmissionExportService modelingSubmissionExportService,
             GroupNotificationService groupNotificationService, CompassService compassService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
+        this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -339,5 +351,44 @@ public class ModelingExerciseResource {
         modelingExerciseRepository.save((ModelingExercise) newExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
+    }
+
+    /**
+     * POST /modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param submissionExportOptions the options that should be used for the export
+     * @return ResponseEntity with status
+     */
+    @PostMapping("/text-exercises/{exerciseId}/export-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+
+        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findById(exerciseId);
+        if (optionalModelingExercise.isEmpty()) {
+            return notFound();
+        }
+        ModelingExercise textExercise = optionalModelingExercise.get();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        try {
+            File zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+
+            if (zipFile == null) {
+                return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .body(null);
+            }
+
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+            return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                "There was an error on the server and the zip file could not be created.")).body(null);
+        }
     }
 }
