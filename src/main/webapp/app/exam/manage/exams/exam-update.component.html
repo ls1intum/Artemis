@@ -58,7 +58,6 @@
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.publishResultsDate' | translate }}"
                         [(ngModel)]="exam.publishResultsDate"
-                        [error]="!isValidPublishResultsDate"
                         name="publishResultsDate"
                         id="publishResultsDate"
                     ></jhi-date-time-picker>
@@ -67,7 +66,6 @@
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | translate }}"
                         [(ngModel)]="exam.examStudentReviewStart"
-                        [error]="!isValidExamStudentReviewStart"
                         name="examStudentReviewStart"
                         id="examStudentReviewStart"
                     ></jhi-date-time-picker>
@@ -76,7 +74,6 @@
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | translate }}"
                         [(ngModel)]="exam.examStudentReviewEnd"
-                        [error]="!isValidExamStudentReviewEnd"
                         name="examStudentReviewEnd"
                         id="examStudentReviewEnd"
                     ></jhi-date-time-picker>

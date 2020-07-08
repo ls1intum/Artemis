@@ -72,18 +72,6 @@ export class ExamUpdateComponent implements OnInit {
         this.jhiAlertService.error(error.message);
     }
 
-    get isValidPublishResultsDate() {
-        return this.exam.publishResultsDate;
-    }
-
-    get isValidExamStudentReviewStart() {
-        return this.exam.examStudentReviewStart;
-    }
-
-    get isValidExamStudentReviewEnd() {
-        return this.exam.examStudentReviewEnd;
-    }
-
     get isValidVisibleDate() {
         return this.exam.visibleDate && moment(this.exam.visibleDate).isAfter(moment());
     }
