@@ -367,9 +367,9 @@ public class ModelingExerciseResource {
         if (optionalModelingExercise.isEmpty()) {
             return notFound();
         }
-        ModelingExercise textExercise = optionalModelingExercise.get();
+        ModelingExercise modelingExercise = optionalModelingExercise.get();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
 

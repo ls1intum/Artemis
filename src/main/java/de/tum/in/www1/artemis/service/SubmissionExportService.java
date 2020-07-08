@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -103,7 +105,7 @@ public abstract class SubmissionExportService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
-        String zipFileName = zipGroupName + "-" + ZonedDateTime.now().toString() + ".zip";
+        String zipFileName = zipGroupName + "-" + ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ) + ".zip";
 
         Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmission", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
@@ -155,7 +157,7 @@ public abstract class SubmissionExportService {
                 log.error("Couldn't create dir: " + parent);
             }
 
-            createZipFile(zipFilePath, submissionFilePaths);
+            createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
             deleteTempFiles(submissionFilePaths);
@@ -177,10 +179,10 @@ public abstract class SubmissionExportService {
      * @param paths the paths that should be zipped
      * @throws IOException if an error occurred while zipping
      */
-    private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+    private void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(path.toString());
+                ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 try {
                     zipOutputStream.putNextEntry(zipEntry);
                     Files.copy(path, zipOutputStream);
