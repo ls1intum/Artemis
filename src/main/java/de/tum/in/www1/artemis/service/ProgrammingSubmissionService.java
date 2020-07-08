@@ -72,8 +72,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            CourseService courseService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository);
+            CourseService courseService, ExamService examService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
