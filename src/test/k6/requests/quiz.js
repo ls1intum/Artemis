@@ -126,8 +126,6 @@ export function submitRandomAnswerRESTExam(artemis, exercise, numberOfQuestions,
         submittedAnswers: exercise.quizQuestions.slice(0, numberOfQuestions).map((q) => generateAnswer(q)),
     };
 
-    console.log(JSON.stringify(answer));
-
     let res = artemis.put(SUBMIT_QUIZ_EXAM(exercise.id), answer);
     if (res[0].status !== 200) {
         console.log('ERROR when submitting quiz (Exam) via REST. Response headers:');

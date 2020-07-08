@@ -132,6 +132,9 @@ export function Artemis(authToken, xsrftoken) {
     this.put = function (endpoint, body, params) {
         return request('put', endpoint, authToken, xsrftoken, body, params);
     };
+    this.patch = function (endpoint, body, params) {
+        return request('patch', endpoint, authToken, xsrftoken, body, params);
+    };
     this.delete = function (endpoint, params) {
         return request('delete', endpoint, authToken, xsrftoken, null, params);
     };

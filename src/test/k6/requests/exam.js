@@ -9,6 +9,8 @@ import {
     GENERATE_STUDENT_EXAMS,
     START_EXERCISES,
     EXAM_CONDUCTION,
+    STUDENT_EXAMS,
+    STUDENT_EXAM_WORKINGTIME,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -105,6 +107,20 @@ export function startExercises(artemis, exam) {
 export function getExamForUser(artemis, courseId, examId) {
     const res = artemis.get(EXAM_CONDUCTION(courseId, examId));
     console.log('Retrieved student exam for exam ' + examId + ' status: ' + res[0].status);
+
+    return JSON.parse(res[0].body);
+}
+
+export function getStudentExams(artemis, exam) {
+    const res = artemis.get(STUDENT_EXAMS(exam.course.id, exam.id));
+    console.log('Retrieved student exams for exam ' + exam.id + ' status: ' + res[0].status);
+
+    return JSON.parse(res[0].body);
+}
+
+export function updateWorkingTime(artemis, exam, studentExam, workingTime) {
+    const res = artemis.patch(STUDENT_EXAM_WORKINGTIME(exam.course.id, exam.id, studentExam.id), workingTime);
+    console.log('Updated student Exam for exam ' + exam.id + ' status: ' + res[0].status);
 
     return JSON.parse(res[0].body);
 }

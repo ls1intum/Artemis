@@ -4,7 +4,17 @@ import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { createQuizExercise, deleteQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
-import { newExam, newExerciseGroup, newTextExercise, addUserToStudentsInExam, generateExams, startExercises, getExamForUser } from './requests/exam.js';
+import {
+    newExam,
+    newExerciseGroup,
+    newTextExercise,
+    addUserToStudentsInExam,
+    generateExams,
+    startExercises,
+    getExamForUser,
+    getStudentExams,
+    updateWorkingTime,
+} from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
 
 // Version: 1.1
@@ -76,6 +86,15 @@ export function setup() {
 
         generateExams(artemis, exam);
 
+        const studentExams = getStudentExams(artemis, exam);
+
+        for (let index in studentExams) {
+            if (index % 10 === 0) {
+                const studentExam = studentExams[index];
+                updateWorkingTime(artemis, exam, studentExam, 180);
+            }
+        }
+
         startExercises(artemis, exam);
 
         sleep(2);
@@ -116,25 +135,38 @@ export default function (data) {
         console.log(`Waiting ${timeUntilExamStart}s for exam start`);
         sleep(1 + timeUntilExamStart);
 
-        for (const exercise of studentExam.exercises) {
-            console.log(`Exercise is of type ${exercise.type}`);
-            switch (exercise.type) {
-                case 'quiz':
-                    const studentParticipations = exercise.studentParticipations;
-                    const submissions = studentParticipations[0].submissions;
-                    const submissionId = submissions[0].id;
-                    for (let i = 1; i <= exercise.quizQuestions.length; i++) {
-                        submitRandomAnswerRESTExam(artemis, exercise, i, submissionId);
-                        sleep(1);
-                    }
-                    break;
+        const workingTime = studentExam.workingTime;
+        const individualEndDate = new Date(parsedStartDate.getTime() + workingTime * 1000);
 
-                case 'text':
-                    for (let i = 0; i <= 10; i++) {
-                        submitRandomTextAnswerExam(artemis, exercise, submissionId);
-                        sleep(1);
-                    }
-                    break;
+        console.log('Individual end date: ' + individualEndDate.toISOString());
+
+        let studentParticipations, submissions, submissionId;
+
+        while (individualEndDate.getTime() - Date.now() > 5000) {
+            console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
+            for (const exercise of studentExam.exercises) {
+                console.log(`Exercise is of type ${exercise.type}`);
+                switch (exercise.type) {
+                    case 'quiz':
+                        studentParticipations = exercise.studentParticipations;
+                        submissions = studentParticipations[0].submissions;
+                        submissionId = submissions[0].id;
+                        for (let i = 1; i <= exercise.quizQuestions.length && individualEndDate.getTime() - Date.now() > 5000; i++) {
+                            submitRandomAnswerRESTExam(artemis, exercise, i, submissionId);
+                            sleep(1);
+                        }
+                        break;
+
+                    case 'text':
+                        studentParticipations = exercise.studentParticipations;
+                        submissions = studentParticipations[0].submissions;
+                        submissionId = submissions[0].id;
+                        for (let i = 0; i <= 10 && individualEndDate.getTime() - Date.now() > 5000; i++) {
+                            submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                            sleep(1);
+                        }
+                        break;
+                }
             }
         }
 

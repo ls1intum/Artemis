@@ -24,6 +24,8 @@ export const EXERCISE_GROUPS = (courseId, examId) => `${EXAM(courseId, examId)}/
 export const TEXT_EXERCISE = '/text-exercises';
 export const EXAM_STUDENTS = (courseId, examId, username) => `${EXAM(courseId, examId)}/students/${username}`;
 export const GENERATE_STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/generate-student-exams`;
+export const STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams`;
+export const STUDENT_EXAM_WORKINGTIME = (courseId, examId, studentExamId) => `${EXAM(courseId, examId)}/studentExams/${studentExamId}/workingTime`;
 export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/start-exercises`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
 export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
