@@ -5,7 +5,7 @@ import { WindowRef } from 'app/core/websocket/window.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import {Exercise, ExerciseType} from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 
@@ -15,7 +15,6 @@ import { SubmissionExportOptions, SubmissionExportService } from './submission-e
     styles: ['textarea { width: 100%; }'],
 })
 export class SubmissionExportDialogComponent implements OnInit {
-
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;
 

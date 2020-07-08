@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpResponse} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {SERVER_API_URL} from 'app/app.constants';
-import {Moment} from 'moment';
-import {ExerciseType} from "app/entities/exercise.model";
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { SERVER_API_URL } from 'app/app.constants';
+import { Moment } from 'moment';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 export type SubmissionExportOptions = {
     exportAllParticipants: boolean;
@@ -14,7 +14,6 @@ export type SubmissionExportOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionExportService {
-
     public resourceUrl = SERVER_API_URL + 'api/';
 
     constructor(private http: HttpClient) {}
@@ -34,9 +33,12 @@ export class SubmissionExportService {
 
     getExerciseUrl(exerciseType: ExerciseType, exerciseId: number) {
         switch (exerciseType) {
-            case ExerciseType.TEXT: return "text-exercises/"+exerciseId;
-            case ExerciseType.MODELING: return "modeling-exercises/"+exerciseId;
-            default: throw Error("Export not implemented for exercise type "+exerciseType);
+            case ExerciseType.TEXT:
+                return 'text-exercises/' + exerciseId;
+            case ExerciseType.MODELING:
+                return 'modeling-exercises/' + exerciseId;
+            default:
+                throw Error('Export not implemented for exercise type ' + exerciseType);
         }
     }
 }

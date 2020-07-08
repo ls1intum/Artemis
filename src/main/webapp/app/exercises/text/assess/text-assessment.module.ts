@@ -27,12 +27,7 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         AssessmentInstructionsModule,
         TextSharedModule,
     ],
-    declarations: [
-        TextAssessmentEditorComponent,
-        TextAssessmentDashboardComponent,
-        ResizableInstructionsComponent,
-        HighlightedTextAreaComponent
-    ],
+    declarations: [TextAssessmentEditorComponent, TextAssessmentDashboardComponent, ResizableInstructionsComponent, HighlightedTextAreaComponent],
     exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
 export class ArtemisTextExerciseAssessmentModule {}
