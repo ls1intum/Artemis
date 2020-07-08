@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -58,17 +57,17 @@ public class ExamService {
 
     private final ExamQuizService examQuizService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, @Lazy ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, InstanceMessageSendService instanceMessageSendService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
         this.examQuizService = examQuizService;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     @Autowired
@@ -191,30 +190,16 @@ public class ExamService {
     }
 
     /**
-     * Returns the relevant result of a student participation
-     *
-     * @param studentParticipation studentParticipation to get relevant result for
-     * @return optional of relevant result
-     */
-    private Optional<Result> getRelevantResult(StudentParticipation studentParticipation) {
-        // no participant -> no relevant result
-        if (studentParticipation.getParticipant() == null) {
-            return Optional.empty();
-        }
-
-        return studentParticipation.getResults().stream().filter(Result::isRated).filter(result -> result.getCompletionDate() != null).filter(result -> result.getScore() != null)
-                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).findFirst();
-
-    }
-
-    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
     public ExamScoresDTO getExamScore(Long examId) {
-        Exam exam = examRepository.findForScoreCalculationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+
+        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -241,28 +226,27 @@ public class ExamService {
             scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
         }
 
-        List<StudentParticipation> studentParticipations = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream)
-                .map(Exercise::getStudentParticipations).flatMap(Collection::stream).collect(Collectors.toList());
-
         // Adding student results information to DTO
         for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
+
             // ToDo Support Team Exercises
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId() == studentResult.id).collect(Collectors.toList());
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
 
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
-                Optional<Result> relevantResult = getRelevantResult(studentParticipation);
-
-                if (relevantResult.isPresent()) {
-                    Result result = relevantResult.get();
-                    Double achievedPoints = result.getScore() / 100.0 * exercise.getMaxScore();
+                // Relevant Result is already calculated
+                if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+                    Result relevantResult = studentParticipation.getResults().iterator().next();
+                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += achievedPoints;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), result.getScore(), achievedPoints));
+                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
+
                 }
+
             }
 
             if (scores.maxPoints != null) {
@@ -273,7 +257,7 @@ public class ExamService {
         // Updating exerciseGroup information in DTO
         for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
             int noOfFoundResults = 0;
-            Double sumOfPoints = 0.0;
+            double sumOfPoints = 0.0;
 
             for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
                 if (studentResult.exerciseGroupIdToExerciseResult.containsKey(exerciseGroup.id)) {
@@ -634,7 +618,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            programmingExerciseScheduleService.unlockAllStudentRepositoriesForExam(programmingExercise).run();
+            instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -662,7 +646,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+            instanceMessageSendService.sendLockAllRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
