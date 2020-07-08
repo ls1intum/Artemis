@@ -21,7 +21,7 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
     @Override
     protected void saveSubmissionToFile(Submission submission, File file) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.write(((ModelingSubmission)submission).getModel()); // TODO: save explanation text
+        writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
         writer.close();
     }
 
