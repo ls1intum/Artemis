@@ -12,8 +12,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
-import io.swagger.models.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +29,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -70,8 +69,8 @@ public class ModelingExerciseResource {
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService,
-            GroupNotificationService groupNotificationService, CompassService compassService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
+            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -379,16 +378,17 @@ public class ModelingExerciseResource {
 
             if (zipFile == null) {
                 return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                    .body(null);
+                        .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                        .body(null);
             }
 
             InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
             return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                "There was an error on the server and the zip file could not be created.")).body(null);
+                    "There was an error on the server and the zip file could not be created.")).body(null);
         }
     }
 }
