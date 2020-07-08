@@ -1,0 +1,128 @@
+<div>
+    <jhi-alert></jhi-alert>
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div *ngIf="!isLoading">
+        <h3 *ngIf="examScoreDTO.title">
+            {{ examScoreDTO.title }}
+        </h3>
+        <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
+            {{ examScoreDTO.maxPoints }} Points achievable
+        </h4>
+        <h4 *ngIf="exerciseGroups && studentResults">
+            <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
+                {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
+            </small>
+            <button (click)="exportToCsv()" class="btn btn-primary btn-sm float-right">
+                <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+                <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
+            </button>
+        </h4>
+
+        <!-- Exercise Groups Statistics Table -->
+        <div class="table-responsive table-bordered table-hover">
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th jhiTranslate="artemisApp.examScores.titleColumn">
+                            Title
+                        </th>
+                        <th jhiTranslate="artemisApp.examScores.containedExercisesColumn">
+                            Contained exercises
+                        </th>
+                        <th jhiTranslate="artemisApp.examScores.averagePointsColumn">
+                            Average points achieved
+                        </th>
+                        <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">
+                            Maximum points achievable
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
+                        <td>{{ exerciseGroup.title }}</td>
+                        <td>
+                            <ul class="list-group list-group-flush">
+                                <li *ngFor="let exerciseTitle of exerciseGroup.containedExercises" class="list-group-item">
+                                    {{ exerciseTitle }}
+                                </li>
+                            </ul>
+                        </td>
+                        <td>{{ exerciseGroup.averagePointsAchieved == null ? '-' : round(exerciseGroup.averagePointsAchieved, 2) }}</td>
+                        <td>{{ exerciseGroup.maxPoints == null ? '-' : exerciseGroup.maxPoints }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Student Result Table -->
+        <div class="table-responsive table-bordered table-hover">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                        <th jhiSortBy="name">
+                            <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="login">
+                            <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="eMail">
+                            <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="registrationNumber">
+                            <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
+                            <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
+                                <span>{{ exerciseGroup.title }}</span>
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                        </ng-container>
+                        <th jhiSortBy="overallPointsAchieved">
+                            <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+
+                        <th jhiSortBy="overallScoreAchieved">
+                            <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let studentResult of studentResults">
+                        <td>{{ studentResult.name }}</td>
+                        <td>{{ studentResult.login }}</td>
+                        <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
+                        <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
+                        <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
+                            <td *ngIf="studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
+                                {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
+                                :
+                                {{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
+
+                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }}
+                                %)
+                            </td>
+                            <ng-template #empty>
+                                <td>
+                                    -
+                                </td>
+                            </ng-template>
+                        </ng-container>
+                        <td>{{ round(studentResult.overallPointsAchieved, 1) }}</td>
+                        <td>{{ round(studentResult.overallScoreAchieved, 2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

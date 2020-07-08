@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -15,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -29,13 +34,60 @@ public class SubmissionService {
 
     private UserService userService;
 
+    private CourseService courseService;
+
     protected AuthorizationCheckService authCheckService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
+            ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
+        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Check that the user is allowed to make the submission
+     *
+     * @param exercise      the exercise for which a submission should be saved
+     * @param submission    the submission that should be saved
+     * @param currentUser   the current user with groups and authorities
+     * @param <T>           The type of the return type of the requesting route so that the
+     *                      response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
+        // Fetch course from database to make sure client didn't change groups
+        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+            return Optional.of(forbidden());
+        }
+
+        // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
+        // user of the participation is the same as the user who executes this call (or student in the team).
+        // This prevents injecting submissions to other users.
+        if (submission.getId() != null) {
+            Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
+            if (existingSubmission.isEmpty()) {
+                return Optional.of(forbidden());
+            }
+
+            StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
+            if (participation != null) {
+                Optional<User> user = participation.getStudent();
+                if (user.isPresent() && !user.get().equals(currentUser)) {
+                    return Optional.of(forbidden());
+                }
+
+                Optional<Team> team = participation.getTeam();
+                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
+                    return Optional.of(forbidden());
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -52,6 +104,26 @@ public class SubmissionService {
     }
 
     /**
+     * Get the number of simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return number of locked submissions for the current user in the given course
+     */
+    public long countSubmissionLocks(long courseId) {
+        return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+    }
+
+    /**
+     * Get simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return number of locked submissions for the current user in the given course
+     */
+    public List<Submission> getLockedSubmissions(long courseId) {
+        return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+    }
+
+    /**
      * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *
@@ -64,23 +136,31 @@ public class SubmissionService {
     }
 
     /**
-     * Count number of submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    public long countSubmissionsForCourse(long courseId) {
+    public long countInTimeSubmissionsForCourse(long courseId) {
         return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
+     */
+    public long countLateSubmissionsForCourse(long courseId) {
+        return submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
     }
 
     /**
      * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
-     *         exercise due date at all
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    public long countSubmissionsForExercise(long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    public DueDateStat countSubmissionsForExercise(long exerciseId) {
+        return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 
     /**
@@ -172,5 +252,28 @@ public class SubmissionService {
                 participation.setSubmissions(Set.of());
             }
         });
+    }
+
+    /**
+     * Filters the submissions to contain only in-time submissions if there are any.
+     * If not, the original list is returned.
+     * @param submissions The submissions to filter
+     * @param dueDate The due-date to filter by
+     * @return The filtered list of submissions
+     */
+    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+        if (dueDate == null) {
+            // this is an edge case, then basically all submissions are before due date
+            return submissions;
+        }
+
+        boolean hasInTimeSubmissions = submissions.stream().anyMatch(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate));
+        if (hasInTimeSubmissions) {
+            return submissions.stream().filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate))
+                    .collect(Collectors.toList());
+        }
+        else {
+            return submissions;
+        }
     }
 }

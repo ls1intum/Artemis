@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -231,8 +226,10 @@ public class Result implements Serializable {
      * @param score new score
      */
     public void setScore(Long score) {
-        this.score = score;
-        this.successful = score == 100L;
+        if (score != null) {
+            this.score = score;
+            this.successful = score == 100L;
+        }
     }
 
     /**
@@ -477,13 +474,6 @@ public class Result implements Serializable {
         }
     }
 
-    // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
-    public void evaluateFeedback(double maxScore) {
-        double totalScore = calculateTotalScore(maxScore);
-        setScore(totalScore, maxScore);
-        setResultString(totalScore, maxScore);
-    }
-
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
@@ -516,19 +506,5 @@ public class Result implements Serializable {
     public String toString() {
         return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
-    }
-
-    /**
-     * @return sum of every feedback credit rounded to max two numbers after the comma
-     */
-    // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
-    private double calculateTotalScore(double maxScore) {
-        double totalScore = 0.0;
-        for (Feedback feedback : this.feedbacks) {
-            totalScore += feedback.getCredits();
-        }
-        // limit total score to be between 0 and maxScore
-        totalScore = Math.max(Math.min(totalScore, maxScore), 0);
-        return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }

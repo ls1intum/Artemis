@@ -107,4 +107,5 @@ public class ModelingExercise extends Exercise implements Serializable {
         return "ModelingExercise{" + "id=" + getId() + ", maxScore='" + getMaxScore() + "'" + ", diagramType='" + getDiagramType() + "'" + ", sampleSolutionModel='"
                 + getSampleSolutionModel() + "'" + ", sampleSolutionExplanation='" + getSampleSolutionExplanation() + "'" + "}";
     }
+
 }

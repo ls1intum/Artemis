@@ -12,7 +12,7 @@
     <div class="card-footer text-muted" *ngIf="nextRelevantExercise" (click)="startExercise(nextRelevantExercise)">
         <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercise:</h6>
         <h5>{{ nextRelevantExercise.title }}</h5>
-        <h6>{{ nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm' }}</h6>
+        <h6>{{ nextRelevantExercise.dueDate | artemisDate }}</h6>
     </div>
     <div class="card-footer text-muted" *ngIf="!nextRelevantExercise">
         <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>

@@ -117,6 +117,24 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         assertThat(getAllCommits(remoteGit).size()).isEqualTo(1);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCombineTemplateRepositoryCommits_invalidId_notFound() throws Exception {
+        programmingExercise.setId(20L);
+        final var path = ProgrammingExerciseResource.Endpoints.ROOT
+                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.put(path, Void.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        final var path = ProgrammingExerciseResource.Endpoints.ROOT
+                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.put(path, Void.class, HttpStatus.FORBIDDEN);
+    }
+
     public List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
         return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
     }

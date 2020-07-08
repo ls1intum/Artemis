@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -51,7 +50,6 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private participationService: ParticipationService,
         private manualResultService: ProgrammingAssessmentManualResultService,
         private activeModal: NgbActiveModal,
-        private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: AlertService,
         private resultService: ResultService,

@@ -103,7 +103,6 @@ public class ProgrammingSubmissionResource {
             SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
             // Remove unnecessary information from the new submission.
-            submission.getParticipation().setExercise(null);
             submission.getParticipation().setSubmissions(null);
 
             programmingSubmissionService.notifyUserAboutSubmission(submission);
@@ -196,9 +195,13 @@ public class ProgrammingSubmissionResource {
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
         // TODO: If the submission is not the latest but the latest graded submission, this does not work if there have been commits since. To make it work we would have to find
         // the correct build for the given commit hash.
-        Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
-        if (result.isPresent()) {
-            resultService.notifyUserAboutNewResult(result.get(), participationId);
+        Optional<Result> optionalResult = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
+        if (optionalResult.isPresent()) {
+            Result result = optionalResult.get();
+            if (result.getParticipation() == null) {
+                result.setParticipation(participation);
+            }
+            resultService.notifyUserAboutNewResult(result, participation);
             return ResponseEntity.ok().build();
         }
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
@@ -231,6 +234,10 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
+            Exercise exercise = exerciseService.findOne(exerciseId);
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise, null)) {
+                return forbidden();
+            }
             programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
             return ResponseEntity.ok().build();
         }
@@ -296,7 +303,7 @@ public class ProgrammingSubmissionResource {
      * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
      * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
      * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
-     * 
+     *
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)

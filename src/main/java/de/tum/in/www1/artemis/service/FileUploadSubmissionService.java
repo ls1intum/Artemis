@@ -47,8 +47,8 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+            AuthorizationCheckService authCheckService, CourseService courseService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -143,6 +143,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
+
         var submissionWithoutResult = (FileUploadSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
@@ -185,6 +188,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.onDelete();
 
         // update submission properties
+        // NOTE: from now on we always set submitted to true to prevent problems here!
+        fileUploadSubmission.setSubmitted(true);
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
@@ -193,10 +198,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
-
-        if (fileUploadSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-        }
+        participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (fileUploadSubmission.getId() == null) {
             Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
@@ -250,7 +252,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getResult() == null || fileUploadSubmission.getResult().getAssessor() == null) {
-            checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
+            checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
         lockSubmission(fileUploadSubmission);

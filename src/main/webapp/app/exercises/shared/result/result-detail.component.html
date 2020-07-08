@@ -43,7 +43,7 @@
             <dl class="buildoutput dl-horizontal">
                 <ng-container *ngFor="let logEntry of buildLogs; let i = index">
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
+                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate: 'short':true }}</dt>
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"

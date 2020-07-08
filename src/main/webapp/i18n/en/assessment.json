@@ -3,6 +3,7 @@
         "assessment": {
             "assessment": "Assessment",
             "generalFeedback": "General Feedback",
+            "unreferencedFeedback": "Feedback for Missing Elements",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
@@ -54,6 +55,15 @@
                     "showAll": "Show all",
                     "showLocked": "Show locked"
                 }
+            },
+            "locks": {
+                "home": {
+                    "title": "Locked Assessments"
+                },
+                "title": "Assessments locked by you",
+                "exercise": "Exercise",
+                "type": "Type",
+                "empty": "No assessments locked by you!"
             }
         }
     }

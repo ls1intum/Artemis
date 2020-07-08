@@ -203,10 +203,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 catchError(() => of()),
             )
             .subscribe();
-        // TODO: This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
-        setTimeout(() => {
-            this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        });
+        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         return this.fileUpdateSubject.asObservable();
     };
 

@@ -56,8 +56,9 @@ public class TextSubmissionService extends SubmissionService {
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
+            CourseService courseService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -87,10 +88,12 @@ public class TextSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(textSubmission.isExampleSubmission())) {
             textSubmission = save(textSubmission);
         }
         else {
+            // NOTE: from now on we always set submitted to true to prevent problems here!
+            textSubmission.setSubmitted(true);
             textSubmission = save(textSubmission, participation, textExercise, principal);
         }
         return textSubmission;
@@ -123,10 +126,7 @@ public class TextSubmissionService extends SubmissionService {
         }
 
         participation.addSubmissions(textSubmission);
-
-        if (textSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-        }
+        participation.setInitializationState(InitializationState.FINISHED);
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
             Optional<Submission> optionalTextSubmission = savedParticipation.findLatestSubmission();
@@ -190,6 +190,9 @@ public class TextSubmissionService extends SubmissionService {
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, textExercise.getDueDate());
+
         var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
@@ -268,7 +271,7 @@ public class TextSubmissionService extends SubmissionService {
                 continue;
             }
 
-            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
+            if (submittedOnly && !Boolean.TRUE.equals(optionalTextSubmission.get().isSubmitted())) {
                 continue;
             }
 
@@ -290,13 +293,8 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmission;
     }
 
-    public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    public TextSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+    public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
+        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
     }
 }

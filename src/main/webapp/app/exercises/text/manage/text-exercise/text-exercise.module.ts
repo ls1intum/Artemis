@@ -7,7 +7,6 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { textExerciseRoute } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
@@ -17,6 +16,9 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ExerciseRowButtonsComponent } from 'app/exercises/shared/exercise-row-buttons/exercise-row-buttons.component';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -24,7 +26,6 @@ const ENTITY_STATES = [...textExerciseRoute];
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
@@ -34,9 +35,11 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisTeamConfigFormGroupModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
+        ExerciseDetailsModule,
+        ArtemisSharedComponentModule,
     ],
-    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
-    exports: [TextExerciseComponent],
+    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, ExerciseRowButtonsComponent],
+    exports: [TextExerciseComponent, ExerciseRowButtonsComponent],
     entryComponents: [ExternalSubmissionDialogComponent],
 })
 export class ArtemisTextExerciseModule {}

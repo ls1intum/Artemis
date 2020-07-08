@@ -1,0 +1,12 @@
+<h6>
+    <span>Repository Link:</span>
+    <span>
+        <a href="{{ this.participation?.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ this.participation?.repositoryUrl }}</a>
+    </span>
+    <br />
+    <!-- TODO the following code does not work, no commit hash is shown, even after reload -->
+    <!--
+    <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | translate }}:</span>
+    <span [title]="this.submission?.commitHash">{{ (submission?.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | translate) }}</span>
+    -->
+</h6>

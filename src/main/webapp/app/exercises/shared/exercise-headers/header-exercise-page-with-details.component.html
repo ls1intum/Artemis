@@ -6,13 +6,13 @@
                 <ng-content select="[pagetitle]"></ng-content>
             </h3>
             <h4>
-                <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd.MM.yy HH:mm') || 'N/A' }} </span>
+                <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
                 <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
                     {{ exercise.dueDate | amTimeAgo }}
                 </span>
             </h4>
             <h4 *ngIf="exercise.assessmentDueDate">
-                <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd.MM.yy HH:mm') || 'N/A' }} </span>
+                <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
                 <span [ngClass]="exerciseStatusBadge" class="badge">
                     {{ exercise.assessmentDueDate | amTimeAgo }}
                 </span>

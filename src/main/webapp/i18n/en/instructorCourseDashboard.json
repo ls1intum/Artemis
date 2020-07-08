@@ -9,6 +9,7 @@
             "submissions": "Submissions",
             "tutors": "Tutors",
             "assessments": "Assessments",
+            "yourAssessmentLocks": "Locked Assessments",
             "open": "submissions not assessed",
             "openComplaint": "complaints not reviewed",
             "openRequest": "requests not answered",

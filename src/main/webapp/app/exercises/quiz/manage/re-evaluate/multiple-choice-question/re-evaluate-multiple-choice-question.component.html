@@ -63,17 +63,22 @@
     </div>
     <div class="markupEditorArea">
         <div class="question-content" style="padding-bottom: 12px;">
-            <div class="input-group" style="height: 60px;">
-                <ace-editor
-                    #questionEditor
-                    [(text)]="questionEditorText"
-                    [mode]="editorMode"
-                    [autoUpdateContent]="editorAutoUpdate"
-                    style="min-height: 40px; width: 90%; overflow: auto;"
-                    class="form-control"
-                >
-                </ace-editor>
-                <span class="input-group-btn" style="vertical-align: top;">
+            <div class="row">
+                <jhi-markdown-editor
+                    [markdown]="getQuestionText(question)"
+                    [editorMode]="editorMode"
+                    [metaCommands]="[]"
+                    [defaultCommands]="[]"
+                    [headerCommands]="[]"
+                    [domainCommands]="[]"
+                    [colorCommands]="[]"
+                    [showEditButton]="false"
+                    [showPreviewButton]="false"
+                    (markdownChange)="onQuestionChange($event)"
+                    class="editor col"
+                    style="width: 90%;"
+                ></jhi-markdown-editor>
+                <span class="col-auto input-group-btn d-flex align-items-center">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                         <fa-icon [icon]="'undo'"></fa-icon>
                     </button>
@@ -87,14 +92,20 @@
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%;" dnd-sortable-handle>
                     <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
                 </span>
-                <ace-editor
-                    [(text)]="answerEditorText[i]"
-                    [mode]="editorMode"
-                    [autoUpdateContent]="editorAutoUpdate"
-                    style="min-height: 40px; height: 60px; width: 65%; overflow: auto;"
-                    class="form-control"
-                >
-                </ace-editor>
+                <jhi-markdown-editor
+                    [markdown]="generateAnswerMarkdown(answer)"
+                    [editorMode]="editorMode"
+                    [metaCommands]="[]"
+                    [defaultCommands]="[]"
+                    [headerCommands]="[]"
+                    [domainCommands]="[]"
+                    [colorCommands]="[]"
+                    [showEditButton]="false"
+                    [showPreviewButton]="false"
+                    (markdownChange)="onAnswerOptionChange($event, answer)"
+                    class="editor"
+                    style="width: 65%;"
+                ></jhi-markdown-editor>
                 <div class="form-group text-center" style="width: 25%;">
                     <button
                         class="btn btn-outline-secondary"

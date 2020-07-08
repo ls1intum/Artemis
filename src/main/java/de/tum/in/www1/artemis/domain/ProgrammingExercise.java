@@ -27,8 +27,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
  * A ProgrammingExercise.
@@ -48,8 +46,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
 
-    @Column(name = "allow_online_editor")
+    @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
+
+    @Column(name = "allow_offline_ide", table = "programming_exercise_details")
+    private Boolean allowOfflineIde;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
@@ -234,6 +235,19 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
+    public Boolean isAllowOfflineIde() {
+        return allowOfflineIde;
+    }
+
+    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+        return this;
+    }
+
+    public void setAllowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+    }
+
     public String getProjectKey() {
         return this.projectKey;
     }
@@ -252,7 +266,9 @@ public class ProgrammingExercise extends Exercise {
         if (this.projectKey != null) {
             return;
         }
-        this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        // Get course over exerciseGroup for exam programming exercises
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
     /**
@@ -264,7 +280,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Nullable
     @Override
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
                 return submission.getResult().isRated();
@@ -383,10 +399,15 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
+    /**
+     * Returns the project name by concatenating the course short name with the exercise title.
+     *
+     * @return project name of the programming exercise
+     */
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for VC service and CI service
-        return this.getCourse().getShortName() + " " + this.getTitle();
+        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore
@@ -491,25 +512,6 @@ public class ProgrammingExercise extends Exercise {
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
-    }
-
-    /**
-     * Columns for which we allow a pageable search using the {@link ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)} (PageableSearchDTO)}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ProgrammingExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
-
-        private String mappedColumnName;
-
-        ProgrammingExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 
     public boolean getIsLocalSimulation() {

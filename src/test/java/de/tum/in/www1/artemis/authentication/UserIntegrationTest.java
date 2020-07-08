@@ -98,9 +98,9 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student.setLangKey(newLangKey);
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword(newPassword);
-        jiraRequestMockProvider.mockIsGroupAvailable(managedUserVM.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, student.getLogin());
-        jiraRequestMockProvider.mockAddUserToGroup(newGroups);
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(newGroups);
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
@@ -117,7 +117,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
         final var oldPassword = userRepository.findById(student.getId()).get().getPassword();
-        jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
         final var userInDB = userRepository.findById(student.getId()).get();
@@ -140,7 +140,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void updateUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
-        jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
 
@@ -154,8 +154,8 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
-        jiraRequestMockProvider.mockAddUserToGroup(student.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(student.getGroups());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(student.getGroups());
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -175,8 +175,8 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student.setEmail("batman@invalid.tum");
         student.setLogin("batman");
         student.setPassword(null);
-        jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
-        jiraRequestMockProvider.mockAddUserToGroup(student.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(student.getGroups());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(student.getGroups());
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -192,8 +192,8 @@ public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
-        jiraRequestMockProvider.mockAddUserToGroup(student.getGroups());
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(student.getGroups());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(student.getGroups());
 
         request.post("/api/users", newUser, HttpStatus.CREATED);
 

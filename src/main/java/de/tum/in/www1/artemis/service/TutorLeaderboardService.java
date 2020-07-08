@@ -71,7 +71,7 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
-        List<User> tutors = userService.getTutors(exercise.getCourse());
+        List<User> tutors = userService.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());

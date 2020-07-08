@@ -29,12 +29,14 @@ import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/model
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
+    totalScore = 0;
     submission: ModelingSubmission | null;
     model: UMLModel | null;
     modelingExercise: ModelingExercise | null;
     result: Result | null;
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     conflicts: Conflict[] | null;
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
@@ -72,10 +74,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private get feedback(): Feedback[] {
-        if (!this.referencedFeedback) {
-            return [this.generalFeedback];
+        if (Feedback.hasDetailText(this.generalFeedback)) {
+            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+        } else {
+            return [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
-        return [this.generalFeedback, ...this.referencedFeedback];
     }
 
     ngOnInit() {
@@ -108,7 +111,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             (error: HttpErrorResponse) => {
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError();
                 }
@@ -128,10 +131,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError();
                 }
@@ -200,13 +203,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null);
+        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex >= 0) {
             this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
             feedback.splice(generalFeedbackIndex, 1);
         }
 
-        this.referencedFeedback = feedback;
+        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
+        this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
         this.highlightAutomaticFeedback();
@@ -260,12 +264,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onSubmitAssessment() {
         if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
-            const confirm = window.confirm(confirmationMessage);
-            if (confirm) {
+
+            // if the assessment is before the assessment due date, don't show the confirm submission button
+            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+            if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
-                this.highlightMissingFeedback = true;
-                this.highlightElementsWithMissingFeedback();
+                const confirm = window.confirm(confirmationMessage);
+                if (confirm) {
+                    this.submitAssessment();
+                } else {
+                    this.highlightMissingFeedback = true;
+                    this.highlightElementsWithMissingFeedback();
+                }
             }
         } else {
             this.submitAssessment();
@@ -348,13 +359,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
-                this.goToExerciseDashboard();
+                this.navigateBack();
             });
         }
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
-        this.referencedFeedback = feedback;
+        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
         this.validateFeedback();
     }
 
@@ -382,7 +393,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
@@ -406,8 +417,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
+        this.calculateTotalScore();
         if (
             (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
+            (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) &&
             (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
         ) {
             this.assessmentsAreValid = false;
@@ -422,8 +435,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.assessmentsAreValid = true;
     }
 
-    goToExerciseDashboard() {
-        if (this.modelingExercise && this.modelingExercise.course) {
+    navigateBack() {
+        if (this.modelingExercise && this.modelingExercise.teamMode && this.modelingExercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/teams/${teamId}`);
+        } else if (this.modelingExercise && !this.modelingExercise.teamMode && this.modelingExercise.course) {
             this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
@@ -479,5 +495,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
+    }
+    /**
+     * Calculates the total score of the current assessment.
+     * This function originally checked whether the total score is negative
+     * or greater than the max. score, but we decided to remove the restriction
+     * and instead set the score boundaries on the server.
+     */
+    calculateTotalScore() {
+        this.totalScore = (this.feedback || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
     }
 }

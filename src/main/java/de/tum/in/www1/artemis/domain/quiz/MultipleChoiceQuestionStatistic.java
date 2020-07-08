@@ -96,7 +96,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
         AnswerCounter answerCounter = new AnswerCounter();
         answerCounter.setAnswer(answer);
         addAnswerCounters(answerCounter);
-
     }
 
     /**
@@ -108,7 +107,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
      */
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-
         changeStatisticBasedOnResult(submittedAnswer, rated, 1);
     }
 
@@ -121,7 +119,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
      */
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-
         changeStatisticBasedOnResult(submittedAnswer, rated, -1);
     }
 

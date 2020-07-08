@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -10,8 +11,11 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
  * A Complaint.
@@ -52,6 +56,9 @@ public class Complaint implements Serializable {
 
     @ManyToOne
     private User student;
+
+    @ManyToOne
+    private Team team;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -144,22 +151,47 @@ public class Complaint implements Serializable {
         return student;
     }
 
-    public Complaint student(User user) {
-        this.student = user;
+    public Team getTeam() {
+        return team;
+    }
+
+    @JsonIgnore
+    public Participant getParticipant() {
+        return Optional.ofNullable((Participant) student).orElse(team);
+    }
+
+    public Complaint participant(Participant participant) {
+        setParticipant(participant);
         return this;
     }
 
-    public void setStudent(User user) {
-        this.student = user;
+    /**
+     * allows to set the participant independent whether it is a team or user
+     * @param participant either a team or user
+     */
+    public void setParticipant(Participant participant) {
+        if (participant instanceof User) {
+            this.student = (User) participant;
+        }
+        else if (participant instanceof Team) {
+            this.team = (Team) participant;
+        }
+        else if (participant == null) {
+            this.student = null;
+            this.team = null;
+        }
+        else {
+            throw new Error("Unknown participant type");
+        }
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
-     * Removes the student from the complaint, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
-     * the student.
+     * Removes the participant from the complaint, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
+     * the participant.
      */
     public void filterSensitiveInformation() {
-        setStudent(null);
+        setParticipant(null);
     }
 
     @Override

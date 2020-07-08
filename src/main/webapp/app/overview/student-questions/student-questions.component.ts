@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -42,11 +42,11 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         });
         if (this.exercise) {
             // in this case the student questions are preloaded
-            this.studentQuestions = this.exercise.studentQuestions;
+            this.studentQuestions = this.sortStudentQuestionsByVote(this.exercise.studentQuestions);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
         } else {
             // in this case the student questions are preloaded
-            this.studentQuestions = this.lecture.studentQuestions;
+            this.studentQuestions = this.sortStudentQuestionsByVote(this.lecture.studentQuestions);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course);
         }
     }
@@ -88,6 +88,9 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
             case QuestionRowActionName.DELETE:
                 this.deleteQuestionFromList(action.studentQuestion);
                 break;
+            case QuestionRowActionName.VOTE_CHANGE:
+                this.updateQuestionAfterVoteChange(action.studentQuestion);
+                break;
         }
     }
 
@@ -119,5 +122,19 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
             this.studentQuestionText = null;
             this.isEditMode = false;
         });
+    }
+
+    private sortStudentQuestionsByVote(studentQuestions: StudentQuestion[]): StudentQuestion[] {
+        return studentQuestions.sort((a, b) => {
+            return b.votes - a.votes;
+        });
+    }
+
+    private updateQuestionAfterVoteChange(studentQuestion: StudentQuestion): void {
+        const indexToUpdate = this.studentQuestions.findIndex((question) => {
+            return question.id === studentQuestion.id;
+        });
+        this.studentQuestions[indexToUpdate] = studentQuestion;
+        this.studentQuestions = this.sortStudentQuestionsByVote(this.studentQuestions);
     }
 }

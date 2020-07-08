@@ -6,9 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,21 +21,10 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
-
-    @Autowired
-    CourseRepository courseRepo;
-
-    @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    ModelAssessmentConflictRepository conflictRepo;
-
-    @Autowired
-    UserRepository userRepo;
 
     @Autowired
     RequestUtilService request;
@@ -49,9 +36,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     FileUploadSubmissionService fileUploadSubmissionService;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -60,13 +44,18 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     ComplaintRepository complaintRepo;
 
-    private FileUploadExercise fileUploadExercise;
+    @Autowired
+    FileUploadExerciseRepository exerciseRepo;
+
+    private FileUploadExercise afterReleaseFileUploadExercise;
+
+    private Course course;
 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 1);
-        database.addCourseWithTwoFileUploadExercise();
-        fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        course = database.addCourseWithThreeFileUploadExercise();
+        afterReleaseFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
 
     @AfterEach
@@ -75,10 +64,41 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public List<Feedback> exerciseWithSGI() throws Exception {
+        database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
+                afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        return ModelFactory.applySGIonFeedback(receivedFileUploadExercise);
+    }
+
+    @Order(1)
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitFileUploadAssessment_asInstructor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        List<Feedback> feedbacks = exerciseWithSGI();
+
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+                params);
+
+        assertThat(result).as("submitted result found").isNotNull();
+        assertThat(result.isRated()).isTrue();
+        assertThat(result.getResultString()).isEqualTo("3 of 5 points"); // total score 3P because gradingInstructionWithLimit was applied twice but only counts once
+        assertThat(result.getFeedbacks().size()).isEqualTo(4);
+        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testUpdateFileUploadAssessmentAfterComplaint_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result fileUploadAssessment = fileUploadSubmission.getResult();
         Complaint complaint = new Complaint().result(fileUploadAssessment).complaintText("This is not fair");
 
@@ -94,14 +114,14 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(updatedResult.getFeedbacks().size()).isEqualTo(2);
+        assertThat(updatedResult.getFeedbacks().size()).isEqualTo(3);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testSaveFileUploadAssessment_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
 
         Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class, HttpStatus.OK);
 
@@ -114,7 +134,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitFileUploadAssessment_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, "student1");
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
@@ -125,9 +145,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
-
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(result.getFeedbacks().size()).isEqualTo(2);
+        assertThat(result.getFeedbacks().size()).isEqualTo(3);
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
@@ -227,12 +246,12 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     }
 
     private void assessmentDueDatePassed() {
-        database.updateAssessmentDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+        database.updateAssessmentDueDate(afterReleaseFileUploadExercise.getId(), ZonedDateTime.now().minusSeconds(10));
     }
 
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, student, originalAssessor);
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, student, originalAssessor);
         fileUploadSubmission.getResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
         resultRepo.save(fileUploadSubmission.getResult());
         var params = new LinkedMultiValueMap<String, String>();
@@ -243,7 +262,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
-        submission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submission, "student1", "tutor1");
+        submission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, submission, "student1", "tutor1");
         database.addSampleFeedbackToResults(submission.getResult());
         request.put(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
@@ -275,18 +294,18 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getOwnAssessmentAsStudent() throws Exception {
-        FileUploadExercise fileUploadExerciseAfterAssessmentDate = (FileUploadExercise) exerciseRepo.findAll().get(2);
+        FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExerciseAfterAssessmentDate, fileUploadSubmission, "student1", "tutor1");
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
     }
 
     @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void getAssessmentOfOtherStudentAsStudent() throws Exception {
-        FileUploadExercise fileUploadExerciseAfterAssessmentDate = (FileUploadExercise) exerciseRepo.findAll().get(2);
+        FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExerciseAfterAssessmentDate, fileUploadSubmission, "student1", "tutor1");
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
     }
 

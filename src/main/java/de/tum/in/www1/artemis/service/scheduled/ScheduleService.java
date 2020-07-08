@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
@@ -20,15 +22,15 @@ public class ScheduleService {
 
     private ExerciseLifecycleService exerciseLifecycleService;
 
-    private final Map<Tuple<Long, ExerciseLifecycle>, ScheduledFuture> scheduledTasks = new HashMap<>();
+    private final Map<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledTasks = new HashMap<>();
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
     }
 
-    private void addScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle, ScheduledFuture future) {
+    private void addScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<ScheduledFuture<?>> futures) {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
-        scheduledTasks.put(taskId, future);
+        scheduledTasks.put(taskId, futures);
     }
 
     private void removeScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle) {
@@ -45,10 +47,25 @@ public class ScheduleService {
      */
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled for clustering more than once.
+        // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise, lifecycle);
-        ScheduledFuture scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
-        addScheduledTask(exercise, lifecycle, scheduledTask);
+        ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
+        addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
+    }
+
+    /**
+     * Schedule a set of tasks for the given Exercise for the provided ExerciseLifecycle at the given times.
+     *
+     * @param exercise Exercise
+     * @param lifecycle ExerciseLifecycle
+     * @param tasks Runnable tasks to be executed at the associated ZonedDateTimes
+     */
+    void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
+        // check if already scheduled for exercise. if so, cancel.
+        // no exercise should be scheduled more than once.
+        cancelScheduledTaskForLifecycle(exercise, lifecycle);
+        Set<ScheduledFuture<?>> scheduledTasks = exerciseLifecycleService.scheduleMultipleTasks(exercise, lifecycle, tasks);
+        addScheduledTask(exercise, lifecycle, scheduledTasks);
     }
 
     /**
@@ -57,10 +74,10 @@ public class ScheduleService {
      */
     void cancelScheduledTaskForLifecycle(Exercise exercise, ExerciseLifecycle lifecycle) {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
-        ScheduledFuture future = scheduledTasks.get(taskId);
-        if (future != null) {
-            log.debug("Cancelling scheduled task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
-            future.cancel(false);
+        Set<ScheduledFuture<?>> futures = scheduledTasks.get(taskId);
+        if (futures != null) {
+            log.debug("Cancelling scheduled task " + lifecycle + " for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+            futures.forEach(future -> future.cancel(false));
             removeScheduledTask(exercise, lifecycle);
         }
     }

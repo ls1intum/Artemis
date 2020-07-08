@@ -11,9 +11,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { Exercise } from 'app/entities/exercise.model';
 
 const expect = chai.expect;
 describe('ComplaintsComponent', () => {
+    const exercise: Exercise = { id: 1, teamMode: false } as Exercise;
     let comp: ComplaintsComponent;
     let fixture: ComponentFixture<ComplaintsComponent>;
     let debugElement: DebugElement;
@@ -38,6 +40,7 @@ describe('ComplaintsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ComplaintsComponent);
                 comp = fixture.componentInstance;
+                comp.exercise = exercise;
                 debugElement = fixture.debugElement;
             });
     }));

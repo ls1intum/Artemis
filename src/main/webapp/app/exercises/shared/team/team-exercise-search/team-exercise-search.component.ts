@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { combineLatest, Observable, of, Subject, merge } from 'rxjs';
 import { filter, map, switchMap, tap, catchError } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { orderBy } from 'lodash';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-team-exercise-search',
@@ -31,7 +33,7 @@ export class TeamExerciseSearchComponent implements OnInit {
 
     inputDisplayValue: string;
 
-    constructor(private courseService: CourseManagementService) {}
+    constructor(private courseService: CourseManagementService, private translateService: TranslateService) {}
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -49,7 +51,8 @@ export class TeamExerciseSearchComponent implements OnInit {
 
     searchResultFormatter = (exercise: Exercise): string => {
         const { title, releaseDate } = exercise;
-        return title + (releaseDate ? ` (${releaseDate.format('DD.MM.YYYY')})` : '');
+        const date = releaseDate ? releaseDate.format(ArtemisDatePipe.format(this.translateService.currentLang, 'short-date')) : '';
+        return title + (releaseDate ? ` (${date})` : '');
     };
 
     /**

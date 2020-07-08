@@ -5,7 +5,7 @@
                 "title": "Programming Exercises",
                 "createLabel": "Create new Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
-                "importLabel": "Import new Programming Exercise",
+                "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
@@ -32,14 +32,18 @@
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "templateRepositoryUrl": "Template Repository Url",
-            "testRepositoryUrl": "Test Repository Url (optional)",
-            "solutionRepositoryUrl": "Solution Repository Url (optional)",
+            "testRepositoryUrl": "Test Repository Url",
+            "solutionRepositoryUrl": "Solution Repository Url",
             "templateBuildPlanId": "Template Build Plan Id",
-            "solutionBuildPlanId": "Solution Build Plan Id (optional)",
+            "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
+            "onlineEditor": "Online Editor",
+            "allowOfflineIde": "Allow Offline IDE",
+            "offlineIde": "Offline IDE",
+            "participationMode": "Participation Mode",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
@@ -153,17 +157,6 @@
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The after due date has been set to the release date!",
                 "notSet": "not set"
-            },
-            "import": {
-                "attention": "Attention! ",
-                "markdownWarning": "You can edit the problem statement after importing the exercise.",
-                "loading": "Loading...",
-                "table": {
-                    "title": "Title",
-                    "language": "Programming Language",
-                    "course": "Course",
-                    "doImport": "Import"
-                }
             },
             "repositoryIsLocked": {
                 "title": "Your Repository is locked.",

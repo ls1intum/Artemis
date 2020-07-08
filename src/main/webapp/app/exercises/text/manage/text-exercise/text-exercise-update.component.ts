@@ -3,18 +3,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { TextExercise } from '../../../../entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
+import { switchMap, tap } from 'rxjs/operators';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -22,7 +24,10 @@ import { AlertService } from 'app/core/alert/alert.service';
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
+    examCourseId: number;
     checkedFlag: boolean;
+    isExamMode: boolean;
+    isImport = false;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
 
@@ -41,6 +46,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
+        private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
@@ -59,17 +65,72 @@ export class TextExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         this.$window.nativeWindow.scroll(0, 0);
 
+        // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
-            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-                (categoryRes: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                },
-                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-            );
+            if (!!this.textExercise.course) {
+                this.examCourseId = this.textExercise.course.id;
+            } else {
+                this.examCourseId = this.textExercise.exerciseGroup?.exam?.course.id!;
+            }
         });
 
+        this.activatedRoute.url
+            .pipe(
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
+                switchMap(() => this.activatedRoute.params),
+                tap((params) => {
+                    if (!this.isExamMode) {
+                        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+                        if (!!this.textExercise.course) {
+                            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                                (categoryRes: HttpResponse<string[]>) => {
+                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                                },
+                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                            );
+                        } else {
+                            this.courseService.findAllCategoriesOfCourse(this.textExercise.exerciseGroup!.exam!.course.id).subscribe(
+                                (categoryRes: HttpResponse<string[]>) => {
+                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                                },
+                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                            );
+                        }
+                    } else {
+                        // Lock individual mode for exam exercises
+                        this.textExercise.mode = ExerciseMode.INDIVIDUAL;
+                        this.textExercise.teamAssignmentConfig = null;
+                        this.textExercise.teamMode = false;
+                    }
+                    if (this.isImport) {
+                        if (this.isExamMode) {
+                            // The target exerciseId where we want to import into
+                            const exerciseGroupId = params['groupId'];
+                            const courseId = params['courseId'];
+                            const examId = params['examId'];
+
+                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
+                            // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
+                            this.textExercise.course = null;
+                        } else {
+                            // The target course where we want to import into
+                            const targetCourseId = params['courseId'];
+                            this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                            // We reference normal exercises by their course, having both would lead to conflicts on the server
+                            this.textExercise.exerciseGroup = null;
+                        }
+                        // Reset the due dates
+                        this.textExercise.dueDate = null;
+                        this.textExercise.releaseDate = null;
+                        this.textExercise.assessmentDueDate = null;
+                    }
+                }),
+            )
+            .subscribe();
         this.isSaving = false;
         this.notificationText = null;
     }
@@ -99,7 +160,9 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
-        if (this.textExercise.id !== undefined) {
+        if (this.isImport) {
+            this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
+        } else if (this.textExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;

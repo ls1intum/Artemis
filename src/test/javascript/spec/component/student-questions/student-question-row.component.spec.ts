@@ -8,6 +8,8 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +51,7 @@ describe('StudentQuestionRowComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }],
             declarations: [StudentQuestionRowComponent],
         })
             .overrideTemplate(StudentQuestionRowComponent, '')

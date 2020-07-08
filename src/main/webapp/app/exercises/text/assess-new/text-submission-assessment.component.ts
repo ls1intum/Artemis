@@ -15,11 +15,12 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -29,12 +30,14 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 export class TextSubmissionAssessmentComponent implements OnInit {
     private userId: number | null;
     exerciseId: number;
+    courseId: number;
     participation: StudentParticipation | null;
     submission: TextSubmission | null;
     exercise: TextExercise | null;
     result: Result | null;
     generalFeedback: Feedback;
     textBlockRefs: TextBlockRef[];
+    unusedTextBlockRefs: TextBlockRef[] = [];
     complaint: Complaint | null;
     totalScore: number;
 
@@ -50,6 +53,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     noNewSubmissions: boolean;
 
     private cancelConfirmationText: string;
+    unreferencedFeedback: Feedback[] = [];
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -57,14 +61,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private get assessments(): Feedback[] {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback];
+            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
         } else {
-            return this.referencedFeedback;
+            return [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
     }
 
-    private get textBlocks(): TextBlock[] {
-        return this.textBlockRefs.map(({ block }) => block);
+    private get textBlocksWithFeedback(): TextBlock[] {
+        return [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback).map(({ block }) => block);
     }
 
     constructor(
@@ -76,6 +80,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         private assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,
         translateService: TranslateService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
@@ -100,6 +105,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.canOverride = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.courseId = 0;
     }
 
     /**
@@ -129,7 +135,12 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course!);
+        this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
+
+        // case distinction for exam mode
+        const course = this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course!);
+
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
@@ -143,7 +154,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
+                .createUrlTree(['course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
                 .toString();
             this.location.go(newUrl);
         }
@@ -163,7 +174,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -183,7 +194,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -202,9 +213,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService
-                .cancelAssessment(this.exercise.id, this.submission.id)
-                .subscribe(() => this.router.navigate(['course-management', this.exercise?.course?.id, 'exercises', this.exercise?.id, 'tutor-dashboard']));
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
         }
     }
 
@@ -213,7 +222,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        await this.router.navigate(['/course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
@@ -229,7 +238,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocks, complaintResponse, this.submission?.id!).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
             (error: HttpErrorResponse) => {
                 console.error(error);
@@ -239,9 +248,19 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
+    navigateBack() {
+        if (this.exercise && this.exercise.teamMode && this.courseId && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.courseId}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.courseId) {
+            this.router.navigateByUrl(`/course-management/${this.courseId}/exercises/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
+    }
+
     private computeTotalScore() {
-        const credits = this.assessments.map((feedback) => feedback.credits);
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     /**
@@ -249,9 +268,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
+        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
 
         this.computeTotalScore();
     }
@@ -261,7 +281,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        const generalFeedbackIndex = feedbacks.findIndex(({ reference }) => reference == null);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);
@@ -269,15 +290,50 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.generalFeedback = new Feedback();
         }
 
-        const sortedRefs = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks).sort((a, b) => a.block.startIndex - b.block.startIndex);
+        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks);
+    }
+
+    /**
+     * Sorts text block refs by there appearance and cheecks for overlaps or gaps.
+     * Prevent dupliace text when manual and automatic text blocks are present.
+     *
+     * @param matchBlocksWithFeedbacks
+     */
+    private sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[]) {
+        // Sort by start index to process all refs in order
+        const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block.startIndex - b.block.startIndex);
 
         let previousIndex = 0;
         const lastIndex = this.submission?.text?.length || 0;
         for (let i = 0; i <= sortedRefs.length; i++) {
-            const ref: TextBlockRef | undefined = sortedRefs[i];
+            let ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
+
+            // new text block starts before previous one ended (overlap)
             if (previousIndex > nextIndex) {
-                console.error('Overlapping Text Blocks!', ref, previousIndex, nextIndex, sortedRefs);
+                const previousRef = this.textBlockRefs.pop();
+                if (!previousRef) {
+                    console.log('Overlapping Text Blocks with nothing?', previousRef, ref);
+                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.AUTOMATIC)) {
+                    console.log('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
+                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.MANUAL)) {
+                    console.log('Overlapping MANUAL Text Blocks!', previousRef, ref);
+                } else {
+                    // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
+                    switch (TextBlockType.MANUAL) {
+                        case previousRef.block.type:
+                            this.unusedTextBlockRefs.push(ref);
+                            ref = previousRef;
+                            break;
+                        case ref.block.type:
+                            this.unusedTextBlockRefs.push(previousRef);
+                            this.addTextBlockByIndices(previousRef.block.startIndex, nextIndex);
+                            break;
+                    }
+                }
+
+                // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
             } else if (previousIndex < nextIndex) {
                 // There is a gap. We need to add a Text Block in between
                 this.addTextBlockByIndices(previousIndex, nextIndex);
@@ -289,6 +345,20 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 previousIndex = ref.block.endIndex;
             }
         }
+    }
+
+    /**
+     * Invoked by Child @Output when adding/removing text blocks. Recalculating refs to keep order and prevent duplicate text displayed.
+     */
+    public recalculateTextBlockRefs(): void {
+        // This is racing with another @Output, so we wait one loop
+        setTimeout(() => {
+            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback);
+            this.textBlockRefs = [];
+            this.unusedTextBlockRefs = [];
+
+            this.sortAndSetTextBlockRefs(refs);
+        });
     }
 
     private addTextBlockByIndices(startIndex: number, endIndex: number): void {

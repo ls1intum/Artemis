@@ -4,8 +4,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
+import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -16,7 +18,7 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CoursesComponent } from 'app/overview/courses.component';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
@@ -30,6 +32,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,6 +60,7 @@ describe('Courses Component', () => {
                     ArtemisSharedCommonModule,
                     ArtemisSharedPipesModule,
                     ArtemisTestModule,
+                    ArtemisSharedModule,
                     TranslateTestingModule,
                     RouterTestingModule.withRoutes([
                         {
@@ -65,13 +69,22 @@ describe('Courses Component', () => {
                         },
                     ]),
                 ],
-                declarations: [GuidedTourComponent, NavbarComponent, NotificationSidebarComponent, FooterComponent, ActiveMenuDirective, MockHasAnyAuthorityDirective],
+                declarations: [
+                    GuidedTourComponent,
+                    NavbarComponent,
+                    NotificationSidebarComponent,
+                    FooterComponent,
+                    LoadingNotificationComponent,
+                    ActiveMenuDirective,
+                    MockHasAnyAuthorityDirective,
+                ],
                 providers: [
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

@@ -158,7 +158,9 @@
                     ></fa-icon>
                 </div>
                 <div class="form-group" *ngIf="complaintsEnabled">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints">Maximum Number of Complaints</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints">
+                        Maximum amount of complaints per student
+                    </label>
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"
@@ -168,9 +170,21 @@
                     <input required type="number" class="form-control" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                 </div>
                 <div class="form-group" *ngIf="complaintsEnabled">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays"
-                        >Deadline for complaints in days after result date</label
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title" for="field_maxTeamComplaints"
+                        >Maximum amount of complaints per team</label
                     >
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | translate }}"
+                    ></fa-icon>
+                    <input required type="number" class="form-control" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
+                </div>
+                <div class="form-group" *ngIf="complaintsEnabled">
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays">
+                        Deadline for complaints in days after result date
+                    </label>
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"

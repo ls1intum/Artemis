@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.net.MalformedURLException;
 import java.util.LinkedList;
@@ -109,7 +111,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(newlyImported.getNumberOfAssessments()).isNull();
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
-        assertThat(newlyImported.getNumberOfParticipations()).isNull();
+        assertThat(newlyImported.getNumberOfSubmissions()).isNull();
         assertThat(newlyImported.getAttachments()).isNull();
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();
@@ -177,6 +179,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
+        doReturn(null).when(bambooServer).publish(any());
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
         bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
@@ -208,10 +211,10 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         final var search = new PageableSearchDTO<String>();
-        search.setPage(0);
+        search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm("");
-        search.setSortedColumn(ProgrammingExercise.ProgrammingExerciseSearchColumn.ID.name());
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
         search.setSortingOrder(SortingOrder.ASCENDING);
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();

@@ -21,11 +21,14 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
 
     List<QuizExercise> findByCourseId(Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "studentParticipations",
+            "studentParticipations.submissions", "studentParticipations.results" })
+    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndParticipationsById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);

@@ -214,4 +214,35 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         request.delete("/api/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionVotes_asInstructor() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestion.getVotes().equals(1));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void editStudentQuestionVotes_asTA() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", -1, StudentQuestion.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestion.getVotes().equals(-1));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void editStudentQuestionVotes_asStudent() throws Exception {
+        List<StudentQuestion> questions = database.createCourseWithExerciseAndStudentQuestions();
+        StudentQuestion studentQuestion = questions.get(0);
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestion.getVotes().equals(2));
+    }
 }

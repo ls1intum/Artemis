@@ -1,6 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -13,11 +14,13 @@ export enum FeedbackHighlightColor {
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
+    MANUAL_UNREFERENCED = 'MANUAL_UNREFERENCED',
     AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 
 export class Feedback implements BaseEntity {
     public id: number;
+    public gradingInstruction: GradingInstruction | null;
     public text: string | null;
     public detailText: string | null;
     public reference: string | null;

@@ -55,8 +55,8 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
-            // complaints are only enabled when both values are positive
-            this.complaintsEnabled = this.course.maxComplaints > 0 && this.course.maxComplaintTimeDays > 0;
+            // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
+            this.complaintsEnabled = (this.course.maxComplaints > 0 || this.course.maxTeamComplaints > 0) && this.course.maxComplaintTimeDays > 0;
         });
 
         this.profileService
@@ -103,6 +103,9 @@ export class CourseUpdateComponent implements OnInit {
             onlineCourse: new FormControl(this.course.onlineCourse),
             complaintsEnabled: new FormControl(this.complaintsEnabled),
             maxComplaints: new FormControl(this.course.maxComplaints, {
+                validators: [Validators.required, Validators.min(0)],
+            }),
+            maxTeamComplaints: new FormControl(this.course.maxTeamComplaints, {
                 validators: [Validators.required, Validators.min(0)],
             }),
             maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
@@ -263,10 +266,12 @@ export class CourseUpdateComponent implements OnInit {
         if (!this.complaintsEnabled) {
             this.complaintsEnabled = true;
             this.courseForm.controls['maxComplaints'].setValue(3);
+            this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
         } else {
             this.complaintsEnabled = false;
             this.courseForm.controls['maxComplaints'].setValue(0);
+            this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);
         }
     }

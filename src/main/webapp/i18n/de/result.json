@@ -37,7 +37,7 @@
             "studentLogin": "Studenten Login",
             "studentLoginRequired": "Studenten Login ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
-            "studentOverride": "Das Abgabedatum dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnise noch mit einer neuen Lösung überschreiben.",
+            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnise noch mit einer neuen Lösung überschreiben.",
             "addFeedback": "Neues Feedback hinzufügen",
             "deleteFeedback": "Letztes Feedback löschen",
             "feedbackTextRequired": "Feedback Text ist erforderlich.",
@@ -45,7 +45,7 @@
             "graded": "Bewertet",
             "notGraded": "Nicht bewertet",
             "preliminary": "(vorläufig)",
-            "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt.",
+            "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach der Einreichungsfrist werden weitere Tests durchgeführt.",
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis."
         }
     }

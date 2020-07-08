@@ -194,6 +194,7 @@
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
+            "finish": "Finish",
             "import": "Import",
             "to-import": "Import",
             "export": "Export",
@@ -275,7 +276,8 @@
         "course": "Course details",
         "lectures": "Lectures",
         "exercise": "Exercise details",
-        "statistics": "Course statistics"
+        "statistics": "Course statistics",
+        "exams": "Exams"
     },
     "connectionStatus": {
         "connected": "Connected",

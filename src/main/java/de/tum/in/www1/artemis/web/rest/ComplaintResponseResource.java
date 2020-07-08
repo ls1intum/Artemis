@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -104,23 +107,23 @@ public class ComplaintResponseResource {
         var user = userService.getUserWithGroupsAndAuthorities();
         var complaintResponse = optionalComplaintResponse.get();
         // All tutors and higher can see this, and also the students who first open the complaint
-        User originalAuthor = complaintResponse.getComplaint().getStudent();
+        Participant originalAuthor = complaintResponse.getComplaint().getParticipant();
         StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.getComplaint().getResult().getParticipation();
         Exercise exercise = studentParticipation.getExercise();
         var atLeastTA = authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!atLeastTA && originalAuthor.getLogin() != null && !originalAuthor.getLogin().equals(principal.getName())) {
+        if (!atLeastTA && !isOriginalAuthor(principal, originalAuthor)) {
             throw new AccessForbiddenException("Insufficient permission for this complaint response");
         }
 
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            complaintResponse.getComplaint().setStudent(null);
+            complaintResponse.getComplaint().setParticipant(null);
         }
 
         if (!atLeastTA) {
             complaintResponse.setReviewer(null);
         }
 
-        if (originalAuthor.getLogin() != null && originalAuthor.getLogin().equals(principal.getName())) {
+        if (isOriginalAuthor(principal, originalAuthor)) {
             // hide complaint completely if the user is the student who created the complaint
             complaintResponse.setComplaint(null);
         }
@@ -131,5 +134,17 @@ public class ComplaintResponseResource {
             complaintResponse.getComplaint().getResult().setSubmission(null);
         }
         return ResponseUtil.wrapOrNotFound(optionalComplaintResponse);
+    }
+
+    private boolean isOriginalAuthor(Principal principal, Participant originalAuthor) {
+        if (originalAuthor instanceof User) {
+            return Objects.equals(((User) originalAuthor).getLogin(), principal.getName());
+        }
+        else if (originalAuthor instanceof Team) {
+            return ((Team) originalAuthor).hasStudentWithLogin(principal.getName());
+        }
+        else {
+            throw new Error("Unknown Participant type");
+        }
     }
 }

@@ -71,13 +71,12 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
-        this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
-        this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+        this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
+        this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
-
             quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
             this.exercise = quizExercise;
         }

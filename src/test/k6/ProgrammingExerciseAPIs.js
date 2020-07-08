@@ -20,6 +20,7 @@ const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
+let userOffset = parseInt(__ENV.USER_OFFSET);
 let programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
 
 export function setup() {
@@ -30,38 +31,45 @@ export function setup() {
 
     let artemis, exerciseId, course, userId;
 
-    // Create course
-    artemis = login(adminUsername, adminPassword);
+    if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
+        console.log('Creating new course and exercise as no parameters are given');
 
-    course = newCourse(artemis);
+        // Create course
+        artemis = login(adminUsername, adminPassword);
 
-    createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course);
+        course = newCourse(artemis);
 
-    const instructorUsername = baseUsername.replace('USERID', '1');
-    const instructorPassword = basePassword.replace('USERID', '1');
+        createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-    // Login to Artemis
-    artemis = login(instructorUsername, instructorPassword);
+        const instructorUsername = baseUsername.replace('USERID', '1');
+        const instructorPassword = basePassword.replace('USERID', '1');
 
-    // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
-    const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
-    if (timeoutExercise > 0) {
-        console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
-        sleep(timeoutExercise);
+        // Login to Artemis
+        artemis = login(instructorUsername, instructorPassword);
+
+        // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
+        const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
+        if (timeoutExercise > 0) {
+            console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
+            sleep(timeoutExercise);
+        }
+
+        // Create new exercise
+        exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
+
+        // Wait some time for builds to finish and test results to come in
+        sleep(20);
+
+        return { exerciseId: exerciseId, courseId: course.id };
+    } else {
+        console.log('Using existing course and exercise');
+        return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
     }
-
-    // Create new exercise
-    exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
-
-    // Wait some time for builds to finish and test results to come in
-    sleep(20);
-
-    return { exerciseId: exerciseId, courseId: course.id };
 }
 
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
-    const userId = __VU;
+    const userId = parseInt(__VU) + userOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);

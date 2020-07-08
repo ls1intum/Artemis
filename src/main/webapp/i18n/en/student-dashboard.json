@@ -2,8 +2,9 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Your current courses",
-            "exerciseTitle": "Current exercise of \"{{ course }}\" active till {{ date }}:",
+            "exerciseTitle": "Current active exercise of \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise of \"{{ course }}\":",
+            "examTitle": "Current exam of \"{{ course }}\":",
             "cardTitle": "Your current score:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
@@ -27,7 +28,8 @@
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
-                "lectures": "Lectures"
+                "lectures": "Lectures",
+                "exams": "Exams"
             },
             "exerciseList": {
                 "fullScore": "Hide full score",
@@ -37,8 +39,8 @@
                 "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
-                "newFirst": "Newest first",
-                "oldFirst": "Oldest first",
+                "newFirst": "Newest",
+                "oldFirst": "Oldest",
                 "noExercises": "No exercises available for the course.",
                 "notReleased": "Not released",
                 "live": "Live",
@@ -51,7 +53,7 @@
                 "exerciseMissedDeadline": "You have missed the deadline.",
                 "exerciseLateSubmission": "Late submission, waiting for feedback.",
                 "exerciseLateFeedback": "Late submission with feedback.",
-                "quizNotStarted": "The quiz hasn't started yet.",
+                "quizNotStarted": "The quiz is not active.",
                 "userNotStartedQuiz": "You have not started this quiz yet.",
                 "userNotParticipated": "You have not participated in this live quiz.",
                 "userParticipating": "You are currently participating in this quiz.",
@@ -65,6 +67,7 @@
                 "userNotParticipatedShort": "Not participated.",
                 "userParticipatingShort": "Currently participating.",
                 "userSubmittedShort": "Already submitted.",
+                "noDateAssociated": "No date associated",
                 "details": {
                     "courseInformation": "Course Information:",
                     "totalExercises": "Total Exercises:",

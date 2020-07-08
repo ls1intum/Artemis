@@ -1,4 +1,4 @@
-import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Input, OnChanges, OnDestroy, SimpleChanges, Component } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
@@ -20,6 +20,7 @@ import { AlertService } from 'app/core/alert/alert.service';
  * The participation given as input needs to have the results attached as this component checks if there is at least one result.
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
+@Component({ template: '' })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
@@ -39,6 +40,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
+
+    // True if the student triggers. false if an instructor triggers it
+    protected personalParticipation: boolean;
 
     protected constructor(
         protected submissionService: ProgrammingSubmissionService,
@@ -87,7 +91,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personalParticipation)
             .pipe(
                 tap(({ submissionState }) => {
                     switch (submissionState) {
@@ -117,7 +121,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {

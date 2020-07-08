@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -18,6 +18,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -26,14 +27,13 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;
-    readonly JAVA = ProgrammingLanguage.JAVA;
-    readonly PYTHON = ProgrammingLanguage.PYTHON;
-    readonly C = ProgrammingLanguage.C;
+    ProgrammingLanguage = ProgrammingLanguage;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
     submitButtonTitle: string;
     isImport: boolean;
+    isExamMode: boolean;
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
@@ -48,7 +48,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
     maxScorePattern = MAX_SCORE_PATTERN;
-    packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
+    // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
+    // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+    packageNamePattern =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
@@ -66,6 +69,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
+        private exerciseGroupService: ExerciseGroupService,
     ) {}
 
     /**
@@ -104,23 +108,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        const targetCourseId = params['courseId'];
-                        this.isImport = true;
-                        this.courseService.find(targetCourseId).subscribe((res) => (this.programmingExercise.course = res.body!));
-
-                        this.programmingExercise.dueDate = null;
-                        this.programmingExercise.projectKey = null;
-                        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
-                        this.programmingExercise.assessmentDueDate = null;
-                        this.programmingExercise.releaseDate = null;
-                        this.programmingExercise.shortName = '';
-                        this.programmingExercise.title = '';
+                        this.setupProgrammingExerciseForImport(params);
                     } else {
-                        if (params['courseId']) {
+                        if (params['courseId'] && params['examId'] && params['groupId']) {
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                                this.isExamMode = true;
+                                this.programmingExercise.exerciseGroup = res.body!;
+                            });
+                        } else if (params['courseId']) {
                             const courseId = params['courseId'];
                             this.courseService.find(courseId).subscribe((res) => {
-                                const course = res.body!;
-                                this.programmingExercise.course = course;
+                                this.isExamMode = false;
+                                this.programmingExercise.course = res.body!;
                                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
                                     (categoryRes: HttpResponse<string[]>) => {
@@ -155,6 +154,39 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
+    }
+
+    /**
+     * Setups the programming exercise for import. The route determine whether the new exercise will be imported as an exam
+     * or a normal exercise.
+     *
+     * @param params given by ActivatedRoute
+     */
+    private setupProgrammingExerciseForImport(params: Params) {
+        this.isImport = true;
+        // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
+        if (params['courseId'] && params['examId'] && params['groupId']) {
+            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                this.programmingExercise.exerciseGroup = res.body!;
+                // Set course to null if a normal exercise is imported
+                this.programmingExercise.course = null;
+            });
+            this.isExamMode = true;
+        } else if (params['courseId']) {
+            this.courseService.find(params['courseId']).subscribe((res) => {
+                this.programmingExercise.course = res.body!;
+                // Set exerciseGroup to null if an exam exercise is imported
+                this.programmingExercise.exerciseGroup = null;
+            });
+            this.isExamMode = false;
+        }
+        this.programmingExercise.dueDate = null;
+        this.programmingExercise.projectKey = null;
+        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
+        this.programmingExercise.assessmentDueDate = null;
+        this.programmingExercise.releaseDate = null;
+        this.programmingExercise.shortName = '';
+        this.programmingExercise.title = '';
     }
 
     /**

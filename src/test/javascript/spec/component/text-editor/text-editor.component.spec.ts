@@ -30,6 +30,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,6 +65,7 @@ describe('TextEditorComponent', () => {
                 ArtemisTeamSubmissionSyncModule,
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RouterTestingModule.withRoutes([textEditorRoute[0]]),
+                RatingModule,
             ],
             declarations: [
                 TextEditorComponent,

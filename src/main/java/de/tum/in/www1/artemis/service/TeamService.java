@@ -60,6 +60,17 @@ public class TeamService {
     }
 
     /**
+     * Finds latest team instance (i.e. the exercise team that was created last) that a given user belongs to in a course
+     *
+     * @param course Course for which to find the team
+     * @param user Student for which to find the team
+     * @return latest team instance
+     */
+    public Optional<Team> findLatestTeamByCourseAndUser(Course course, User user) {
+        return teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
+    }
+
+    /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
      * @param exercise Exercise for which to return all teams
      * @param teamOwnerId Optional user id by which to filter teams on their owner

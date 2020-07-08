@@ -130,12 +130,12 @@ public class BambooRequestMockProvider {
     public void mockGiveProjectPermissions(ProgrammingExercise exercise) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
 
-        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getInstructorGroupName());
+        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName());
         mockServer.expect(ExpectedCount.once(), requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
-        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
-            final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getTeachingAssistantGroupName());
+        if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
+            final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName());
             mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
                     .andRespond(withStatus(HttpStatus.NO_CONTENT));
         }
@@ -152,7 +152,7 @@ public class BambooRequestMockProvider {
         final var targetPlanName = username.toUpperCase();
         final var targetPlanKey = projectKey + "-" + targetPlanName;
         final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
-        final var buildProjectName = exercise.getCourse().getShortName().toUpperCase() + " " + exercise.getTitle();
+        final var buildProjectName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + exercise.getTitle();
 
         when(planHelper.clonePlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean())).thenReturn("success");
         verifications.add((() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));

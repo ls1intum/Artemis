@@ -1,28 +1,39 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.*;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -37,7 +48,7 @@ public class Course implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    private FileService fileService = new FileService();
+    private transient FileService fileService = new FileService();
 
     @Transient
     private String prevCourseIcon;
@@ -88,6 +99,10 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
+    @Column(name = "max_team_complaints")
+    @JsonView(QuizView.Before.class)
+    private Integer maxTeamComplaints;
+
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
@@ -121,6 +136,11 @@ public class Course implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<TutorGroup> tutorGroups = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<Exam> exams = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -286,6 +306,19 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
+    public Integer getMaxTeamComplaints() {
+        return maxTeamComplaints;
+    }
+
+    public Course maxTeamComplaints(Integer maxTeamComplaints) {
+        this.maxTeamComplaints = maxTeamComplaints;
+        return this;
+    }
+
+    public void setMaxTeamComplaints(Integer maxTeamComplaints) {
+        this.maxTeamComplaints = maxTeamComplaints;
+    }
+
     public Integer getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
     }
@@ -443,6 +476,28 @@ public class Course implements Serializable {
         this.tutorGroups = tutorGroups;
     }
 
+    public Set<Exam> getExams() {
+        return exams;
+    }
+
+    public void setExams(Set<Exam> exams) {
+        this.exams = exams;
+    }
+
+    public void addExam(Exam exam) {
+        this.exams.add(exam);
+        if (exam.getCourse() != this) {
+            exam.setCourse(this);
+        }
+    }
+
+    public void removeExam(Exam exam) {
+        this.exams.remove(exam);
+        if (exam.getCourse() == this) {
+            exam.setCourse(null);
+        }
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /*
@@ -470,7 +525,7 @@ public class Course implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilepath(), getId());
     }
 
     @PostPersist
@@ -484,13 +539,13 @@ public class Course implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilepath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, Constants.COURSE_ICON_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, FilePathService.getCourseIconFilepath(), getId());
     }
 
     @Override
@@ -520,12 +575,6 @@ public class Course implements Serializable {
                 + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
                 + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
                 + ", presentationScore='" + getPresentationScore() + "}";
-    }
-
-    @JsonIgnore
-    public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
-        return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

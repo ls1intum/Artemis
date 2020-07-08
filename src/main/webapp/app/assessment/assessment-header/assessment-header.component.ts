@@ -23,6 +23,7 @@ export class AssessmentHeaderComponent {
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
 
+    @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;

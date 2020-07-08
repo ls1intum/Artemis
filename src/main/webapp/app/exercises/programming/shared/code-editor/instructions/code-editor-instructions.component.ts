@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import Interactable from '@interactjs/core/Interactable';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Subscription } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';

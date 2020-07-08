@@ -9,6 +9,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programmi
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -94,6 +95,32 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
     }
 
+    onRefresh() {
+        if (this.editorState !== EditorState.CLEAN) {
+            const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
+            modal.componentInstance.shouldRefresh.subscribe(() => {
+                this.executeRefresh();
+            });
+        } else {
+            this.executeRefresh();
+        }
+    }
+
+    executeRefresh() {
+        this.editorState = EditorState.REFRESHING;
+        setTimeout(() => {
+            if (this.editorState === EditorState.REFRESHING) {
+                this.editorState = EditorState.UNSAVED_CHANGES;
+                const error = new Error('connectionTimeoutRefresh');
+                this.onError.emit(error.message);
+            }
+        }, 8000);
+        this.repositoryService.pull().subscribe(() => {
+            this.unsavedFiles = {};
+            this.editorState = EditorState.CLEAN;
+        });
+    }
+
     onSave() {
         this.saveChangedFiles()
             .pipe(catchError(() => of()))
@@ -106,6 +133,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      */
     saveChangedFiles(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
+            setTimeout(() => {
+                if (this.editorState === EditorState.SAVING) {
+                    this.editorState = EditorState.UNSAVED_CHANGES;
+                    const error = new Error('connectionTimeoutSave');
+                    this.onError.emit(error.message);
+                }
+            }, 8000);
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles).pipe(

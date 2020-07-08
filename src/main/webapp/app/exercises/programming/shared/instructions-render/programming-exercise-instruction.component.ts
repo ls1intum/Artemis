@@ -32,6 +32,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Input() public participation: Participation;
     @Input() public exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
+    @Input() personalParticipation: boolean;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
@@ -153,7 +154,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
-            catchError(() => []),
+            catchError(() => of([])),
         );
     }
 
@@ -186,7 +187,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;

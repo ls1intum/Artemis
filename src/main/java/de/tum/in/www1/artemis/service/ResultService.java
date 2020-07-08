@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -127,7 +128,7 @@ public class ResultService {
     /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
-     * 
+     *
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
@@ -294,7 +295,7 @@ public class ResultService {
         savedResult = savedResultOpt.get();
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
-        if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
+        if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
@@ -337,8 +338,9 @@ public class ResultService {
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
-    public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+    public DueDateStat countNumberOfAssessments(Long courseId) {
+        return new DueDateStat(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
+                resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
     }
 
     /**
@@ -358,8 +360,9 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public long countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
+                resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
     }
 
     /**
@@ -379,9 +382,9 @@ public class ResultService {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
-                asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
+    public DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat(resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
+                resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
     }
 
     /**
@@ -416,12 +419,12 @@ public class ResultService {
         return objectMapper.writeValueAsString(resultCopy);
     }
 
-    public void notifyUserAboutNewResult(Result result, Long participationId) {
-        notifyNewResult(result, participationId);
+    public void notifyUserAboutNewResult(Result result, Participation participation) {
+        notifyNewResult(result, participation);
     }
 
-    private void notifyNewResult(Result result, Long participationId) {
-        websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
+    private void notifyNewResult(Result result, Participation participation) {
+        websocketMessagingService.broadcastNewResult(participation, result);
     }
 
     /**

@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -47,6 +48,8 @@ public class QuizExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final QuizScheduleService quizScheduleService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final AuthorizationCheckService authCheckService;
@@ -54,12 +57,13 @@ public class QuizExerciseResource {
     private final GroupNotificationService groupNotificationService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            ExerciseService exerciseService, UserService userService) {
+            QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
+        this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -82,21 +86,32 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
-
         // check if quiz is valid
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+
+        // Check that the user is authorized to create the exercise
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
         quizExercise = quizExerciseService.save(quizExercise);
 
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
+        // Only notify students and tutors if the exercise is created for a course
+        if (quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
+        }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -120,17 +135,27 @@ public class QuizExerciseResource {
             return createQuizExercise(quizExercise);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        // check if quiz is valid
+        if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 
-        // check if quiz is valid
-        if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
-        }
+        // Forbid conversion between normal course exercise and exam exercise
+        QuizExercise quizExerciseBeforeUpdate = quizExerciseService.findOne(quizExercise.getId());
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, quizExerciseBeforeUpdate, ENTITY_NAME);
 
         // check if quiz is has already started
         Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
@@ -147,11 +172,11 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-
-        // NOTE: it does not make sense to notify students here!
-        if (notificationText != null) {
+        // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
+        // Only notify students about changes if a regular exercise in a course was updated
+        if (notificationText != null && quizExercise.hasCourse()) {
+            // notify websocket channel of changes to the quiz exercise
+            quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -187,9 +212,19 @@ public class QuizExerciseResource {
     @GetMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+
+        if (quizExercise.hasExerciseGroup()) {
+            // Get the course over the exercise group
+            Course course = quizExercise.getExerciseGroup().getExam().getCourse();
+
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+        else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
@@ -206,11 +241,15 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        if (quizExercise == null) {
+            return notFound();
+        }
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
+        // fetch the quiz exercise again to make sure the latest changes are included
+        return ResponseEntity.ok(quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId()));
     }
 
     /**
@@ -251,13 +290,13 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
 
         // check permissions
-        Course course = quizExercise.getCourse();
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
@@ -270,8 +309,8 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now
-                quizExercise.setReleaseDate(ZonedDateTime.now());
+                // set release date to now, truncated to seconds because the database only stores seconds
+                quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 quizExercise.setIsPlannedToStart(true);
                 groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
                 break;
@@ -308,7 +347,10 @@ public class QuizExerciseResource {
         }
 
         // save quiz exercise
-        quizExercise = quizExerciseRepository.save(quizExercise);
+        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
+        // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
+        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
@@ -325,41 +367,39 @@ public class QuizExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete QuizExercise : {}", quizExerciseId);
-        Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
-        if (quizExercise.isEmpty()) {
+        Optional<QuizExercise> quizExerciseOptional = quizExerciseService.findById(quizExerciseId);
+        if (quizExerciseOptional.isEmpty()) {
             return notFound();
         }
-        Course course = quizExercise.get().getCourse();
+        Course course = quizExerciseOptional.get().getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(quizExercise.get(), course, user);
+        exerciseService.logDeletion(quizExerciseOptional.get(), course, user);
         exerciseService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExerciseOptional.get().getTitle())).build();
     }
 
     /**
-     * PUT /quiz-exercises-re-evaluate : Re-evaluates an existing quizExercise.
-     * <p>
-     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary 2. save changed quizExercise 3. if flag is
-     * set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
+     * PUT /quiz-exercises/:quizExerciseId/re-evaluate : Re-evaluates an existing quizExercise.
      *
+     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
+     * 2. save changed quizExercise
+     * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
+     *
+     * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise the quizExercise to re-evaluate
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
-    @PutMapping("/quiz-exercises-re-evaluate")
+    @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
-        if (quizExercise.getId() == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
-        }
-        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();

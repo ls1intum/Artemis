@@ -38,6 +38,7 @@
             "startAssessment": "Start new assessment",
             "new": "NEW",
             "noSubmissions": "There are currently no submissions for you to grade",
+            "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
             "complaints": "Complaints",
             "noComplaints": "There are no complaints at this moment.",
             "noComplaintsDisplayed": "There are no complaints at this moment (excluding complaints about your own assessment)",
@@ -54,7 +55,11 @@
             "showMoreFeedbackRequests": "Show the request",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
-            "numberOfTotalSubmissions": "Total submissions",
+            "stats": {
+                "intime": "In time",
+                "late": "Late"
+            },
+            "numberOfSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
             "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",

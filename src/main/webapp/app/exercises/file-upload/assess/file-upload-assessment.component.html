@@ -1,6 +1,7 @@
 <jhi-assessment-layout
-    (navigateBack)="goToExerciseDashboard()"
+    (navigateBack)="navigateBack()"
     [isLoading]="isLoading"
+    [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"

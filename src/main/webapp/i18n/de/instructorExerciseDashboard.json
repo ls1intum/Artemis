@@ -6,12 +6,12 @@
             "back": "Zurück",
             "noProblemStatement": "No problem statement available",
             "informationAboutExercise": "Keine Problembeschreibung verfügbar",
-            "exerciseDueDate": "Übung Abgabedatum",
+            "exerciseDueDate": "Einreichungsfrist der Aufgabe",
             "submissions": "Einreichungen",
-            "assessmentDueDate": "Abgabedatum der Bewertung",
+            "assessmentDueDate": "Einreichungsfrist der Bewertung",
             "assessments": "Assessments",
             "open": "offen",
-            "leaderboardTitle": "Tutor Bestenliste für diese Übung"
+            "leaderboardTitle": "Tutor Bestenliste für diese Aufgabe"
         }
     }
 }

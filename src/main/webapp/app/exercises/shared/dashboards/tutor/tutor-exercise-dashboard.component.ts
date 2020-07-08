@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -34,6 +34,7 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -55,15 +56,15 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfSubmissions = 0;
-    numberOfAssessments = 0;
+    numberOfSubmissions = new DueDateStat();
+    numberOfAssessments = new DueDateStat();
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
-    totalAssessmentPercentage = 0;
+    totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
@@ -192,8 +193,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
                 this.getSubmissions();
 
-                // We don't want to assess submissions before the exercise due date
-                if (!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) {
+                // 1. We don't want to assess submissions before the exercise due date
+                // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
+                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode) {
                     this.getSubmissionWithoutAssessment();
                 }
             },
@@ -211,7 +213,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.statsForDashboard = res.body!;
+                this.statsForDashboard = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
@@ -229,9 +231,20 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments / this.numberOfSubmissions) * 100);
-                    this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions) * 100);
+                if (this.numberOfSubmissions.inTime > 0) {
+                    this.totalAssessmentPercentage.inTime = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                } else {
+                    this.totalAssessmentPercentage.inTime = 100;
+                }
+                if (this.numberOfSubmissions.late > 0) {
+                    this.totalAssessmentPercentage.late = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                } else {
+                    this.totalAssessmentPercentage.late = 100;
+                }
+                if (this.numberOfSubmissions.total > 0) {
+                    this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
+                } else {
+                    this.tutorAssessmentPercentage = 100;
                 }
             },
             (response: string) => this.onError(response),
@@ -436,9 +449,13 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Navigates back to the tutor dashboard
+     * Navigates back to the tutor (exam) dashboard
      */
     back() {
-        this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        if (this.exercise?.course) {
+            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        } else {
+            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+        }
     }
 }

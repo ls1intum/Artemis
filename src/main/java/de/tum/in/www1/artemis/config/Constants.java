@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import java.io.File;
 import java.util.regex.Pattern;
 
 /**
@@ -15,24 +14,13 @@ public final class Constants {
 
     public static final String DEFAULT_LANGUAGE = "en";
 
-    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
-
-    public static final String TEMP_FILEPATH = "uploads" + File.separator + "images" + File.separator + "temp" + File.separator;
-
-    public static final String DRAG_AND_DROP_BACKGROUND_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "backgrounds"
-            + File.separator;
-
-    public static final String DRAG_ITEM_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "drag-items" + File.separator;
-
-    public static final String COURSE_ICON_FILEPATH = "uploads" + File.separator + "images" + File.separator + "course" + File.separator + "icons" + File.separator;
-
-    public static final String LECTURE_ATTACHMENT_FILEPATH = "uploads" + File.separator + "attachments" + File.separator + "lecture" + File.separator;
-
-    public static final String FILE_UPLOAD_EXERCISES_FILEPATH = "uploads" + File.separator + "file-upload-exercises" + File.separator;
+    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
+    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
+
+    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
@@ -50,7 +38,9 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
+
+    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -66,6 +56,8 @@ public final class Constants {
     public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
 
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
+
+    public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
 
@@ -90,6 +82,10 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
 
+    public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "The visible date of the exam of the programming exercise has passed. When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
+
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully when the visible date of the exam passed.";
+
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
@@ -109,19 +105,35 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String DELETE_EXAM = "DELETE_EXAM";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
 
+    public static final String DELETE_EXERCISE_GROUP = "DELETE_EXERCISE_GROUP";
+
     public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
+    public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
+
+    public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
+
+    public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
+
+    public static final String HAZELCAST_QUIZ_PREFIX = "quiz-";
+
+    public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
+
+    public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     private Constants() {
     }

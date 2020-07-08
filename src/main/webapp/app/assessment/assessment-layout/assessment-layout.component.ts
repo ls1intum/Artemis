@@ -27,6 +27,7 @@ export class AssessmentLayoutComponent {
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
 
+    @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
@@ -43,4 +44,16 @@ export class AssessmentLayoutComponent {
     @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+
+    /**
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     */
+    get isAllowedToRespond(): boolean {
+        if (this.complaint!.team) {
+            return this.isAssessor;
+        } else {
+            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
+        }
+    }
 }

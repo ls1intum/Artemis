@@ -83,13 +83,13 @@ export class NotificationService {
 
     protected convertDateFromClient(notification: Notification): Notification {
         return Object.assign({}, notification, {
-            notificationDate: notification.notificationDate != null && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
+            notificationDate: notification.notificationDate && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
         });
     }
 
     protected convertDateFromServer(res: HttpResponse<Notification>): HttpResponse<Notification> {
         if (res.body) {
-            res.body.notificationDate = res.body.notificationDate != null ? moment(res.body.notificationDate) : null;
+            res.body.notificationDate = res.body.notificationDate ? moment(res.body.notificationDate) : null;
         }
         return res;
     }
@@ -97,7 +97,7 @@ export class NotificationService {
     protected convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
-                notification.notificationDate = notification.notificationDate != null ? moment(notification.notificationDate) : null;
+                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
             });
         }
         return res;

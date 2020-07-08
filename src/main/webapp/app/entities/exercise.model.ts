@@ -11,6 +11,8 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -81,10 +83,11 @@ export abstract class Exercise implements BaseEntity {
     public studentQuestions: StudentQuestion[];
     public exerciseHints: ExerciseHint[];
     public gradingCriteria: GradingCriterion[];
+    public exerciseGroup: ExerciseGroup | null;
 
     // transient objects which might not be set
-    public numberOfParticipations?: number;
-    public numberOfAssessments?: number;
+    public numberOfSubmissions?: DueDateStat;
+    public numberOfAssessments?: DueDateStat;
     public numberOfComplaints?: number;
     public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;
@@ -131,4 +134,16 @@ export function getIconTooltip(exerciseType: ExerciseType): string {
     };
 
     return tooltips[exerciseType];
+}
+
+/**
+ * Get the course id for an exercise.
+ * The course id is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
+ * @param exercise the exercise for which the course id should be extracted
+ */
+export function getCourseId(exercise: Exercise): number | undefined {
+    if (exercise.course) {
+        return exercise.course.id;
+    }
+    return exercise.exerciseGroup?.exam?.course.id;
 }

@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -63,9 +65,11 @@ public class ModelingSubmissionResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
             ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService) {
+            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -75,6 +79,7 @@ public class ModelingSubmissionResource {
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -90,15 +95,14 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
+        long start = System.currentTimeMillis();
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        modelingSubmissionService.hideDetails(modelingSubmission, user);
-        return ResponseEntity.ok(modelingSubmission);
+        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        long end = System.currentTimeMillis();
+        log.info("createModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        return response;
     }
 
     /**
@@ -114,13 +118,33 @@ public class ModelingSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
+        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        long end = System.currentTimeMillis();
+        log.info("updateModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        return response;
+    }
+
+    @NotNull
+    private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
 
-        // TODO: add one additional check: fetch modelingSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<ModelingSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(modelingExercise, user);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
+        }
+
+        // Prevent multiple submissions (currently only for exam submissions)
+        modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(modelingExercise, modelingSubmission, user);
+
+        // Check if the user is allowed to submit
+        Optional<ResponseEntity<ModelingSubmission>> submissionAllowanceFailure = modelingSubmissionService.checkSubmissionAllowance(modelingExercise, modelingSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
+        }
 
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         modelingSubmissionService.hideDetails(modelingSubmission, user);
@@ -238,7 +262,7 @@ public class ModelingSubmissionResource {
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
@@ -276,7 +300,7 @@ public class ModelingSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         if (compassService.isSupported(modelingExercise)) {
             // ask Compass for optimal submission to assess if diagram type is supported
@@ -387,9 +411,9 @@ public class ModelingSubmissionResource {
     }
 
     private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
-        final Course course = courseService.findOne(exercise.getCourse().getId());
+        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
 }

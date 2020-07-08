@@ -60,9 +60,9 @@ public class ModelingAssessmentService extends AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
-        // feedback credits)
-        return resultRepository.save(result);
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, exercise, calculatedScore);
+        // return resultRepository.save(result);
     }
 
     /**
@@ -80,7 +80,6 @@ public class ModelingAssessmentService extends AssessmentService {
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
-        checkGeneralFeedback(modelingAssessment);
 
         result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());

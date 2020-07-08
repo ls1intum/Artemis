@@ -1,12 +1,13 @@
-import { EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { EventEmitter, Input, OnDestroy, OnInit, Output, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 
+@Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;

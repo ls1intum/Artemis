@@ -8,7 +8,12 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,22 +27,53 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExamService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.NotificationService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TutorDashboardService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -71,6 +107,8 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExamService examService;
+
     private final ExerciseService exerciseService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
@@ -95,7 +133,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final TutorDashboardService tutorDashboardService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -104,15 +142,16 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
+            ExamService examService, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, SubmissionService submissionService,
+            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
+            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
+        this.examService = examService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
@@ -126,10 +165,10 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -211,9 +250,8 @@ public class CourseResource {
     /**
      * PUT /courses : Updates an existing updatedCourse.
      *
-     * @param updatedCourse the updatedCourse to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse, or with status 400 (Bad Request) if the updatedCourse is not valid, or with status
-     * 500 (Internal Server Error) if the updatedCourse couldn't be updated
+     * @param updatedCourse the course to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated course
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
@@ -233,8 +271,8 @@ public class CourseResource {
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        // only allow admins or instructors of the existing updatedCourse to change it
-        // this is important, otherwise someone could put himself into the instructor group of the updated Course
+        // only allow admins or instructors of the existing course to change it
+        // this is important, otherwise someone could put himself into the instructor group of the updated course
         if (!authCheckService.isAtLeastInstructorInCourse(existingCourse.get(), user)) {
             return forbidden();
         }
@@ -303,6 +341,10 @@ public class CourseResource {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaints(3);
         }
+        if (course.getMaxTeamComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            course.setMaxTeamComplaints(3);
+        }
         if (course.getMaxComplaintTimeDays() == null) {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaintTimeDays(7);
@@ -310,14 +352,17 @@ public class CourseResource {
         if (course.getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
+        if (course.getMaxTeamComplaints() < 0) {
+            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
+        }
         if (course.getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() == 0 && course.getMaxComplaints() != 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() == 0 && (course.getMaxComplaints() != 0 || course.getMaxTeamComplaints() != 0)) {
+            throw new BadRequestAlertException("If complaints are allowed, the complaint time in days must be positive.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
+        if (course.getMaxComplaintTimeDays() != 0 && (course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0)) {
+            throw new BadRequestAlertException("If no complaints are allowed, the complaint time in days should be set to zero.", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
     }
 
@@ -345,7 +390,7 @@ public class CourseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
                     .body(null);
         }
-        if (course.isRegistrationEnabled() != Boolean.TRUE) {
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
@@ -457,7 +502,7 @@ public class CourseResource {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
+                exerciseService.filterForCourseDashboard(exercise, participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -482,9 +527,7 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
-
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
-
         return courses;
     }
 
@@ -500,43 +543,16 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
-            }
-            else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-            }
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-
-            exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            exercise.setNumberOfParticipations(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-                        return emptyTutorParticipation;
-                    });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-        }
+        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -555,22 +571,26 @@ public class CourseResource {
 
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
-        stats.setNumberOfSubmissions(numberOfSubmissions);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
-        stats.setNumberOfAssessments(numberOfAssessments);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
+
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
@@ -590,7 +610,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -609,7 +629,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
@@ -634,29 +654,64 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
+
+            DueDateStat numberOfSubmissions;
+            DueDateStat numberOfAssessments;
+
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             }
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfParticipations(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
+     */
+    @GetMapping("/courses/{courseId}/lockedSubmissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get all locked submissions for course : {}", courseId);
+        long start = System.currentTimeMillis();
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
+
+        for (Submission submission : submissions) {
+            submissionService.hideDetails(submission, user);
+        }
+
+        long end = System.currentTimeMillis();
+        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        return ResponseEntity.ok(submissions);
     }
 
     /**
@@ -676,7 +731,7 @@ public class CourseResource {
         final long start = System.currentTimeMillis();
         final Course course = courseService.findOne(courseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -696,10 +751,15 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
+
+        final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long startT = System.currentTimeMillis();
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
@@ -709,10 +769,6 @@ public class CourseResource {
 
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
-    }
-
-    private boolean userHasPermission(Course course, User user) {
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
     }
 
     /**
@@ -730,13 +786,14 @@ public class CourseResource {
         if (course == null) {
             return notFound();
         }
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
-        }
 
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
+
+        for (Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId(), false, false);
+        }
 
         for (Lecture lecture : course.getLectures()) {
             lectureService.delete(lecture);
@@ -757,6 +814,18 @@ public class CourseResource {
         }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        }
+
+        // delete the Exams
+        List<Exam> exams = examService.findAllByCourseId(courseId);
+        for (Exam exam : exams) {
+            exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(exam.getId());
+            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.delete(exercise.getId(), false, false);
+                }
+            }
+            examService.delete(exam.getId());
         }
 
         courseService.delete(courseId);

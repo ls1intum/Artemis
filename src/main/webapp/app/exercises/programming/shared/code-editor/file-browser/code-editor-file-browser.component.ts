@@ -4,7 +4,7 @@ import { Observable, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
-import Interactable from '@interactjs/core/Interactable';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { textFileExtensions } from './text-files.json';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -145,7 +145,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+        if (
+            (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState !== EditorState.REFRESHING)
+        ) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;
@@ -174,6 +177,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 tap((files) => {
                     this.isLoadingFiles = false;
                     this.repositoryFiles = files;
+                    this.unsavedFiles = [];
                     this.setupTreeview();
                 }),
             )

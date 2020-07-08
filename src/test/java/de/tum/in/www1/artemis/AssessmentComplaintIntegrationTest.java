@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -59,6 +60,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Autowired
     ObjectMapper mapper;
 
+    @Autowired
+    AssessmentService assessmentService;
+
     private ModelingExercise modelingExercise;
 
     private ModelingSubmission modelingSubmission;
@@ -74,7 +78,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        // Initialize with 5 max complaints and 2 weeks max complaint deadline
+        // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         saveModelingSubmissionAndAssessment();
@@ -120,7 +124,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 5, ComplaintType.COMPLAINT);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -181,7 +185,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         request.post("/api/complaint-responses", complaintResponse, HttpStatus.CREATED);
-        assertThat(complaintResponse.getComplaint().getStudent()).isNull();
+        assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -239,7 +243,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student2")
     public void getComplaintByResultId_studentAndNotOwner_forbidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
@@ -259,19 +263,19 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1")
     public void getComplaintByResultid_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
-        assertThat(received.getStudent()).as("Tutors should not see the student of a complaint").isNull();
+        assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsForTutor_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -284,12 +288,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsByCourseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/courses/" + modelingExercise.getCourse().getId() + "/complaints", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK, Complaint.class,
+                params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
@@ -297,7 +302,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsForTutorDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -307,7 +312,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
             assertThat(participation.getStudent()).as("No student information").isNull();
-            assertThat(compl.getStudent()).as("No student information").isNull();
+            assertThat(compl.getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
             assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
         });
@@ -316,7 +321,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
@@ -331,7 +336,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1")
     public void getComplaintResponseByComplaintId_sensitiveDataHiddenForTutor() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
@@ -340,7 +345,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
 
         Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
-        assertThat(receivedComplaint.getStudent()).as("student is not set").isNull();
+        assertThat(receivedComplaint.getParticipant()).as("student is not set").isNull();
         assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
         assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
         assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
@@ -349,7 +354,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1")
     public void getComplaintResponseByComplaintId_sensitiveDataHiddenForInstructor() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
@@ -359,7 +364,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
 
         Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
-        assertThat(receivedComplaint.getStudent()).as("student is set").isNotNull();
+        assertThat(receivedComplaint.getParticipant()).as("student is set").isNotNull();
         assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
         assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
         assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
@@ -368,7 +373,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student2")
     public void getComplaintResponseByComplaintId_studentNotOriginalAuthor_forbidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
@@ -384,7 +389,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
-        String coursesUrl = "/api/courses/" + modelingExercise.getCourse().getId() + "/complaints";
+        String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
         List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
@@ -422,8 +427,15 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
-        storedFeedbackResult.evaluateFeedback(20);
-        sentFeedbackResult.evaluateFeedback(20);
+        Double calculatedScore = assessmentService.calculateTotalScore(storedFeedback);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 20.0);
+        storedFeedbackResult.setScore(totalScore, 20.0);
+        storedFeedbackResult.setResultString(totalScore, 20.0);
+
+        Double calculatedScore2 = assessmentService.calculateTotalScore(sentFeedback);
+        double totalScore2 = assessmentService.calculateTotalScore(calculatedScore2, 20.0);
+        sentFeedbackResult.setScore(totalScore2, 20.0);
+        sentFeedbackResult.setResultString(totalScore2, 20.0);
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> {
             assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(FeedbackType.MANUAL);
@@ -463,9 +475,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(exercise.getNumberOfAssessments()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfComplaints()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfMoreFeedbackRequests()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getNumberOfParticipations()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getNumberOfSubmissions()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getProblemStatement()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getCourse()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getAssessmentDueDate()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
@@ -488,7 +500,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     }
 
     private void checkIfNoStudentInformationPresent(Complaint receivedComplaint) {
-        assertThat(receivedComplaint.getStudent()).as("Student should not be contained").isNull();
+        assertThat(receivedComplaint.getParticipant()).as("Student should not be contained").isNull();
         assertThat(receivedComplaint.getResultBeforeComplaint()).as("No old result info").isNull();
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
@@ -500,7 +512,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -514,9 +526,10 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getNumberOfAllowedComplaintsInCourse() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints", HttpStatus.OK,
+                Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
         // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }
@@ -524,7 +537,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getMoreFeedbackRequestsForTutorDashboard() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin("student1"));
         moreFeedbackRequest.setAccepted(true);
         complaintRepo.save(moreFeedbackRequest);
 
@@ -535,7 +548,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
             assertThat(participation.getStudent()).as("No student information").isEmpty();
-            assertThat(compl.getStudent()).as("No student information").isNull();
+            assertThat(compl.getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
             assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
         });

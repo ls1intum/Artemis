@@ -8,13 +8,13 @@
                 <div class="col-6">
                     <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
                     <dd>
-                        <span>{{ lecture.startDate | date: 'dd.MM.yy HH:mm' }}</span>
+                        <span>{{ lecture.startDate | artemisDate }}</span>
                     </dd>
                 </div>
                 <div class="col-6">
                     <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
                     <dd>
-                        <span>{{ lecture.endDate | date: 'dd.MM.yy HH:mm' }}</span>
+                        <span>{{ lecture.endDate | artemisDate }}</span>
                     </dd>
                 </div>
             </div>
@@ -65,8 +65,8 @@
                                             <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | translate }}
                                         </a>
                                     </td>
-                                    <td>{{ attachment.releaseDate | date: 'dd.MM.yy HH:mm' }}</td>
-                                    <td>{{ attachment.uploadDate | date: 'dd.MM.yy HH:mm' }}</td>
+                                    <td>{{ attachment.releaseDate | artemisDate }}</td>
+                                    <td>{{ attachment.uploadDate | artemisDate }}</td>
                                     <td>
                                         {{ attachment.version }}
                                     </td>

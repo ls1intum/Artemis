@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -34,7 +33,6 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         private participationService: ParticipationService,
         private externalSubmissionService: ExternalSubmissionService,
         private activeModal: NgbActiveModal,
-        private datePipe: DatePipe,
         private eventManager: JhiEventManager,
     ) {}
 

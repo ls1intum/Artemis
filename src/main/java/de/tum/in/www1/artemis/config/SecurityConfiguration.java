@@ -92,15 +92,25 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
         // @formatter:off
-        web.ignoring().antMatchers(HttpMethod.OPTIONS, "/**").antMatchers("/app/**/*.{js,html}").antMatchers("/i18n/**").antMatchers("/content/**").antMatchers("/test/**");
-        web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
-        web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
-        web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
-        web.ignoring().antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
+        web.ignoring()
+            .antMatchers(HttpMethod.OPTIONS, "/**")
+            .antMatchers("/app/**/*.{js,html}")
+            .antMatchers("/i18n/**")
+            .antMatchers("/content/**")
+            .antMatchers("/test/**");
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
+        web.ignoring()
+            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        // @formatter:off
         http
             .csrf()
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())

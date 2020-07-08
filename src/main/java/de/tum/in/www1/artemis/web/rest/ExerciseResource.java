@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -99,20 +101,40 @@ public class ExerciseResource {
     @GetMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+
+        // Exam exercise
+        if (exercise.hasExerciseGroup()) {
+
+            if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                // instructors and admins should always be able to see exam exercises
+                // continue
+            }
+            else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                // tutors should only be able to see exam exercises when the exercise has finished
+                // TODO: we should rather take the max end date of the exam
+                if (exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                    // When there is no due date or the due date is in the future, we return forbidden here
+                    return forbidden();
+                }
+            }
+        }
+        // Normal exercise
+        else {
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                return forbidden();
+            }
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                exercise.filterSensitiveInformation();
+            }
+        }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            exercise.filterSensitiveInformation();
-        }
-
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
@@ -187,20 +209,22 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions;
+        DueDateStat numberOfSubmissions;
+        DueDateStat numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
+            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
+            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
-        stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
@@ -304,6 +328,13 @@ public class ExerciseResource {
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+
+        // TODO: Create alternative route so that instructors and admins can access the exercise details
+        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();

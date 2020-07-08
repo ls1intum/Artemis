@@ -8,7 +8,6 @@ import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-sele
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
@@ -37,12 +36,12 @@ import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/mod
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(courseManagementState),
-        SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
         ImageCropperModule,
@@ -71,6 +70,7 @@ import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
 })

@@ -25,6 +25,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -81,6 +82,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
         private fileService: FileService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -131,10 +133,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
@@ -152,7 +154,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
                 (error: HttpErrorResponse) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.goToExerciseDashboard();
+                        this.navigateBack();
                     } else {
                         this.onError('');
                     }
@@ -345,7 +347,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 .cancelAssessment(this.submission.id)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 });
         }
     }
@@ -371,8 +373,12 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             },
         );
     }
-    goToExerciseDashboard() {
-        if (this.exercise && this.exercise.course) {
+
+    navigateBack() {
+        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
             this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
@@ -413,8 +419,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
-
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     downloadFile(filePath: string) {

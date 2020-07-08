@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col-8">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
             <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
@@ -10,7 +10,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
+                    <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
                 </div>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>

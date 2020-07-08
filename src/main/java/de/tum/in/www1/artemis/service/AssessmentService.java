@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -30,7 +31,7 @@ public class AssessmentService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ResultService resultService;
+    protected final ResultService resultService;
 
     private final SubmissionRepository submissionRepository;
 
@@ -88,8 +89,9 @@ public class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         if (!(exercise instanceof ProgrammingExercise)) {
-            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
-            originalResult.evaluateFeedback(exercise.getMaxScore());
+            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here
+            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedScore);
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
@@ -109,16 +111,15 @@ public class AssessmentService {
      * @return true of the the given user can override a potentially existing result
      */
     public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        // if the assessor is null, the user is allowed to save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
+            return isAllowedToBeAssessor || isAtLeastInstructor;
         }
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
         var assessmentDueDate = exercise.getAssessmentDueDate();
-        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
     /**
@@ -144,34 +145,77 @@ public class AssessmentService {
      * @return The example result, which is linked to the submission
      */
     public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
-        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+        return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
-     * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
-     *
-     * @param assessment the assessment to check
+     * Returns whether a user is allowed to be the assessor of an existing result
+     * @param result Result for which to check if the user can be the assessor
+     * @param exercise Exercise to which the result belongs to
+     * @param user User for whom to check if they can be the assessor of the given result
+     * @return true if the user is allowed to be the assessor, false otherwise
      */
-    void checkGeneralFeedback(List<Feedback> assessment) {
-        final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
-        if (generalFeedbackCount > 1) {
-            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
+        if (exercise.isTeamMode()) {
+            // for team exercises only the team tutor is allowed to be the assessor
+            return ((StudentParticipation) result.getParticipation()).getTeam().orElseThrow().isOwner(user);
+        }
+        else {
+            // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
+            return result.getAssessor() == null || user.equals(result.getAssessor());
         }
     }
 
-    private double calculateTotalScore(Double calculatedScore, Double maxScore) {
+    public double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
 
     /**
      * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The score of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
      * @param assessments the List of Feedback
      * @return the total score
      */
-    protected Double calculateTotalScore(List<Feedback> assessments) {
-        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
+    public Double calculateTotalScore(List<Feedback> assessments) {
+        double totalScore = 0.0;
+
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+        for (Feedback feedback : assessments) {
+            if (feedback.getGradingInstruction() != null) {
+                if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
+                    // We Encountered this grading instruction before
+                    var maxCount = feedback.getGradingInstruction().getUsageCount();
+                    var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
+                    if (maxCount > 0) {
+                        if (encounters >= maxCount) {
+                            // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
+                        }
+                        else {
+                            // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
+                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
+                            totalScore += feedback.getGradingInstruction().getCredits();
+                        }
+                    }
+                    else {
+                        totalScore += feedback.getCredits();
+                    }
+                }
+                else {
+                    // First time encountering the grading instruction
+                    gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
+                    totalScore += feedback.getCredits();
+                }
+            }
+            else {
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
+                totalScore += feedback.getCredits();
+            }
+        }
+        return totalScore;
     }
 }

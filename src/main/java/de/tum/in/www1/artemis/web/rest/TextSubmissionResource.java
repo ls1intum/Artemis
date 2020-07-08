@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -33,13 +32,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -71,15 +64,20 @@ public class TextSubmissionResource {
 
     private final TextSubmissionService textSubmissionService;
 
+    private final TextAssessmentService textAssessmentService;
+
     private final UserService userService;
 
     private final GradingCriterionService gradingCriterionService;
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
+            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
+            ExamSubmissionService examSubmissionService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -89,6 +87,8 @@ public class TextSubmissionResource {
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
         this.textClusteringScheduleService = textClusteringScheduleService;
+        this.textAssessmentService = textAssessmentService;
+        this.examSubmissionService = examSubmissionService;
     }
 
     /**
@@ -127,26 +127,37 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
+
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        long start = System.currentTimeMillis();
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
 
-        // fetch course from database to make sure client didn't change groups
-        final Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
         }
 
-        // TODO: add one additional check: fetch textSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // Prevent multiple submissions (currently only for exam submissions)
+        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
+
+        // Check if the user is allowed to submit
+        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
+        }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         this.textSubmissionService.hideDetails(textSubmission, user);
+        long end = System.currentTimeMillis();
+        log.info("handleTextSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -227,9 +238,8 @@ public class TextSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -248,11 +258,12 @@ public class TextSubmissionResource {
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
@@ -267,6 +278,9 @@ public class TextSubmissionResource {
             }
             textSubmission = optionalTextSubmission.get();
         }
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
 
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();

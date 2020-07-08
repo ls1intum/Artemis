@@ -40,6 +40,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,6 +54,10 @@ describe('TutorExerciseDashboardComponent', () => {
 
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
+    const stats = {
+        numberOfSubmissions: { inTime: 12, late: 5 },
+        numberOfAssessments: { inTime: 9, late: 1 },
+    } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
     beforeEach(async () => {
@@ -100,7 +105,12 @@ describe('TutorExerciseDashboardComponent', () => {
                             };
                         },
                         getStatsForTutors() {
-                            return of();
+                            return {
+                                subscribe: (fn: (value: any) => void) =>
+                                    fn({
+                                        body: stats,
+                                    }),
+                            };
                         },
                     },
                 },
@@ -146,5 +156,15 @@ describe('TutorExerciseDashboardComponent', () => {
         expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmission).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
+    });
+
+    it('should have correct percentages calculated', () => {
+        modelingSubmissionStub.returns(of(submission));
+
+        comp.loadAll();
+
+        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
+        expect(comp.totalAssessmentPercentage.late).to.equal(20);
     });
 });

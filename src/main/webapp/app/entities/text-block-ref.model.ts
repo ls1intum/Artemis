@@ -1,11 +1,13 @@
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 export class TextBlockRef {
     constructor(public block: TextBlock, public feedback?: Feedback) {}
 
     public static new(): TextBlockRef {
-        return new TextBlockRef(new TextBlock());
+        const textBlock = new TextBlock();
+        textBlock.type = TextBlockType.MANUAL;
+        return new TextBlockRef(textBlock);
     }
 
     public initFeedback(): void {

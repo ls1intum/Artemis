@@ -38,6 +38,7 @@
             "startAssessment": "Neue Bewertung starten",
             "new": "NEU",
             "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
+            "startAssessmentFromTeamPages": "Bewertungen für Team-Übungen werden von den Seiten deiner Teams aus gestartet.",
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerden.",
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
@@ -54,7 +55,11 @@
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
-            "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
+            "stats": {
+                "intime": "Zeitgerecht",
+                "late": "Verspätet"
+            },
+            "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",

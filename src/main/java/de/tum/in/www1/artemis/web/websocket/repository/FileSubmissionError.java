@@ -38,12 +38,4 @@ public class FileSubmissionError extends WebsocketError implements Serializable 
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String errorMessage) {
-        this.error = errorMessage;
-    }
 }

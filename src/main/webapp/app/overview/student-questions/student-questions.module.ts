@@ -6,11 +6,12 @@ import { StudentQuestionsComponent } from 'app/overview/student-questions/studen
 import { StudentQuestionRowComponent } from 'app/overview/student-questions/student-question-row/student-question-row.component';
 import { StudentQuestionComponent } from 'app/overview/student-questions/student-question/student-question.component';
 import { StudentQuestionAnswerComponent } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
+import { StudentVotesComponent } from 'app/overview/student-questions/student-votes/student-votes.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownEditorModule],
-    declarations: [StudentQuestionsComponent, StudentQuestionRowComponent, StudentQuestionComponent, StudentQuestionAnswerComponent],
+    declarations: [StudentQuestionsComponent, StudentQuestionRowComponent, StudentQuestionComponent, StudentQuestionAnswerComponent, StudentVotesComponent],
     exports: [StudentQuestionsComponent],
 })
 export class ArtemisStudentQuestionsModule {}

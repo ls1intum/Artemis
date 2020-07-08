@@ -182,14 +182,14 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 indexKeys.push(dateIndex);
                 if (dateValue) {
                     groupedExercises[dateIndex] = {
-                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
+                        start: moment(dateValue).startOf('week'),
+                        end: moment(dateValue).endOf('week'),
                         isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         exercises: [],
                     };
                 } else {
                     groupedExercises[dateIndex] = {
-                        label: `No date associated`,
                         isCollapsed: false,
                         isCurrentWeek: false,
                         exercises: [],
