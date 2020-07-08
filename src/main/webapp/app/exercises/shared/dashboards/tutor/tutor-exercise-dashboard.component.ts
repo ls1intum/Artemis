@@ -68,6 +68,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
+    otherSubmissions: Submission[] = [];
     unassessedSubmission: Submission | null;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
@@ -257,19 +258,21 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
+        // for exam mode we do not need only the tutors own assessments
+        const getOnlyTutorsOwnAssessments = this.exercise.exerciseGroup ? false : true;
         // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: getOnlyTutorsOwnAssessments });
                 break;
             case ExerciseType.MODELING:
-                submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: getOnlyTutorsOwnAssessments });
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: getOnlyTutorsOwnAssessments });
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: getOnlyTutorsOwnAssessments });
                 break;
         }
 
@@ -280,7 +283,22 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                /*
                 this.submissions = submissions.map((submission) => {
+                    submission.participation.submissions = [submission];
+                    return submission;
+                }); */
+                const ownAssessedSubmissions = submissions.filter((submission) => submission.result?.assessor?.id === this.tutor?.id);
+                // todo: rename this.submissions to ownAssessedSubmissions
+                this.submissions = ownAssessedSubmissions.map((submission) => {
+                    submission.participation.submissions = [submission];
+                    return submission;
+                });
+
+                const otherAssessedSubmissions = submissions.filter(
+                    (submission) => submission.result && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
+                );
+                this.otherSubmissions = otherAssessedSubmissions.map((submission) => {
                     submission.participation.submissions = [submission];
                     return submission;
                 });
