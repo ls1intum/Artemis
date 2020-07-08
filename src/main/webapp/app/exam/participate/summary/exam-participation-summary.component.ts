@@ -21,6 +21,9 @@ export class ExamParticipationSummaryComponent {
     @Input()
     studentExam: StudentExam;
 
+    @Input()
+    instructorView = false;
+
     collapsedSubmissionIds: number[] = [];
 
     constructor() {}
@@ -42,8 +45,18 @@ export class ExamParticipationSummaryComponent {
      * @param exercise
      * returns the students submission for the specific exercise
      */
-    getSubmissionForExercise(exercise: Exercise): Submission {
-        return exercise.studentParticipations[0].submissions[0];
+    getSubmissionForExercise(exercise: Exercise): Submission | null {
+        if (
+            exercise &&
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length > 0 &&
+            exercise.studentParticipations[0].submissions &&
+            exercise.studentParticipations[0].submissions.length > 0
+        ) {
+            return exercise.studentParticipations[0].submissions[0];
+        } else {
+            return null;
+        }
     }
 
     /**

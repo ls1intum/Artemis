@@ -20,6 +20,8 @@ export class ModelingExamSummaryComponent implements OnInit {
     constructor() {}
 
     ngOnInit() {
-        this.umlModel = JSON.parse(this.submission.model);
+        if (this.submission) {
+            this.umlModel = JSON.parse(this.submission.model);
+        }
     }
 }

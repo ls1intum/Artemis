@@ -683,20 +683,41 @@ public class DatabaseUtilService {
         var assessmentDueDate = ZonedDateTime.now().plusDays(8);
         ModelFactory.generateExerciseGroup(true, exam);
         ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        exam.setNumberOfExercisesInExam(4);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        var exerciseGroup1 = exam.getExerciseGroups().get(0);
-        var exerciseGroup2 = exam.getExerciseGroups().get(1);
+        var exerciseGroup0 = exam.getExerciseGroups().get(0);
+        var exerciseGroup1 = exam.getExerciseGroups().get(1);
+        var exerciseGroup2 = exam.getExerciseGroups().get(2);
+        var exerciseGroup3 = exam.getExerciseGroups().get(3);
 
-        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
-        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
-        textExercise1 = exerciseRepo.save(textExercise1);
-        textExercise2 = exerciseRepo.save(textExercise2);
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup0);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup0);
+        exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
+        exerciseRepo.save(textExercise1);
+        exerciseRepo.save(textExercise2);
 
-        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup2, startDate, endDate);
-        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup2, startDate, endDate);
-        quizExercise1 = exerciseRepo.save(quizExercise1);
-        quizExercise2 = exerciseRepo.save(quizExercise2);
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1, startDate, endDate);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1, startDate, endDate);
+        exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
+        exerciseRepo.save(quizExercise1);
+        exerciseRepo.save(quizExercise2);
+
+        FileUploadExercise fileUploadExercise1 = ModelFactory.generateFileUploadExerciseForExam(startDate, endDate, endDate.plusDays(5), "pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise2 = ModelFactory.generateFileUploadExerciseForExam(startDate, endDate, endDate.plusDays(5), "pdf", exerciseGroup2);
+        exerciseGroup2.setExercises(Set.of(fileUploadExercise1, fileUploadExercise2));
+        exerciseRepo.save(fileUploadExercise1);
+        exerciseRepo.save(fileUploadExercise2);
+
+        ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(startDate, endDate, endDate.plusDays(5), DiagramType.ClassDiagram, exerciseGroup3);
+        ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(startDate, endDate, endDate.plusDays(5), DiagramType.ClassDiagram, exerciseGroup3);
+        exerciseGroup3.setExercises(Set.of(modelingExercise1, modelingExercise2));
+        exerciseRepo.save(modelingExercise1);
+        exerciseRepo.save(modelingExercise2);
+
+        // Programming exercises need a proper setup for 'prepare exam start' to work
         return exam;
     }
 

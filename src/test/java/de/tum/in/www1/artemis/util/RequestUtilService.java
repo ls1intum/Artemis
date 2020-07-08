@@ -63,10 +63,17 @@ public class RequestUtilService {
     }
 
     public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
+        return post(path, body, expectedStatus, contentType, withLocation, null);
+    }
+
+    public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation, @Nullable HttpHeaders httpHeaders) throws Exception {
         String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
         var requestBuilder = MockMvcRequestBuilders.post(new URI(path)).contentType(contentType);
         if (jsonBody != null) {
             requestBuilder = requestBuilder.content(jsonBody);
+        }
+        if (httpHeaders != null) {
+            requestBuilder = requestBuilder.headers(httpHeaders);
         }
         MvcResult res = mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {

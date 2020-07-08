@@ -289,12 +289,24 @@ public class Exam implements Serializable {
     /**
      * check if students are allowed to see this exam
      *
-     * @return true, if students are allowed to see this exam, otherwise false
+     * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
     public Boolean isVisibleToStudents() {
-        if (visibleDate == null) {  // no visible date means the exercise is visible to students
-            return Boolean.TRUE;
+        if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
+            return null;
         }
         return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if the exam has started
+     *
+     * @return true, if the exam has started, otherwise false, null if this cannot be determined
+     */
+    public Boolean isStarted() {
+        if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
+            return null;
+        }
+        return startDate.isBefore(ZonedDateTime.now());
     }
 }

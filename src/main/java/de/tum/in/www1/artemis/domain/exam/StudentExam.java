@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.persistence.*;
@@ -116,6 +117,19 @@ public class StudentExam implements Serializable {
     public StudentExam removeExercise(ExamSession examSession) {
         this.examSessions.remove(examSession);
         return this;
+    }
+
+    /**
+     * check if the individual student exam has ended (based on the working time)
+     *
+     * @return true if the exam has finished, otherwise false, null if this cannot be determined
+     */
+    public Boolean isEnded() {
+        if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
+            return null;
+        }
+        var individualEndDate = this.getExam().getStartDate().plusSeconds(this.getWorkingTime());
+        return ZonedDateTime.now().isAfter(individualEndDate);
     }
 
     @Override

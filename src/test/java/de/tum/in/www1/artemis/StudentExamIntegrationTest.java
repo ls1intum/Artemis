@@ -70,7 +70,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @AfterEach
-    public void resetDatabase() {
+    public void resetDatabase() throws Exception {
+
+        // change back to instructor user
+        database.changeUser("instructor1");
+        // Clean up to prevent exceptions during reset database
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+
         database.resetDatabase();
     }
 
@@ -117,7 +123,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -145,7 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
             var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
-            assertThat(response.getExercises().size()).isEqualTo(2);
+            assertThat(response.getExercises().size()).isEqualTo(4);
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
             assertThat(textExercise.getStudentParticipations().size()).isEqualTo(1);
@@ -198,7 +203,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0." + studentExam.getId() + ".1");
 
             // TODO: add other exercises, programming, modeling and file upload
-
         }
 
         // change back to instructor user
@@ -245,7 +249,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -276,10 +279,45 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateWorkingTime() throws Exception {
-        Integer newWorkingTime = 180 * 60;
+        int newWorkingTime = 180 * 60;
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        exam1 = examRepository.save(exam1);
         StudentExam result = request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/workingTime",
                 newWorkingTime, StudentExam.class, HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateWorkingTimeInvalid() throws Exception {
+        int newWorkingTime = 0;
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        exam1 = examRepository.save(exam1);
+        request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/workingTime", newWorkingTime,
+                StudentExam.class, HttpStatus.BAD_REQUEST);
+        // working time did not change
+        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
+
+        newWorkingTime = -10;
+        request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/workingTime", newWorkingTime,
+                StudentExam.class, HttpStatus.BAD_REQUEST);
+        // working time did not change
+        studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateWorkingTimeLate() throws Exception {
+        int newWorkingTime = 180 * 60;
+        exam1.setVisibleDate(ZonedDateTime.now());
+        exam1 = examRepository.save(exam1);
+        request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/" + studentExam1.getId() + "/workingTime", newWorkingTime,
+                StudentExam.class, HttpStatus.BAD_REQUEST);
+        // working time did not change
+        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
     }
 }
