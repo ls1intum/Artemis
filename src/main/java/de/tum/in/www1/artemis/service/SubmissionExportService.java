@@ -52,6 +52,7 @@ public abstract class SubmissionExportService {
      * @return a reference to the zipped file
      * @throws IOException
      */
+    @Nullable
     public File exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
@@ -100,6 +101,7 @@ public abstract class SubmissionExportService {
      * @return the zipped file
      * @throws IOException
      */
+    @Nullable
     private File createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -150,11 +152,15 @@ public abstract class SubmissionExportService {
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
+        if (submissionFilePaths.isEmpty())
+            return null;
+
         try {
 
             File parent = zipFilePath.getParent().toFile();
             if (!parent.exists() && !parent.mkdirs()) {
                 log.error("Couldn't create dir: " + parent);
+                return null;
             }
 
             createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
