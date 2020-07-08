@@ -62,8 +62,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     List<Submission> findByParticipationId(long participationId);
 
-
-
     /**
      * @param participationId the participation id we are interested in
      * @param date the latest allowed date

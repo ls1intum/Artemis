@@ -1,15 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Repository;
-
-import javax.annotation.Nullable;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -30,6 +20,17 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
+
 @Repository
 public class TextExerciseExportService {
 
@@ -39,9 +40,7 @@ public class TextExerciseExportService {
 
     private final SubmissionRepository submissionRepository;
 
-    public TextExerciseExportService(
-        TextExerciseRepository textExerciseRepository,
-        SubmissionRepository submissionRepository) {
+    public TextExerciseExportService(TextExerciseRepository textExerciseRepository, SubmissionRepository submissionRepository) {
         this.textExerciseRepository = textExerciseRepository;
         this.submissionRepository = submissionRepository;
     }
@@ -54,45 +53,43 @@ public class TextExerciseExportService {
         TextExercise textExercise = textExerciseRepository.findById(exerciseId).get();
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
 
-        String zipGroupName = course.getTitle()+"-"+textExercise.getTitle()+"-submissions";
-        String zipFileName = zipGroupName+"-"+ZonedDateTime.now().toString()+".zip";
+        String zipGroupName = course.getTitle() + "-" + textExercise.getTitle() + "-submissions";
+        String zipFileName = zipGroupName + "-" + ZonedDateTime.now().toString() + ".zip";
 
         Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedTextExercises", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedTextExercises", zipFileName);
 
         // Save all Submissions
-        List<Path> submissionFilePaths = participations.stream()
-            .map((participation) -> {
-                Optional<Submission> submission = submissionRepository.findLatestSubmissionByParticipationIdBefore(participation.getId(), lateSubmissionFilter);
+        List<Path> submissionFilePaths = participations.stream().map((participation) -> {
+            Optional<Submission> submission = submissionRepository.findLatestSubmissionByParticipationIdBefore(participation.getId(), lateSubmissionFilter);
 
-                if (submission.isEmpty())
-                    return Optional.<Path>empty();
+            if (submission.isEmpty())
+                return Optional.<Path>empty();
 
-                String submissionFileName = textExercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-"
-                    + submission.get().getId() + ".txt";
-                Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
+            String submissionFileName = textExercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + submission.get().getId() + ".txt";
+            Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
-                try {
+            try {
 
-                    saveSubmissionToFile((TextSubmission)submission.get(), submissionFilePath.toFile());
-                    return Optional.of(submissionFilePath);
+                saveSubmissionToFile((TextSubmission) submission.get(), submissionFilePath.toFile());
+                return Optional.of(submissionFilePath);
 
-                } catch (IOException ioException) {
-                    log.error("Could not create file " + submissionFilePath.toString() + "for exporting: " + ioException.getMessage());
-                    return Optional.<Path>empty();
-                }
+            }
+            catch (IOException ioException) {
+                log.error("Could not create file " + submissionFilePath.toString() + "for exporting: " + ioException.getMessage());
+                return Optional.<Path>empty();
+            }
 
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
+        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         try {
             createZipFile(zipFilePath, submissionFilePaths);
             scheduleForDeletion(zipFilePath, 15);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }
+        finally {
             deleteTempFiles(submissionFilePaths);
         }
 
@@ -104,7 +101,7 @@ public class TextExerciseExportService {
         writer.write(submission.getText());
         writer.close();
     }
-    
+
     /**
      * Create a zipfile of the given paths and save it in the zipFilePath
      *
@@ -151,6 +148,7 @@ public class TextExerciseExportService {
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
+
     /**
      * Schedule the deletion of the given path with a given delay
      *
@@ -171,6 +169,5 @@ public class TextExerciseExportService {
 
         futures.put(path, future);
     }
-
 
 }

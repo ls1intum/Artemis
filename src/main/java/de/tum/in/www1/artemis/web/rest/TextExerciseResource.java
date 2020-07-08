@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -86,8 +86,9 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            TextExerciseExportService textExerciseExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
+            TextExerciseExportService textExerciseExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -492,7 +493,6 @@ public class TextExerciseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((TextExercise) newExercise);
     }
 
-
     /**
      * POST /text-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
@@ -519,29 +519,27 @@ public class TextExerciseResource {
 
         if (submissionExportOptions.isExportAllParticipants()) {
             exportedStudentParticipations = new ArrayList<>(textExercise.getStudentParticipations());
-        } else {
-            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(",")))
-                .stream()
-                .map(String::trim)
-                .map(Long::parseLong)
-                .collect(Collectors.toSet());
+        }
+        else {
+            Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(submissionExportOptions.getParticipantIdentifierList().split(","))).stream().map(String::trim)
+                    .map(Long::parseLong).collect(Collectors.toSet());
 
-            exportedStudentParticipations = textExercise.getStudentParticipations().stream()
-                .filter(participation -> participationIdSet.contains(participation.getId()))
-                .collect(Collectors.toList());
+            exportedStudentParticipations = textExercise.getStudentParticipations().stream().filter(participation -> participationIdSet.contains(participation.getId()))
+                    .collect(Collectors.toList());
         }
 
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                .body(null);
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .body(null);
         }
 
         ZonedDateTime filterLateSubmissionsDate = null;
         if (submissionExportOptions.isFilterLateSubmissions()) {
             if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
                 filterLateSubmissionsDate = textExercise.getDueDate();
-            } else {
+            }
+            else {
                 filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
             }
         }
@@ -549,7 +547,7 @@ public class TextExerciseResource {
         File zipFile = textExerciseExportService.exportStudentSubmissions(exerciseId, exportedStudentParticipations, filterLateSubmissionsDate);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                "There was an error on the server and the zip file could not be created.")).body(null);
+                    "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
