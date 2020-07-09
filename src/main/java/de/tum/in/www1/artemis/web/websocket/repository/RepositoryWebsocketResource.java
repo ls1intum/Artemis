@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -132,9 +133,11 @@ public class RepositoryWebsocketResource {
             return;
         }
 
-        // Apply checks for exam (submission is in time & user's student exam has the exercise)
+        // Apply checks for exam (submission is in time & user's student exam has the exercise).
+        // Checks only apply to StudentParticipation, otherwise template and solution participation can't be edited using the code editor
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation
+                && !examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
