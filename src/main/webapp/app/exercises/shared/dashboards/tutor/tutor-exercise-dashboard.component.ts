@@ -35,6 +35,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import {SortService} from "app/shared/service/sort.service";
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -107,6 +108,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseForGuidedTour: Exercise | null;
 
+    sortPredicate = 'id';
+    reverseOrder = false;
+
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: AlertService,
@@ -123,6 +127,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
+        private sortService: SortService
     ) {}
 
     /**
@@ -474,5 +479,12 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         } else {
             this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
         }
+    }
+
+    /**
+     * Sorts the rows for 2nd correction table
+     */
+    sortRows() {
+        this.sortService.sortByProperty(this.otherAssessedSubmissions, this.sortPredicate, this.reverseOrder);
     }
 }
