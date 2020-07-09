@@ -177,27 +177,30 @@ export class TextAssessmentsService {
     }
 
     /**
-     * Track the change of the Feedback in Athene
+     * Track the change of the Feedback in Athene.
+     *
+     * The routing to athene is done using nginx on the production server.
      *
      * @param submission - The submission object that holds the data that is tracked
      */
     public trackFeedback(submission: TextSubmission | null) {
-        // clone submission and resolve circular json properties
-        const submissionForSending = cloneDeep(submission);
-        submissionForSending!.participation.submissions = [];
-        submissionForSending!.participation.results.map((result) => {
-            result.participation = null;
-            result.submission = null;
-        });
-
-        const sendObject = {
-            textBlocks: submissionForSending?.blocks,
-            participation: submissionForSending?.participation,
-        };
-
         if (submission!.participation?.trackingToken) {
+            // clone submission and resolve circular json properties
+            const submissionForSending = cloneDeep(submission);
+            submissionForSending!.participation.submissions = [];
+            submissionForSending!.participation.results.map((result) => {
+                result.participation = null;
+                result.submission = null;
+            });
+
+            const trackingObject = {
+                textBlocks: submissionForSending?.blocks,
+                participation: submissionForSending?.participation,
+            };
+
+            // The request is directly routed to athene via nginx
             this.http
-                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, sendObject, {
+                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, trackingObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission!.participation.trackingToken },
                 })
                 .subscribe();
