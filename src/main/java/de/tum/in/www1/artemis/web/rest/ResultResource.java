@@ -210,7 +210,7 @@ public class ResultResource {
 
     protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         // If the exercise is an exam exercise, we allow a second correction by the tutor
-        final var secondAssessmentDue = exercise.hasExerciseGroup() && !existingResult.isAssessedTwice();
+        final var secondAssessmentDue = exercise.hasExerciseGroup() && !Boolean.TRUE.equals(existingResult.isAssessedTwice());
         // if the assessor is null, the user is allowed to save / submit / override the existing result
         final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
         if (existingResult.getCompletionDate() == null) {

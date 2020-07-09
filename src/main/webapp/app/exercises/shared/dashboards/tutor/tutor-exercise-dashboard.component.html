@@ -293,10 +293,12 @@
                         </tr>
                         <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0 && !exercise.teamMode">
                             <td></td>
+                            <td *ngIf="!!exercise.exerciseGroup"></td>
                             <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
+                            <td *ngIf="!!exercise.exerciseGroup"></td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
                                 {{ 'artemisApp.tutorExerciseDashboard.languages.' + (unassessedSubmission.language ? unassessedSubmission.language : 'UNKNOWN') | translate }}
                             </td>
