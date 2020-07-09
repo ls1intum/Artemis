@@ -35,7 +35,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
-import {SortService} from "app/shared/service/sort.service";
+import { SortService } from 'app/shared/service/sort.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -127,7 +127,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
-        private sortService: SortService
+        private sortService: SortService,
     ) {}
 
     /**
