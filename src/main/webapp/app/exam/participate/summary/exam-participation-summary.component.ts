@@ -1,8 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseId, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { getIcon } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
@@ -42,9 +41,7 @@ export class ExamParticipationSummaryComponent {
     }
 
     generateLink(exercise: Exercise) {
-        // TODO parse courseId
-        const link = '/courses/11/' + exercise.type + '-exercises/' + exercise.id + '/participate/' + exercise.studentParticipations[0].id;
-        return link;
+        return `/courses/${getCourseId(exercise)}/${exercise.type}-exercises/${exercise.id}/participate/${exercise.studentParticipations[0].id}`;
     }
 
     /**
