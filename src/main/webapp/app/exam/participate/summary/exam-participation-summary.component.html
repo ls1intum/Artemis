@@ -20,7 +20,7 @@
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <!-- TODO change to after publishResultDate -->
-            <div *ngIf="true">
+            <div *ngIf="isPublished">
                 <jhi-result [participation]="exercise.studentParticipations[0]"></jhi-result>
             </div>
             <button
@@ -34,7 +34,7 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise)">
             <!-- TODO add after publishResultDate-->
-            <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING">
+            <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && isPublished">
                 <button class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span>&nbsp;View Result</span>
                 </button>

@@ -3,6 +3,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getCourseId, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -26,6 +27,11 @@ export class ExamParticipationSummaryComponent {
     collapsedSubmissionIds: number[] = [];
 
     constructor() {}
+
+    get isPublished() {
+        // TODO: Change visibleDate to publishDate
+        return this.studentExam.exam.visibleDate && moment(this.studentExam.exam.visibleDate).isBefore(moment());
+    }
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
