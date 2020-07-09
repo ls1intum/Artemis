@@ -167,6 +167,18 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <ngx-datatable-column prop="isAssessedTwice" *ngIf="!!exercise.exerciseGroup" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('isAssessedTwice')">
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.result.assessedTwice' | translate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('isAssessedTwice')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                         <fa-icon [icon]="!!value ? 'check' : 'times'"></fa-icon>
+                    </ng-template>
+                </ngx-datatable-column>
+
                 <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('type')">

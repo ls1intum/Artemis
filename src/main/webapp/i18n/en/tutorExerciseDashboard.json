@@ -34,7 +34,6 @@
             "assessor": "Corrector",
             "status": "Status",
             "score": "Score",
-            "assessedTwice": "Assessed Twice",
             "action": "Action",
             "continueAssessment": "Continue assessment",
             "openAssessment": "Open assessment",
