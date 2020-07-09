@@ -338,30 +338,35 @@
                 </h4>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="otherAssessedSubmissions.length > 0; else noSubmissions">
-                        <thead jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="sortRows.bind(this)">
-                            <tr>
+                        <thead>
+                            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="sortRows.bind(this)">
                                 <th>#</th>
                                 <th jhiSortBy="id">
-                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</a>
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</span>
                                     <fa-icon [icon]="'sort'"></fa-icon>
                                 </th>
-                                <th jhiSortBy="date">
-                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</a>
+                                <th jhiSortBy="submissionDate">
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</span>
                                     <fa-icon [icon]="'sort'"></fa-icon>
                                 </th>
-                                <th jhiSortBy="result">
-                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</a>
+                                <th jhiSortBy="result.score">
+                                    <span class="th-link">{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</span>
                                     <fa-icon [icon]="'sort'"></fa-icon>
                                 </th>
-                                <th jhiSortBy="name">
-                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.assessor' | translate }}</a>
+                                <th jhiSortBy="result.assessor">
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.assessor' | translate }}</span>
                                     <fa-icon [icon]="'sort'"></fa-icon>
                                 </th>
-                                <th jhiSortBy="score">
-                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</a>
+                                <th jhiSortBy="result.score">
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</span>
+                                    <fa-icon [icon]="'sort'"></fa-icon>
                                 </th>
-                                <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
-                                <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
+                                <th *ngIf="exercise.type === ExerciseType.TEXT">
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
