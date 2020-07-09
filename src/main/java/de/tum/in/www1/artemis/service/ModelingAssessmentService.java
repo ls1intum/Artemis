@@ -87,7 +87,7 @@ public class ModelingAssessmentService extends AssessmentService {
         User user = userService.getUser();
         if (isExamExercise) {
             // if we override a assessment by another assessor, with a completion date for an exam exercise, we set the 2nd assessment boolean to true
-            if (result.getCompletionDate() != null && result.getAssessor() != user) {
+            if (result.getCompletionDate() != null && user.equals(result.getAssessor())) {
                 result.setIsAssessedTwice(true);
             }
             else {

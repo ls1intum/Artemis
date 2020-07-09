@@ -196,7 +196,7 @@ public class ResultResource {
 
         // set the second assessment flag if the original result was manual
         if (exercise.hasExerciseGroup()) {
-            if (originalResult.getCompletionDate() != null && originalResult.getAssessor() != user) {
+            if (originalResult.getCompletionDate() != null && user.equals(originalResult.getAssessor())) {
                 updatedResult.setIsAssessedTwice(true);
             }
             else {
