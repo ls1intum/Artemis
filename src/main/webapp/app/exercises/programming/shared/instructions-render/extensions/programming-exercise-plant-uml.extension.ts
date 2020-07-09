@@ -67,20 +67,26 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}"></div>`;
                 // Replace test status markers.
                 const plantUmls = text.match(plantUmlRegex) || [];
-                const replacedText = plantUmls.reduce((acc: string, plantUml: string): string => {
+                // Assign unique ids to uml data structure at the beginning.
+                const plantUmlsIndexed = plantUmls.map((plantUml) => {
+                    const nextIndex = this.plantUmlIndex;
                     this.plantUmlIndex++;
-                    return acc.replace(new RegExp(escapeStringForUseInRegex(plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, this.plantUmlIndex.toString()));
+                    return { id: nextIndex, plantUml };
+                });
+                const replacedText = plantUmlsIndexed.reduce((acc: string, umlIndexed: { id: number; plantUml: string }): string => {
+                    return acc.replace(new RegExp(escapeStringForUseInRegex(umlIndexed.plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, umlIndexed.id.toString()));
                 }, text);
-                const plantUmlsValidated = plantUmls.map((plantUml) =>
-                    plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
+                const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { id: number; plantUml: string }) => {
+                    plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
                         const tests = capture.split(',');
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                         return testCaseState === TestCaseState.SUCCESS ? 'green' : testCaseState === TestCaseState.FAIL ? 'red' : 'grey';
-                    }),
-                );
+                    });
+                    return plantUmlIndexed;
+                });
                 this.injectableElementsFoundSubject.next(() => {
-                    plantUmlsValidated.forEach((plantUml: string, index: number) => {
-                        this.loadAndInjectPlantUml(plantUml, this.plantUmlIndex - plantUmlsValidated.length + index + 1);
+                    plantUmlsValidated.forEach((plantUmlIndexed: { id: number; plantUml: string }) => {
+                        this.loadAndInjectPlantUml(plantUmlIndexed.plantUml, plantUmlIndexed.id);
                     });
                 });
                 return replacedText;
