@@ -16,14 +16,17 @@ import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.BambooService;
+import de.tum.in.www1.artemis.service.connectors.BitbucketService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling" })
+@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling", "athene" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @SpyBean
