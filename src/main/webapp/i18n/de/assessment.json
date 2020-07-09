@@ -10,6 +10,7 @@
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
+            "firstCorrectionBy": "Erstkorrektur von: {{otherUser}}",
             "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
             "button": {

@@ -47,6 +47,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     invalidError: string | null;
     isAssessor = true;
     isAtLeastInstructor = false;
+    isExamMode = false;
     busy = true;
     showResult = true;
     complaint: Complaint;
@@ -166,6 +167,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        this.isExamMode = !!this.exercise.exerciseGroup;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {
             this.getComplaint();

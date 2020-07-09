@@ -8,13 +8,23 @@
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor && !isComplaint"
+            *ngIf="!isAssessor && !isComplaint && !isExamMode"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Assessment locked by: otherUser
+        </span>
+        <span
+            id="secondCorrection"
+            *ngIf="!isAssessor && !isComplaint && isExamMode"
+            class="text-info ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.firstCorrectionBy"
+            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
+        >
+            First correction by: otherUser
         </span>
         <span
             *ngIf="!isAssessor && isComplaint"
@@ -28,7 +38,7 @@
         <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
             You have the lock for this assessment
         </span>
-        <ng-container *ngIf="!result?.completionDate || ">
+        <ng-container *ngIf="!result?.completionDate">
             <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <fa-icon [icon]="'save'"></fa-icon>

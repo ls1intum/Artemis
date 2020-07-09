@@ -47,6 +47,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     cancelBusy: boolean;
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
+    isExamMode = false;
     isAtLeastInstructor: boolean;
     canOverride: boolean;
     assessmentsAreValid: boolean;
@@ -134,6 +135,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
+        this.isExamMode = !!this.exercise.exerciseGroup;
         this.result = this.submission?.result;
         this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
