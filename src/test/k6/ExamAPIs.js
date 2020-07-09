@@ -17,7 +17,8 @@ import {
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
-import { createProgrammingExercise } from './requests/programmingExercise.js';
+import { createProgrammingExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
+import { allSuccessfulContentJava } from './resource/constants_java.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -179,7 +180,8 @@ export default function (data) {
 
                 case 'programming':
                     let simulationParticipation = studentParticipations[0];
-
+                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
+                    simulateSubmission(artemis, simulation, TestResult.SUCCESS);
                     break;
             }
             sleep(1);
