@@ -58,12 +58,6 @@ describe('System Notification Component', () => {
             });
     });
 
-    it('should get identity from account service on init', () => {
-        sinon.spy(accountService, 'identity');
-        systemNotificationComponent.ngOnInit();
-        expect(accountService.identity).to.have.been.calledOnce;
-    });
-
     describe('Load active notification', () => {
         it('should get active system notification with system notification type warning', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
