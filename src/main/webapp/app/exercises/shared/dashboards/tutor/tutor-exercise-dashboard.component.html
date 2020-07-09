@@ -258,7 +258,10 @@
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
                             </td>
                             <td *ngIf="!!exercise.exerciseGroup">
-                                <fa-icon *ngIf="submission.result.isAssessedTwice" [icon]="'check'"></fa-icon>
+                                <fa-icon *ngIf="submission.result.isAssessedTwice; else assessedOnce" [icon]="'check'"></fa-icon>
+                                <ng-template #assessedOnce>
+                                    <fa-icon [icon]="'times'"></fa-icon>
+                                </ng-template>
                             </td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
                                 {{ 'artemisApp.tutorExerciseDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
