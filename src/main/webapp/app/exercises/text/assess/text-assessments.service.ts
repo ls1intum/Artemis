@@ -187,11 +187,11 @@ export class TextAssessmentsService {
         if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
-            delete submissionForSending.participation.submissions;
+            delete submissionForSending.participation?.submissions;
             delete submissionForSending.participation?.exercise?.course;
             delete submissionForSending.participation?.exercise?.exerciseGroup;
             delete submissionForSending.atheneTextAssessmentTrackingToken;
-            submissionForSending.participation.results.forEach((result) => {
+            submissionForSending.participation?.results?.forEach((result) => {
                 delete result.participation;
                 delete result.submission;
             });
@@ -203,7 +203,7 @@ export class TextAssessmentsService {
 
             // The request is directly routed to athene via nginx
             this.http
-                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, trackingObject, {
+                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, trackingObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
                 })
                 .subscribe();
