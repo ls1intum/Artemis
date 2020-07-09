@@ -263,8 +263,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        // for exam mode we do not need only the tutors own assessments
-        const getOnlyTutorsOwnAssessments = this.exercise.exerciseGroup ? false : true;
+        // for exam mode we need all assessments for the second correction, not just the tutors.
+        const getOnlyTutorsOwnAssessments = !this.exercise.exerciseGroup;
         // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
@@ -298,7 +298,11 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 if (!getOnlyTutorsOwnAssessments) {
                     // Get the assessed submissions for all other tutors (needed for 2nd correction of exam exercises)
                     const otherAssessedSubmissions = submissions.filter(
-                        (submission) => this.calculateStatus(submission) === 'DONE' && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
+                        (submission) =>
+                            this.calculateStatus(submission) === 'DONE' &&
+                            submission.result.assessor &&
+                            submission.result.assessor.id !== this.tutor?.id &&
+                            !submission.result.isAssessedTwice,
                     );
                     // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                     this.otherAssessedSubmissions = otherAssessedSubmissions.map((submission) => {
