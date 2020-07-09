@@ -142,7 +142,8 @@
                     "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"
                 }
             },
-            "exam": "Klausur"
+            "exam": "Klausur",
+            "setDatesFromExam": "Set Dates From Exam"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

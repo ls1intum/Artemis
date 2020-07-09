@@ -142,7 +142,8 @@
                     "pattern": "The maximum score must be between 1 and 9999!"
                 }
             },
-            "exam": "Exam"
+            "exam": "Exam",
+            "setDatesFromExam": "Set Dates From Exam"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

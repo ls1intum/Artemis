@@ -210,10 +210,20 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
+
     /**
      * gets the flag of the structured grading instructions slide toggle
      */
     getCheckedFlag(event: boolean) {
         this.checkedFlag = event;
+    }
+
+    setDatesFromExam() {
+        if (this.isExamMode) {
+            const exam = this.textExercise.exerciseGroup?.exam!;
+            this.textExercise.releaseDate = exam.startDate;
+            this.textExercise.dueDate = exam.endDate;
+            this.textExercise.assessmentDueDate = exam.examStudentReviewStart;
+        }
     }
 }

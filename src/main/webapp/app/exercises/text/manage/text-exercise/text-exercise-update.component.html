@@ -33,6 +33,10 @@
             </div>
         </div>
         <jhi-team-config-form-group [exercise]="textExercise"></jhi-team-config-form-group>
+        <hr />
+        <div *ngIf="isExamMode" class="mt-1 mb-1">
+            <button type="button" class="btn btn-outline-primary" (click)="setDatesFromExam()" jhiTranslate="artemisApp.exercise.setDatesFromExam">Get Dates From Exam</button>
+        </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
@@ -64,6 +68,7 @@
             ></jhi-date-time-picker>
             <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
         </div>
+        <hr />
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input
