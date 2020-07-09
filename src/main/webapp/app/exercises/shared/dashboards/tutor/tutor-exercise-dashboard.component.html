@@ -290,6 +290,7 @@
                         </tr>
                         <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0 && !exercise.teamMode">
                             <td></td>
+                            <td *ngIf="!!exercise.exerciseGroup"></td>
                             <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
