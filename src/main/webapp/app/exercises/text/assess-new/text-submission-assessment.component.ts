@@ -149,7 +149,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.computeTotalScore();
         this.isLoading = false;
 
-        // track feedback externally
+        // track feedback in athene
         this.assessmentsService.trackFeedback(this.submission);
     }
 
@@ -176,7 +176,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        // track feedback externally
+        // track feedback in athene
         this.assessmentsService.trackFeedback(this.submission);
 
         this.saveBusy = true;
@@ -199,7 +199,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        // track feedback externally
+        // track feedback in athene
         this.assessmentsService.trackFeedback(this.submission);
 
         this.submitBusy = true;

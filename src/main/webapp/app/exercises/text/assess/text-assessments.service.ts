@@ -111,8 +111,8 @@ export class TextAssessmentsService {
                 // Make sure Feedbacks Array is initialized
                 tap((response) => (response.body!.results[0].feedbacks = response.body!.results[0].feedbacks || [])),
 
-                // Make sure header for feedback is loaded
-                tap((response) => (response.body!.trackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
+                tap((response) => (response.body!.textExerciseTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
                 map((response) => response.body!),
             );
     }
@@ -184,7 +184,7 @@ export class TextAssessmentsService {
      * @param submission - The submission object that holds the data that is tracked
      */
     public trackFeedback(submission: TextSubmission | null) {
-        if (submission!.participation?.trackingToken) {
+        if (submission!.participation?.textExerciseTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
             submissionForSending!.participation.submissions = [];
@@ -201,7 +201,7 @@ export class TextAssessmentsService {
             // The request is directly routed to athene via nginx
             this.http
                 .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, trackingObject, {
-                    headers: { 'X-Athene-Tracking-Authorization': submission!.participation.trackingToken },
+                    headers: { 'X-Athene-Tracking-Authorization': submission!.participation.textExerciseTrackingToken },
                 })
                 .subscribe();
         }

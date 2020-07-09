@@ -52,7 +52,8 @@ export class TextSubmissionService {
             .pipe(
                 tap((response) => (response.body!.participation.submissions = [response.body!])),
                 tap((response) => (response.body!.participation.results = [response.body!.result])),
-                tap((response) => (response.body!.participation.trackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
+                tap((response) => (response.body!.participation.textExerciseTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
                 map((response) => response.body!),
             );
     }
