@@ -187,7 +187,7 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(participationId, updatedResult);
         }
         // get the original result with assessor for permission checks below, otherwise the client could override the assessor and the check would not make any sense
-        Result originalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(updatedResult.getId()).get();
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
         if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
@@ -203,11 +203,6 @@ public class ResultResource {
                 updatedResult.setIsAssessedTwice(false);
             }
         }
-
-        updatedResult.setParticipation(originalResult.getParticipation());
-        updatedResult.setSubmission(originalResult.getSubmission());
-        updatedResult.getParticipation().getResults().add(updatedResult);
-        updatedResult.getSubmission().setResult(updatedResult);
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);

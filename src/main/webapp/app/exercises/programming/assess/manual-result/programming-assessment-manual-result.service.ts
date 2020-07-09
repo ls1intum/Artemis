@@ -6,7 +6,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
-import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
@@ -30,10 +29,8 @@ export class ProgrammingAssessmentManualResultService {
      * Updates an existing manual result in the server
      * @param {number} participationId - Id of the participation
      * @param {Result} result - Updated result to be stored in the server
-     * @param {User} user - The overriding user
      */
-    update(participationId: number, result: Result, user: User): Observable<EntityResponseType> {
-        result.assessor = user;
+    update(participationId: number, result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result) as any;
         // This needs to be removed to avoid a circular serialization issue.
         copy.participation!.results = undefined;
