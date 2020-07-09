@@ -18,4 +18,3 @@ export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
 
 export const ARTEMIS_VERSION_HEADER = 'Content-Version';
-export const ARTEMIS_SERVER_DATE_HEADER = 'Server-Date';
