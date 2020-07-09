@@ -164,39 +164,42 @@ public class ProgrammingExerciseExportService {
      */
     private Repository zipRepositoryForParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
             final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos) throws GitAPIException, InterruptedException, IOException {
-        final var repo = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
-        gitService.resetToOriginMaster(repo); // start with clean state
+        final var repository = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
+        gitService.resetToOriginMaster(repository); // start with clean state
 
         if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
-            filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repo);
+            filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repository);
         }
 
         if (repositoryExportOptions.isAddParticipantName()) {
             log.debug("Adding student or team name to participation {}", participation.toString());
-            addParticipantIdentifierToProjectName(repo, programmingExercise, participation);
+            addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
         }
 
         if (repositoryExportOptions.isCombineStudentCommits()) {
             log.debug("Combining commits for participation {}", participation.toString());
-            gitService.combineAllStudentCommits(repo, programmingExercise);
+            gitService.combineAllStudentCommits(repository, programmingExercise);
         }
 
         if (repositoryExportOptions.isNormalizeCodeStyle()) {
             try {
                 log.debug("Normalizing code style for participation {}", participation.toString());
-                fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
-                fileService.convertToUTF8Directory(repo.getLocalPath().toString());
+                fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
+                fileService.convertToUTF8Directory(repository.getLocalPath().toString());
             }
             catch (Exception ex) {
-                log.warn("Cannot normalize code style in the repo " + repo.getLocalPath() + " due to the following exception: " + ex.getMessage());
+                log.warn("Cannot normalize code style in the repository " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
             }
         }
 
-        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-        Path zippedRepoFile = gitService.zipRepository(repo, REPO_DOWNLOAD_CLONE_PATH);
+        log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
+        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH);
         pathsToZippedRepos.add(zippedRepoFile);
 
-        return repo;
+        // if repository is not closed, it causes weird IO issues when trying to delete the repository again
+        // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+        repository.close();
+        return repository;
     }
 
     /**
@@ -223,18 +226,22 @@ public class ProgrammingExerciseExportService {
      * Deletes the locally checked out repository.
      *
      * @param participation The participation related to the repository
-     * @param repo The repository that should get deleted
+     * @param repository The repository that should get deleted
      */
-    private void deleteTempLocalRepository(ProgrammingExerciseStudentParticipation participation, Repository repo) {
+    private void deleteTempLocalRepository(ProgrammingExerciseStudentParticipation participation, Repository repository) {
         // we do some cleanup here to prevent future errors with file handling
         // We can always delete the repository as it won't be used by the student (separate path)
-        if (repo != null) {
+        if (repository != null) {
             try {
-                log.debug("Delete temporary repository " + repo.getLocalPath().toString());
+                // if repository is not closed, it causes weird IO issues when trying to delete the repository again
+                // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+                repository.close();
+
+                log.debug("Delete temporary repository " + repository.getLocalPath().toString());
                 gitService.deleteLocalRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
             }
             catch (Exception ex) {
-                log.warn("Could not delete temporary repository " + repo.getLocalPath().toString() + ": " + ex.getMessage());
+                log.warn("Could not delete temporary repository " + repository.getLocalPath().toString() + ": " + ex.getMessage());
             }
         }
     }
@@ -281,15 +288,15 @@ public class ProgrammingExerciseExportService {
      * Adds the participant identifier (student login or team short name) of the given student participation to the project name in all .project (Eclipse)
      * and pom.xml (Maven) files found in the given repository.
      *
-     * @param repo The repository for which the student id should get added
+     * @param repository The repository for which the student id should get added
      * @param programmingExercise The checked out exercise in the repository
      * @param participation The student participation for the student/team identifier, which should be added.
      */
-    public void addParticipantIdentifierToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
+    public void addParticipantIdentifierToProjectName(Repository repository, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String participantIdentifier = participation.getParticipantIdentifier();
 
         // Get all files in repository expect .git files
-        List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
+        List<String> allRepoFiles = listAllFilesInPath(repository.getLocalPath());
 
         // is Java programming language
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
@@ -297,22 +304,25 @@ public class ProgrammingExerciseExportService {
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
-                addParticipantIdentifierToEclipseProjectName(repo, participantIdentifier, eclipseProjectFilePath);
+                addParticipantIdentifierToEclipseProjectName(repository, participantIdentifier, eclipseProjectFilePath);
             }
 
             // Filter all pom.xml files
             List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
             for (String pomFilePath : pomFiles) {
-                addParticipantIdentifierToMavenProjectName(repo, participantIdentifier, pomFilePath);
+                addParticipantIdentifierToMavenProjectName(repository, participantIdentifier, pomFilePath);
             }
         }
 
         try {
-            gitService.stageAllChanges(repo);
-            gitService.commit(repo, "Add participant identifier (student login or team short name) to project name");
+            gitService.stageAllChanges(repository);
+            gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+            log.error("Cannot stage or commit to the repository " + repository.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 
