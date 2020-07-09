@@ -60,6 +60,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
+    isExamMode: boolean;
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
@@ -106,7 +107,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             this.loadExercise(exerciseId)
                 .pipe(
                     catchError(() => throwError('exerciseNotFound')),
-                    tap((exercise) => (this.exercise = exercise)),
+                    tap((exercise) => {
+                        this.exercise = exercise;
+                        this.isExamMode = !exercise.course;
+                    }),
                     // Set selected participation
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
