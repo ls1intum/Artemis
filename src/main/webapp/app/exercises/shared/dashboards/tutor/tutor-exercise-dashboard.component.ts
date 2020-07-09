@@ -264,7 +264,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         // for exam mode we need all assessments for the second correction, not just the tutors.
-        const getOnlyTutorsOwnAssessments = !this.exercise.exerciseGroup;
+        const isExamMode = !!this.exercise.exerciseGroup;
+        const getOnlyTutorsOwnAssessments = !isExamMode;
         // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
@@ -295,7 +296,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     return submission;
                 });
 
-                if (!getOnlyTutorsOwnAssessments) {
+                if (isExamMode) {
                     // Get the assessed submissions for all other tutors (needed for 2nd correction of exam exercises)
                     const otherAssessedSubmissions = submissions.filter(
                         (submission) =>

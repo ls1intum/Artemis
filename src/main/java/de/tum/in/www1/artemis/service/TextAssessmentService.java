@@ -60,6 +60,7 @@ public class TextAssessmentService extends AssessmentService {
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
+     * @param isExamExercise flag for exam exercises. Required to handle {@link Result#isAssessedTwice()} flag.
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */
