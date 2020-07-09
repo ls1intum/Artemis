@@ -98,6 +98,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        final var isExamExercise = textExercise.hasExerciseGroup();
         checkTextExerciseForRequest(textExercise, user);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResult_Id(resultId);
@@ -111,7 +112,8 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks());
+
+        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks(), isExamExercise);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {

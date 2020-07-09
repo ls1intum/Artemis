@@ -47,14 +47,16 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment);
+        final var isExamExercise = textExercise.hasExerciseGroup();
+        Result result = saveAssessment(resultId, textAssessment, isExamExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
         return submitResult(result, textExercise, calculatedScore);
     }
 
     /**
-     * This function is used for manually assessed results. It updates the completion date and sets the assessor attribute. Furthermore, it
-     * saves the assessment in the file system the total score is calculated and set in the result.
+     * This function is used for manually assessed results. It updates the completion date and sets the assessor attribute.
+     * In case of exam exercises it also handles the {@link Result#isAssessedTwice()} flag.
+     * Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
@@ -62,7 +64,7 @@ public class TextAssessmentService extends AssessmentService {
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, boolean isExamExercise) throws BadRequestAlertException {
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
                 .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -75,6 +77,16 @@ public class TextAssessmentService extends AssessmentService {
         Result result = desiredResult.orElseGet(Result::new);
 
         User user = userService.getUser();
+        if (isExamExercise) {
+            // if we override a assessment by another assessor, with a completion date for an exam exercise, we set the 2nd assessment boolean to true
+            if (result.getCompletionDate() != null && result.getAssessor() != user) {
+                result.setIsAssessedTwice(true);
+            }
+            else {
+                // Otherwise we set it to false;
+                result.setIsAssessedTwice(false);
+            }
+        }
         result.setAssessor(user);
 
         // TODO: how can the result be connected with the submission, if the result is newly created?
