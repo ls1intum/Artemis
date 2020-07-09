@@ -430,9 +430,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        const isBeforeAssessmentDueDate = !!this.exercise?.assessmentDueDate ? moment().isBefore(this.exercise?.assessmentDueDate!) : true;
+        // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
+        // additionally, tutors are allowed to re-assess exam exercises.
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor || (this.isExamMode && isBeforeAssessmentDueDate);
     }
 
     toggleCollapse($event: any) {

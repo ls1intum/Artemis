@@ -122,10 +122,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         // NOTE: the following line deviates intentionally from other exercises because currently we do not use assessmentDueDate
         // and tutors should be able to override the created results when the assessmentDueDate is not set (also see ResultResource.isAllowedToOverrideExistingResult)
         // TODO: make it consistent with other exercises in the future
-        const isBeforeAssessmentDueDate = this.exercise && (!this.exercise.assessmentDueDate || moment().isBefore(this.exercise.assessmentDueDate));
-        const secondAssessmentDue = !!this.exercise.exerciseGroup && this.result.assessor !== this.user && isBeforeAssessmentDueDate;
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor || secondAssessmentDue;
+        const isBeforeAssessmentDueDate = !!this.exercise?.assessmentDueDate ? moment().isBefore(this.exercise?.assessmentDueDate!) : true;
+        // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
+        // additionally, tutors are allowed to re-assess exam exercises.
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor || (!!this.exercise.exerciseGroup && isBeforeAssessmentDueDate);
     }
 
     /**

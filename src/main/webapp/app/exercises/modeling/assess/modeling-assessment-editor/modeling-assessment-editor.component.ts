@@ -228,9 +228,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.modelingExercise && this.modelingExercise.course
                 ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
                 : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        const isBeforeAssessmentDueDate = !!this.modelingExercise?.assessmentDueDate ? moment().isBefore(this.modelingExercise?.assessmentDueDate!) : true;
+        // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
+        // additionally, tutors are allowed to re-assess exam exercises.
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor || (this.isExamMode && isBeforeAssessmentDueDate);
     }
 
     onError(): void {
