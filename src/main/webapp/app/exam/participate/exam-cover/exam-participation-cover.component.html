@@ -1,5 +1,5 @@
 <div class="container d-flex flex-column align-items-center justify-content-center">
-    <h2 style="text-align: center;">
+    <h2 style="text-align: center;" *ngIf="startView">
         <span>{{ 'artemisApp.examParticipation.greeting' | translate: { title: exam.title, fullName: accountName } }}</span>
     </h2>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
