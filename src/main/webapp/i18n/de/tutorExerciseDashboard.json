@@ -28,8 +28,10 @@
             "assessingExampleSubmission": "Beispielabgabe bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
             "studentsSubmissions": "Abgaben der Studenten",
+            "submissionId": "ID",
             "submissionDate": "Abgabedatum",
             "result": "Ergebnis",
+            "assessor": "Korrektor",
             "status": "Status",
             "score": "Ergebnis",
             "action": "Aktion",
@@ -76,7 +78,8 @@
                 "UNKNOWN": "Unbekannt"
             },
             "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
-            "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an."
+            "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
+            "othersAssessments": "Bewertungen der anderen Korrektoren"
         }
     }
 }
