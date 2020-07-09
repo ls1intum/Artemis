@@ -8,7 +8,7 @@
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor && !isComplaint && !isExamMode"
+            *ngIf="!isAssessor && !isComplaint && isExamMode"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
@@ -18,7 +18,7 @@
         </span>
         <span
             id="secondCorrection"
-            *ngIf="!isAssessor && !isComplaint && isExamMode"
+            *ngIf="!isAssessor && !isComplaint && !isExamMode"
             class="text-info ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.firstCorrectionBy"
