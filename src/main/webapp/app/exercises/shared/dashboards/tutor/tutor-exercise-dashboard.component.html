@@ -238,7 +238,7 @@
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</th>
-                            <th *ngIf="exercise.exerciseGroup">{{ 'artemisApp.tutorExerciseDashboard.assessedTwice' | translate }}</th>
+                            <th *ngIf="!!exercise.exerciseGroup">{{ 'artemisApp.tutorExerciseDashboard.assessedTwice' | translate }}</th>
                             <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
                         </tr>
@@ -257,7 +257,7 @@
                             <td>
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
                             </td>
-                            <td>
+                            <td *ngIf="!!exercise.exerciseGroup">
                                 <fa-icon *ngIf="submission.result.isAssessedTwice" [icon]="'check'"></fa-icon>
                             </td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">

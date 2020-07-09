@@ -196,7 +196,7 @@ public class ResultResource {
 
         // set the second assessment flag if the original result was manual
         if (exercise.hasExerciseGroup()) {
-            if (originalResult.getAssessor() != user) {
+            if (originalResult.getCompletionDate() != null && originalResult.getAssessor() != user) {
                 updatedResult.setIsAssessedTwice(true);
             }
             else {
@@ -222,7 +222,7 @@ public class ResultResource {
         // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
         // and tutors should be able to override the created results when the assessmentDueDate is null
         final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor || secondAssessmentDue && isBeforeAssessmentDueDate;
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor || (secondAssessmentDue && isBeforeAssessmentDueDate);
 
         // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
         // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
