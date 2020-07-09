@@ -18,6 +18,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     private testsForTaskSubject = new Subject<TaskArray>();
     private injectableElementsFoundSubject = new Subject<() => void>();
 
+    // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
+    private taskIndex = 0;
+
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private componentFactoryResolver: ComponentFactoryResolver,
@@ -52,8 +55,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ taskName, tests, hints }, index: number) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${index}`);
+        tasks.forEach(({ id, taskName, tests, hints }) => {
+            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
@@ -94,7 +97,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
                     .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
+                        const nextIndex = this.taskIndex;
+                        this.taskIndex++;
                         return {
+                            id: nextIndex,
                             completeString: testMatch[0],
                             taskName: testMatch[1],
                             tests: testMatch[2].split(',').map((s) => s.trim()),
@@ -107,9 +113,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     this.injectTasks(testsForTask);
                 });
                 return testsForTask.reduce(
-                    (acc: string, { completeString: task }, index: number): string =>
+                    (acc: string, { completeString: task, id }): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
+                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, id.toString())),
                     text,
                 );
             },
