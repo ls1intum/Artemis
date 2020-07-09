@@ -18,6 +18,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+/**
+ * This component is used to create a jwt token for the tutor-assessment tracking.
+ * <p>
+ * The token is used to verify, that the tracking request belongs to the corresponding result that
+ * is assessed
+ */
 @Component
 @Profile("athene")
 public class AtheneTrackingTokenProvider {
@@ -46,6 +52,7 @@ public class AtheneTrackingTokenProvider {
 
     /**
      * Create JWT Token to communicate with the Athene Tracking Component for a given Result.
+     *
      * @param result Result Object
      * @return JWT Token
      */
@@ -59,7 +66,8 @@ public class AtheneTrackingTokenProvider {
     }
 
     /**
-     * Create JWT Token to communicate with the Athene Tracking Component and add it as HTTP Header.
+     * Create JWT Token to communicate with the Athene Tracking Component and add it as HTTP
+     * Header.
      *
      * @param bodyBuilder HttpResponse BodyBuilder
      * @param result Result Object

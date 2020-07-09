@@ -13,7 +13,6 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,9 +32,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
-import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.GradingCriterionService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
@@ -55,9 +53,6 @@ public class TextSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -65,8 +60,6 @@ public class TextSubmissionResource {
     private final ExerciseService exerciseService;
 
     private final TextExerciseService textExerciseService;
-
-    private final CourseService courseService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -85,13 +78,12 @@ public class TextSubmissionResource {
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
+            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
-        this.courseService = courseService;
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
@@ -188,7 +180,7 @@ public class TextSubmissionResource {
         }
         final TextSubmission textSubmission = optionalTextSubmission.get();
 
-        // set up tracking header
+        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         if (textSubmission.getResult() != null) {
             this.atheneTrackingTokenProvider
@@ -313,6 +305,8 @@ public class TextSubmissionResource {
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+
+        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         if (textSubmission.getResult() != null) {
             this.atheneTrackingTokenProvider
                     .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
