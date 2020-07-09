@@ -1,7 +1,4 @@
 import {
-    COURSE,
-    COURSE_STUDENTS,
-    COURSE_INSTRUCTORS,
     EXAMS,
     EXERCISE_GROUPS,
     TEXT_EXERCISE,
@@ -11,6 +8,7 @@ import {
     EXAM_CONDUCTION,
     STUDENT_EXAMS,
     STUDENT_EXAM_WORKINGTIME,
+    EVALUATE_QUIZ_EXAM,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -125,26 +123,7 @@ export function updateWorkingTime(artemis, exam, studentExam, workingTime) {
     return JSON.parse(res[0].body);
 }
 
-export function removeUserFromStudentsInCourse(artemis, username, courseId) {
-    const res = artemis.delete(COURSE_STUDENTS(courseId, username));
-    console.log('Remove user ' + username + ' from students in course ' + courseId + ' status: ' + res[0].status);
-}
-
-export function addUserToInstructorsInCourse(artemis, username, courseId) {
-    const res = artemis.post(COURSE_INSTRUCTORS(courseId, username));
-    console.log('Add user ' + username + ' to instructors in course ' + courseId + ' status: ' + res[0].status);
-}
-
-export function removeUserFromInstructorsInCourse(artemis, username, courseId) {
-    const res = artemis.delete(COURSE_INSTRUCTORS(courseId, username));
-    console.log('Remove user ' + username + ' from instructors in course ' + courseId + ' status: ' + res[0].status);
-}
-
-export function deleteCourse(artemis, courseId) {
-    const res = artemis.delete(COURSE(courseId));
-
-    if (res[0].status !== 200) {
-        fail('ERROR: Unable to delete course ' + courseId);
-    }
-    console.log('SUCCESS: Deleted course ' + courseId);
+export function evaluateQuizzes(artemis, courseId, examId) {
+    const res = artemis.post(EVALUATE_QUIZ_EXAM(courseId, examId));
+    console.log('Evaluated quiz exercises in exam ' + examId + ' status: ' + res[0].status);
 }
