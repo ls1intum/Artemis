@@ -218,6 +218,9 @@ export class ExamManagementService {
             startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : null,
             endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : null,
             visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : null,
+            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : null,
+            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : null,
+            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : null,
         });
     }
 
@@ -226,6 +229,9 @@ export class ExamManagementService {
             res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
             res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : null;
+            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : null;
+            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : null;
+            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : null;
         }
         return res;
     }
@@ -236,6 +242,9 @@ export class ExamManagementService {
                 exam.startDate = exam.startDate ? moment(exam.startDate) : null;
                 exam.endDate = exam.endDate ? moment(exam.endDate) : null;
                 exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : null;
+                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : null;
+                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : null;
+                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : null;
             });
         }
         return res;

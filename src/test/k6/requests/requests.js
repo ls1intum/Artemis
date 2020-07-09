@@ -40,6 +40,8 @@ const request = function (method, endpoint, authToken, xsrftoken, body, params) 
                     Authorization: 'Bearer ' + authToken,
                     'X-XSRF-TOKEN': xsrftoken,
                     'Content-Type': 'application/json',
+                    'X-Artemis-Client-Fingerprint': 'b832814fcce0cab9fc5f717d5b93fa07',
+                    'X-Artemis-Client-Instance-ID': '9e0b78ec-e43e-43da-a767-89b3f80df63a',
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
@@ -129,6 +131,9 @@ export function Artemis(authToken, xsrftoken) {
     };
     this.put = function (endpoint, body, params) {
         return request('put', endpoint, authToken, xsrftoken, body, params);
+    };
+    this.patch = function (endpoint, body, params) {
+        return request('patch', endpoint, authToken, xsrftoken, body, params);
     };
     this.delete = function (endpoint, params) {
         return request('delete', endpoint, authToken, xsrftoken, null, params);
