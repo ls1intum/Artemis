@@ -112,7 +112,7 @@ export class TextAssessmentsService {
                 tap((response) => (response.body!.results[0].feedbacks = response.body!.results[0].feedbacks || [])),
 
                 // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
-                tap((response) => (response.body!.textExerciseTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                tap((response) => ((response.body!.submissions[0] as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
                 map((response) => response.body!),
             );
     }
@@ -183,28 +183,28 @@ export class TextAssessmentsService {
      *
      * @param submission - The submission object that holds the data that is tracked
      */
-    public trackFeedback(submission: TextSubmission | null) {
-        if (submission!.participation?.textExerciseTrackingToken) {
+    public trackAssessment(submission: TextSubmission | null) {
+        if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
-            delete submissionForSending!.participation.submissions;
-            delete submissionForSending!.participation?.exercise?.course;
-            delete submissionForSending!.participation?.exercise?.exerciseGroup;
-            delete submissionForSending!.participation?.textExerciseTrackingToken;
-            submissionForSending!.participation.results.map((result) => {
+            delete submissionForSending.participation.submissions;
+            delete submissionForSending.participation?.exercise?.course;
+            delete submissionForSending.participation?.exercise?.exerciseGroup;
+            delete submissionForSending.atheneTextAssessmentTrackingToken;
+            submissionForSending.participation.results.forEach((result) => {
                 delete result.participation;
                 delete result.submission;
             });
 
             const trackingObject = {
-                textBlocks: submissionForSending?.blocks,
-                participation: submissionForSending?.participation,
+                textBlocks: submissionForSending.blocks,
+                participation: submissionForSending.participation,
             };
 
             // The request is directly routed to athene via nginx
             this.http
                 .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment}`, trackingObject, {
-                    headers: { 'X-Athene-Tracking-Authorization': submission!.participation.textExerciseTrackingToken },
+                    headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
                 })
                 .subscribe();
         }
