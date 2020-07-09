@@ -148,9 +148,17 @@
                 </li>
             </ul>
             <button
-                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport"
+                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport && !isExamMode"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
+                jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
+            >
+                Create example solution
+            </button>
+            <button
+                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport && isExamMode"
+                class="btn btn-primary"
+                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
             >
                 Create example solution
@@ -198,9 +206,18 @@
             </ul>
 
             <button
-                *ngIf="modelingExercise.id && !isImport"
+                *ngIf="modelingExercise.id && !isImport && !isExamMode"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
+                jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
+            >
+                Create example submission
+            </button>
+
+            <button
+                *ngIf="modelingExercise.id && !isImport && isExamMode"
+                class="btn btn-primary"
+                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
                 Create example submission
