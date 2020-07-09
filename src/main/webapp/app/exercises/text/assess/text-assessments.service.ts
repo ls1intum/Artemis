@@ -187,10 +187,13 @@ export class TextAssessmentsService {
         if (submission!.participation?.textExerciseTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
-            submissionForSending!.participation.submissions = [];
+            delete submissionForSending!.participation.submissions;
+            delete submissionForSending!.participation?.exercise?.course;
+            delete submissionForSending!.participation?.exercise?.exerciseGroup;
+            delete submissionForSending!.participation?.textExerciseTrackingToken;
             submissionForSending!.participation.results.map((result) => {
-                result.participation = null;
-                result.submission = null;
+                delete result.participation;
+                delete result.submission;
             });
 
             const trackingObject = {
