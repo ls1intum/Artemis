@@ -25,6 +25,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Filter properties for a result
@@ -71,6 +72,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private momentDiff: DifferencePipe,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
+        private accountService: AccountService,
         private resultService: ResultService,
         private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -97,6 +99,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe(() => (this.isLoading = false));
+                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
+                this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });
         });
