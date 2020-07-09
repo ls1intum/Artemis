@@ -289,7 +289,10 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Get the assessed submission of one tutor
-                const ownAssessedSubmissions = submissions.filter((submission) => submission.result?.assessor?.id === this.tutor?.id);
+                let ownAssessedSubmissions = submissions;
+                if (isExamMode) {
+                    ownAssessedSubmissions = submissions.filter((submission) => submission.result?.assessor?.id === this.tutor?.id);
+                }
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 this.assessedSubmissions = ownAssessedSubmissions.map((submission) => {
                     submission.participation.submissions = [submission];
