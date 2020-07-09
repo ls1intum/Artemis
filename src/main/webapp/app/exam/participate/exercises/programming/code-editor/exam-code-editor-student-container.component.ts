@@ -69,7 +69,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      * @param commitState current CommitState from CodeEditorActionsComponent
      */
     onCommitStateChange(commitState: CommitState): void {
-        if (this.participation.submissions && this.participation.submissions[0]) {
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
             this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
         }
     }
@@ -81,7 +81,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      */
     onFileChange<F extends FileChange>($event: [string[], F]) {
         super.onFileChange($event);
-        this.participation.submissions[0].isSynced = false;
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            this.participation.submissions[0].isSynced = false;
+        }
     }
 
     /**
@@ -89,6 +91,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
      */
     onFileContentChange($event: { file: string; fileContent: string }) {
         super.onFileContentChange($event);
-        this.participation.submissions[0].isSynced = false;
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            this.participation.submissions[0].isSynced = false;
+        }
     }
 }
