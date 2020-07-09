@@ -28,8 +28,10 @@
             "assessingExampleSubmission": "assessing example submission",
             "assessExampleSubmission": "Assess example submission",
             "studentsSubmissions": "Student's submissions",
+            "submissionId": "ID",
             "submissionDate": "Submission date",
             "result": "Result",
+            "assessor": "Corrector",
             "status": "Status",
             "score": "Score",
             "action": "Action",
@@ -76,7 +78,8 @@
                 "UNKNOWN": "Unknown"
             },
             "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
-            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments."
+            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
+            "othersAssessments": "Assessments of the other correctors"
         }
     }
 }

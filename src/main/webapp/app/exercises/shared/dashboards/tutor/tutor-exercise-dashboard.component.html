@@ -233,6 +233,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th *ngIf="!!exercise.exerciseGroup">{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
@@ -244,6 +245,7 @@
                     <tbody>
                         <tr *ngFor="let submission of assessedSubmissions; let i = index">
                             <td>{{ i + 1 }}</td>
+                            <td *ngIf="!!exercise.exerciseGroup">{{ submission.id }}</td>
                             <td>{{ submission.submissionDate | artemisDate }}</td>
                             <td>
                                 <jhi-result [participation]="submission.participation"></jhi-result>
@@ -332,7 +334,7 @@
             <!-- Start all assessed submissions only for exam mode -->
             <div *ngIf="!!exercise.exerciseGroup && (tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED)">
                 <h4>
-                    Submissions for 2nd review:
+                    {{ 'artemisApp.tutorExerciseDashboard.othersAssessments' | translate }}
                 </h4>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="otherAssessedSubmissions.length > 0; else noSubmissions">
@@ -340,22 +342,25 @@
                             <tr>
                                 <th>#</th>
                                 <th jhiSortBy="id">
-                                    <a class="th-link">ID</a>
-                                    <fa-icon [icon]="'sort'"></fa-icon></th>
+                                    <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</a>
+                                    <fa-icon [icon]="'sort'"></fa-icon>
+                                </th>
                                 <th jhiSortBy="date">
                                     <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</a>
-                                    <fa-icon [icon]="'sort'"></fa-icon></th>
+                                    <fa-icon [icon]="'sort'"></fa-icon>
+                                </th>
                                 <th jhiSortBy="result">
                                     <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</a>
-                                    <fa-icon [icon]="'sort'"></fa-icon></th>
+                                    <fa-icon [icon]="'sort'"></fa-icon>
+                                </th>
                                 <th jhiSortBy="name">
-                                    <a class="th-link">Assessor</a>
-                                    <fa-icon [icon]="'sort'"></fa-icon></th>
+                                    a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.assessor' | translate }}</a>
+                                    <fa-icon [icon]="'sort'"></fa-icon>
+                                </th>
                                 <th jhiSortBy="score">
                                     <a class="th-link">{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</a>
-                                    <fa-icon [icon]="'sort'"></fa-icon></th>
-                                <th *ngIf="exercise.type === ExerciseType.TEXT">
-                                    {{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
+                                </th>
+                                <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
                                 <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
                             </tr>
                         </thead>

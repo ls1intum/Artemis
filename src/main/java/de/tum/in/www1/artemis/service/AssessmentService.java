@@ -121,7 +121,7 @@ public class AssessmentService {
         var assessmentDueDate = exercise.getAssessmentDueDate();
         final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
         // this is the case for exam exercise submissions that are assessed and submitted
-        if(isExamExercise) {
+        if (isExamExercise) {
             var exam = exercise.getExerciseGroup().getExam();
             // TODO use exam assessment due date from PR 1830 here instead
             return isBeforeAssessmentDueDate || isAtLeastInstructor;

@@ -47,6 +47,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
+    isExamMode = false;
     hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
@@ -146,6 +147,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
+        this.isExamMode = !!this.modelingExercise.exerciseGroup;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
