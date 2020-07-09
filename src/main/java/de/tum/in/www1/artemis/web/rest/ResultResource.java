@@ -158,7 +158,7 @@ public class ResultResource {
 
     /**
      * PUT /participations/{participationId}/manual-results : Updates an existing result.
-     *
+     * Also handles setting the {@link Result#isAssessedTwice()} flag.
      * @param participationId the id of the participation for which the manual result is updated
      * @param updatedResult the result to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
@@ -194,12 +194,23 @@ public class ResultResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
+        // set the second assessment flag if the original result was manual
+        if (exercise.hasExerciseGroup()) {
+            if (originalResult.getAssessor() != user) {
+                updatedResult.setIsAssessedTwice(true);
+            }
+            else {
+                updatedResult.setIsAssessedTwice(false);
+            }
+        }
+
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
     }
 
     protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-
+        // If the exercise is an exam exercise, we allow a second correction by the tutor
+        final var secondAssessmentDue = exercise.hasExerciseGroup() && !existingResult.isAssessedTwice();
         // if the assessor is null, the user is allowed to save / submit / override the existing result
         final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
         if (existingResult.getCompletionDate() == null) {
@@ -211,7 +222,7 @@ public class ResultResource {
         // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
         // and tutors should be able to override the created results when the assessmentDueDate is null
         final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor || secondAssessmentDue && isBeforeAssessmentDueDate;
 
         // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
         // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
