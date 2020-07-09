@@ -9,6 +9,7 @@
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
                 "exportPDF": "Als PDF exportieren",
+                "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
                 "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
@@ -71,6 +72,9 @@
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
+            "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
+            "generateParticipationRetry": "Erneut versuchen",
             "points": "Punkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
