@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild, Output, EventEmitter } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -27,7 +27,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     @Input()
     showHelpButton = true;
 
+    @Output()
+    private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
+
     private apollonEditor: ApollonEditor | null = null;
+    private modelSubscription: number;
 
     constructor(private jhiAlertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
@@ -76,6 +80,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      */
     private initializeApollonEditor(): void {
         if (this.apollonEditor !== null) {
+            this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
             this.apollonEditor.destroy();
         }
         // Apollon doesn't need assessments in Modeling mode
@@ -85,6 +90,9 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             mode: ApollonMode.Modelling,
             readonly: this.readOnly,
             type: this.diagramType,
+        });
+        this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
+            this.onModelChanged.emit(model);
         });
     }
 
@@ -139,6 +147,9 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      */
     ngOnDestroy(): void {
         if (this.apollonEditor !== null) {
+            if (this.modelSubscription) {
+                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+            }
             this.apollonEditor.destroy();
             this.apollonEditor = null;
         }
