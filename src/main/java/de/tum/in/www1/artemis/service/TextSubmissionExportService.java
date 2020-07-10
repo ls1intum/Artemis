@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
@@ -19,7 +20,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected void saveSubmissionToFile(Submission submission, File file) throws IOException {
+    protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         writer.write(((TextSubmission) submission).getText());
         writer.close();

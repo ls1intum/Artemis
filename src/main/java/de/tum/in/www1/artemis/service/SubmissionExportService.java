@@ -141,7 +141,7 @@ public abstract class SubmissionExportService {
                     return Optional.<Path>empty();
                 }
 
-                this.saveSubmissionToFile(latestSubmission, submissionFilePath.toFile());
+                this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
 
             }
@@ -174,7 +174,7 @@ public abstract class SubmissionExportService {
         return zipFilePath.toFile();
     }
 
-    protected abstract void saveSubmissionToFile(Submission submission, File file) throws IOException;
+    protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;
 
     protected abstract String getFileEndingForSubmission(Submission submission);
 

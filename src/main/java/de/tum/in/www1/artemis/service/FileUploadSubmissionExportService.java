@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
@@ -19,8 +20,12 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected void saveSubmissionToFile(Submission submission, File file) throws IOException {
-        Files.copy(Path.of(((FileUploadSubmission) submission).getFilePath()), file.toPath());
+    protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
+        // we need to get the 'real' file path here, the submission only has the api url path
+        String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
+        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
+
+        Files.copy(Path.of(filePath, apiFilePathParts[apiFilePathParts.length-1]), file.toPath());
     }
 
     @Override
