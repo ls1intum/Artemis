@@ -29,7 +29,6 @@ import { Course } from 'app/entities/course.model';
     styleUrls: ['./text-submission-assessment.component.scss'],
 })
 export class TextSubmissionAssessmentComponent implements OnInit {
-
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
@@ -98,7 +97,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         translateService: TranslateService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
-        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => this.cancelConfirmationText = text);
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
     }
 
@@ -334,7 +333,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             if (!ref && previousIndex > nextIndex) {
                 console.error('Illegal State: previous index cannot be greated than the last index!');
 
-            // new text block starts before previous one ended (overlap)
+                // new text block starts before previous one ended (overlap)
             } else if (previousIndex > nextIndex) {
                 const previousRef = this.textBlockRefs.pop();
                 if (!previousRef) {
@@ -357,7 +356,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                     }
                 }
 
-            // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
+                // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
             } else if (previousIndex < nextIndex) {
                 // There is a gap. We need to add a Text Block in between
                 this.addTextBlockByIndices(previousIndex, nextIndex);
@@ -386,7 +385,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private addTextBlockByIndices(startIndex: number, endIndex: number): void {
-        if (startIndex >= endIndex) { return; }
+        if (startIndex >= endIndex) {
+            return;
+        }
 
         const newRef = TextBlockRef.new();
         newRef.block.startIndex = startIndex;
