@@ -236,6 +236,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * suggested feedback if automatic assessment is enabled and feedback available
      * <p>
      * TODO: Remove when migrating to Text Assessment V2
+     * @deprecated Text Blocks are now part of the retrieveParticipationForSubmission() response. Please use V2 text assessment which does not need this API call. This API call will be removed soon.
      *
      * @param resultId the resultId the which needs TextBlocks
      * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
