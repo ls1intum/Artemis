@@ -11,7 +11,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -112,10 +111,6 @@ public class Result implements Serializable {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
-
-    // For Exam exercises, we need to track whether it was corrected for a second time
-    @Column(name = "isAssessedTwice")
-    private Boolean isAssessedTwice;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -235,15 +230,6 @@ public class Result implements Serializable {
             this.score = score;
             this.successful = score == 100L;
         }
-    }
-
-    @JsonGetter("isAssessedTwice")
-    public Boolean isAssessedTwice() {
-        return this.isAssessedTwice;
-    }
-
-    public void setIsAssessedTwice(Boolean isAssessedTwice) {
-        this.isAssessedTwice = isAssessedTwice;
     }
 
     /**

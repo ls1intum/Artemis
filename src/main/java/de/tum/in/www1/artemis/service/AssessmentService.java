@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import javax.validation.constraints.NotNull;
 
@@ -100,36 +99,7 @@ public class AssessmentService {
     }
 
     /**
-     * checks if the user can create or override an already submitted result. This is only possible for the second correction of exam exercises or
-     * if the same tutor overrides before the assessment due date or if an instructor overrides it.
-     *
-     * If the result does not yet exist or is not yet submitted, this method returns true for individual exercises.
-     * For team exercises, the user must be the team's tutor or an instructor in order to be able to create a result.
-     *
-     * @param submission the submission that might include an existing result which would include information about the assessor
-     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
-     * @param user the user who initiates a request
-     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
-     * @return true of the the given user can override a potentially existing result
-     */
-    public boolean isAllowedToCreateOrOverrideResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var existingResult = submission.getResult();
-        if (existingResult == null) {
-            if (exercise.isTeamMode()) {
-                // for team exercises a user is allowed to create a result only if they are the team's tutor (or an instructor)
-                StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-                return Objects.equals(participation.getTeam().orElseThrow().getOwner(), user) || isAtLeastInstructor;
-            }
-            else {
-                // for individual exercises a result can always be created by any tutor if none exists yet
-                return true;
-            }
-        }
-        return this.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
-    }
-
-    /**
-     * checks if the user can override an already submitted result. This is only possible for exam exercises or if the same tutor overrides before the assessment due date
+     * checks if the user can create or override an already submitted result. This is only possible for exam exercises or if the same tutor overrides before the assessment due date
      * or if an instructor overrides it.
      *
      * If the result does not yet exist or is not yet submitted, this method returns true
@@ -140,9 +110,8 @@ public class AssessmentService {
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @return true of the the given user can override a potentially existing result
      */
-    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
-        final boolean isExamExercise = exercise.hasExerciseGroup();
+    public boolean isAllowedToCreateOrOverrideResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        final boolean isAllowedToBeAssessor = isTutorAllowedToBeAssessorOfResult(existingResult, exercise, user);
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAllowedToBeAssessor || isAtLeastInstructor;
@@ -151,11 +120,6 @@ public class AssessmentService {
         var assessmentDueDate = exercise.getAssessmentDueDate();
         final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
         // this is the case for exam exercise submissions that are assessed and submitted
-        if (isExamExercise) {
-            var exam = exercise.getExerciseGroup().getExam();
-            // TODO use exam assessment due date from PR 1830 here instead
-            return (isBeforeAssessmentDueDate && !Boolean.TRUE.equals(existingResult.isAssessedTwice())) || isAtLeastInstructor;
-        }
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
@@ -193,7 +157,7 @@ public class AssessmentService {
      * @param user User for whom to check if they can be the assessor of the given result
      * @return true if the user is allowed to be the assessor, false otherwise
      */
-    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
+    private boolean isTutorAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
         if (exercise.isTeamMode()) {
             // for team exercises only the team tutor is allowed to be the assessor
             return ((StudentParticipation) result.getParticipation()).getTeam().orElseThrow().isOwner(user);

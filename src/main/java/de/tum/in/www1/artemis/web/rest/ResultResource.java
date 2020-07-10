@@ -156,7 +156,6 @@ public class ResultResource {
 
     /**
      * PUT /participations/{participationId}/manual-results : Updates an existing result.
-     * Also handles setting the {@link Result#isAssessedTwice()} flag.
      * @param participationId the id of the participation for which the manual result is updated
      * @param updatedResult the result to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
@@ -188,18 +187,8 @@ public class ResultResource {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!assessmentService.isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        // set the second assessment flag if the original result was manual
-        if (exercise.hasExerciseGroup()) {
-            if (originalResult.getCompletionDate() != null && !user.equals(originalResult.getAssessor())) {
-                updatedResult.setIsAssessedTwice(true);
-            }
-            else {
-                updatedResult.setIsAssessedTwice(false);
-            }
         }
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);

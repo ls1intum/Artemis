@@ -152,11 +152,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission, modelingExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise.hasExerciseGroup());
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
 
         if (submit) {
             // SK: deactivate conflict handling for now, because it is not fully implemented yet.
@@ -210,7 +210,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise, user);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise.hasExerciseGroup());
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
     }
 

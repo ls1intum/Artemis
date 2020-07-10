@@ -66,16 +66,15 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. In case of exam exercises it also handles the {@link Result#isAssessedTwice()} flag.
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute.
      * Furthermore, it saves the result in the database.
      *
      * @param modelingSubmission the modeling submission to which the feedback belongs to
      * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param isExamExercise Flag for exam exercises
      * @return result that was saved in the database
      */
     @Transactional
-    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, boolean isExamExercise) {
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission);
@@ -85,16 +84,7 @@ public class ModelingAssessmentService extends AssessmentService {
         result.setExampleResult(modelingSubmission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
-        if (isExamExercise) {
-            // if we override a assessment by another assessor, with a completion date for an exam exercise, we set the 2nd assessment boolean to true
-            if (result.getCompletionDate() != null && !user.equals(result.getAssessor())) {
-                result.setIsAssessedTwice(true);
-            }
-            else {
-                // Otherwise we set it to false;
-                result.setIsAssessedTwice(false);
-            }
-        }
+
         result.setAssessor(user);
         result.updateAllFeedbackItems(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises

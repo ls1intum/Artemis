@@ -57,11 +57,10 @@ public class FileUploadAssessmentService extends AssessmentService {
      *
      * @param fileUploadSubmission the file upload submission to which the feedback belongs to
      * @param fileUploadAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param isExamExercise flag for exam exercises. Required to handle {@link Result#isAssessedTwice()} flag.
      * @return result that was saved in the database
      */
     @Transactional
-    public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment, boolean isExamExercise) {
+    public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
             result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);
@@ -75,16 +74,7 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.setExampleResult(fileUploadSubmission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
-        if (isExamExercise) {
-            // if we override a assessment by another assessor, with a completion date for an exam exercise, we set the 2nd assessment boolean to true
-            if (result.getCompletionDate() != null && !user.equals(result.getAssessor())) {
-                result.setIsAssessedTwice(true);
-            }
-            else {
-                // Otherwise we set it to false;
-                result.setIsAssessedTwice(false);
-            }
-        }
+
         result.setAssessor(user);
         result.updateAllFeedbackItems(fileUploadAssessment);
         // Note: this boolean flag is only used for programming exercises

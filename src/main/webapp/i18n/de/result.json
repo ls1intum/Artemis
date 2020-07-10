@@ -46,8 +46,7 @@
             "notGraded": "Nicht bewertet",
             "preliminary": "(vorläufig)",
             "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach der Einreichungsfrist werden weitere Tests durchgeführt.",
-            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
-            "assessedTwice": "Zweitkorrigiert"
+            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis."
         }
     }
 }

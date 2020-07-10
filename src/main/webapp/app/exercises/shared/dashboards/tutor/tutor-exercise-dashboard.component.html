@@ -238,7 +238,6 @@
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</th>
-                            <th *ngIf="!!exercise.exerciseGroup">{{ 'artemisApp.result.assessedTwice' | translate }}</th>
                             <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
                         </tr>
@@ -256,12 +255,6 @@
                             </td>
                             <td>
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
-                            </td>
-                            <td *ngIf="!!exercise.exerciseGroup">
-                                <fa-icon *ngIf="submission.result.isAssessedTwice; else assessedOnce" [icon]="'check'"></fa-icon>
-                                <ng-template #assessedOnce>
-                                    <fa-icon [icon]="'times'"></fa-icon>
-                                </ng-template>
                             </td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
                                 {{ 'artemisApp.tutorExerciseDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
@@ -298,7 +291,6 @@
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
-                            <td *ngIf="!!exercise.exerciseGroup"></td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
                                 {{ 'artemisApp.tutorExerciseDashboard.languages.' + (unassessedSubmission.language ? unassessedSubmission.language : 'UNKNOWN') | translate }}
                             </td>

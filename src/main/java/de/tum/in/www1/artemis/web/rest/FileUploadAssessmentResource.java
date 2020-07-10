@@ -101,12 +101,12 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(fileUploadSubmission, fileUploadExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(fileUploadSubmission.getResult(), fileUploadExercise, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + fileUploadSubmission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise.hasExerciseGroup());
+        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);
         if (submit) {
             result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }

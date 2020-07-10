@@ -302,11 +302,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 if (isExamMode) {
                     // Get the assessed submissions for all other tutors (needed for 2nd correction of exam exercises)
                     const otherAssessedSubmissions = submissions.filter(
-                        (submission) =>
-                            this.calculateStatus(submission) === 'DONE' &&
-                            submission.result.assessor &&
-                            submission.result.assessor.id !== this.tutor?.id &&
-                            !submission.result.isAssessedTwice,
+                        (submission) => this.calculateStatus(submission) === 'DONE' && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
                     );
                     // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                     this.otherAssessedSubmissions = otherAssessedSubmissions.map((submission) => {
