@@ -1,6 +1,6 @@
 const webpack = require('webpack');
 const writeFilePlugin = require('write-file-webpack-plugin');
-const webpackMerge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
@@ -13,7 +13,7 @@ const commonConfig = require('./webpack.common.js');
 
 const ENV = 'development';
 
-module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
+module.exports = (options) => merge(commonConfig({ env: ENV }), {
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './build/resources/main/static/',
