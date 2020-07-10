@@ -287,7 +287,7 @@ public class SubmissionService {
      * @param exercise the exercise (access to the exercise itself is not checked here)
      * @param getOnlyOwnAssessments true if the user requests to get only submissions assessed by themselves
      */
-    public void checkGetAllSubmissionAllowance(Exercise exercise, boolean getOnlyOwnAssessments) {
+    public void checkGetAllSubmissionsAllowance(Exercise exercise, boolean getOnlyOwnAssessments) {
         boolean isExamExercise = exercise.hasExerciseGroup();
         // allow tutors to access submissions of their own normal exercise assessments or all exam exercise submissions
         if (getOnlyOwnAssessments || isExamExercise) {
