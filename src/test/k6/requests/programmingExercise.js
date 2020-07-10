@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage) {
+export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null) {
     let res;
 
     let programmingExerciseProblemStatement;
@@ -88,10 +88,16 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         presentationScoreEnabled: false,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
-        course: {
-            id: courseId,
-        },
     };
+
+    if (courseId) {
+        exercise.course = {
+            id: courseId,
+        };
+    }
+    if (exerciseGroup) {
+        exercise.exerciseGroup = exerciseGroup;
+    }
 
     res = artemis.post(PROGRAMMING_EXERCISES_SETUP, exercise);
     if (res[0].status !== 201) {

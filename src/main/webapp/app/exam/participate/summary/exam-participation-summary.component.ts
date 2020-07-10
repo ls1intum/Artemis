@@ -25,7 +25,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     @Input()
     instructorView = false;
 
-    collapsedSubmissionIds: number[] = [];
+    collapsedExerciseIds: number[] = [];
 
     courseId: number;
 
@@ -53,7 +53,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     printPDF() {
         // expand all exercises before printing
-        this.collapsedSubmissionIds = [];
+        this.collapsedExerciseIds = [];
         setTimeout(() => window.print());
     }
 
@@ -63,7 +63,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise): Submission | null {
         if (
@@ -81,38 +81,35 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
-    getParticipationForProgrammingExercise(exercise: Exercise): Participation {
-        return exercise.studentParticipations[0];
-    }
-
-    /**
-     * checks collapse control of exercise cards depending on submissionId
-     */
-    isCollapsed(exercise: Exercise): boolean {
-        const submission = this.getSubmissionForExercise(exercise);
-        if (submission && submission.id) {
-            const submissionId = submission.id;
-            return this.collapsedSubmissionIds.includes(submissionId);
+    getParticipationForExercise(exercise: Exercise): Participation | null {
+        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
+            return exercise.studentParticipations[0];
+        } else {
+            return null;
         }
-        return false;
     }
 
     /**
-     * adds collapse control of exercise cards depending on submissionId
-     * @param exercise the exercise for which the submission should be collapsed
+     * @param exerciseId
+     * checks collapse control of exercise cards depending on exerciseId
      */
-    toggleCollapseSubmission(exercise: Exercise): void {
-        const submission = this.getSubmissionForExercise(exercise);
-        if (submission && submission.id) {
-            const submissionId = submission.id;
-            const collapsed = this.isCollapsed(exercise);
-            if (collapsed) {
-                this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
-            } else {
-                this.collapsedSubmissionIds.push(submissionId);
-            }
+    isCollapsed(exerciseId: number): boolean {
+        return this.collapsedExerciseIds.includes(exerciseId);
+    }
+
+    /**
+     * @param exerciseId
+     * adds collapse control of exercise cards depending on exerciseId
+     * @param exerciseId the exercise for which the submission should be collapsed
+     */
+    toggleCollapseExercise(exerciseId: number): void {
+        const collapsed = this.isCollapsed(exerciseId);
+        if (collapsed) {
+            this.collapsedExerciseIds = this.collapsedExerciseIds.filter((id) => id !== exerciseId);
+        } else {
+            this.collapsedExerciseIds.push(exerciseId);
         }
     }
 }
