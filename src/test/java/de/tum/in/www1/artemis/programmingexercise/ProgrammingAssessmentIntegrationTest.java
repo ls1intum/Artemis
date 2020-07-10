@@ -189,9 +189,10 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatForbidden() throws Exception {
+    public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
         database.updateAssessmentDueDate(programmingExercise.getId(), null);
-        overrideAssessment(HttpStatus.FORBIDDEN);
+        // TODO: in the future, this should be forbidden, see ResultResource.isAllowedToOverrideExistingResult
+        overrideAssessment(HttpStatus.OK);
     }
 
     private void assessmentDueDatePassed() {

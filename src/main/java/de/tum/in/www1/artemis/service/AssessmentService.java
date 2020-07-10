@@ -100,12 +100,12 @@ public class AssessmentService {
 
     /**
      * Checks if the user has the authority to create or override an already submitted result.
-     * Creating a result (no previous result) is only possible within the exercise's assessment due date. {@link Exercise#getAssessmentDueDate()} must not be null.
+     * Creating a result (no previous result) is only possible within the exercise's assessment due date.
      * Tutors can only override those results which they have assessed themselves. See {@link #isTutorAllowedToBeAssessorOfResult(Result, Exercise, User)}.
-     * Results which are assessed, but not submitted i.e. they are still drafts ({@link Result#getCompletionDate()} is not set) can always be overriden,
-     * regardless of the exercise's assessment due date by an allowed assessor.
      * For exam exercises {@link Exercise#hasExerciseGroup()}, all tutors can override the results of other assessors to allow for a second correction, within the exercise's assessment due date.
      * Instructors can always create or override results.
+     *
+     * If the result does not yet exist or is not yet submitted, this method returns true
      *
      * @param existingResult the existing result in case the result is updated (submitted or overridden)
      * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
