@@ -40,8 +40,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get isPublished() {
-        // TODO: Change visibleDate to publishDate
-        return this.studentExam.exam.visibleDate && moment(this.studentExam.exam.visibleDate).isBefore(moment());
+        return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
     getIcon(exerciseType: ExerciseType) {
