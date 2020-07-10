@@ -191,7 +191,9 @@ export class TextAssessmentsService {
             delete submissionForSending.participation?.exercise?.course;
             delete submissionForSending.participation?.exercise?.exerciseGroup;
             delete submissionForSending.atheneTextAssessmentTrackingToken;
-            submissionForSending.participation?.results?.map((result) => {
+
+            // eslint-disable-next-line chai-friendly/no-unused-expressions
+            submissionForSending.participation?.results?.forEach((result) => {
                 delete result.participation;
                 delete result.submission;
             });
