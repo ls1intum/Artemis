@@ -6,3 +6,6 @@ client:
 
 tests:
 - src/test/*
+
+database:
+- src/main/resources/config/liquibase/master.xml
