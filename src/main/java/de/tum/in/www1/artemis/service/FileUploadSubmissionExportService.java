@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import de.tum.in.www1.artemis.domain.Exercise;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -25,7 +25,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
         String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
 
-        Files.copy(Path.of(filePath, apiFilePathParts[apiFilePathParts.length-1]), file.toPath());
+        Files.copy(Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]), file.toPath());
     }
 
     @Override

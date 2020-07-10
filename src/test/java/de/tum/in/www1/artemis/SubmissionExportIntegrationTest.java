@@ -1,45 +1,33 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExamSessionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
-import org.dom4j.Text;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -65,15 +53,21 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     private SubmissionExportOptionsDTO baseExportOptions;
 
     private ModelingSubmission modelingSubmission1;
+
     private ModelingSubmission modelingSubmission2;
+
     private ModelingSubmission modelingSubmission3;
 
     private TextSubmission textSubmission1;
+
     private TextSubmission textSubmission2;
+
     private TextSubmission textSubmission3;
 
     private FileUploadSubmission fileUploadSubmission1;
+
     private FileUploadSubmission fileUploadSubmission2;
+
     private FileUploadSubmission fileUploadSubmission3;
 
     @BeforeEach
@@ -92,16 +86,19 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
                     modelingSubmission1 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json", "student1");
                     modelingSubmission2 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json", "student2");
                     modelingSubmission3 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json", "student3");
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     e.printStackTrace();
                 }
-            } else if (exercise instanceof TextExercise) {
+            }
+            else if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
 
                 textSubmission1 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), "student1");
                 textSubmission2 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true), "student2");
                 textSubmission3 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), "student3");
-            } else if (exercise instanceof FileUploadExercise) {
+            }
+            else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
                 fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), "student1");
@@ -112,7 +109,8 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission2);
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission3);
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     fail("Could not create submission files", e);
                 }
 
@@ -192,25 +190,29 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         assertZipContains(fileUploadUip, fileUploadSubmission1, fileUploadSubmission2, fileUploadSubmission3);
     }
 
-    private void assertZipContains(File file, Submission ...submissions) {
+    private void assertZipContains(File file, Submission... submissions) {
         try {
             ZipFile zip = new ZipFile(file);
             for (Submission s : submissions) {
                 assertThat(zip.getEntry(getSubmissionFileName(s))).isNotNull();
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             fail("Could not read zip file.");
         }
     }
 
     private String getSubmissionFileName(Submission submission) {
         if (submission instanceof TextSubmission) {
-            return textExercise.getTitle() + "-" + ((StudentParticipation)submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".txt";
-        } else if (submission instanceof ModelingSubmission) {
-            return modelingExercise.getTitle() + "-" + ((StudentParticipation)submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
-        } else if (submission instanceof FileUploadSubmission) {
-            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation)submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
-        } else {
+            return textExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".txt";
+        }
+        else if (submission instanceof ModelingSubmission) {
+            return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
+        }
+        else if (submission instanceof FileUploadSubmission) {
+            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
+        }
+        else {
             fail("Unknown submission type");
             return "";
         }

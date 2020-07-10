@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
