@@ -62,6 +62,13 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
+    reload(): void {
+        this.ngOnInit();
+        if (this.instructions) {
+            this.instructions.refreshInstructions();
+        }
+    }
+
     /**
      * Update Submission.isSynced based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
