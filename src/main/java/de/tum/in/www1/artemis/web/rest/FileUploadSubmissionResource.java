@@ -195,7 +195,7 @@ public class FileUploadSubmissionResource {
         final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
-        fileUploadSubmissionService.checkGetAllSubmissionAllowance(exercise, assessedByTutor);
+        fileUploadSubmissionService.checkGetAllSubmissionsAllowance(exercise, assessedByTutor);
 
         final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {

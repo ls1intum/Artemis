@@ -172,7 +172,7 @@ public class ModelingSubmissionResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
 
-        modelingSubmissionService.checkGetAllSubmissionAllowance(exercise, assessedByTutor);
+        modelingSubmissionService.checkGetAllSubmissionsAllowance(exercise, assessedByTutor);
 
         final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {

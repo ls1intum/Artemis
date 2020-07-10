@@ -178,7 +178,7 @@ public class TextSubmissionResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = textExerciseService.findOne(exerciseId);
 
-        textSubmissionService.checkGetAllSubmissionAllowance(exercise, assessedByTutor);
+        textSubmissionService.checkGetAllSubmissionsAllowance(exercise, assessedByTutor);
 
         final List<TextSubmission> textSubmissions;
         if (assessedByTutor) {

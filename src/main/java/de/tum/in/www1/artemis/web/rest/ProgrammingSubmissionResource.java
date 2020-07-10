@@ -348,7 +348,7 @@ public class ProgrammingSubmissionResource {
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         // we don't pass assessedByTutor here and only true, because the logic here allowed all tutors access to all submissions
-        programmingSubmissionService.checkGetAllSubmissionAllowance(exercise, true);
+        programmingSubmissionService.checkGetAllSubmissionsAllowance(exercise, true);
 
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
