@@ -37,12 +37,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     onActivate(): void {
         if (this.codeEditorComponent) {
-            this.codeEditorComponent.ngOnInit();
+            this.codeEditorComponent.reload();
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    updateSubmissionFromView(intervalSave: boolean): void {
+    updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorComponent.actions.onSave();
     }

@@ -169,7 +169,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.injectableContentFoundSubscription = merge(
             this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
             this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
-        ).subscribe((injectableCallback) => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
+        ).subscribe((injectableCallback) => {
+            this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback];
+        });
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
         }
