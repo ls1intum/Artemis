@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -269,6 +272,12 @@ public class ModelFactory {
         if (submitted) {
             fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
+        return fileUploadSubmission;
+    }
+
+    public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
+        FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
+        fileUploadSubmission.setFilePath(filePath);
         return fileUploadSubmission;
     }
 
