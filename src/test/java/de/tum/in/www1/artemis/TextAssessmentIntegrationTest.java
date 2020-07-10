@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,6 +98,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     private TextExercise textExercise;
 
@@ -660,5 +666,22 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
                 .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void checkTrackingTokenHeader() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        var expectedResponseHeaders = new HashMap<String, String>();
+        expectedResponseHeaders.put("X-Athene-Tracking-Authorization", "");
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("lock", "true");
+
+        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters, new HttpHeaders(),
+                new String[] { "X-Athene-Tracking-Authorization" });
+
     }
 }
