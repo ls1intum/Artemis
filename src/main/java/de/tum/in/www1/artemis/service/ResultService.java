@@ -94,18 +94,6 @@ public class ResultService {
     }
 
     /**
-     * Get a result from the database by its id together with the associated submission and the list of feedback items.
-     *
-     * @param resultId the id of the result to load from the database
-     * @return the result with submission and feedback list
-     */
-    public Result findOneWithEagerSubmissionAndFeedback(long resultId) {
-        log.debug("Request to get Result: {}", resultId);
-        return resultRepository.findWithEagerSubmissionAndFeedbackById(resultId)
-                .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
-    }
-
-    /**
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
