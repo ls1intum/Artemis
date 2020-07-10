@@ -861,7 +861,9 @@ public class UserService {
      * @param group the group
      */
     public void addUserToGroup(User user, String group) {
+        final var oldGroups = new TreeSet<>(user.getGroups());
         artemisAuthenticationProvider.addUserToGroup(user, group);
+        updateUserInConnectorsAndAuthProvider(user, oldGroups);
     }
 
     /**
@@ -871,7 +873,9 @@ public class UserService {
      * @param group the group
      */
     public void removeUserFromGroup(User user, String group) {
+        final var oldGroups = new TreeSet<>(user.getGroups());
         artemisAuthenticationProvider.removeUserFromGroup(user, group);
+        updateUserInConnectorsAndAuthProvider(user, oldGroups);
     }
 
     /**
