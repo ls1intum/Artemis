@@ -149,7 +149,7 @@ public class AssessmentService {
         }
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
         var assessmentDueDate = exercise.getAssessmentDueDate();
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
         // this is the case for exam exercise submissions that are assessed and submitted
         if (isExamExercise) {
             var exam = exercise.getExerciseGroup().getExam();
