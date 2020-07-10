@@ -22,7 +22,6 @@ describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;
     let systemNotificationComponentFixture: ComponentFixture<SystemNotificationComponent>;
     let systemNotificationService: SystemNotificationService;
-    let accountService: AccountService;
     let jhiWebsocketService: JhiWebsocketService;
 
     const createActiveNotification = (type: SystemNotificationType) => {
@@ -53,15 +52,8 @@ describe('System Notification Component', () => {
                 systemNotificationComponentFixture = TestBed.createComponent(SystemNotificationComponent);
                 systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
                 systemNotificationService = TestBed.inject(SystemNotificationService);
-                accountService = TestBed.inject(AccountService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
-    });
-
-    it('should get identity from account service on init', () => {
-        sinon.spy(accountService, 'identity');
-        systemNotificationComponent.ngOnInit();
-        expect(accountService.identity).to.have.been.calledOnce;
     });
 
     describe('Load active notification', () => {

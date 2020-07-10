@@ -231,7 +231,9 @@ public class ParticipationService {
             if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
-
+            // TODO: load submission with exercise for exam edge case:
+            // clients creates missing participaiton for exercise, call on server succeeds, but response to client is lost
+            // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text, file upload or quiz submission
                 if (createInitialSubmission) {
