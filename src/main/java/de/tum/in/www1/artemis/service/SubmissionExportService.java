@@ -52,13 +52,12 @@ public abstract class SubmissionExportService {
      * @return a reference to the zipped file
      * @throws IOException
      */
-    @Nullable
-    public File exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
         if (exerciseOpt.isEmpty())
-            return null;
+            return Optional.empty();
 
         Exercise exercise = exerciseOpt.get();
 
@@ -76,7 +75,7 @@ public abstract class SubmissionExportService {
         }
 
         if (exportedStudentParticipations.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
 
         ZonedDateTime filterLateSubmissionsDate = null;
@@ -101,8 +100,8 @@ public abstract class SubmissionExportService {
      * @return the zipped file
      * @throws IOException
      */
-    @Nullable
-    private File createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter) throws IOException {
+    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter)
+            throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -111,6 +110,12 @@ public abstract class SubmissionExportService {
 
         Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
+
+        File submissionFolder = submissionsFolderPath.toFile();
+        if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
+            log.error("Couldn't create dir: " + submissionFolder);
+            return Optional.empty();
+        }
 
         // Save all Submissions
         List<Path> submissionFilePaths = participations.stream().map((participation) -> {
@@ -134,35 +139,20 @@ public abstract class SubmissionExportService {
             Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
             try {
-
-                File parent = submissionFilePath.getParent().toFile();
-                if (!parent.exists() && !parent.mkdirs()) {
-                    log.error("Couldn't create dir: " + parent);
-                    return Optional.<Path>empty();
-                }
-
                 this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
-
             }
             catch (IOException ioException) {
-                log.error("Could not create file " + submissionFilePath.toString() + "for exporting: " + ioException.getMessage());
+                log.error("Could not create file " + submissionFilePath.toString() + " for exporting: " + ioException.getMessage());
                 return Optional.<Path>empty();
             }
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionFilePaths.isEmpty())
-            return null;
+            return Optional.empty();
 
         try {
-
-            File parent = zipFilePath.getParent().toFile();
-            if (!parent.exists() && !parent.mkdirs()) {
-                log.error("Couldn't create dir: " + parent);
-                return null;
-            }
-
             createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
@@ -171,7 +161,7 @@ public abstract class SubmissionExportService {
 
         scheduleForDeletion(zipFilePath, 15);
 
-        return zipFilePath.toFile();
+        return Optional.of(zipFilePath.toFile());
     }
 
     protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;
@@ -183,6 +173,7 @@ public abstract class SubmissionExportService {
      *
      * @param zipFilePath path where the zip file should be saved
      * @param paths the paths that should be zipped
+     * @param pathsRoot the root path relative to <code>paths</code>
      * @throws IOException if an error occurred while zipping
      */
     private void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {

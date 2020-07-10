@@ -25,7 +25,12 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
         String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
 
-        Files.copy(Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]), file.toPath());
+        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+
+        if (!submissionPath.toFile().exists())
+            throw new IOException("Could not find uploaded file for submission.");
+
+        Files.copy(submissionPath, file.toPath());
     }
 
     @Override

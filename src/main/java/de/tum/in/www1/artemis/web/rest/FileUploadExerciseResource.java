@@ -307,17 +307,23 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
 
-        try {
-            File zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+        // ta's are not allowed to download all participations
+        if (submissionExportOptions.isExportAllParticipants() && authCheckService.isTeachingAssistantInCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+            return forbidden();
+        }
 
-            if (zipFile == null) {
+        try {
+            Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+
+            if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
                         .body(null);
             }
 
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-            return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
+                    .body(resource);
 
         }
         catch (IOException e) {
