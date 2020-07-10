@@ -55,6 +55,13 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     /**
      * Creates and returns an extension to current exercise.
+     * The extension provides a custom rendering mechanism for embedded plantUml diagrams.
+     * The mechanism works as follows:
+     * 1) Find (multiple) embedded plantUml diagrams based on a regex (startuml, enduml).
+     * 2) Replace the whole plantUml with a simple plantUml div container and a unique placeholder id
+     * 3) Add colors for test results in the plantUml (red, green, grey)
+     * 4) Send the plantUml content to the server for rendering a svg (the result will be cached for performance reasons)
+     * 5) Inject the computed svg for the plantUml (from the server) into the plantUml div container based on the unique placeholder id (see step 2)
      */
     getExtension() {
         const extension: showdown.ShowdownExtension = {
@@ -70,13 +77,18 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // Assign unique ids to uml data structure at the beginning.
                 const plantUmlsIndexed = plantUmls.map((plantUml) => {
                     const nextIndex = this.plantUmlIndex;
+                    // increase the global unique index so that the next plantUml gets a unique global id
                     this.plantUmlIndex++;
-                    return { id: nextIndex, plantUml };
+                    return { plantUmlId: nextIndex, plantUml };
                 });
-                const replacedText = plantUmlsIndexed.reduce((acc: string, umlIndexed: { id: number; plantUml: string }): string => {
-                    return acc.replace(new RegExp(escapeStringForUseInRegex(umlIndexed.plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, umlIndexed.id.toString()));
+                // custom markdown to html rendering: replace the plantUml in the markdown with a simple <div></div> container with a unique id placeholder
+                // with the global unique id so that we can find the plantUml later on, when it was rendered, and then inject the 'actual' inner html (actually a svg image)
+                const replacedText = plantUmlsIndexed.reduce((acc: string, umlIndexed: { plantUmlId: number; plantUml: string }): string => {
+                    return acc.replace(new RegExp(escapeStringForUseInRegex(umlIndexed.plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, umlIndexed.plantUmlId.toString()));
                 }, text);
-                const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { id: number; plantUml: string }) => {
+                // before we send the plantUml to the server for rendering, we need to inject the current test status so that the colors can be adapted
+                // (green == implemented, red == not yet implemented, grey == unknown)
+                const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
                     plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
                         const tests = capture.split(',');
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
@@ -84,9 +96,10 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                     });
                     return plantUmlIndexed;
                 });
+                // send the adapted plantUml to the server for rendering and inject the result into the html DOM based on the unique plantUml id
                 this.injectableElementsFoundSubject.next(() => {
-                    plantUmlsValidated.forEach((plantUmlIndexed: { id: number; plantUml: string }) => {
-                        this.loadAndInjectPlantUml(plantUmlIndexed.plantUml, plantUmlIndexed.id);
+                    plantUmlsValidated.forEach((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
+                        this.loadAndInjectPlantUml(plantUmlIndexed.plantUml, plantUmlIndexed.plantUmlId);
                     });
                 });
                 return replacedText;
