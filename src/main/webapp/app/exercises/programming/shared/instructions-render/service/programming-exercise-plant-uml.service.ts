@@ -21,13 +21,12 @@ export class ProgrammingExercisePlantUmlService {
      * Requests the plantuml png file as arraybuffer and converts it to base64.
      * @param plantUml - definition obtained by parsing the README markdown file.
      *
-     * TODO provide a rationale about the cache configuration
-     *
+     * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
     @Cacheable({
         /** Cacheable configuration **/
-        maxCacheCount: 3,
-        maxAge: 3000,
+        maxCacheCount: 100,
+        maxAge: 3600000, // ms
         slidingExpiration: true,
     })
     getPlantUmlImage(plantUml: string) {
@@ -43,13 +42,12 @@ export class ProgrammingExercisePlantUmlService {
      * Requests the plantuml svg as string.
      * @param plantUml - definition obtained by parsing the README markdown file.
      *
-     * TODO provide a rationale about the cache configuration
-     *
+     * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
     @Cacheable({
         /** Cacheable configuration **/
-        maxCacheCount: 3,
-        maxAge: 3000,
+        maxCacheCount: 100,
+        maxAge: 3600000, // ms
         slidingExpiration: true,
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {

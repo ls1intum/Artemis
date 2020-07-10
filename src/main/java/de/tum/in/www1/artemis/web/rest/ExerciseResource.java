@@ -122,6 +122,10 @@ public class ExerciseResource {
                     return forbidden();
                 }
             }
+            else {
+                // Students should never access exercises
+                return forbidden();
+            }
         }
         // Normal exercise
         else {

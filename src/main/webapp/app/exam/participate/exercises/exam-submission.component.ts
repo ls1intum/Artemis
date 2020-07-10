@@ -1,6 +1,6 @@
 export abstract class ExamSubmissionComponent {
     abstract hasUnsavedChanges(): boolean;
-    abstract updateSubmissionFromView(intervalSave: boolean): void;
+    abstract updateSubmissionFromView(): void;
 
     /**
      * is called when the component becomes active / visible
