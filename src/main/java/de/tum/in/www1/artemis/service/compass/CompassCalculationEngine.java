@@ -133,10 +133,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void buildModel(ModelingSubmission modelingSubmission) {
         if (modelingSubmission.getModel() != null) {
-            if (parseString(modelingSubmission.getModel()).isJsonObject()) {
-                buildModel(modelingSubmission.getId(), parseString(modelingSubmission.getModel()).getAsJsonObject());
-            }
-
+            buildModel(modelingSubmission.getId(), parseString(modelingSubmission.getModel()).getAsJsonObject());
         }
     }
 
@@ -248,9 +245,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (modelIndex.getModelMap().containsKey(modelId)) {
             return;
         }
-        if (parseString(model).isJsonObject()) {
-            buildModel(modelId, parseString(model).getAsJsonObject());
-        }
+        buildModel(modelId, parseString(model).getAsJsonObject());
     }
 
     @Override
