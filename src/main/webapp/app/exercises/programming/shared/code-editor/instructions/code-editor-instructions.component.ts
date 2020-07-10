@@ -54,6 +54,12 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
         });
     }
 
+    refreshInstructions(): void {
+        if (this.readOnlyInstructions) {
+            this.readOnlyInstructions.updateMarkdown();
+        }
+    }
+
     /**
      * If there is a subscription do unsubscribe.
      */
