@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -675,8 +674,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         database.addTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
 
-        var expectedResponseHeaders = new HashMap<String, String>();
-        expectedResponseHeaders.put("X-Athene-Tracking-Authorization", "");
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
 
