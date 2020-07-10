@@ -100,12 +100,12 @@ public class AssessmentService {
 
     /**
      * Checks if the user has the authority to create or override an already submitted result.
-     * Creating a result (no previous result) is only possible within the exercise's assessment due date.
+     * Creating a result (no previous result) or not submitted always returns true
      * Tutors can only override those results which they have assessed themselves. See {@link #isTutorAllowedToBeAssessorOfResult(Result, Exercise, User)}.
      * For exam exercises {@link Exercise#hasExerciseGroup()}, all tutors can override the results of other assessors to allow for a second correction, within the exercise's assessment due date.
      * Instructors can always create or override results.
      *
-     * If the result does not yet exist or is not yet submitted, this method returns true
+     * Currently, for programming exercises we do not check the assessment due date, as this cannot be set.
      *
      * @param existingResult the existing result in case the result is updated (submitted or overridden)
      * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
@@ -117,10 +117,18 @@ public class AssessmentService {
         final boolean isAllowedToBeAssessor = isTutorAllowedToBeAssessorOfResult(existingResult, exercise, user);
         // for exams, all tutors are allowed to override other assessor's results.
         final boolean isExamExercise = exercise.hasExerciseGroup();
+
+        // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
         if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAllowedToBeAssessor || isAtLeastInstructor;
         }
+
+        // TODO: currently for programmingExercises we cannot set an assessment due date, therefore we need to skip the due date check for them
+        final boolean isProgrammingExercise = exercise instanceof ProgrammingExercise;
+        if (isProgrammingExercise) {
+            return isAllowedToBeAssessor || isExamExercise || isAtLeastInstructor;
+        }
+
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
         var assessmentDueDate = exercise.getAssessmentDueDate();
         final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
