@@ -78,6 +78,7 @@ public class TextSubmissionService extends SubmissionService {
      */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
+        // TODO Important: for exam exercises, we should NOT check this!!!
         final var dueDate = textExercise.getDueDate();
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {

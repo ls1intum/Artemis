@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
 import java.io.IOException;
-import java.time.Instant;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -22,8 +21,6 @@ public class ApiVersionFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(ApiVersionFilter.class);
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
-
-    public static final String SERVER_DATE_HEADER = "Server-Date";
 
     /**
      * Artemis Version as defined in build.gradle
@@ -49,8 +46,6 @@ public class ApiVersionFilter implements Filter {
         logger.debug("Adding Version and current Server Time to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
 
         httpResponse.addHeader(CONTENT_VERSION_HEADER, VERSION);
-
-        httpResponse.addHeader(SERVER_DATE_HEADER, Instant.now().toString());
 
         chain.doFilter(request, response);
     }

@@ -300,12 +300,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
@@ -348,12 +350,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],

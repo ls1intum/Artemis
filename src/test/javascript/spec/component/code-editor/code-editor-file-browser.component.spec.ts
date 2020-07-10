@@ -473,6 +473,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(foldersInTreeHtml).to.have.lengthOf(1);
         renamingInput = filesInTreeHtml[0].query(By.css('input'));
         expect(renamingInput).not.to.exist;
+
+        // Wait for focus of input element
+        tick();
     }));
 
     it('should rename all paths concerned if a folder is renamed', fakeAsync(() => {
