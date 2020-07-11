@@ -25,7 +25,7 @@ export interface ICodeEditorRepositoryFileService {
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
 }
@@ -114,18 +114,16 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private fileUpdateSubject = new Subject<FileSubmission>();
-    private fileUpdateUrl: string;
-
+    private fileSaveUrl: string;
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 
     /**
-     * Calls ngOnDestroy of super and unsubscribes from current service.
+     * Calls ngOnDestroy of super to unsubscribe from domain/participation changes.
      */
     ngOnDestroy() {
         super.ngOnDestroy();
-        this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
     }
 
     /**
@@ -137,15 +135,8 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        if (this.fileUpdateUrl) {
-            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
-        }
-        this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
+        this.fileSaveUrl = `${this.restResourceUrl}/files`;
     }
-
-    getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
-    };
 
     getFile = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
@@ -174,19 +165,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    getRepositoryContent = () => {
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
+    };
+
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
-        if (this.fileUpdateSubject) {
-            this.fileUpdateSubject.complete();
-        }
-        if (this.fileUpdateUrl) {
-            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
-        }
-
-        this.fileUpdateSubject = new Subject<FileSubmission>();
-
-        this.jhiWebsocketService.subscribe(this.fileUpdateUrl);
-        this.jhiWebsocketService
-            .receive(this.fileUpdateUrl)
+        this.http
+            .put<FileSubmission>(this.fileSaveUrl, fileUpdates)
             .pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (checkIfSubmissionIsError(fileSubmission)) {
@@ -203,7 +188,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 catchError(() => of()),
             )
             .subscribe();
-        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         return this.fileUpdateSubject.asObservable();
     };
 

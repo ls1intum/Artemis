@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.web.websocket.repository;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.*;
@@ -53,15 +52,13 @@ public class RepositoryResource {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ExerciseService exerciseService;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ExamSubmissionService examSubmissionService;
 
-    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
                               ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
                               ExamSubmissionService examSubmissionService) {
         this.userService = userService;
@@ -69,7 +66,6 @@ public class RepositoryResource {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.versionControlService = versionControlService;
-        this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionService = examSubmissionService;
@@ -89,7 +85,7 @@ public class RepositoryResource {
         try {
             participation = programmingExerciseParticipationService.findParticipation(participationId);
         } catch (EntityNotFoundException ex) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound", ex.getCause());
+            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
         }
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
@@ -124,6 +120,41 @@ public class RepositoryResource {
         if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        }
+        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+        return ResponseEntity.ok(fileSaveResult);
+    }
+
+    /**
+     * Update a list of files in a test repository based on the submission's content.
+     *
+     * @param exerciseId  of exercise to which the files belong
+     * @param submissions information about the file updates
+     * @param principal   used to check if the user can update the files
+     */
+    @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions, Principal principal) {
+        // TODO: this should rather be a REST call so that security checks are easier to implement. Ask Sascha what he meant
+        ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        if(versionControlService.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
+        }
+        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
+
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getURL());
+        } catch (IllegalAccessException e) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        } catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
+        } catch (GitAPIException | InterruptedException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
         return ResponseEntity.ok(fileSaveResult);
