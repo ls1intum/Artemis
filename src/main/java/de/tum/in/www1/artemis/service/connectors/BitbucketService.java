@@ -533,7 +533,7 @@ public class BitbucketService extends AbstractVersionControlService {
                         new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
                         });
 
-                if (response.getBody().getSize() > 0) {
+                if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
                     if (exists) {
                         log.warn("Bitbucket project with name" + projectName + " already exists");
