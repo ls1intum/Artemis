@@ -159,6 +159,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId id of participation to which the files belong
      * @param submissions     information about the file updates
      * @param principal       used to check if the user can update the files
+     * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
@@ -214,6 +215,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param exerciseId  of exercise to which the files belong
      * @param submissions information about the file updates
      * @param principal   used to check if the user can update the files
+     * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions, Principal principal) {
