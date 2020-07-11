@@ -175,14 +175,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      *
      * @param fileUpdates the Array of updated files
      */
-    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>): Observable<FileSubmission> {
+        const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
 
         this.http
-            .put<FileSubmission>(this.fileUpdateUrl, fileUpdates)
+            .put<FileSubmission>(currentFileUpdateUrl, fileUpdates)
             .pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (checkIfSubmissionIsError(fileSubmission)) {
@@ -200,7 +201,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             )
             .subscribe();
         return this.fileUpdateSubject.asObservable();
-    };
+    }
 
     renameFile = (currentFilePath: string, newFilename: string) => {
         return this.http
