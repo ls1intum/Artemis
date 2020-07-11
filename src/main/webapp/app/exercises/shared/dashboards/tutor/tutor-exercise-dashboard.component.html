@@ -233,7 +233,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th *ngIf="!!exercise.exerciseGroup">{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</th>
+                            <th *ngIf="isExamMode">{{ 'artemisApp.tutorExerciseDashboard.submissionId' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.submissionDate' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
@@ -245,7 +245,7 @@
                     <tbody>
                         <tr *ngFor="let submission of assessedSubmissions; let i = index">
                             <td>{{ i + 1 }}</td>
-                            <td *ngIf="!!exercise.exerciseGroup">{{ submission.id }}</td>
+                            <td *ngIf="isExamMode">{{ submission.id }}</td>
                             <td>{{ submission.submissionDate | artemisDate }}</td>
                             <td>
                                 <jhi-result [participation]="submission.participation"></jhi-result>
@@ -286,7 +286,7 @@
                         </tr>
                         <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0 && !exercise.teamMode">
                             <td></td>
-                            <td *ngIf="!!exercise.exerciseGroup"></td>
+                            <td *ngIf="isExamMode"></td>
                             <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
@@ -333,7 +333,7 @@
                 </ng-template>
             </div>
             <!-- Start all assessed submissions only for exam mode -->
-            <div *ngIf="!!exercise.exerciseGroup && (tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED)">
+            <div *ngIf="isExamMode && (tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED)">
                 <h4>
                     {{ 'artemisApp.tutorExerciseDashboard.othersAssessments' | translate }}
                 </h4>

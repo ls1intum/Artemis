@@ -110,6 +110,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     sortPredicate = 'id';
     reverseOrder = false;
+    isExamMode = false;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -158,6 +159,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+                this.isExamMode = !!this.exercise.exerciseGroup;
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
@@ -264,8 +266,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         // for exam mode we need all assessments for the second correction, not just the tutors.
-        const isExamMode = !!this.exercise.exerciseGroup;
-        const getOnlyTutorsOwnAssessments = !isExamMode;
+        const getOnlyTutorsOwnAssessments = !this.isExamMode;
         // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
@@ -290,7 +291,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             .subscribe((submissions: Submission[]) => {
                 // Get the assessed submission of one tutor
                 let ownAssessedSubmissions = submissions;
-                if (isExamMode) {
+                if (this.isExamMode) {
                     ownAssessedSubmissions = submissions.filter((submission) => submission.result?.assessor?.id === this.tutor?.id);
                 }
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
@@ -299,7 +300,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     return submission;
                 });
 
-                if (isExamMode) {
+                if (this.isExamMode) {
                     // Get the assessed submissions for all other tutors (needed for 2nd correction of exam exercises)
                     const otherAssessedSubmissions = submissions.filter(
                         (submission) => this.calculateStatus(submission) === 'DONE' && submission.result.assessor && submission.result.assessor.id !== this.tutor?.id,
