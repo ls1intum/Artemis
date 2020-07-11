@@ -12,12 +12,15 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,6 +29,8 @@ import { Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+
+type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -86,6 +91,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadingExam: boolean;
 
+    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -98,6 +105,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
         private alertService: AlertService,
+        private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
         this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
@@ -126,6 +134,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                     this.loadingExam = false;
                 },
+                // if error occurs
                 () => (this.loadingExam = false),
             );
         });
@@ -165,14 +174,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
-            // init studentExam and activeExercise
+            // init studentExam
             this.studentExam = studentExam;
-            this.activeExercise = studentExam.exercises[0];
             // set endDate with workingTime
             this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
-            this.submissionComponentVisited[0] = true;
+            // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises.forEach((exercise) => {
                 // We do not support hints at the moment. Setting an empty array here disables the hint requests
@@ -182,37 +190,28 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
                         });
-                    } else {
-                        // create empty fallback submission
-                        let submission;
-                        switch (exercise.type) {
-                            case ExerciseType.TEXT:
-                                submission = new TextSubmission();
-                                break;
-                            case ExerciseType.FILE_UPLOAD:
-                                submission = new FileUploadSubmission();
-                                break;
-                            case ExerciseType.MODELING:
-                                submission = new ModelingSubmission();
-                                break;
-                            case ExerciseType.PROGRAMMING:
-                                submission = new ProgrammingSubmission();
-                                break;
-                            case ExerciseType.QUIZ:
-                                submission = new QuizSubmission();
-                                break;
-                        }
-                        submission.isSynced = true;
-                        participation.submissions = [submission];
                     }
                 });
             });
-            if (this.activeSubmissionComponent) {
-                this.activeSubmissionComponent.onActivate();
-            }
+            const initialExercise = this.studentExam.exercises[0];
+            this.initializeExercise(initialExercise);
         }
         this.examConfirmed = true;
         this.startAutoSaveTimer();
+    }
+
+    /**
+     * checks if there is a participation for the given exercise and if it was initialized properly
+     * @param exercise to check
+     * @returns true if valid, false otherwise
+     */
+    private isExerciseParticipationValid(exercise: Exercise): boolean {
+        // check if there is at least one participation with state === Initialized
+        return (
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length !== 0 &&
+            exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED
+        );
     }
 
     /**
@@ -222,14 +221,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 30) {
-                this.triggerSave(true, false);
+            if (this.autoSaveTimer >= 30 && !this.isOver()) {
+                this.triggerSave(false);
             }
         }, 1000);
     }
 
     examEnded() {
-        this.triggerSave(false, true);
+        this.triggerSave(true);
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -289,12 +288,74 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
-        this.triggerSave(false, exerciseChange.force);
-        this.activeExercise = exerciseChange.exercise;
-        this.submissionComponentVisited[this.activeExerciseIndex] = true;
-        if (this.activeSubmissionComponent) {
-            this.activeSubmissionComponent.onActivate();
+        this.triggerSave(exerciseChange.force);
+        this.initializeExercise(exerciseChange.exercise);
+    }
+
+    /**
+     * sets active exercise and checks if participation is valid for exercise
+     * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
+     * @param exercise to initialize
+     */
+    private initializeExercise(exercise: Exercise) {
+        this.activeExercise = exercise;
+        // if we do not have a valid participation for the exercise -> initialize it
+        if (!this.isExerciseParticipationValid(exercise)) {
+            // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
+            this.createParticipationForExercise(exercise).subscribe((participation) => {
+                if (participation !== null) {
+                    // for programming exercises -> wait for latest submission before showing exercise
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.programmingSubmissionService.getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, true).subscribe((programmingSubmissionObj) => {
+                            if (programmingSubmissionObj.submission) {
+                                participation.submissions = [programmingSubmissionObj.submission];
+                            }
+                            this.submissionComponentVisited[this.activeExerciseIndex] = true;
+                            if (this.activeSubmissionComponent) {
+                                this.activeSubmissionComponent.onActivate();
+                            }
+                        });
+                    } else {
+                        this.submissionComponentVisited[this.activeExerciseIndex] = true;
+                        if (this.activeSubmissionComponent) {
+                            this.activeSubmissionComponent.onActivate();
+                        }
+                    }
+                }
+            });
+        } else {
+            this.submissionComponentVisited[this.activeExerciseIndex] = true;
+            if (this.activeSubmissionComponent) {
+                this.activeSubmissionComponent.onActivate();
+            }
         }
+    }
+
+    /**
+     * creates a participation for the exercise, if it did not exist already
+     * @param exercise
+     */
+    createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | null> {
+        this.generateParticipationStatus.next('generating');
+        return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
+            map((createdParticipation: StudentParticipation) => {
+                // if the same participations is not yet present in the exercise -> add it
+                if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
+                    // remove because of circular dependency when converting to JSON
+                    delete createdParticipation.exercise;
+                    exercise.studentParticipations.push(createdParticipation);
+                    if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
+                        createdParticipation.submissions[0].isSynced = true;
+                    }
+                }
+                this.generateParticipationStatus.next('success');
+                return createdParticipation;
+            }),
+            catchError(() => {
+                this.generateParticipationStatus.next('failed');
+                return Observable.of(null);
+            }),
+        );
     }
 
     /**
@@ -305,28 +366,29 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * 4) exam is about to end (<1s left)
      *      --> in this case, we can even save all submissions with isSynced = true
      *
-     * @param intervalSave is set to true, if the save was triggered from the interval timer
      * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
-    triggerSave(intervalSave: boolean, force: boolean) {
+    triggerSave(force: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
         if ((this.activeSubmissionComponent && force) || this.activeSubmissionComponent?.hasUnsavedChanges()) {
             // this will lead to a save below, because isSynced will be set to false
-            this.activeSubmissionComponent.updateSubmissionFromView(intervalSave);
+            this.activeSubmissionComponent.updateSubmissionFromView();
         }
 
         // goes through all exercises and checks if there are unsynched submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises.forEach((exercise: Exercise) => {
             exercise.studentParticipations.forEach((participation) => {
-                participation.submissions
-                    .filter((submission) => !submission.isSynced)
-                    .forEach((unsynchedSubmission) => {
-                        submissionsToSync.push({ exercise, submission: unsynchedSubmission });
-                    });
+                if (participation.submissions) {
+                    participation.submissions
+                        .filter((submission) => !submission.isSynced)
+                        .forEach((unsynchedSubmission) => {
+                            submissionsToSync.push({ exercise, submission: unsynchedSubmission });
+                        });
+                }
             });
         });
 
@@ -336,7 +398,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -345,7 +407,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -354,7 +416,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id, submissionToSync.submission as QuizSubmission).subscribe(
-                            () => (submissionToSync.submission.isSynced = true),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             (error) => this.onSaveSubmissionError(error),
                         );
                         break;
@@ -364,6 +426,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private onSaveSubmissionSuccess(submission: Submission) {
+        submission.isSynced = true;
+        submission.submitted = true;
     }
 
     private onSaveSubmissionError(error: string) {

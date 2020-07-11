@@ -47,6 +47,15 @@ public class Exam implements Serializable {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    @Column(name = "publish_results_date")
+    private ZonedDateTime publishResultsDate;
+
+    @Column(name = "exam_student_review_start")
+    private ZonedDateTime examStudentReviewStart;
+
+    @Column(name = "exam_student_review_end")
+    private ZonedDateTime examStudentReviewEnd;
+
     @Column(name = "start_text")
     @Lob
     private String startText;
@@ -139,6 +148,30 @@ public class Exam implements Serializable {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public ZonedDateTime getPublishResultsDate() {
+        return publishResultsDate;
+    }
+
+    public void setPublishResultsDate(ZonedDateTime publishResultsDate) {
+        this.publishResultsDate = publishResultsDate;
+    }
+
+    public ZonedDateTime getExamStudentReviewStart() {
+        return examStudentReviewStart;
+    }
+
+    public void setExamStudentReviewStart(ZonedDateTime examStudentReviewStart) {
+        this.examStudentReviewStart = examStudentReviewStart;
+    }
+
+    public ZonedDateTime getExamStudentReviewEnd() {
+        return examStudentReviewEnd;
+    }
+
+    public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
+        this.examStudentReviewEnd = examStudentReviewEnd;
     }
 
     public String getStartText() {
