@@ -1,8 +1,9 @@
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
-import 'brace/mode/javascript';
 import 'brace/mode/markdown';
+import 'brace/mode/haskell';
+import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
