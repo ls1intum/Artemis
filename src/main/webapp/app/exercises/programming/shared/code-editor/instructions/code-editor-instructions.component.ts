@@ -56,6 +56,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     refreshInstructions(): void {
         if (this.readOnlyInstructions) {
+            // Load the result of the active exercise into the UML and Task extension on exercise switch
+            this.readOnlyInstructions.latestResult = this.readOnlyInstructions.latestResult;
             this.readOnlyInstructions.updateMarkdown();
         }
     }
