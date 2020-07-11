@@ -21,9 +21,15 @@ public class TextSubmissionExportService extends SubmissionExportService {
 
     @Override
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.write(((TextSubmission) submission).getText());
-        writer.close();
+        if (((TextSubmission) submission).getText() == null) {
+            if (!file.exists())
+                file.createNewFile(); // create empty file if submission is empty
+        }
+        else {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write(((TextSubmission) submission).getText());
+            writer.close();
+        }
     }
 
     @Override

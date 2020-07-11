@@ -21,13 +21,18 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
     @Override
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
+
+        if (((FileUploadSubmission) submission).getFilePath() == null) {
+            throw new IOException("Could not find uploaded file for submission.");
+        }
+
         // we need to get the 'real' file path here, the submission only has the api url path
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
         String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
 
         Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
-        if (!submissionPath.toFile().exists())
+        if (!submissionPath.toFile().exists()) // throw if submission file does not exist
             throw new IOException("Could not find uploaded file for submission.");
 
         Files.copy(submissionPath, file.toPath());
@@ -35,9 +40,14 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
     @Override
     protected String getFileEndingForSubmission(Submission submission) {
-        String[] parts = ((FileUploadSubmission) submission).getFilePath().split("/");
-        String fileName = parts[parts.length - 1];
-        int endingIndex = fileName.indexOf(".");
-        return fileName.substring(endingIndex);
+        if (((FileUploadSubmission) submission).getFilePath() == null) {
+            return ""; // submission will be ignored by saveSubmissionToFile
+        }
+        else {
+            String[] parts = ((FileUploadSubmission) submission).getFilePath().split("/");
+            String fileName = parts[parts.length - 1];
+            int endingIndex = fileName.indexOf(".");
+            return fileName.substring(endingIndex);
+        }
     }
 }
