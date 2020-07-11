@@ -4,7 +4,15 @@
     </h2>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div class="d-flex justify-content-center">
-        <input [(ngModel)]="confirmed" type="checkbox" id="confirmBox" (click)="updateConfirmation()" style="place-self: flex-start;" class="mt-1" />
+        <input
+            [(ngModel)]="confirmed"
+            type="checkbox"
+            id="confirmBox"
+            (click)="updateConfirmation()"
+            style="place-self: flex-start;"
+            class="mt-1"
+            [disabled]="startView ? waitingForExamStart : false"
+        />
         <span id="formatted-confirmation-text" class="d-inline-block ml-2" [innerHTML]="formattedConfirmationText"></span>
     </div>
     <div style="text-align: center;">
