@@ -11,6 +11,10 @@ export class Exam implements BaseEntity {
     public visibleDate: Moment | null;
     public startDate: Moment | null;
     public endDate: Moment | null;
+    public publishResultsDate: Moment | null;
+    public examStudentReviewStart: Moment | null;
+    public examStudentReviewEnd: Moment | null;
+
     public startText: string;
     public endText: string;
     public confirmationStartText: string;
