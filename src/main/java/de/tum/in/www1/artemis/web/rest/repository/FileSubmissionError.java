@@ -11,7 +11,7 @@ public class FileSubmissionError extends Error implements Serializable {
 
     private String fileName;
 
-    public FileSubmissionError(Long participationId, String errorMessage) {
+    FileSubmissionError(Long participationId, String errorMessage) {
         super(errorMessage);
         this.participationId = participationId;
     }

@@ -217,7 +217,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions, Principal principal) {
-        // TODO: this should rather be a REST call so that security checks are easier to implement. Ask Sascha what he meant
         ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
         if (versionControlService.isEmpty()) {

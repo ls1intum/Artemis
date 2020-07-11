@@ -169,7 +169,18 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .pipe(handleErrorResponse(this.conflictService));
     };
 
+    /** Call to server to update files.
+     * Checks all returned files submissions for submissionerrors, see {@link checkIfSubmissionIsError}
+     * Currently we only handle {@link GitConflictState#CHECKOUT_CONFLICT}
+     *
+     * @param fileUpdates the Array of updated files
+     */
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
+        if (this.fileUpdateSubject) {
+            this.fileUpdateSubject.complete();
+        }
+        this.fileUpdateSubject = new Subject<FileSubmission>();
+
         this.http
             .put<FileSubmission>(this.fileUpdateUrl, fileUpdates)
             .pipe(
