@@ -18,7 +18,7 @@ public class PrometheusAuthConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // Only enable the endpoint an ip-address is specified
+        // Only enable the endpoint if an ip-address is specified
         if (monitoringIpAddress != null && !monitoringIpAddress.isEmpty()) {
             http.authorizeRequests().antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress).anyRequest().authenticated().and().sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().csrf().disable();

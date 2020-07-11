@@ -13,23 +13,37 @@ import io.micrometer.core.instrument.MeterRegistry;
 @Component
 public class MetricsBean {
 
+    private final String ARTEMIS_HEALTH_NAME = "artemis.health";
+
+    private final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
+
+    private final String ARTEMIS_HEALTH_TAG = "healthindicator";
+
     public MetricsBean(MeterRegistry meterRegistry, SimpUserRegistry simpUserRegistry, List<HealthContributor> healthContributors) {
+        // Publish the number of currently (via WebSockets) connected users
         Gauge.builder("artemis.instance.websocket.users", simpUserRegistry, SimpUserRegistry::getUserCount).strongReference(true)
                 .description("Number of users connected to this Artemis instance").register(meterRegistry);
 
+        // Publish the health status for each HealthContributor
+        // The health status gets published as one Gauge with name ARTEMIS_HEALTH_NAME that has several values (one for each HealthIndicator), using different values for the
+        // ARTEMIS_HEALTH_TAG tag
         for (HealthContributor healthContributor : healthContributors) {
+            // For most HealthContributors, there is only one HealthIndicator that can directly be published.
+            // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
             if (healthContributor instanceof HealthIndicator) {
                 HealthIndicator healthIndicator = (HealthIndicator) healthContributor;
-                Gauge.builder("artemis.health", healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description("Artemis Health Indicator")
-                        .tag("healtindicator", healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
+                Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
+                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
             }
+
+            // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
             if (healthContributor instanceof DiscoveryCompositeHealthContributor) {
                 DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor = (DiscoveryCompositeHealthContributor) healthContributor;
                 for (NamedContributor<HealthContributor> discoveryHealthContributor : discoveryCompositeHealthContributor) {
                     if (discoveryHealthContributor.getContributor() instanceof HealthIndicator) {
                         HealthIndicator healthIndicator = (HealthIndicator) discoveryHealthContributor.getContributor();
-                        Gauge.builder("artemis.health", healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description("Artemis Health Indicator")
-                                .tag("healtindicator", discoveryHealthContributor.getName().toLowerCase()).register(meterRegistry);
+                        Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.getName().toLowerCase()).register(meterRegistry);
                     }
                 }
             }
@@ -37,6 +51,12 @@ public class MetricsBean {
         }
     }
 
+    /**
+     * Maps the health status to a double
+     *
+     * @param health the Health whose status should be mapped
+     * @return a double corresponding to the health status
+     */
     private double mapHealthToDouble(Health health) {
         switch (health.getStatus().getCode()) {
             case "UP":
