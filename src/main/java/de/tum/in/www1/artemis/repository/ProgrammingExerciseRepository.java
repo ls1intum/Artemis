@@ -143,5 +143,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     long countByShortNameAndCourse(String shortName, Course course);
 
+    long countByTitleAndCourse(String shortName, Course course);
+
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
+
+    long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 }
