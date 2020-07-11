@@ -1,11 +1,11 @@
-package de.tum.in.www1.artemis.web.websocket.repository;
+package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.io.Serializable;
 
 /**
  * Class for unmarshalling file updates received by websocket.
  */
-public class FileSubmission implements Serializable {
+class FileSubmission implements Serializable {
 
     private String fileName;
 
