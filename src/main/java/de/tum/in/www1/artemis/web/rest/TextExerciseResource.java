@@ -522,7 +522,7 @@ public class TextExerciseResource {
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
                         .body(null);
             }
 
