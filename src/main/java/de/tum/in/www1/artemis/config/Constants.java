@@ -32,8 +32,6 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
 
-    public static final String REPOSITORY_RESOURCE_PATH = "/repository/";
-
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
