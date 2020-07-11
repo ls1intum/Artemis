@@ -34,7 +34,7 @@
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && isPublished">
                 <button class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
-                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span>&nbsp;View Result</span>
+                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </button>
             </div>
             <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
