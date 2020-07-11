@@ -114,7 +114,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private fileUpdateSubject = new Subject<FileSubmission>();
-    private fileSaveUrl: string;
+    private fileUpdateUrl: string;
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -135,8 +135,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        this.fileSaveUrl = `${this.restResourceUrl}/files`;
+        this.fileUpdateUrl = `${this.restResourceUrl}/files`;
     }
+
+    getRepositoryContent = () => {
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
+    };
 
     getFile = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
@@ -165,13 +169,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .pipe(handleErrorResponse(this.conflictService));
     };
 
-    getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
-    };
-
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         this.http
-            .put<FileSubmission>(this.fileSaveUrl, fileUpdates)
+            .put<FileSubmission>(this.fileUpdateUrl, fileUpdates)
             .pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (checkIfSubmissionIsError(fileSubmission)) {

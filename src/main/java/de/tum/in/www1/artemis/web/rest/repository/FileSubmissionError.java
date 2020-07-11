@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Class for marshalling and sending errors encountered when trying to persist file updates received by websocket.
  */
-class FileSubmissionError extends Error implements Serializable {
+public class FileSubmissionError extends Error implements Serializable {
 
     private Long participationId;
 

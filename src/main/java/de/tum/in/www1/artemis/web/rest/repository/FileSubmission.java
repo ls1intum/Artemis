@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Class for unmarshalling file updates received by websocket.
  */
-class FileSubmission implements Serializable {
+public class FileSubmission implements Serializable {
 
     private String fileName;
 
