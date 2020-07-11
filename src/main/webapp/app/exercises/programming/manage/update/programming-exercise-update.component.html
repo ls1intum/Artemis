@@ -57,9 +57,9 @@
                         [readonly]="!isImport && programmingExercise.id"
                         #shortName="ngModel"
                     />
-                    <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                    <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys: ['required']">
                         <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + e.key"></div>
+                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                         </div>
                     </ng-container>
                 </div>
@@ -127,7 +127,7 @@
                         </label>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
                     </div>
-                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise"> </jhi-programming-exercise-lifecycle>
+                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"> </jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
