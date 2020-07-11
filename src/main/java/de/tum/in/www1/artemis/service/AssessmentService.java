@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,7 +98,8 @@ public class AssessmentService {
 
     /**
      * Checks if the user has the authority to create or override an already submitted result.
-     * Creating a result (no previous result) or not submitted always returns true
+     * Creating a result (no previous result) is always allowed if within the assessment due date, see {@link Exercise#getAssessmentDueDate()}
+     * Not submitted results ({@link Result#getCompletionDate()} == null) can always be overriden by allowed assesors.
      * Tutors can only override those results which they have assessed themselves. See {@link #isTutorAllowedToBeAssessorOfResult(Result, Exercise, User)}.
      * For exam exercises {@link Exercise#hasExerciseGroup()}, all tutors can override the results of other assessors to allow for a second correction, within the exercise's assessment due date.
      * Instructors can always create or override results.
@@ -113,7 +112,19 @@ public class AssessmentService {
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @return true if the the given user can create or override a potentially existing result, else false
      */
-    public boolean isAllowedToCreateOrOverrideResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        final boolean isProgrammingExercise = exercise instanceof ProgrammingExercise;
+        // if not result is set, every tutor can create within the assessment due date
+        if (existingResult == null) {
+            // TODO: currently for programmingExercises we cannot set an assessment due date, therefore we always allow the first manual assessment
+            if (isProgrammingExercise) {
+                return true;
+            }
+            return isBeforeAssessmentDueDate || isAtLeastInstructor;
+        }
+
         final boolean isAllowedToBeAssessor = isTutorAllowedToBeAssessorOfResult(existingResult, exercise, user);
         // for exams, all tutors are allowed to override other assessor's results.
         final boolean isExamExercise = exercise.hasExerciseGroup();
@@ -124,14 +135,11 @@ public class AssessmentService {
         }
 
         // TODO: currently for programmingExercises we cannot set an assessment due date, therefore we need to skip the due date check for them
-        final boolean isProgrammingExercise = exercise instanceof ProgrammingExercise;
-        if (isProgrammingExercise) {
+        if (isProgrammingExercise && assessmentDueDate == null) {
             return isAllowedToBeAssessor || isExamExercise || isAtLeastInstructor;
         }
 
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || (isExamExercise && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
