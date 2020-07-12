@@ -64,7 +64,6 @@
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
             disableActions ||
-            isBuilding ||
             editorState === EditorState.REFRESHING ||
             editorState === EditorState.SAVING ||
             (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
