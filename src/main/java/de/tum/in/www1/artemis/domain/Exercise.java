@@ -869,14 +869,14 @@ public abstract class Exercise implements Serializable {
 
     public boolean isReleased() {
         // Exam
+        ZonedDateTime releaseDate;
         if (this.getExerciseGroup() != null) {
-            ZonedDateTime releaseDate = this.getExerciseGroup().getExam().getStartDate();
-            return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+            releaseDate = this.getExerciseGroup().getExam().getStartDate();
         }
         else {
-            ZonedDateTime releaseDate = getReleaseDate();
-            return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+            releaseDate = getReleaseDate();
         }
+        return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
     public Long getStudentAssignedTeamId() {
