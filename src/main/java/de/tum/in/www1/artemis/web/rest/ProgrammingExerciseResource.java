@@ -290,7 +290,8 @@ public class ProgrammingExerciseResource {
         }
 
         try {
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            // Setup all repositories etc
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
