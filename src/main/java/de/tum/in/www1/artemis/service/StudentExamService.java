@@ -123,6 +123,10 @@ public class StudentExamService {
                             submission.submissionDate(ZonedDateTime.now());
                             submission.submitted(true);
                             if (exercise instanceof QuizExercise) {
+                                // recreate pointers back to submission in each submitted answer
+                                for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submission).getSubmittedAnswers()) {
+                                    submittedAnswer.setSubmission(((QuizSubmission) submission));
+                                }
                                 quizSubmissionRepository.save((QuizSubmission) submission);
                             }
                             else if (exercise instanceof TextExercise) {
