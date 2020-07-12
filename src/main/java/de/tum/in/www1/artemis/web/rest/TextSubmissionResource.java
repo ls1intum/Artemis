@@ -57,6 +57,8 @@ public class TextSubmissionResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExamService examService;
+
     private final TextExerciseService textExerciseService;
 
     private final CourseService courseService;
@@ -78,7 +80,7 @@ public class TextSubmissionResource {
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
-            ExamSubmissionService examSubmissionService) {
+            ExamSubmissionService examSubmissionService, ExamService examService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -90,6 +92,7 @@ public class TextSubmissionResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
+        this.examService = examService;
     }
 
     /**
@@ -255,7 +258,8 @@ public class TextSubmissionResource {
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (exam != null) {
-            if (exam.getEndDate() != null && exam.getEndDate().isAfter(ZonedDateTime.now())) {
+            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+            if (latestIndiviudalExamEndDate != null && latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
                 return notFound();
             }
         }
