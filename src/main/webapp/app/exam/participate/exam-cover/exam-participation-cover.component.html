@@ -1,6 +1,12 @@
-<jhi-exam-timer style="position: absolute; right: 10px;" class="justify-content-end" *ngIf="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+<div class="w-100 d-flex" *ngIf="!startView">
+    <div class="col-md-3"></div>
+    <h2 class="col-md-6" style="text-align: center;">
+        {{ exam.title }}
+    </h2>
+    <jhi-exam-timer class="col-md-3 justify-content-end" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+</div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
-    <h2 style="text-align: center;" *ngIf="startView; else headerEndView">
+    <h2 style="text-align: center;" *ngIf="startView">
         <span>{{
             'artemisApp.examParticipation.greeting'
                 | translate
@@ -10,11 +16,6 @@
                       }
         }}</span>
     </h2>
-    <ng-template #headerEndView>
-        <h2 style="text-align: center;">
-            {{ exam.title }}
-        </h2>
-    </ng-template>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div class="d-flex justify-content-center">
         <input
