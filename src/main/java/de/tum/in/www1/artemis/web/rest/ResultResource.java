@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -535,10 +536,21 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
-                    "External submissions are not supported before the exercise due date.")).build();
+
+        if (exercise.getExerciseGroup() == null) {
+            if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the exercise due date.")).build();
+            }
         }
+        else {
+            Exam exam = exercise.getExerciseGroup().getExam();
+            if (exam.getEndDate() == null || ZonedDateTime.now().isBefore(exam.getEndDate())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the end of the exam.")).build();
+            }
+        }
+
         if (exercise instanceof QuizExercise) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
                     "External submissions are not supported for Quiz exercises.")).build();
