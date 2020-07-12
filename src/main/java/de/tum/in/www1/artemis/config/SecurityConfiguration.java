@@ -50,6 +50,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
+    @Value("${spring.prometheus.monitoringIp:#{null}}")
+    private Optional<String> monitoringIpAddress;
+
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
                                  CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
@@ -147,6 +150,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
+            // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
+            .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/time").permitAll()
         .and()
