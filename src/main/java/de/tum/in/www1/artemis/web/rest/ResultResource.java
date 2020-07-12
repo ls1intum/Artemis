@@ -540,7 +540,7 @@ public class ResultResource {
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
-        if (exercise.getExerciseGroup() == null) {
+        if (!exercise.hasExerciseGroup()) {
             if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the exercise due date.")).build();
