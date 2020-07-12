@@ -173,7 +173,7 @@ public class LtiResource {
         if (exercise.isEmpty()) {
             return notFound();
         }
-        if (authCheckService.isAtLeastInstructorForExercise(exercise.get(), null)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise.get(), null)) {
             return forbidden();
         }
         if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
