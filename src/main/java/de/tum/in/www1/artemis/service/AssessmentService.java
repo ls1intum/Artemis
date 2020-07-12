@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -33,11 +34,13 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
+    private final ExamService examService;
+
     private final SubmissionRepository submissionRepository;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, ExamService examService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -45,11 +48,21 @@ public class AssessmentService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.submissionRepository = submissionRepository;
+        this.examService = examService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
         Double maxScore = exercise.getMaxScore();
-        result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+
+        if (exercise.hasExerciseGroup()) {
+            Exam exam = exercise.getExerciseGroup().getExam();
+            ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+            result.setRatedIfNotExceeded(latestIndividualExamEndDate, result.getSubmission().getSubmissionDate());
+        }
+        else {
+            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        }
+
         result.setCompletionDate(ZonedDateTime.now());
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
