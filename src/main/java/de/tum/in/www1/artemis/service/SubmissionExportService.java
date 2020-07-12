@@ -56,8 +56,9 @@ public abstract class SubmissionExportService {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
-        if (exerciseOpt.isEmpty())
+        if (exerciseOpt.isEmpty()) {
             return Optional.empty();
+        }
 
         Exercise exercise = exerciseOpt.get();
 
@@ -131,8 +132,9 @@ public abstract class SubmissionExportService {
                 }
             }
 
-            if (latestSubmission == null)
+            if (latestSubmission == null) {
                 return Optional.<Path>empty();
+            }
 
             String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
                     + this.getFileEndingForSubmission(latestSubmission);
