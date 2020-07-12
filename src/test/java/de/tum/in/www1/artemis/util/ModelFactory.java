@@ -272,6 +272,12 @@ public class ModelFactory {
         return fileUploadSubmission;
     }
 
+    public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
+        FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
+        fileUploadSubmission.setFilePath(filePath);
+        return fileUploadSubmission;
+    }
+
     public static FileUploadSubmission generateLateFileUploadSubmission() {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(true);
