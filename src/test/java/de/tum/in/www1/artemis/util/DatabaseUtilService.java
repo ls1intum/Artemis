@@ -1147,6 +1147,28 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithModelingAndTextAndFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        modelingExercise.setTitle("Modeling");
+        course.addExercises(modelingExercise);
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setTitle("Text");
+        course.addExercises(textExercise);
+
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        fileUploadExercise.setTitle("FileUpload");
+        course.addExercises(fileUploadExercise);
+
+        course = courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        return course;
+    }
+
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
