@@ -301,6 +301,12 @@ public class ProgrammingExerciseResource {
         }
     }
 
+    /**
+     * Checks if a project exists for a programming exercise
+     *
+     * @param programmingExercise programming exercise to check for
+     * @return ProgrammingExercise as Optional if Project exists, Empty Optional otherwise
+     */
     public Optional<ResponseEntity<ProgrammingExercise>> checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
