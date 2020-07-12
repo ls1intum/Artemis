@@ -25,8 +25,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
+    @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     course: Course | null;
     startEnabled: boolean;
+    endEnabled: boolean;
     confirmed: boolean;
 
     formattedGeneralInformation: SafeHtml | null;
@@ -59,11 +61,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
+            this.formattedStartDate = this.exam.startDate ? this.exam.startDate.format('LT') : '';
         } else {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
         }
-        this.formattedStartDate = this.exam.startDate ? this.exam.startDate.format('LT') : '';
 
         this.accountService.identity().then((user) => {
             if (user && user.name) {
@@ -86,6 +88,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     updateConfirmation() {
         if (this.startView) {
             this.startEnabled = this.confirmed;
+        } else {
+            this.endEnabled = this.confirmed;
         }
     }
 
@@ -150,7 +154,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     /**
      * Submits the exam if user has valid token
      */
-    submit() {
+    submitExam() {
         // TODO: refactor following code
         // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
         //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
@@ -163,10 +167,16 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         // error message
         //     }
         // });
+        this.onExamEnded.emit();
     }
 
     get startButtonEnabled(): boolean {
         return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
+    }
+
+    get endButtonEnabled(): boolean {
+        // TODO: add logic when confirm can be clicked
+        return !!(!this.falseName && this.confirmed && this.exam);
     }
 
     get falseName(): boolean {
