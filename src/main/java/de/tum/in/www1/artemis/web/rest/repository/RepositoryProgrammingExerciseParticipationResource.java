@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -200,8 +201,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
+        // Checks only apply to StudentParticipation, otherwise template and solution participation can't be edited using the code editor
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        if (!examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation
+                && !examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
