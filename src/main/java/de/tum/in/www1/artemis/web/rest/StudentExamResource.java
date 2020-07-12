@@ -149,7 +149,6 @@ public class StudentExamResource {
     }
 
     @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
-    // TODO: check if this is correct
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam, HttpServletRequest request) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
