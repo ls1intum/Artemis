@@ -13,10 +13,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -29,8 +35,18 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         this.studentExamRepository = studentExamRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -88,13 +104,24 @@ public class StudentExamService {
 
         studentExam.getExercises().forEach(exercise -> {
             // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
-            if ((exercise instanceof QuizExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getStudentParticipations() != null
-                    && exercise.getStudentParticipations().size() == 1) {
+            if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                 exercise.getStudentParticipations().forEach(studentParticipation -> {
                     // if exactly one submission exists we save the submission
                     if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
+                        studentParticipation.setExercise(exercise);
                         studentParticipation.getSubmissions().forEach(submission -> {
-                            // TODO: save submission
+                            submission.setParticipation(studentParticipation);
+                            submission.submissionDate(ZonedDateTime.now());
+                            submission.submitted(true);
+                            if (exercise instanceof QuizExercise) {
+                                quizSubmissionRepository.save((QuizSubmission) submission);
+                            }
+                            else if (exercise instanceof TextExercise) {
+                                textSubmissionRepository.save((TextSubmission) submission);
+                            }
+                            else if (exercise instanceof ModelingExercise) {
+                                modelingSubmissionRepository.save((ModelingSubmission) submission);
+                            }
                         });
                     }
                 });

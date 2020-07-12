@@ -229,13 +229,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     onExamEndConfirmed() {
-        this.triggerSave(true);
-        // TODO: submit only after successful submission is done
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam.id).subscribe(() => (this.studentExam.submitted = true));
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
     }
 
     examEnded() {
-        window.clearInterval(this.autoSaveInterval);
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        // update local studentExam for later sync with server
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     /**
