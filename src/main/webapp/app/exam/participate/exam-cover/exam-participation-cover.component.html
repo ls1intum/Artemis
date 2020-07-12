@@ -1,4 +1,5 @@
-<div class="container d-flex flex-column align-items-center justify-content-center">
+<jhi-exam-timer class="float-right" *ngIf="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+<div class="container d-flex flex-column align-items-center justify-content-center float-right">
     <h2 style="text-align: center;" *ngIf="startView">
         <span>{{ 'artemisApp.examParticipation.greeting' | translate: { title: exam.title, fullName: accountName } }}</span>
     </h2>

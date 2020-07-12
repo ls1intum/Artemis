@@ -11,6 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -42,6 +43,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     accountName = '';
     enteredName = '';
 
+    graceEndDate: moment.Moment;
+    criticalTime = moment.duration(30, 'seconds');
+
     constructor(
         private courseService: CourseManagementService,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -65,6 +69,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         } else {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
+            if (this.exam.endDate) {
+                this.graceEndDate = this.exam.endDate.add(this.exam.gracePeriod, 'seconds');
+            }
         }
 
         this.accountService.identity().then((user) => {
