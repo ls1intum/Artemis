@@ -30,12 +30,6 @@ public class StudentExam implements Serializable {
     private Boolean submitted;
 
     /**
-     * The duration in which the students can do final submissions before the exam ends in seconds
-     */
-    @Column(name = "grace_period")
-    private Integer gracePeriod = 180;
-
-    /**
      * The working time in seconds
      */
     @Column(name = "working_time")
@@ -74,14 +68,6 @@ public class StudentExam implements Serializable {
 
     public void setSubmitted(Boolean submitted) {
         this.submitted = submitted;
-    }
-
-    public Integer getGracePeriod() {
-        return gracePeriod;
-    }
-
-    public void setGracePeriod(Integer gracePeriod) {
-        this.gracePeriod = gracePeriod;
     }
 
     public Integer getWorkingTime() {

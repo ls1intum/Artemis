@@ -76,7 +76,7 @@ public class StudentExamService {
         // TODO: check if end is calculated correctly -> maybe use individual working time of students?
         // checks if
         if (studentExam.getExam().getEndDate() != null
-                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getGracePeriod(), ChronoUnit.SECONDS)))) {
+                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS)))) {
             studentExam.setSubmitted(true);
             studentExamRepository.save(studentExam);
         }
