@@ -19,8 +19,8 @@
     <div *ngIf="isExamMode" class="row justify-content-between">
         <div class="col-8">
             <ul>
-                <li><span jhiTranslate="artemisApp.exam.endDate"> Exam End Date</span> : {{ exam.endDate | artemisDate }}</li>
-                <li><span jhiTranslate="artemisApp.exam.publishResultsDate"> Publish Results Date</span> : {{ exam.publishResultsDate | artemisDate }}</li>
+                <li><span jhiTranslate="artemisApp.exam.endDate"> Exam End Date</span> : {{ exam?.endDate | artemisDate }}</li>
+                <li><span jhiTranslate="artemisApp.exam.publishResultsDate"> Publish Results Date</span> : {{ exam?.publishResultsDate | artemisDate }}</li>
             </ul>
         </div>
     </div>
@@ -79,7 +79,7 @@
     </div>
 
     <div class="table-responsive">
-        <div class="guided-tour-form-check form-check col-6 align-baseline">
+        <div *ngIf="!isExamMode" class="guided-tour-form-check form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
