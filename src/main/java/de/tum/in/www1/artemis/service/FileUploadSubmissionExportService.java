@@ -32,8 +32,9 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
         Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
-        if (!submissionPath.toFile().exists()) // throw if submission file does not exist
+        if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
             throw new IOException("Could not find uploaded file for submission.");
+        }
 
         Files.copy(submissionPath, file.toPath());
     }

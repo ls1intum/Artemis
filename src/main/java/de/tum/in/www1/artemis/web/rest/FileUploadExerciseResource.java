@@ -308,7 +308,8 @@ public class FileUploadExerciseResource {
         }
 
         // ta's are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants() && authCheckService.isTeachingAssistantInCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+        if (submissionExportOptions.isExportAllParticipants()
+                && !authCheckService.isAtLeastInstructorInCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
             return forbidden();
         }
 

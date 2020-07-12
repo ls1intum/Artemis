@@ -22,8 +22,9 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
     @Override
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((ModelingSubmission) submission).getModel() == null) {
-            if (!file.exists())
+            if (!file.exists()) {
                 file.createNewFile(); // create empty file if submission is empty
+            }
         }
         else {
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));

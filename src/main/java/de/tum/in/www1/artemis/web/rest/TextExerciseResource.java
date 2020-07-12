@@ -513,7 +513,7 @@ public class TextExerciseResource {
         }
 
         // ta's are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants() && authCheckService.isTeachingAssistantInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
             return forbidden();
         }
 

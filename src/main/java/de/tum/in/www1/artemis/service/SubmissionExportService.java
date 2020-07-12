@@ -50,7 +50,7 @@ public abstract class SubmissionExportService {
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the expot
      * @return a reference to the zipped file
-     * @throws IOException
+     * @throws IOException if an error occurred while zipping
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
 
@@ -99,7 +99,7 @@ public abstract class SubmissionExportService {
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
      * @return the zipped file
-     * @throws IOException
+     * @throws IOException if an error occurred while zipping
      */
     private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter)
             throws IOException {
@@ -151,8 +151,9 @@ public abstract class SubmissionExportService {
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
-        if (submissionFilePaths.isEmpty())
+        if (submissionFilePaths.isEmpty()) {
             return Optional.empty();
+        }
 
         try {
             createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);

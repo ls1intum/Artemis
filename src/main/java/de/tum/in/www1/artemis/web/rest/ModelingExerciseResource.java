@@ -374,7 +374,7 @@ public class ModelingExerciseResource {
         }
 
         // ta's are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants() && authCheckService.isTeachingAssistantInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
             return forbidden();
         }
 
