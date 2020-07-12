@@ -73,6 +73,9 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
      */
     ngOnInit(): void {
+        if (this.isExamMode) {
+            this.showFinishedExercises = true;
+        }
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
@@ -167,6 +170,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
             this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
             this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
         }
+        this.triggerFinishedExercises();
     }
 
     /**
