@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -88,6 +87,12 @@ public class StudentExamService {
         return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
     }
 
+    /**
+     * submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
+     * and if it was submitted after exam startDate and before individual endDate + gracePeriod
+     *
+     * @param studentExam latest studentExam object which will be submitted (final submission)
+     */
     public void submitStudentExam(StudentExam studentExam) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
@@ -95,10 +100,14 @@ public class StudentExamService {
             throw new IllegalStateException("StudentExam is already marked as submitted");
         }
 
-        // TODO: check if end is calculated correctly -> maybe use individual working time of students?
+        // gets individual exam end or exam.endDate if individual cannot be calculated
+        ZonedDateTime examEndDate = studentExam.getExam().getStartDate() != null && studentExam.getWorkingTime() != null
+                ? studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime())
+                : studentExam.getExam().getEndDate();
+
         // checks if student exam is live (after start date, before end date + grace period)
-        if ((studentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate())) || (studentExam.getExam().getEndDate() != null
-                && !(ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS))))) {
+        if ((studentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate()))
+                || (examEndDate != null && !(ZonedDateTime.now().isBefore(examEndDate.plusSeconds(studentExam.getExam().getGracePeriod()))))) {
             throw new IllegalStateException("StudentExam cannot be marked as submitted, because it is not invoked between start and end of exam");
         }
 
