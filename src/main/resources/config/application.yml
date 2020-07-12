@@ -24,6 +24,7 @@ logging:
 artemis:
     version: #project.version#
     file-upload-path: uploads
+    submission-export-path: exports
 
 management:
     endpoints:
