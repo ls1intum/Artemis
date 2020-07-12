@@ -245,7 +245,7 @@ public class TextSubmissionResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         Exam exam = null;
-        if (exercise.getExerciseGroup() != null) {
+        if (exercise.hasExerciseGroup()) {
             exam = exercise.getExerciseGroup().getExam();
         }
 

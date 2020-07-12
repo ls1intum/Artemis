@@ -137,6 +137,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 tap(({ body: participation }) => {
                     this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
+                    //ToDo: Adapt for exam exercise which have no dueDate!
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),
                 catchError((err: any) => {
