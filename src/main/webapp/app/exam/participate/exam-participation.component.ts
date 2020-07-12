@@ -228,6 +228,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }, 1000);
     }
 
+    /**
+     * triggered after student accepted exam end terms, will make final call to update submission on server
+     */
     onExamEndConfirmed() {
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
@@ -235,6 +238,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
     }
 
+    /**
+     * called when exam ended because the working time is over
+     */
     examEnded() {
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
