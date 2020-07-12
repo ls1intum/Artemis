@@ -89,12 +89,13 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
-                    <th jhiSortBy="dueDate">
+                    <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentDueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.actions' | translate }}</th>
                 </tr>
