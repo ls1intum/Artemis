@@ -290,7 +290,8 @@ public class ProgrammingExerciseResource {
         }
 
         try {
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            // Setup all repositories etc
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
@@ -301,6 +302,16 @@ public class ProgrammingExerciseResource {
         }
     }
 
+    /**
+     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     * This prevents errors then the actual projects will be generated later on.
+     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
+     *
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @return an error response in case the project already exists or an empty optional in case it does not exist yet (which means the setup can continue as usual)
+     */
     public Optional<ResponseEntity<ProgrammingExercise>> checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
