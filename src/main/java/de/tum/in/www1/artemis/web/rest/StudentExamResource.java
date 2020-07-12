@@ -148,9 +148,19 @@ public class StudentExamResource {
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
+    /**
+     * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
+     * Updates all submissions and marks student exam as submitted according to given student exam
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExam   the student exam parameter (request body)
+     * @return              empty response with status code:
+     *                          200 if successful
+     *                          400 if student exam was in an illegal state
+     */
     @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam, HttpServletRequest request) {
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId());
         if (accessFailure.isPresent()) {
