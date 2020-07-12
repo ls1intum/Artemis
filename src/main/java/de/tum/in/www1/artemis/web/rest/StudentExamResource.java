@@ -161,7 +161,7 @@ public class StudentExamResource {
         }
         catch (IllegalStateException exception) {
             log.debug("REST request to mark the studentExam as failed, because of illegal state of StudentExam : {}", studentExamId);
-            ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok().build();
     }

@@ -229,11 +229,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     onExamEndConfirmed() {
+        this.triggerSave(true);
+        // TODO: submit only after successful submission is done
         this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam.id).subscribe(() => (this.studentExam.submitted = true));
     }
 
     examEnded() {
-        this.triggerSave(true);
         window.clearInterval(this.autoSaveInterval);
     }
 
