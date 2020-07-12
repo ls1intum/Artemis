@@ -62,6 +62,17 @@ export class ExamParticipationService {
     }
 
     /**
+     * Submit {@link StudentExam} - the exam cannot be updated afterwards anymore
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId: the id of the studentExam
+     */
+    public submitStudentExam(courseId: number, examId: number, studentExamId: number): Observable<void> {
+        const url = this.getResourceURL(courseId, examId) + `/studentExams/${studentExamId}/submit`;
+        return this.httpClient.post<void>(url, {});
+    }
+
+    /**
      * save the studentExam to the local Storage
      *
      * @param courseId

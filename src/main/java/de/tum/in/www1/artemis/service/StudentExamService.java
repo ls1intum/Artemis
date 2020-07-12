@@ -73,12 +73,19 @@ public class StudentExamService {
         log.debug("Request to mark student exam with id {} as submitted", studentExamId);
         StudentExam studentExam = studentExamRepository.findById(studentExamId)
                 .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+        // checks if student exam is already marked as submitted
+        if (studentExam.isSubmitted()) {
+            throw new IllegalStateException("StudentExam is already marked as submitted");
+        }
         // TODO: check if end is calculated correctly -> maybe use individual working time of students?
-        // checks if
-        if (studentExam.getExam().getEndDate() != null
-                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS)))) {
+        // checks if student exam is live (after start date, before end date + grace period)
+        if ((studentExam.getExam().getStartDate() != null && ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate())) && (studentExam.getExam().getEndDate() != null
+                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS))))) {
             studentExam.setSubmitted(true);
             studentExamRepository.save(studentExam);
+        }
+        else {
+            throw new IllegalStateException("StudentExam cannot be marked as submitted, because it is not invoked between start and end of exam");
         }
     }
 

@@ -156,7 +156,13 @@ public class StudentExamResource {
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
-        studentExamService.markStudentExamAsSubmitted(studentExamId);
+        try {
+            studentExamService.markStudentExamAsSubmitted(studentExamId);
+        }
+        catch (IllegalStateException exception) {
+            log.debug("REST request to mark the studentExam as failed, because of illegal state of StudentExam : {}", studentExamId);
+            ResponseEntity.badRequest().build();
+        }
         return ResponseEntity.ok().build();
     }
 

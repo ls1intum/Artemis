@@ -62,7 +62,7 @@ public class StudentExam implements Serializable {
         this.id = id;
     }
 
-    public Boolean getSubmitted() {
+    public Boolean isSubmitted() {
         return submitted;
     }
 

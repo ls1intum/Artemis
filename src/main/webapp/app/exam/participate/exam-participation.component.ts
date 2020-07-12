@@ -229,7 +229,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     onExamEndConfirmed() {
-        this.examEndConfirmed = true;
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam.id).subscribe(() => (this.studentExam.submitted = true));
     }
 
     examEnded() {
