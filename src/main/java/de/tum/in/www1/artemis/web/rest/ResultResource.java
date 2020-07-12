@@ -61,6 +61,8 @@ public class ResultResource {
 
     private final ResultService resultService;
 
+    private final ExamService examService;
+
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
@@ -82,7 +84,7 @@ public class ResultResource {
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            AssessmentService assessmentService) {
+            AssessmentService assessmentService, ExamService examService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -95,6 +97,7 @@ public class ResultResource {
         this.programmingSubmissionService = programmingSubmissionService;
         this.assessmentService = assessmentService;
         this.userService = userService;
+        this.examService = examService;
     }
 
     /**
@@ -545,7 +548,8 @@ public class ResultResource {
         }
         else {
             Exam exam = exercise.getExerciseGroup().getExam();
-            if (exam.getEndDate() == null || ZonedDateTime.now().isBefore(exam.getEndDate())) {
+            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+            if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the end of the exam.")).build();
             }
