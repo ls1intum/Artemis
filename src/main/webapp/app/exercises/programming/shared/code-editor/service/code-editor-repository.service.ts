@@ -185,6 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.http
             .put<FileSubmission>(currentFileUpdateUrl, fileUpdates)
             .pipe(
+                handleErrorResponse(this.conflictService),
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (checkIfSubmissionIsError(fileSubmission)) {
                         // The subject gets informed about all errors.
@@ -197,7 +198,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     }
                     this.fileUpdateSubject.next(fileSubmission);
                 }),
-                catchError(() => of()),
+                catchError(() => of(this.fileUpdateSubject.error(new Error('connectionLost')))),
             )
             .subscribe();
         return this.fileUpdateSubject.asObservable();
