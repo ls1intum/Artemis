@@ -296,6 +296,10 @@ public class ExamService {
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
+        }
+
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
