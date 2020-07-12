@@ -760,7 +760,8 @@ public class ProgrammingExerciseService {
     public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+            return programmingExercise.getDueDate() != null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                    && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
         }
         return false;
     }
