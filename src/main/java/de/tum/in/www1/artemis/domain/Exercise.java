@@ -870,7 +870,7 @@ public abstract class Exercise implements Serializable {
     public boolean isReleased() {
         // Exam
         ZonedDateTime releaseDate;
-        if (this.getExerciseGroup() != null) {
+        if (this.hasExerciseGroup()) {
             releaseDate = this.getExerciseGroup().getExam().getStartDate();
         }
         else {
