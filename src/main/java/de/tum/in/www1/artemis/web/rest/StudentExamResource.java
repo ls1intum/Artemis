@@ -148,6 +148,18 @@ public class StudentExamResource {
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
+    @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/submit")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId, HttpServletRequest request) {
+        log.debug("REST request to mark the studentExam as submitted : {}", studentExamId);
+        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExamId);
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+        studentExamService.markStudentExamAsSubmitted(studentExamId);
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -65,6 +67,19 @@ public class StudentExamService {
     public Optional<StudentExam> findOneWithExercisesByUserIdAndExamIdOptional(Long userId, Long examId) {
         log.debug("Request to get optional student exam by userId {} and examId {}", userId, examId);
         return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
+    }
+
+    public void markStudentExamAsSubmitted(Long studentExamId) {
+        log.debug("Request to mark student exam with id {} as submitted", studentExamId);
+        StudentExam studentExam = studentExamRepository.findById(studentExamId)
+                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+        // TODO: check if end is calculated correctly -> maybe use individual working time of students?
+        // checks if
+        if (studentExam.getExam().getEndDate() != null
+                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getGracePeriod(), ChronoUnit.SECONDS)))) {
+            studentExam.setSubmitted(true);
+            studentExamRepository.save(studentExam);
+        }
     }
 
     /**

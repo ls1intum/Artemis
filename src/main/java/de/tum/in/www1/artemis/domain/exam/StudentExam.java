@@ -26,6 +26,15 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "submitted")
+    private Boolean submitted;
+
+    /**
+     * The duration in which the students can do final submissions before the exam ends in seconds
+     */
+    @Column(name = "grace_period")
+    private Integer gracePeriod = 180;
+
     /**
      * The working time in seconds
      */
@@ -57,6 +66,22 @@ public class StudentExam implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Boolean getSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
+    }
+
+    public Integer getGracePeriod() {
+        return gracePeriod;
+    }
+
+    public void setGracePeriod(Integer gracePeriod) {
+        this.gracePeriod = gracePeriod;
     }
 
     public Integer getWorkingTime() {
