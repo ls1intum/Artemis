@@ -75,7 +75,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde;
     }
 
-    examConfirmed = false;
+    examStartConfirmed = false;
+    examEndConfirmed = false;
 
     /**
      * Websocket channels
@@ -196,7 +197,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const initialExercise = this.studentExam.exercises[0];
             this.initializeExercise(initialExercise);
         }
-        this.examConfirmed = true;
+        this.examStartConfirmed = true;
         this.startAutoSaveTimer();
     }
 
@@ -225,6 +226,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.triggerSave(false);
             }
         }, 1000);
+    }
+
+    onExamEndConfirmed() {
+        this.examEndConfirmed = true;
     }
 
     examEnded() {

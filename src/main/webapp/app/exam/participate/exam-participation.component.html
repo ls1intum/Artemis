@@ -2,13 +2,13 @@
     <jhi-exam-participation-cover
         [startView]="true"
         [exam]="exam"
-        *ngIf="isVisible() && !isOver() && !examConfirmed"
+        *ngIf="isVisible() && !isOver() && !examStartConfirmed"
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
     <ng-container *ngIf="studentExam; else alert">
         <!-- exam participation -->
-        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed; else alert">
+        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed && !examEndConfirmed; else alert">
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
@@ -105,7 +105,8 @@
                 </div>
             </div>
         </ng-container>
-        <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
+        <jhi-exam-participation-cover [startView]="false" [exam]="exam" *ngIf="isOver() && !examEndConfirmed" (onExamEnded)="onExamEndConfirmed()"></jhi-exam-participation-cover>
+        <jhi-exam-participation-summary *ngIf="isOver() && examEndConfirmed" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
     <ng-template #alert>
         <div class="d-flex my-2">
