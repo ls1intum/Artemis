@@ -27,6 +27,7 @@
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
-        "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises."
+        "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
+        "nosubmissions": "No existing user was specified or no submission exists."
     }
 }
