@@ -240,7 +240,11 @@ public class TextSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
-        Exam exam = exercise.getExerciseGroup().getExam();
+
+        Exam exam = null;
+        if (exercise.getExerciseGroup() != null) {
+            exam = exercise.getExerciseGroup().getExam();
+        }
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
