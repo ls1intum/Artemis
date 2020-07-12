@@ -12,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -69,24 +72,38 @@ public class StudentExamService {
         return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
     }
 
-    public void markStudentExamAsSubmitted(Long studentExamId) {
-        log.debug("Request to mark student exam with id {} as submitted", studentExamId);
-        StudentExam studentExam = studentExamRepository.findById(studentExamId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
+    public void submitStudentExam(StudentExam studentExam) {
+        log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
         if (studentExam.isSubmitted()) {
             throw new IllegalStateException("StudentExam is already marked as submitted");
         }
+
         // TODO: check if end is calculated correctly -> maybe use individual working time of students?
         // checks if student exam is live (after start date, before end date + grace period)
-        if ((studentExam.getExam().getStartDate() != null && ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate())) && (studentExam.getExam().getEndDate() != null
-                && (ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS))))) {
-            studentExam.setSubmitted(true);
-            studentExamRepository.save(studentExam);
-        }
-        else {
+        if ((studentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate())) || (studentExam.getExam().getEndDate() != null
+                && !(ZonedDateTime.now().isBefore(studentExam.getExam().getEndDate().plus(studentExam.getExam().getGracePeriod(), ChronoUnit.SECONDS))))) {
             throw new IllegalStateException("StudentExam cannot be marked as submitted, because it is not invoked between start and end of exam");
         }
+
+        studentExam.getExercises().forEach(exercise -> {
+            // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
+            if ((exercise instanceof QuizExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getStudentParticipations() != null
+                    && exercise.getStudentParticipations().size() == 1) {
+                exercise.getStudentParticipations().forEach(studentParticipation -> {
+                    // if exactly one submission exists we save the submission
+                    if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
+                        studentParticipation.getSubmissions().forEach(submission -> {
+                            // TODO: save submission
+                        });
+                    }
+                });
+            }
+        });
+
+        // if everything worked -> set studentExam to submitted
+        studentExam.setSubmitted(true);
+        studentExamRepository.save(studentExam);
     }
 
     /**

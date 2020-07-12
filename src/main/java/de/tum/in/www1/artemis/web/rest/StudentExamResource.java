@@ -148,19 +148,20 @@ public class StudentExamResource {
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 
-    @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/{studentExamId}/submit")
+    @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
+    // TODO: check if this is correct
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId, HttpServletRequest request) {
-        log.debug("REST request to mark the studentExam as submitted : {}", studentExamId);
-        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExamId);
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam, HttpServletRequest request) {
+        log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
+        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId());
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
         try {
-            studentExamService.markStudentExamAsSubmitted(studentExamId);
+            studentExamService.submitStudentExam(studentExam);
         }
         catch (IllegalStateException exception) {
-            log.debug("REST request to mark the studentExam as failed, because of illegal state of StudentExam : {}", studentExamId);
+            log.debug("REST request to mark the studentExam as failed, because of illegal state of StudentExam : {}", studentExam.getId());
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok().build();
