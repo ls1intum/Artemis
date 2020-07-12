@@ -519,7 +519,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the programming exercises.
+     * GET /courses/:courseId/programming-exercises : get all the programming exercises.
      *
      * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
