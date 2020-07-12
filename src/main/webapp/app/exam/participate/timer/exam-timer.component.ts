@@ -43,9 +43,13 @@ export class ExamTimerComponent implements OnInit {
     updateDisplayTime(timeDiff: moment.Duration) {
         // update isCriticalTime
         this.setIsCriticalTime(timeDiff);
-        return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.asMinutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
+        if (timeDiff.milliseconds() < 0) {
+            return '00 : 00';
+        } else {
+            return timeDiff.asMinutes() > 10
+                ? Math.round(timeDiff.asMinutes()) + ' min'
+                : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
+        }
     }
 
     setIsCriticalTime(timeDiff: moment.Duration) {
