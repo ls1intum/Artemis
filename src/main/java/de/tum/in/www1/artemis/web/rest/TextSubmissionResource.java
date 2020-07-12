@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -239,6 +240,7 @@ public class TextSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
+        Exam exam = exercise.getExerciseGroup().getExam();
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -248,8 +250,15 @@ public class TextSubmissionResource {
         }
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        if (exam != null) {
+            if (exam.getEndDate() != null && exam.getEndDate().isAfter(ZonedDateTime.now())) {
+                return notFound();
+            }
+        }
+        else {
+            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                return notFound();
+            }
         }
 
         // Tutors cannot start assessing submissions if Athene is currently processing
