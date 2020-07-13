@@ -52,7 +52,7 @@ public class ExamAccessService {
      * @param examId    The id of the exam
      * @return a ResponseEntity with the exam
      */
-    public ResponseEntity<Exam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
+    public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
@@ -62,13 +62,15 @@ public class ExamAccessService {
         }
 
         // Check that the exam exists
-        Optional<Exam> exam = examRepository.findById(examId);
-        if (exam.isEmpty()) {
+        Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+        if (studentExam.isEmpty()) {
             return notFound();
         }
 
+        Exam exam = studentExam.get().getExam();
+
         // Check that the exam belongs to the course
-        if (!exam.get().getCourse().getId().equals(courseId)) {
+        if (!exam.getCourse().getId().equals(courseId)) {
             return conflict();
         }
 
@@ -78,11 +80,11 @@ public class ExamAccessService {
         }
 
         // Check that the exam is visible
-        if (exam.get().getVisibleDate() != null && exam.get().getVisibleDate().isAfter(ZonedDateTime.now())) {
+        if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {
             return forbidden();
         }
 
-        return ResponseEntity.ok(exam.get());
+        return ResponseEntity.ok(studentExam.get());
     }
 
     /**
