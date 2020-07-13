@@ -165,8 +165,9 @@ public class StudentExamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
-        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId());
-        return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam));
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
+        return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam, currentUser));
     }
 
     /**

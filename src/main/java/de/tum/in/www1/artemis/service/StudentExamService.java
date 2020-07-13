@@ -14,12 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
@@ -98,9 +97,10 @@ public class StudentExamService {
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
      * @param studentExam latest studentExam object which will be submitted (final submission)
-     * @return Resposne
+     * @param currentUser the current user
+     * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
-    public ResponseEntity<Void> submitStudentExam(StudentExam studentExam) {
+    public ResponseEntity<Void> submitStudentExam(StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
         if (studentExam.isSubmitted()) {
@@ -122,12 +122,15 @@ public class StudentExamService {
             return badRequest();
         }
 
-        studentExam.getExercises().forEach(exercise -> {
+        for (Exercise exercise : studentExam.getExercises()) {
             // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
             if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
-                exercise.getStudentParticipations().forEach(studentParticipation -> {
+                for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
                     // if exactly one submission exists we save the submission
                     if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
+                        if (!studentParticipation.isOwnedBy(currentUser)) {
+                            return forbidden();
+                        }
                         studentParticipation.setExercise(exercise);
                         studentParticipation.getSubmissions().forEach(submission -> {
                             submission.setParticipation(studentParticipation);
@@ -148,9 +151,9 @@ public class StudentExamService {
                             }
                         });
                     }
-                });
+                }
             }
-        });
+        }
 
         // if everything worked -> set studentExam to submitted
         studentExam.setSubmitted(true);
