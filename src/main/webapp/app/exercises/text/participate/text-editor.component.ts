@@ -48,6 +48,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
 
+    // indicates, that it is an exam exercise and the publishResults date is in the past
+    isAfterPublishDate: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private textExerciseService: TextExerciseService,
@@ -83,11 +86,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise.studentParticipations = [this.participation];
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
-        this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
+        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate));
+        this.isAfterPublishDate =
+            !!this.textExercise.exerciseGroup &&
+            !!this.textExercise.exerciseGroup.exam &&
+            !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
+            moment().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
 
         if (participation.submissions && participation.submissions.length > 0) {
             this.submission = participation.submissions[0] as TextSubmission;
-            if (this.submission && participation.results && this.isAfterAssessmentDueDate) {
+            if (this.submission && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = participation.results.find((r) => r.submission!.id === this.submission.id)!;
                 this.result.participation = participation;
             }
