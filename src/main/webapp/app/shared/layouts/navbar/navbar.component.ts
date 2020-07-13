@@ -78,8 +78,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
 
-        this.examParticipationService.currentlyLoadedExam.subscribe((exam) => {
-            this.exam = exam;
+        this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
+            this.exam = studentExam.exam;
         });
     }
 

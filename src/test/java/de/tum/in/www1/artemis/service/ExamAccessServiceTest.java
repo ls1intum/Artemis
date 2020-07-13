@@ -313,28 +313,28 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = database.addEmptyCourse();
         course.setStudentGroupName("another");
         courseRepository.save(course);
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
+        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
         assertThat(result).isEqualTo(forbidden());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
+        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
         assertThat(result).isEqualTo(notFound());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examBelongsToCourse() {
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
+        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
         assertThat(result).isEqualTo(conflict());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam1.getId());
+        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam1.getId());
         assertThat(result).isEqualTo(forbidden());
     }
 
@@ -344,7 +344,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
-        ResponseEntity<Exam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
+        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
         assertThat(result).isEqualTo(forbidden());
     }
 }

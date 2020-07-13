@@ -113,25 +113,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * initializes courseId and course
+     * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            // TODO: the following approach is error prone. Instead get the exam from a service that has a reference
-            // if (!!window.history.state.exam) {
-            //     this.examTitle = window.history.state.exam?.title;
-            // }
+
             this.loadingExam = true;
-            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
-                (exam) => {
-                    this.exam = exam;
-                    this.individualStudentEndDate = exam.endDate ? exam.endDate : this.serverDateService.now();
+            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                (studentExam) => {
+                    this.studentExam = studentExam;
+                    this.exam = studentExam.exam;
+                    this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
                     if (this.isOver()) {
-                        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-                            this.studentExam = studentExam;
-                            this.calculateIndividualStudentEndDate();
+                        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExamWithExercises: StudentExam) => {
+                            this.studentExam = studentExamWithExercises;
                         });
                     }
                     this.loadingExam = false;
@@ -179,7 +176,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // init studentExam
             this.studentExam = studentExam;
             // set endDate with workingTime
-            this.calculateIndividualStudentEndDate();
+            this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
@@ -455,9 +452,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
-    }
-
-    private calculateIndividualStudentEndDate() {
-        this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
     }
 }
