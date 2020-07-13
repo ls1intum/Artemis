@@ -107,7 +107,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetStudentExamsForExam_asInstructor() throws Exception {
         List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams.size()).isEqualTo(1);
+        assertThat(studentExams.size()).isEqualTo(2);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size() + 2); // we generate two additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3); // we generate two additional student exams in the @Before method
 
         // start exercises
 
