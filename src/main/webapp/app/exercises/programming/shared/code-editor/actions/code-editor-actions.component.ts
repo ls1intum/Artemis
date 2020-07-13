@@ -176,11 +176,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 }
                 this.onSavedFiles.emit(fileSubmission);
             },
-            catchError((err) => {
+            (err) => {
                 this.onError.emit(err.error);
                 this.editorState = EditorState.UNSAVED_CHANGES;
-                return throwError('saving failed');
-            }),
+                throwError('savingFailed');
+            },
         );
     }
 
