@@ -188,6 +188,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
+                            submission.submitted = false;
                         });
                     }
                 });
