@@ -157,15 +157,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             }, 8000);
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            this.saveFilesAsync(unsavedFiles).then();
+            this.saveFiles(unsavedFiles);
             return Observable.of(null);
         } else {
             return Observable.of(null);
         }
     }
 
-    private async saveFilesAsync(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
-        await this.repositoryFileService.updateFiles(fileUpdates).subscribe(
+    private saveFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
+        this.repositoryFileService.updateFiles(fileUpdates).subscribe(
             (fileSubmission: FileSubmission | FileSubmissionError) => {
                 if (checkIfSubmissionIsError(fileSubmission)) {
                     this.repositoryFileService.fileUpdateSubject.error(fileSubmission);
@@ -174,14 +174,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     }
                     return;
                 }
-                this.repositoryFileService.fileUpdateSubject.next(fileSubmission);
                 this.onSavedFiles.emit(fileSubmission);
             },
-            (err) => {
+            catchError((err) => {
                 this.onError.emit(err.error);
                 this.editorState = EditorState.UNSAVED_CHANGES;
-                throwError('savingFailed');
-            },
+                return throwError('saving failed');
+            }),
         );
     }
 
