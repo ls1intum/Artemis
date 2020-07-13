@@ -151,9 +151,12 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
      * Updates all submissions and marks student exam as submitted according to given student exam
+     *
+     * NOTE: the studentExam has to be sent with all exercises, participations and submissions
+     *
      * @param courseId      the course to which the student exams belong to
      * @param examId        the exam to which the student exams belong to
-     * @param studentExam   the student exam parameter (request body)
+     * @param studentExam   the student exam with exercises, participations and submissions
      * @return              empty response with status code:
      *                          200 if successful
      *                          400 if student exam was in an illegal state
