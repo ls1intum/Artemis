@@ -232,5 +232,9 @@
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
         }
+    },
+    "studentExam": {
+        "alreadySubmitted": "Du hast bereits abgegeben.",
+        "submissionNotInTime": "Du kannst nur zwischen Start und Ende der Klausur abgeben."
     }
 }
