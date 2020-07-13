@@ -53,7 +53,7 @@
                 </ng-container>
                 <!-- Quiz Exercise -->
                 <ng-container *ngIf="exercise.type === QUIZ">
-                    <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
+                    <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)" [isPublished]="isPublished"></jhi-quiz-exam-summary>
                 </ng-container>
                 <!-- Programming Exercise -->
                 <ng-container *ngIf="exercise.type === PROGRAMMING">
