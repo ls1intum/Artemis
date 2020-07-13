@@ -1,8 +1,9 @@
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
+        *ngIf="isVisible() && !isOver() && !examStartConfirmed"
         [startView]="true"
         [exam]="exam"
-        *ngIf="isVisible() && !isOver() && !examStartConfirmed"
+        [studentExam]="studentExam"
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
@@ -106,9 +107,10 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
+            *ngIf="isOver() && !studentExam.submitted"
             [startView]="false"
             [exam]="exam"
-            *ngIf="isOver() && !studentExam.submitted"
+            [studentExam]="studentExam"
             (onExamEnded)="onExamEndConfirmed()"
         ></jhi-exam-participation-cover>
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>

@@ -107,7 +107,7 @@ public class StudentExamService {
     public ResponseEntity<Void> submitStudentExam(StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
-        if (studentExam.isSubmitted()) {
+        if (Boolean.TRUE.equals(studentExam.isSubmitted())) {
             return conflict(ENTITY_NAME, "alreadySubmitted", "You have already submitted.");
         }
 
