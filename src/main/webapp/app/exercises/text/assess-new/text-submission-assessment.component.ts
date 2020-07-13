@@ -21,6 +21,7 @@ import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -28,16 +29,20 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     styleUrls: ['./text-submission-assessment.component.scss'],
 })
 export class TextSubmissionAssessmentComponent implements OnInit {
-    private userId: number | null;
-    exerciseId: number;
-    courseId: number;
+    /*
+     * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
+     * All properties must be initialized with a default value (or null) in the resetComponent() method.
+     * For traceability: Keep order in resetComponent() consistent with declaration.
+     */
+
     participation: StudentParticipation | null;
     submission: TextSubmission | null;
     exercise: TextExercise | null;
     result: Result | null;
     generalFeedback: Feedback;
+    unreferencedFeedback: Feedback[];
     textBlockRefs: TextBlockRef[];
-    unusedTextBlockRefs: TextBlockRef[] = [];
+    unusedTextBlockRefs: TextBlockRef[];
     complaint: Complaint | null;
     totalScore: number;
 
@@ -52,8 +57,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
 
+    /*
+     * Non-resetted properties:
+     * These properties are not resetted on purpose, as they cannot change between assessments.
+     */
+    private userId: number | null;
     private cancelConfirmationText: string;
-    unreferencedFeedback: Feedback[] = [];
+    // ExerciseId is updated from Route Subscription directly.
+    exerciseId: number;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -71,6 +82,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback).map(({ block }) => block);
     }
 
+    private get course(): Course | undefined {
+        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
+    }
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -86,15 +101,22 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.resetComponent();
     }
 
+    /**
+     * This method is called before the component is REUSED!
+     * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
+     */
     private resetComponent(): void {
         this.participation = null;
         this.submission = null;
         this.exercise = null;
         this.result = null;
         this.generalFeedback = new Feedback();
+        this.unreferencedFeedback = [];
         this.textBlockRefs = [];
+        this.unusedTextBlockRefs = [];
         this.complaint = null;
         this.totalScore = 0;
+
         this.isLoading = true;
         this.saveBusy = false;
         this.submitBusy = false;
@@ -105,7 +127,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.canOverride = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
-        this.courseId = 0;
     }
 
     /**
@@ -135,11 +156,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        this.courseId = this.exercise?.course ? this.exercise?.course?.id! : this.exercise?.exerciseGroup?.exam?.course?.id!;
 
         // case distinction for exam mode
-        const course = this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course!);
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -157,7 +176,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(['course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
+                .createUrlTree(['course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
                 .toString();
             this.location.go(newUrl);
         }
@@ -231,7 +250,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.courseId, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
@@ -258,11 +277,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.exercise && this.exercise.teamMode && this.courseId && this.submission) {
+        if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.courseId}/exercises/${this.exercise.id}/teams/${teamId}`);
-        } else if (this.exercise && !this.exercise.teamMode && this.courseId) {
-            this.router.navigateByUrl(`/course-management/${this.courseId}/exercises/${this.exercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
+            this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }
@@ -319,15 +338,19 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             let ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
 
-            // new text block starts before previous one ended (overlap)
-            if (previousIndex > nextIndex) {
+            // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
+            if (!ref && previousIndex > nextIndex) {
+                console.error('Illegal State: previous index cannot be greated than the last index!');
+
+                // new text block starts before previous one ended (overlap)
+            } else if (previousIndex > nextIndex) {
                 const previousRef = this.textBlockRefs.pop();
                 if (!previousRef) {
-                    console.log('Overlapping Text Blocks with nothing?', previousRef, ref);
+                    console.error('Overlapping Text Blocks with nothing?', previousRef, ref);
                 } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.AUTOMATIC)) {
-                    console.log('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
+                    console.error('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
                 } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.MANUAL)) {
-                    console.log('Overlapping MANUAL Text Blocks!', previousRef, ref);
+                    console.error('Overlapping MANUAL Text Blocks!', previousRef, ref);
                 } else {
                     // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
                     switch (TextBlockType.MANUAL) {
@@ -371,6 +394,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private addTextBlockByIndices(startIndex: number, endIndex: number): void {
+        if (startIndex >= endIndex) {
+            return;
+        }
+
         const newRef = TextBlockRef.new();
         newRef.block.startIndex = startIndex;
         newRef.block.endIndex = endIndex;

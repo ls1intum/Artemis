@@ -191,6 +191,24 @@ public class BitbucketRequestMockProvider {
         return repositorySlug;
     }
 
+    /**
+     * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
+     *
+     * @param exercise the programming exercise that already exists
+     */
+    public void mockProjectKeyExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+        final var existsUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
+        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    /**
+     * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
+     *
+     * @param exercise the programming exercise that might already exist
+     * @param exists whether the programming exercise with the same title exists
+     * @throws JsonProcessingException
+     * @throws URISyntaxException
+     */
     public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws JsonProcessingException, URISyntaxException {
         final var existsUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
         final var uniqueUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").queryParam("name", exercise.getProjectName()).build()

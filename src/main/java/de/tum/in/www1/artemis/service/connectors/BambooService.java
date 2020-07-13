@@ -889,7 +889,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Queries Bamboo to find out if the project already exists.
+     * Queries Bamboo to find out if the project already exists using the project key and the project name
      *
      * @param projectKey to check if a project with this unique key already exists.
      * @param projectName to check if a project with the same name already exists.
@@ -911,7 +911,7 @@ public class BambooService implements ContinuousIntegrationService {
                 final var response = restTemplate.exchange(
                         BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
                         HttpMethod.GET, entity, BambooProjectSearchDTO.class);
-                if (response.getBody().getSize() > 0) {
+                if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream()
                             .map(BambooProjectSearchDTO.SearchResultDTO::getSearchEntity)
                             .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
