@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -670,6 +671,11 @@ public class DatabaseUtilService {
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.addRegisteredUser(user);
         examRepository.save(exam);
+        var studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        studentExamRepository.save(studentExam);
         return exam;
     }
 

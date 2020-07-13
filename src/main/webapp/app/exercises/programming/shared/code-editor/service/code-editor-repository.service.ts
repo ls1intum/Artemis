@@ -193,7 +193,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                 }
                 this.fileUpdateSubject.next(fileSubmission);
             }),
-            catchError(() => of()),
+            catchError((_) => {
+                this.fileUpdateSubject.error(new Error('savingFailed'));
+                throw Error('savingFailed');
+            }),
         );
     }
 
