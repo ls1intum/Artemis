@@ -11,7 +11,6 @@ import {
     FileSubmissionError,
     FileType,
     GitConflictState,
-    RepositoryError,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
@@ -25,7 +24,7 @@ export interface ICodeEditorRepositoryFileService {
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission>;
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<void | FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
 }
@@ -113,7 +112,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
-    private fileUpdateSubject = new Subject<FileSubmission>();
+    fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
@@ -175,33 +174,17 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      *
      * @param fileUpdates the Array of updated files
      */
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>): Observable<FileSubmission> {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
         const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
-
-        this.http
-            .put<FileSubmission>(currentFileUpdateUrl, fileUpdates)
-            .pipe(
-                handleErrorResponse(this.conflictService),
-                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
-                    if (checkIfSubmissionIsError(fileSubmission)) {
-                        // The subject gets informed about all errors.
-                        this.fileUpdateSubject.error(fileSubmission);
-                        // Checkout conflict handling.
-                        if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
-                            this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        }
-                        return;
-                    }
-                    this.fileUpdateSubject.next(fileSubmission);
-                }),
-                catchError(() => of(this.fileUpdateSubject.error(new Error('connectionLost')))),
-            )
-            .subscribe();
-        return this.fileUpdateSubject.asObservable();
+        return this.http.put<FileSubmission>(currentFileUpdateUrl, fileUpdates).pipe(
+            handleErrorResponse(this.conflictService),
+            tap((_: FileSubmission | FileSubmissionError) => {}),
+            catchError(() => of(this.fileUpdateSubject.error(new Error('connectionLost')))),
+        );
     }
 
     renameFile = (currentFilePath: string, newFilename: string) => {
