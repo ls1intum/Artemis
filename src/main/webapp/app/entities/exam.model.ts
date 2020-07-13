@@ -14,6 +14,10 @@ export class Exam implements BaseEntity {
     public publishResultsDate: Moment | null;
     public examStudentReviewStart: Moment | null;
     public examStudentReviewEnd: Moment | null;
+    /**
+     * grace period in seconds - time in which students can still submit even though working time is over
+     */
+    public gracePeriod: number;
 
     public startText: string;
     public endText: string;

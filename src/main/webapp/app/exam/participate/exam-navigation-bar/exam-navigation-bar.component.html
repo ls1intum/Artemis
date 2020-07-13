@@ -50,10 +50,7 @@
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                 </button>
             </div>
-            <div class="col-auto h3 timer px-1" jhiTranslate="artemisApp.examParticipation.timer">Time Left:</div>
-            <div class="col-auto h3 m-0 text-overflow remaining-time mb-2 px-0" [class.critical]="criticalTime">
-                {{ displayTime$ | async }}
-            </div>
+            <jhi-exam-timer [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()"></jhi-exam-timer>
         </div>
     </div>
 </div>
