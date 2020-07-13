@@ -113,13 +113,13 @@ public class StudentExamService {
         }
 
         // gets individual exam end or exam.endDate if individual cannot be calculated
-        ZonedDateTime examEndDate = studentExam.getExam().getStartDate() != null && studentExam.getWorkingTime() != null
-                ? studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime())
-                : studentExam.getExam().getEndDate();
+        ZonedDateTime examEndDate = existingStudentExam.getExam().getStartDate() != null && existingStudentExam.getWorkingTime() != null
+                ? existingStudentExam.getExam().getStartDate().plusSeconds(existingStudentExam.getWorkingTime())
+                : existingStudentExam.getExam().getEndDate();
 
         // checks if student exam is live (after start date, before end date + grace period)
-        if ((studentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate()))
-                || (examEndDate != null && !(ZonedDateTime.now().isBefore(examEndDate.plusSeconds(studentExam.getExam().getGracePeriod()))))) {
+        if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
+                || (examEndDate != null && !(ZonedDateTime.now().isBefore(examEndDate.plusSeconds(existingStudentExam.getExam().getGracePeriod()))))) {
             return forbidden(ENTITY_NAME, "submissionNotInTime", "You can only submit between start and end of the exam.");
         }
 
