@@ -196,12 +196,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
-                if (this.participation.id === result.participation?.id) {
-                    this.latestResult = result;
-                    this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
-                    this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
-                    this.updateMarkdown();
-                }
+                this.latestResult = result;
+                this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
+                this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+                this.updateMarkdown();
             });
     }
 
