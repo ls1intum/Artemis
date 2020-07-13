@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -37,6 +38,8 @@ public class StudentExamService {
 
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
+    private final ParticipationService participationService;
+
     private final StudentExamRepository studentExamRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -47,6 +50,7 @@ public class StudentExamService {
 
     public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
             TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+        this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
@@ -118,6 +122,9 @@ public class StudentExamService {
             return forbidden(ENTITY_NAME, "submissionNotInTime", "You can only submit between start and end of the exam.");
         }
 
+        List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
+                studentExam.getExercises());
+
         if (studentExam.getExercises() == null) {
             return badRequest();
         }
@@ -126,13 +133,28 @@ public class StudentExamService {
             // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
             if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                 for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+                    StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId()))
+                            .collect(Collectors.toList()).get(0);
                     // if exactly one submission exists we save the submission
                     if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
-                        if (!studentParticipation.isOwnedBy(currentUser)) {
+                        // check that the current user owns the participation
+                        if (!studentParticipation.isOwnedBy(currentUser) || !existingParticipation.isOwnedBy(currentUser)) {
                             return forbidden();
                         }
                         studentParticipation.setExercise(exercise);
-                        studentParticipation.getSubmissions().forEach(submission -> {
+                        for (Submission submission : studentParticipation.getSubmissions()) {
+                            // we do not apply the following checks for programming exercises
+                            if (exercise instanceof ProgrammingExercise) {
+                                continue;
+                            }
+                            // check that the submission belongs to the already saved participation
+                            if (!existingParticipation.getSubmissions().contains(submission)) {
+                                return forbidden();
+                            }
+                            // check that no result has been injected
+                            if (submission.getResult() != null) {
+                                return forbidden();
+                            }
                             submission.setParticipation(studentParticipation);
                             submission.submissionDate(ZonedDateTime.now());
                             submission.submitted(true);
@@ -149,7 +171,7 @@ public class StudentExamService {
                             else if (exercise instanceof ModelingExercise) {
                                 modelingSubmissionRepository.save((ModelingSubmission) submission);
                             }
-                        });
+                        }
                     }
                 }
             }
