@@ -14,3 +14,8 @@
     border-color: #3c763d;
     z-index: 8;
 }
+
+:host {
+    display: flex;
+    flex-direction: column;
+}
