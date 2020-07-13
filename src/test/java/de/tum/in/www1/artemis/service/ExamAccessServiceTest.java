@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
@@ -42,6 +43,9 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
 
     private List<User> users;
 
@@ -327,6 +331,8 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examBelongsToCourse() {
+        studentExam2.setUser(database.getUserByLogin("student1"));
+        studentExamRepository.save(studentExam2);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
         assertThat(result).isEqualTo(conflict());
     }
@@ -334,6 +340,8 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
+        studentExam1.setUser(database.getUserByLogin("student1"));
+        studentExamRepository.save(studentExam1);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam1.getId());
         assertThat(result).isEqualTo(forbidden());
     }
@@ -341,7 +349,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examIsVisible() {
-        Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
