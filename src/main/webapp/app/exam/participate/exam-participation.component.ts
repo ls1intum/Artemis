@@ -131,6 +131,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.isOver()) {
                         this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
                             this.studentExam = studentExam;
+                            this.calculateIndividualStudentEndDate();
                         });
                     }
                     this.loadingExam = false;
@@ -171,14 +172,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * exam start text confirmed and name entered, start button clicked and exam avtive
+     * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
             // set endDate with workingTime
-            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
+            this.calculateIndividualStudentEndDate();
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
@@ -454,5 +455,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
+    }
+
+    private calculateIndividualStudentEndDate() {
+        this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
     }
 }
