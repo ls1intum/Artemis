@@ -166,17 +166,7 @@ public class StudentExamResource {
     public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId());
-        if (accessFailure.isPresent()) {
-            return accessFailure.get();
-        }
-        try {
-            studentExamService.submitStudentExam(studentExam);
-        }
-        catch (IllegalStateException exception) {
-            log.debug("REST request to mark the studentExam as failed, because of illegal state of StudentExam : {}", studentExam.getId());
-            return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok().build();
+        return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam));
     }
 
     /**

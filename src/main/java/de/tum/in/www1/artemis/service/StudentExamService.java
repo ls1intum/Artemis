@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
@@ -30,6 +33,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class StudentExamService {
+
+    private static final String ENTITY_NAME = "studentExam";
 
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -89,16 +94,17 @@ public class StudentExamService {
     }
 
     /**
-     * submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
+     * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
      * @param studentExam latest studentExam object which will be submitted (final submission)
+     * @return Resposne
      */
-    public void submitStudentExam(StudentExam studentExam) {
+    public ResponseEntity<Void> submitStudentExam(StudentExam studentExam) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
         if (studentExam.isSubmitted()) {
-            throw new IllegalStateException("StudentExam is already marked as submitted");
+            return conflict(ENTITY_NAME, "alreadySubmitted", "You have already submitted.");
         }
 
         // gets individual exam end or exam.endDate if individual cannot be calculated
@@ -109,7 +115,11 @@ public class StudentExamService {
         // checks if student exam is live (after start date, before end date + grace period)
         if ((studentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(studentExam.getExam().getStartDate()))
                 || (examEndDate != null && !(ZonedDateTime.now().isBefore(examEndDate.plusSeconds(studentExam.getExam().getGracePeriod()))))) {
-            throw new IllegalStateException("StudentExam cannot be marked as submitted, because it is not invoked between start and end of exam");
+            return forbidden(ENTITY_NAME, "notInTime", "You can only submit between start and end of the exam");
+        }
+
+        if (studentExam.getExercises() == null) {
+            return badRequest();
         }
 
         studentExam.getExercises().forEach(exercise -> {
@@ -145,6 +155,8 @@ public class StudentExamService {
         // if everything worked -> set studentExam to submitted
         studentExam.setSubmitted(true);
         studentExamRepository.save(studentExam);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
