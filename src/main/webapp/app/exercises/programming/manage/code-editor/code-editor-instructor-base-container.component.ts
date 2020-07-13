@@ -2,6 +2,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { OnDestroy, OnInit, Component } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -59,6 +60,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
+    isExamMode: boolean;
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
@@ -79,6 +81,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private exerciseHintService: ExerciseHintService,
+        private location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -104,7 +107,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             this.loadExercise(exerciseId)
                 .pipe(
                     catchError(() => throwError('exerciseNotFound')),
-                    tap((exercise) => (this.exercise = exercise)),
+                    tap((exercise) => {
+                        this.exercise = exercise;
+                        this.isExamMode = !exercise.course;
+                    }),
                     // Set selected participation
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
@@ -113,6 +119,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
                                 this.selectParticipationDomainById(nextAvailableParticipation.id);
+
+                                // Show a consistent route in the browser
+                                if (nextAvailableParticipation.id !== participationId) {
+                                    const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                                    this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                                }
                             } else {
                                 throwError('participationNotFound');
                             }

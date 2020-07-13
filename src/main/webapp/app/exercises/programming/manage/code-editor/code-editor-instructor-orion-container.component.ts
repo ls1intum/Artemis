@@ -3,6 +3,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -32,6 +33,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         exerciseHintService: ExerciseHintService,
+        location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -46,6 +48,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
             domainService,
             programmingExerciseParticipationService,
             exerciseHintService,
+            location,
             participationService,
             translateService,
             route,

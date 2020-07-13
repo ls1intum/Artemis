@@ -96,6 +96,24 @@ public class BambooRequestMockProvider {
         mockServer.reset();
     }
 
+    /**
+     * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
+     *
+     * @param exercise the programming exercise that already exists
+     */
+    public void mockProjectKeyExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+        mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + exercise.getProjectKey())).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK));
+    }
+
+    /**
+     * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
+     *
+     * @param exercise the programming exercise that might already exist
+     * @param exists whether the programming exercise with the same title exists
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();

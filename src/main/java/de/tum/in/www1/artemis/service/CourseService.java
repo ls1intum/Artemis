@@ -219,12 +219,16 @@ public class CourseService {
      * @return the Course of the Exercise
      */
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
+
         if (exercise.hasExerciseGroup()) {
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
+            exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            return findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            exercise.setCourse(course);
+            return course;
         }
     }
 
