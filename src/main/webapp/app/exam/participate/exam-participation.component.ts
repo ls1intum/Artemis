@@ -169,7 +169,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * exam start text confirmed and name entered, start button clicked and exam avtive
+     * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
