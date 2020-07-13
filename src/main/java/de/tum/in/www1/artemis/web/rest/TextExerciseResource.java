@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -388,9 +389,9 @@ public class TextExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // Exam exercises can only be seen by students after the publishResultDate
-        if (authCheckService.isOnlyStudentInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), user)
-                && (textExercise.hasExerciseGroup() || !textExercise.getExerciseGroup().getExam().isPublished())) {
+        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
+        if (authCheckService.isOnlyStudentInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), user) && (textExercise.hasExerciseGroup()
+                && textExercise.getExerciseGroup().getExam().getEndDate().isBefore(ZonedDateTime.now()) && !textExercise.getExerciseGroup().getExam().isPublished())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
