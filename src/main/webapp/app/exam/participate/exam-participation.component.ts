@@ -29,6 +29,7 @@ import { Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -191,6 +192,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
                         });
+                    } else if (exercise.type === ExerciseType.PROGRAMMING) {
+                        participation.submissions.push(new ProgrammingSubmission());
                     }
                 });
             });
