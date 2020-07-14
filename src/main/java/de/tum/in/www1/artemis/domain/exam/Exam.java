@@ -379,7 +379,7 @@ public class Exam implements Serializable {
     /**
      * check if results of exam are published
      *
-     * @return true, if the results are published, otherwise false, null if this cannot be determined
+     * @return true, if the results are published, false if not published or not set!
      */
     public Boolean resultsPublished() {
         if (publishResultsDate == null) {
