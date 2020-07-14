@@ -8,7 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -332,5 +336,23 @@ public class AuthorizationCheckService {
         return isAtLeastStudentForExercise(exercise) && isOwnerOfParticipation(participation)
                 && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
                 && result.getCompletionDate() != null;
+    }
+
+    /**
+     * Checks if the user is allowed to see the exam result. Returns true if
+     *
+     * - the current user is at least teaching assistant in the course
+     * - OR if the exercise is not part of an exam
+     * - OR if the exam has not ended
+     * - OR if the exam has already ended and the results were published
+     *
+     * @param exercise - Exercise that the result is requested for
+     * @param user - User that requests the result
+     * @return true if user is allowed to see the result, false otherwise
+     */
+    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
+        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
+                || (exercise.hasCourse() || (exercise.hasExerciseGroup() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
+                        || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 }

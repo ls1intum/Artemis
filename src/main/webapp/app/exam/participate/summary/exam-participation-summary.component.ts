@@ -1,16 +1,16 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { examResultsPublished, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { getIcon } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-participation-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
 })
-export class ExamParticipationSummaryComponent {
+export class ExamParticipationSummaryComponent implements OnInit {
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -26,10 +26,24 @@ export class ExamParticipationSummaryComponent {
 
     collapsedExerciseIds: number[] = [];
 
-    constructor() {}
+    courseId: number;
+
+    constructor(private route: ActivatedRoute) {}
+
+    /**
+     * Initialise the courseId from the current url
+     */
+    ngOnInit(): void {
+        // courseId is not part of the exam or the exercise
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+    }
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
+    }
+
+    getExamResultsPublished(exercise: Exercise) {
+        return examResultsPublished(exercise);
     }
 
     /**
@@ -39,6 +53,10 @@ export class ExamParticipationSummaryComponent {
         // expand all exercises before printing
         this.collapsedExerciseIds = [];
         setTimeout(() => window.print());
+    }
+
+    public generateLink(exercise: Exercise) {
+        return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
     }
 
     /**
