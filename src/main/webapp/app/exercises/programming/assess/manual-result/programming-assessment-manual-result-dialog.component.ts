@@ -19,6 +19,7 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/alert/alert.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -137,8 +138,12 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 tap(({ body: participation }) => {
                     this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
-                    //ToDo: Adapt for exam exercise which have no dueDate!
-                    this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+
+                    if (!!this.participation.exercise.exerciseGroup) {
+                        this.isOpenForSubmission = !(this.result.assessmentType === AssessmentType.AUTOMATIC || this.result.assessmentType === AssessmentType.MANUAL);
+                    } else {
+                        this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+                    }
                 }),
                 catchError((err: any) => {
                     this.alertService.error(err);
