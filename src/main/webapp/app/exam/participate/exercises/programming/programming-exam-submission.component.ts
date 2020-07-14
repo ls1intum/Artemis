@@ -41,15 +41,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    // ComponentId to verify uniqueness
-    componentId: number;
-
-    constructor() {
-        super();
-        this.componentId = Math.random() * 1000000000;
-        console.log(`Constructor ProgrammingExamSubmissionComponent with id ${this.componentId}`);
-    }
-
     hasUnsavedChanges(): boolean {
         if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
             return false;

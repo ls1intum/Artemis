@@ -55,9 +55,6 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
     repositoryIsLocked = false;
 
-    // ComponentId to verify uniqueness
-    componentId: number;
-
     constructor(
         private domainService: DomainService,
         translateService: TranslateService,
@@ -66,8 +63,6 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         fileService: CodeEditorFileService,
     ) {
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
-        this.componentId = Math.random() * 1000000000;
-        console.log(`Constructor ExamCodeEditorStudentContainerComponent with id ${this.componentId}`);
     }
 
     /**
