@@ -209,11 +209,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @returns true if valid, false otherwise
      */
     private isExerciseParticipationValid(exercise: Exercise): boolean {
-        // check if there is at least one participation with state === Initialized
+        // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations &&
             exercise.studentParticipations.length !== 0 &&
-            exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED
+            (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED ||
+                exercise.studentParticipations[0].initializationState === InitializationState.FINISHED)
         );
     }
 
