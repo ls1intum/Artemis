@@ -12,7 +12,8 @@
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
                 "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
-                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
+                "viewResult": " Ergebnis ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
