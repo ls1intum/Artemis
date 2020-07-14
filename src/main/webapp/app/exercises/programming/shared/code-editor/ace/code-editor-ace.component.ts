@@ -141,21 +141,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
-        this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-            this.editorChangeLog.push(change);
-        });
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
+            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
+                this.editorChangeLog.push(change);
+            });
 
-        // Restore the previous cursor position
-        this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
-        this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
-        this.editor.setMode(this.editorMode);
-        this.editor.getEditor().resize();
-        this.editor.getEditor().focus();
-        // Reset the undo stack after file change, otherwise the user can undo back to the old file
-        this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
-        if (this.buildLogErrors) {
-            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            // Restore the previous cursor position
+            this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
+            this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
+            this.editor.setMode(this.editorMode);
+            this.editor.getEditor().resize();
+            this.editor.getEditor().focus();
+            // Reset the undo stack after file change, otherwise the user can undo back to the old file
+            this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
+            if (this.buildLogErrors) {
+                this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            }
         }
     }
 
