@@ -111,20 +111,6 @@ export abstract class Exercise implements BaseEntity {
     protected constructor(type: ExerciseType) {
         this.type = type;
     }
-
-    /**
-     * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
-     */
-    get examResultsPublished(): boolean {
-        if (!!this.exerciseGroup && !!this.exerciseGroup.exam) {
-            if (this.exerciseGroup.exam.publishResultsDate) {
-                return moment().isAfter(this.exerciseGroup.exam.publishResultsDate);
-            }
-            // default to false if it is an exam exercise but the publishResultsDate is not set
-            return false;
-        }
-        return true;
-    }
 }
 
 export function getIcon(exerciseType: ExerciseType): string {
@@ -161,4 +147,18 @@ export function getCourseId(exercise: Exercise): number | undefined {
         return exercise.course.id;
     }
     return exercise.exerciseGroup?.exam?.course.id;
+}
+
+/**
+ * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
+ */
+export function examResultsPublished(exercise: Exercise): boolean {
+    if (!!exercise.exerciseGroup && !!exercise.exerciseGroup.exam) {
+        if (exercise.exerciseGroup.exam.publishResultsDate) {
+            return moment().isAfter(exercise.exerciseGroup.exam.publishResultsDate);
+        }
+        // default to false if it is an exam exercise but the publishResultsDate is not set
+        return false;
+    }
+    return true;
 }

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { examResultsPublished, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ActivatedRoute } from '@angular/router';
@@ -40,6 +40,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
+    }
+
+    getExamResultsPublished(exercise: Exercise) {
+        return examResultsPublished(exercise);
     }
 
     /**

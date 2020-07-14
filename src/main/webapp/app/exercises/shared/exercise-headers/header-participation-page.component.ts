@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
+import { examResultsPublished, Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -31,6 +31,10 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+    }
+
+    get examResultsPublished() {
+        return examResultsPublished(this.exercise);
     }
 
     /**

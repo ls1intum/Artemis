@@ -9,6 +9,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { examResultsPublished } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -24,6 +25,7 @@ export class QuizExamSummaryComponent implements OnInit {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     exerciseWithSolution: QuizExercise;
+    examResultsPublished: boolean;
 
     @Input()
     exercise: QuizExercise;
@@ -35,8 +37,9 @@ export class QuizExamSummaryComponent implements OnInit {
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
+        this.examResultsPublished = examResultsPublished(this.exercise);
         // get quiz-exercise with solution after result is published
-        if (this.exercise.examResultsPublished) {
+        if (this.examResultsPublished) {
             this.exerciseService.find(this.exercise.id).subscribe((response) => {
                 this.exerciseWithSolution = response.body!;
             });
@@ -44,7 +47,7 @@ export class QuizExamSummaryComponent implements OnInit {
     }
 
     get quizQuestions() {
-        return this.exercise.examResultsPublished && this.exerciseWithSolution ? this.exerciseWithSolution.quizQuestions : this.exercise.quizQuestions;
+        return examResultsPublished(this.exercise) && this.exerciseWithSolution ? this.exerciseWithSolution.quizQuestions : this.exercise.quizQuestions;
     }
 
     /**
