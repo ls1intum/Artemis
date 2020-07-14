@@ -1,30 +1,15 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, of, Subscription, throwError } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import {
-    CommitState,
-    EditorState,
-    FileSubmission,
-    FileSubmissionError,
-    GitConflictState,
-    RepositoryError,
-} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
-
-/**
- * Type guard for checking if the file submission received through the websocket is an error object.
- * @param toBeDetermined either a FileSubmission or a FileSubmissionError.
- */
-const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
-    return !!(toBeDetermined as FileSubmissionError).error;
-};
 
 @Component({
     selector: 'jhi-code-editor-actions',
