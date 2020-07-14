@@ -17,15 +17,39 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.GradingCriterionService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.TextAssessmentService;
+import de.tum.in.www1.artemis.service.TextBlockService;
+import de.tum.in.www1.artemis.service.TextExerciseService;
+import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -40,14 +64,14 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api/text-assessments")
 public class TextAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String ENTITY_NAME = "textAssessment";
 
-    private final TextBlockRepository textBlockRepository;
+    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    private final TextBlockRepository textBlockRepository;
 
     private final ResultService resultService;
 
@@ -65,12 +89,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
+
     private final GradingCriterionService gradingCriterionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
             UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
@@ -83,6 +110,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.gradingCriterionService = gradingCriterionService;
+        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
     /**
@@ -204,11 +232,12 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Splits the TextSubmission corresponding to a resultId into TextBlocks.
-     * The TextBlocks get a suggested feedback if automatic assessment is enabled and feedback available
-     *
+     * Splits the TextSubmission corresponding to a resultId into TextBlocks. The TextBlocks get a
+     * suggested feedback if automatic assessment is enabled and feedback available
+     * <p>
      * TODO: Remove when migrating to Text Assessment V2
      * @deprecated Text Blocks are now part of the retrieveParticipationForSubmission() response. Please use V2 text assessment which does not need this API call. This API call will be removed soon.
+     *
      * @param resultId the resultId the which needs TextBlocks
      * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
      * @throws EntityNotFoundException if the corresponding Exercise isn't a TextExercise
@@ -301,7 +330,12 @@ public class TextAssessmentResource extends AssessmentResource {
         // Remove Submission from Result
         result.setSubmission(null);
 
-        return ResponseEntity.ok(participation);
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        final Result finalResult = result;
+
+        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
+        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, finalResult));
+        return bodyBuilder.body(participation);
     }
 
     /**
@@ -343,7 +377,6 @@ public class TextAssessmentResource extends AssessmentResource {
      * required permissions
      * @param textExercise which needs to be checked
      * @throws BadRequestAlertException if no request was found
-     *
      */
     private void checkTextExerciseForRequest(@Nullable TextExercise textExercise, User user) {
         if (textExercise == null) {
