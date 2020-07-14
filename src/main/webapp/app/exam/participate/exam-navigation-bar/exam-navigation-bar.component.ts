@@ -20,6 +20,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
+    @Output() onExamAbort = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
 
@@ -127,6 +128,13 @@ export class ExamNavigationBarComponent implements OnInit {
             // Until then show, that the exercise is synced
             return 'synced';
         }
+    }
+
+    /**
+     * Notify parent component when user wants to abort the exam
+     */
+    abort() {
+        this.onExamAbort.emit();
     }
 
     // TODO: find usages of similar logic -> put into utils method

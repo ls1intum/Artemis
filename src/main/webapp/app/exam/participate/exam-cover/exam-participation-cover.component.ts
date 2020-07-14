@@ -28,6 +28,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() studentExam: StudentExam;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
+    @Output() onExamContinueAfterAbort = new EventEmitter<void>();
     course: Course | null;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -176,6 +177,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //     }
         // });
         this.onExamEnded.emit();
+    }
+
+    /**
+     * Notify the parent component that the user wants to continue after abort
+     */
+    continueAfterAbort() {
+        this.onExamContinueAfterAbort.emit();
     }
 
     get startButtonEnabled(): boolean {

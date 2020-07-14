@@ -49,7 +49,7 @@
                 <button [class.invisible]="isProgrammingExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
                 </button>
-                <button class="btn btn-danger ml-2">
+                <button class="btn btn-danger ml-2" (click)="abort()">
                     {{ 'artemisApp.examParticipation.abort' | translate }}
                 </button>
             </div>

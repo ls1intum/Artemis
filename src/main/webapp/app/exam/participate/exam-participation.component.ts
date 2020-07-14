@@ -64,6 +64,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     unsavedChanges = false;
     disconnected = false;
 
+    aborted = false;
+
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
@@ -267,6 +269,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         // update local studentExam for later sync with server
         this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+    }
+
+    /**
+     * Called when a user wants to abort the exam or decides to continue.
+     */
+    toggleAbort() {
+        this.aborted = !this.aborted;
     }
 
     /**
