@@ -268,7 +268,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             window.clearInterval(this.autoSaveInterval);
         }
         // update local studentExam for later sync with server
-        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.updateLocalStudentExam();
     }
 
     /**
@@ -276,6 +276,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         this.handInEarly = !this.handInEarly;
+        if (this.handInEarly) {
+            // update local studentExam for later sync with server if the student wants to hand in early
+            this.updateLocalStudentExam();
+        }
     }
 
     /**
@@ -485,6 +489,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private updateLocalStudentExam() {
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
