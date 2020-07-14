@@ -13,6 +13,7 @@ export const EXERCISES = (courseId) => `${COURSE(courseId)}/exercises`;
 export const EXERCISE = (courseId, exerciseId) => `${EXERCISES(courseId)}/${exerciseId}`;
 export const PARTICIPATION = (exerciseId) => `/exercises/${exerciseId}/participation`;
 export const PARTICIPATIONS = (courseId, exerciseId) => `${EXERCISE(courseId, exerciseId)}/participations`;
+export const FILES = (participationId) => `/repository/${participationId}/files`;
 export const COMMIT = (participationId) => `/repository/${participationId}/commit`;
 export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;
 export const PARTICIPATION_WITH_RESULT = (participationId) => `/participations/${participationId}/withLatestResult`;
