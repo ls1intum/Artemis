@@ -12,6 +12,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -245,7 +246,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (modelIndex.getModelMap().containsKey(modelId)) {
             return;
         }
-        buildModel(modelId, parseString(model).getAsJsonObject());
+        if (model != null) {
+            JsonElement jsonElement = parseString(model);
+            if (jsonElement != null) {
+                buildModel(modelId, jsonElement.getAsJsonObject());
+            }
+        }
     }
 
     @Override

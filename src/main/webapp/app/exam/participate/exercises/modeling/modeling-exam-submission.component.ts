@@ -5,6 +5,8 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -29,7 +31,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.updateViewFromSubmission();
     }
 
-    onActivate(): void {}
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    onActivate(): void {
+        console.log('ModelingExamSubmissionComponent.onActivate() for exercise ' + this.exercise.id);
+    }
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {
@@ -49,12 +61,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         const diagramJson = JSON.stringify(currentApollonModel);
         if (this.studentSubmission && diagramJson) {
             this.studentSubmission.model = diagramJson;
-            this.studentSubmission.isSynced = false;
         }
     }
 
     /**
-     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the subission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
         return !this.studentSubmission.isSynced!;
