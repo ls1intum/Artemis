@@ -77,20 +77,20 @@
             </button>
         </ng-container>
         <ng-template #endButton>
-            <div *ngIf="aborted" class="mb-2 font-weight-bold text-danger">
+            <div *ngIf="handInEarly" class="mb-2 font-weight-bold text-danger">
                 {{ 'artemisApp.examParticipation.handInEarlyNotice' | translate }}
             </div>
             <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                 <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
             </button>
         </ng-template>
-        <div *ngIf="aborted" class="mt-5">
+        <div *ngIf="handInEarly" class="mt-5">
             <div class="mb-2 font-weight-bold">
-                {{ 'artemisApp.examParticipation.continueAfterAbortDescription' | translate }}
+                {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | translate }}
             </div>
-            <button class="btn btn-secondary mt-2" (click)="continueAfterAbort()">
+            <button class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>
-                {{ 'artemisApp.examParticipation.continueAfterAbort' | translate }}
+                {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | translate }}
             </button>
         </div>
     </div>

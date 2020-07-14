@@ -17,7 +17,7 @@
                 [endDate]="individualStudentEndDate"
                 (onExerciseChanged)="onExerciseChange($event)"
                 (examAboutToEnd)="examEnded()"
-                (onExamAbort)="toggleAbort()"
+                (onExamHandInEarly)="toggleHandInEarly()"
             ></jhi-exam-navigation-bar>
             <div class="d-flex justify-content-center mt-2 mb-4">
                 <jhi-alert></jhi-alert>
@@ -112,9 +112,9 @@
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
-            [aborted]="aborted"
+            [handInEarly]="handInEarly"
             (onExamEnded)="onExamEndConfirmed()"
-            (onExamContinueAfterAbort)="toggleAbort()"
+            (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>

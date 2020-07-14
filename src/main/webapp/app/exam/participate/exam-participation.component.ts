@@ -64,7 +64,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     unsavedChanges = false;
     disconnected = false;
 
-    aborted = false;
+    handInEarly = false;
 
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
@@ -272,10 +272,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * Called when a user wants to abort the exam or decides to continue.
+     * Called when a user wants to hand in early or decides to continue.
      */
-    toggleAbort() {
-        this.aborted = !this.aborted;
+    toggleHandInEarly() {
+        this.handInEarly = !this.handInEarly;
     }
 
     /**
@@ -286,7 +286,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
         }
-        if (this.aborted || this.studentExam.submitted) {
+        if (this.handInEarly || this.studentExam.submitted) {
             // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }

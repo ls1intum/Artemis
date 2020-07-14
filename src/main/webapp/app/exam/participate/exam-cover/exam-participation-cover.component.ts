@@ -26,10 +26,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
-    @Input() aborted = false;
+    @Input() handInEarly = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
-    @Output() onExamContinueAfterAbort = new EventEmitter<void>();
+    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
     course: Course | null;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -181,10 +181,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Notify the parent component that the user wants to continue after abort
+     * Notify the parent component that the user wants to continue after hand in early
      */
-    continueAfterAbort() {
-        this.onExamContinueAfterAbort.emit();
+    continueAfterHandInEarly() {
+        this.onExamContinueAfterHandInEarly.emit();
     }
 
     get startButtonEnabled(): boolean {

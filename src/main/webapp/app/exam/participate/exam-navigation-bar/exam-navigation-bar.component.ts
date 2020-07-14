@@ -20,7 +20,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
-    @Output() onExamAbort = new EventEmitter<void>();
+    @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
 
@@ -131,10 +131,10 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     /**
-     * Notify parent component when user wants to abort the exam
+     * Notify parent component when user wants to hand in early
      */
-    abort() {
-        this.onExamAbort.emit();
+    handInEarly() {
+        this.onExamHandInEarly.emit();
     }
 
     // TODO: find usages of similar logic -> put into utils method
