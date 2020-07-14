@@ -87,9 +87,9 @@
             "notSubmitted": "Exercise not submitted",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
-            "abort": "Abort",
+            "abort": "Hand in early",
             "continueAfterAbort": "Continue",
-            "continueAfterAbortDescription": "You don't want to abort yet?"
+            "continueAfterAbortDescription": "You don't want to hand in yet?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
