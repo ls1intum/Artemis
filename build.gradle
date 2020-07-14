@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.5.1"
+    id "com.diffplug.spotless" version "5.1.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.3.1"
+version = "4.3.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -200,7 +200,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:3.9.0"
+    implementation "org.liquibase:liquibase-core:4.0.0"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -226,7 +226,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.49.Final"
     implementation "io.projectreactor.netty:reactor-netty:0.9.9.RELEASE"
     implementation "org.springframework:spring-messaging:5.2.7.RELEASE"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.6.RELEASE_1"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.7.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -240,8 +240,8 @@ dependencies {
     implementation ("io.springfox:springfox-swagger2:2.10.5") {
         exclude module: "mapstruct"
     }
-    implementation "io.springfox:springfox-bean-validators:2.10.5"
-    implementation "mysql:mysql-connector-java:8.0.20"
+    implementation "io.springfox:springfox-bean-validators:3.0.0"
+    implementation "mysql:mysql-connector-java:8.0.21"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
@@ -265,8 +265,8 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.14.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.14.1'
-    testImplementation "org.mockito:mockito-core:3.3.3"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.3.3"
+    testImplementation "org.mockito:mockito-core:3.4.0"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.4.0"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"

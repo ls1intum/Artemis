@@ -234,8 +234,7 @@ public class RepositoryService {
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout)
-            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout) throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -259,7 +258,7 @@ public class RepositoryService {
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }

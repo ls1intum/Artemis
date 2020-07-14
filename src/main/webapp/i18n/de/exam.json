@@ -35,6 +35,7 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
@@ -73,7 +74,8 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "greeting": "Hallo {{ fullName }}, willkommen zu {{ title }}",
+            "finish": "Hallo {{ fullName }}, das ist das Ende von {{ title }} ",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
@@ -232,5 +234,9 @@
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
         }
+    },
+    "studentExam": {
+        "alreadySubmitted": "Du hast bereits abgegeben.",
+        "submissionNotInTime": "Du kannst nur zwischen Start und Ende der Klausur abgeben."
     }
 }

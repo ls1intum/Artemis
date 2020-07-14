@@ -52,18 +52,43 @@ public class StudentExamAccessService {
      */
     public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
+        return checkStudentExamAccess(courseId, examId, studentExamId, currentUser);
+    }
 
+    /**
+     * Checks if the current user is allowed to see the requested student exam.
+     *
+     * @param courseId      the if of the course
+     * @param examId        the id of the exam
+     * @param studentExamId the id of the student exam
+     * @param currentUser   the current user
+     * @param <T>           The type of the return type of the requesting route so that the
+     *                      response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, User currentUser) {
         Optional<ResponseEntity<T>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
 
+        // Check that the student exam exists
         Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
         if (studentExam.isEmpty()) {
             return Optional.of(notFound());
         }
 
-        return checkStudentExamAccess(examId, currentUser, studentExam.get());
+        // Check that the examId equals the id of the exam of the student exam
+        if (!studentExam.get().getExam().getId().equals(examId)) {
+            return Optional.of(conflict());
+        }
+
+        // Check that the student of the required student exam is the current user
+        if (!studentExam.get().getUser().equals(currentUser)) {
+            return Optional.of(forbidden());
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -106,19 +131,4 @@ public class StudentExamAccessService {
 
         return Optional.empty();
     }
-
-    private <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long examId, User currentUser, StudentExam studentExam) {
-        // Check that the examId equals the id of the exam of the student exam
-        if (!studentExam.getExam().getId().equals(examId)) {
-            return Optional.of(conflict());
-        }
-
-        // Check that the student of the required student exam is the current user
-        if (!studentExam.getUser().equals(currentUser)) {
-            return Optional.of(forbidden());
-        }
-
-        return Optional.empty();
-    }
-
 }

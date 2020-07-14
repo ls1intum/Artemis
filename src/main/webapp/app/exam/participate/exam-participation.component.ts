@@ -29,6 +29,7 @@ import { Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -113,24 +114,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * initializes courseId and course
+     * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            // TODO: the following approach is error prone. Instead get the exam from a service that has a reference
-            // if (!!window.history.state.exam) {
-            //     this.examTitle = window.history.state.exam?.title;
-            // }
+
             this.loadingExam = true;
-            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
-                (exam) => {
-                    this.exam = exam;
-                    this.individualStudentEndDate = exam.endDate ? exam.endDate : this.serverDateService.now();
+            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                (studentExam) => {
+                    this.studentExam = studentExam;
+                    this.exam = studentExam.exam;
+                    this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
                     if (this.isOver()) {
-                        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-                            this.studentExam = studentExam;
+                        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExamWithExercises: StudentExam) => {
+                            this.studentExam = studentExamWithExercises;
                         });
                     }
                     this.loadingExam = false;
@@ -171,14 +170,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * exam start text confirmed and name entered, start button clicked and exam avtive
+     * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
             // set endDate with workingTime
-            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
+            this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
@@ -190,7 +189,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
+                            submission.submitted = false;
                         });
+                    } else if (exercise.type === ExerciseType.PROGRAMMING) {
+                        participation.submissions.push(new ProgrammingSubmission());
                     }
                 });
             });
@@ -207,11 +209,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @returns true if valid, false otherwise
      */
     private isExerciseParticipationValid(exercise: Exercise): boolean {
-        // check if there is at least one participation with state === Initialized
+        // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations &&
             exercise.studentParticipations.length !== 0 &&
-            exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED
+            (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED ||
+                exercise.studentParticipations[0].initializationState === InitializationState.FINISHED)
         );
     }
 
@@ -228,13 +231,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }, 1000);
     }
 
+    /**
+     * triggered after student accepted exam end terms, will make final call to update submission on server
+     */
     onExamEndConfirmed() {
-        this.examEndConfirmed = true;
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
     }
 
+    /**
+     * called when exam ended because the working time is over
+     */
     examEnded() {
-        this.triggerSave(true);
-        window.clearInterval(this.autoSaveInterval);
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        // update local studentExam for later sync with server
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     /**
