@@ -3,7 +3,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -37,10 +36,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-    }
-
-    get resultsPublished() {
-        return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
     getIcon(exerciseType: ExerciseType) {
