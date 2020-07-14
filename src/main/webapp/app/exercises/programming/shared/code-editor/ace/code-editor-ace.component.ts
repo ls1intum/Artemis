@@ -121,7 +121,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         } else if ((changes.selectedFile && this.selectedFile) || (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING)) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.fileSession[this.selectedFile]) {
+            if (this.selectedFile && !this.fileSession[this.selectedFile]) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
