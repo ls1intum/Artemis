@@ -108,7 +108,7 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="(isOver() && !studentExam.submitted) || aborted"
+            *ngIf="isOver() && !studentExam.submitted"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
