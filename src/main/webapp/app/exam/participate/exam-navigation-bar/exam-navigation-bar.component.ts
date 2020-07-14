@@ -134,6 +134,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * Notify parent component when user wants to hand in early
      */
     handInEarly() {
+        this.saveExercise();
         this.onExamHandInEarly.emit();
     }
 
