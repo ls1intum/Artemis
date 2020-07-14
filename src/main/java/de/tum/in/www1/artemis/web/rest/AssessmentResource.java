@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +32,17 @@ public abstract class AssessmentResource {
 
     protected final ResultRepository resultRepository;
 
+    protected final ExamService examService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository) {
+            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService) {
         this.authCheckService = authCheckService;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.submissionService = submissionService;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
+        this.examService = examService;
     }
 
     abstract String getEntityName();
@@ -86,6 +91,14 @@ public abstract class AssessmentResource {
                 return Objects.equals(participation.getTeam().orElseThrow().getOwner(), user) || isAtLeastInstructor;
             }
             else {
+                // tutors can assess exam exercises after the last student has finished the exam
+                if (exercise.hasExerciseGroup() && !isAtLeastInstructor) {
+                    final Exam exam = exercise.getExerciseGroup().getExam();
+                    ZonedDateTime latestExamDueDate = examService.getLatestIndiviudalExamEndDate(exam.getId());
+                    if (latestExamDueDate.isAfter(ZonedDateTime.now())) {
+                        return false;
+                    }
+                }
                 // for individual exercises a result can always be created by any tutor if none exists yet
                 return true;
             }
