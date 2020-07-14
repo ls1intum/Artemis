@@ -282,7 +282,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is over
      */
     isOver(): boolean {
-        if (this.studentExam && this.studentExam.ended) {
+        if ((this.studentExam && this.studentExam.ended) || this.aborted) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
         }
