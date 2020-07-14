@@ -401,7 +401,7 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // init saving
-        container.actions.saveChangedFiles().subscribe();
+        container.actions.saveChangedFilesWithTimeout().subscribe();
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.editorState).to.equal(EditorState.SAVING);
 
@@ -496,13 +496,11 @@ describe('CodeEditorStudentIntegration', () => {
         expect(saveFilesStub).to.have.been.calledOnceWithExactly([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }]);
         expect(container.editorState).to.equal(EditorState.SAVING);
         expect(container.fileBrowser.status.editorState).to.equal(EditorState.SAVING);
-        expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        saveFilesSubject.next({ [unsavedFile]: null });
-
         // committing
         expect(commitStub).to.have.been.calledOnce;
         expect(container.commitState).to.equal(CommitState.COMMITTING);
+        expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
+        saveFilesSubject.next({ [unsavedFile]: null });
         expect(container.editorState).to.equal(EditorState.CLEAN);
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         getLatestPendingSubmissionSubject.next({

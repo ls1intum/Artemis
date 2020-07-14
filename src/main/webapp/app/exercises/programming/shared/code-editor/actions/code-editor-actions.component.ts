@@ -8,8 +8,23 @@ import { CodeEditorConflictStateService } from 'app/exercises/programming/shared
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    EditorState,
+    FileSubmission,
+    FileSubmissionError,
+    GitConflictState,
+    RepositoryError,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
+
+/**
+ * Type guard for checking if the file submission received through the websocket is an error object.
+ * @param toBeDetermined either a FileSubmission or a FileSubmissionError.
+ */
+const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
+    return !!(toBeDetermined as FileSubmissionError).error;
+};
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -122,7 +137,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onSave() {
-        this.saveChangedFiles()
+        this.saveChangedFilesWithTimeout()
             .pipe(catchError(() => of()))
             .subscribe();
     }
@@ -131,7 +146,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles(): Observable<any> {
+    saveChangedFilesWithTimeout(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
             setTimeout(() => {
                 if (this.editorState === EditorState.SAVING) {
@@ -142,17 +157,31 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             }, 8000);
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
-                tap((res) => this.onSavedFiles.emit(res)),
-                catchError((err) => {
-                    this.onError.emit(err.error);
-                    this.editorState = EditorState.UNSAVED_CHANGES;
-                    return throwError('saving failed');
-                }),
-            );
+            this.saveFiles(unsavedFiles);
+            return Observable.of(null);
         } else {
             return Observable.of(null);
         }
+    }
+
+    private saveFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
+        this.repositoryFileService.updateFiles(fileUpdates).subscribe(
+            (fileSubmission: FileSubmission | FileSubmissionError) => {
+                if (checkIfSubmissionIsError(fileSubmission)) {
+                    this.repositoryFileService.fileUpdateSubject.error(fileSubmission);
+                    if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                    }
+                    return;
+                }
+                this.onSavedFiles.emit(fileSubmission);
+            },
+            (err) => {
+                this.onError.emit(err.error);
+                this.editorState = EditorState.UNSAVED_CHANGES;
+                throwError('savingFailed');
+            },
+        );
     }
 
     /**
@@ -168,7 +197,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         // If there are unsaved changes, save them before trying to commit again.
         Observable.of(null)
             .pipe(
-                switchMap(() => (this.editorState === EditorState.UNSAVED_CHANGES ? this.saveChangedFiles() : Observable.of(null))),
+                switchMap(() => (this.editorState === EditorState.UNSAVED_CHANGES ? this.saveChangedFilesWithTimeout() : Observable.of(null))),
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => this.repositoryService.commit()),
                 tap(() => {
