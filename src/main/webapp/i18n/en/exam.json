@@ -89,7 +89,8 @@
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "abort": "Hand in early",
             "continueAfterAbort": "Continue",
-            "continueAfterAbortDescription": "You don't want to hand in yet?"
+            "continueAfterAbortDescription": "You don't want to hand in yet?",
+            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer."
         },
         "exerciseGroup": {
             "created": "New exercise group created",
