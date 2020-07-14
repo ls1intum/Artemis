@@ -194,20 +194,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.selectedFile && this.fileSession && this.fileSession[this.selectedFile].code !== code) {
-            const cursor = this.editor.getEditor().getCursorPosition();
-            this.fileSession[this.selectedFile] = { code, cursor };
-            if (this.buildLogErrors.errors[this.selectedFile]) {
-                this.buildLogErrors = {
-                    ...this.buildLogErrors,
-                    errors: {
-                        ...this.buildLogErrors.errors,
-                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
-                    },
-                };
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            if (this.fileSession[this.selectedFile].code !== code) {
+                const cursor = this.editor.getEditor().getCursorPosition();
+                this.fileSession[this.selectedFile] = { code, cursor };
+                if (this.buildLogErrors.errors[this.selectedFile]) {
+                    this.buildLogErrors = {
+                        ...this.buildLogErrors,
+                        errors: {
+                            ...this.buildLogErrors.errors,
+                            [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
+                        },
+                    };
+                }
+                this.editorChangeLog = [];
+                this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
-            this.editorChangeLog = [];
-            this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
         }
     }
 
