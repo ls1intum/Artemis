@@ -673,4 +673,34 @@ public class ExamResource {
 
         return ResponseEntity.ok(exam.getExerciseGroups());
     }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/latest-end-date : Get an exam for conduction.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it culd not be
+     * determined
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/latest-end-date")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ZonedDateTime> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get latest individual end date of exam : {}", examId);
+
+        Optional<ResponseEntity<ZonedDateTime>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
+
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndiviudalExamEndDate(examId);
+
+        if (latestIndividualEndDateOfExam == null) {
+            return ResponseEntity.notFound().build();
+        }
+        else {
+            return ResponseEntity.ok().body(latestIndividualEndDateOfExam);
+        }
+    }
+
 }
