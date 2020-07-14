@@ -80,11 +80,13 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     };
 
     commit = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
+        const url = `${this.restResourceUrl}/commit`;
+        return this.http.post<void>(url, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
+        const url = `${this.restResourceUrl}/pull`;
+        return this.http.get<void>(url, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**
@@ -92,7 +94,8 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
      * This is the method that is used to resolve conflicts.
      */
     resetRepository = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/reset`, {});
+        const url = `${this.restResourceUrl}/reset`;
+        return this.http.post<void>(url, {});
     };
 }
 
