@@ -87,7 +87,9 @@
             "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
-            "abort": "Beenden"
+            "abort": "Beenden",
+            "continueAfterAbort": "Weitermachen",
+            "continueAfterAbortDescription": "Du willst doch nicht vorzeitig abgeben?"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

@@ -81,6 +81,15 @@
                 <span jhiTranslate="artemisApp.exam.endExam">End Exam</span>
             </button>
         </ng-template>
+        <div *ngIf="aborted" class="mt-5">
+            <div class="mb-2 font-weight-bold">
+                {{ 'artemisApp.examParticipation.continueAfterAbortDescription' | translate }}
+            </div>
+            <button class="btn btn-secondary mt-2" (click)="continueAfterAbort()">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>
+                {{ 'artemisApp.examParticipation.continueAfterAbort' | translate }}
+            </button>
+        </div>
     </div>
     <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
         <span>{{ 'artemisApp.examParticipation.waitForStart' | translate: { title: exam.title } }}</span>

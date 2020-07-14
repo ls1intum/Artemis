@@ -26,6 +26,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() aborted = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterAbort = new EventEmitter<void>();
