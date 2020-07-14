@@ -91,14 +91,17 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     }
 
     /**
-     * Update Submission.isSynced based on the CommitState.
+     * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
      *
      * @param commitState current CommitState from CodeEditorActionsComponent
      */
     onCommitStateChange(commitState: CommitState): void {
         if (this.participation.submissions && this.participation.submissions.length > 0) {
-            this.participation.submissions[0].submitted = commitState === CommitState.CLEAN;
+            if (commitState === CommitState.CLEAN) {
+                this.participation.submissions[0].submitted = true;
+                this.participation.submissions[0].isSynced = true;
+            }
         }
     }
 

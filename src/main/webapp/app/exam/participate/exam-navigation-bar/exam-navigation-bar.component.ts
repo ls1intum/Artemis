@@ -65,7 +65,8 @@ export class ExamNavigationBarComponent implements OnInit {
     saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
-        if (submission && this.exercises[this.exerciseIndex].type != ExerciseType.PROGRAMMING) {
+        // we do not submit programming exercises on a save
+        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
         if (newIndex > this.exercises.length - 1) {
