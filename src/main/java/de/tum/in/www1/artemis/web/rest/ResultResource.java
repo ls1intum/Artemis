@@ -211,7 +211,15 @@ public class ResultResource {
             return isAssessor || isAtLeastInstructor;
         }
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
+        ZonedDateTime assessmentDueDate;
+
+        if (exercise.hasExerciseGroup()) {
+            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
+        }
+        else {
+            assessmentDueDate = exercise.getAssessmentDueDate();
+        }
+
         // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
         // and tutors should be able to override the created results when the assessmentDueDate is null
         final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
