@@ -109,7 +109,7 @@ export class ArtemisMarkdownService {
             extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        const clean = DOMPurify.sanitize(html, { ADD_TAGS: ['img'], ADD_ATTR: ['src', 'alt'] });
+        const clean = DOMPurify.sanitize(html);
         return clean;
     }
 
