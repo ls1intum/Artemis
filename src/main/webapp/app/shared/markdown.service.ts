@@ -109,8 +109,7 @@ export class ArtemisMarkdownService {
             extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        const clean = DOMPurify.sanitize(html);
-        return clean;
+        return DOMPurify.sanitize(html);
     }
 
     /**
