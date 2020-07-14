@@ -286,7 +286,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
         }
-        if (this.handInEarly || (this.studentExam && this.studentExam.submitted)) {
+        if (this.handInEarly || this.studentExam?.submitted) {
             // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }
