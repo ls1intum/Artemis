@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -684,10 +685,10 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/latest-end-date")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ZonedDateTime> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
 
-        Optional<ResponseEntity<ZonedDateTime>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
+        Optional<ResponseEntity<ExamInformationDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
 
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
@@ -699,7 +700,9 @@ public class ExamResource {
             return ResponseEntity.notFound().build();
         }
         else {
-            return ResponseEntity.ok().body(latestIndividualEndDateOfExam);
+            ExamInformationDTO examInformationDTO = new ExamInformationDTO();
+            examInformationDTO.latestIndividualEndDate = latestIndividualEndDateOfExam;
+            return ResponseEntity.ok().body(examInformationDTO);
         }
     }
 
