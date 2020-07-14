@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.service.*;
@@ -58,11 +56,9 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final ExamService examService;
-
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, ExamService examService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -72,7 +68,6 @@ public class FileUploadSubmissionResource {
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
-        this.examService = examService;
     }
 
     /**
@@ -255,18 +250,10 @@ public class FileUploadSubmissionResource {
             return badRequest();
         }
 
-        Exam exam = fileUploadExercise.getExerciseGroup().getExam();
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
-            if (latestIndiviudalExamEndDate != null && latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
-        }
-        else {
-            if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.exerciseService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.*;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -68,12 +66,9 @@ public class ModelingSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final ExamService examService;
-
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
             ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
-            ExamService examService) {
+            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -84,7 +79,6 @@ public class ModelingSubmissionResource {
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
-        this.examService = examService;
     }
 
     /**
@@ -261,18 +255,10 @@ public class ModelingSubmissionResource {
             return badRequest();
         }
 
-        Exam exam = exercise.getExerciseGroup().getExam();
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
-            if (latestIndiviudalExamEndDate != null && latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
-        }
-        else {
-            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.exerciseService.checkIfExerciseDueDateIsReached(exercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

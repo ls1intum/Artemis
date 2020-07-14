@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,8 +56,6 @@ public class TextSubmissionResource {
 
     private final ExerciseService exerciseService;
 
-    private final ExamService examService;
-
     private final TextExerciseService textExerciseService;
 
     private final CourseService courseService;
@@ -80,7 +77,7 @@ public class TextSubmissionResource {
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
-            ExamSubmissionService examSubmissionService, ExamService examService) {
+            ExamSubmissionService examSubmissionService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -92,7 +89,6 @@ public class TextSubmissionResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
-        this.examService = examService;
     }
 
     /**
@@ -256,17 +252,10 @@ public class TextSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
-            if (latestIndiviudalExamEndDate != null && latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
-        }
-        else {
-            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return notFound();
-            }
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.exerciseService.checkIfExerciseDueDateIsReached(exercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Tutors cannot start assessing submissions if Athene is currently processing
