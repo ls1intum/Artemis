@@ -49,6 +49,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     triggerExamAboutToEnd() {
+        this.saveExercise();
         this.examAboutToEnd.emit();
     }
 
