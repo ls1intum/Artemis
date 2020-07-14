@@ -339,21 +339,20 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the user is allowed to see the exam result.
-     *
-     * Returns true if
-     *      - the current user is not a student in the course,
-     *      OR
-     *      - the exercise is an exam exercise
-     *      - the exam has already ended
-     *      - and the exam results were published
+     * Checks if the user is allowed to see the exam result. Returns true if
+     * 
+     * - the current user is at least teaching assistant in the course
+     * - OR if the exercise is not part of an exam
+     * - OR if the exam has not ended
+     * - OR if the exam has already ended and the results were published
      *
      * @param exercise - Exercise that the result is requested for
      * @param user - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
     public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
-        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || (exercise.hasExerciseGroup()
-                && exercise.getExerciseGroup().getExam().getEndDate().isBefore(ZonedDateTime.now()) && exercise.getExerciseGroup().getExam().resultsPublished());
+        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
+                || (exercise.hasCourse() || (exercise.hasExerciseGroup() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
+                        || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 }
