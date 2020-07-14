@@ -39,7 +39,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
-    get isPublished() {
+    get resultsPublished() {
         return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 

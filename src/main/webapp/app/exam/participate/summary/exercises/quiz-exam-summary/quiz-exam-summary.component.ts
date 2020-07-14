@@ -32,14 +32,14 @@ export class QuizExamSummaryComponent implements OnInit {
     submission: QuizSubmission;
 
     @Input()
-    isPublished: boolean;
+    resultsPublished: boolean;
 
     constructor(private exerciseService: QuizExerciseService) {}
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
         // get quiz-exercise with solution after result is published
-        if (this.isPublished) {
+        if (this.resultsPublished) {
             this.exerciseService.find(this.exercise.id).subscribe((response) => {
                 this.exerciseWithSolution = response.body!;
             });
@@ -47,7 +47,7 @@ export class QuizExamSummaryComponent implements OnInit {
     }
 
     get quizQuestions() {
-        return this.isPublished && this.exerciseWithSolution ? this.exerciseWithSolution.quizQuestions : this.exercise.quizQuestions;
+        return this.resultsPublished && this.exerciseWithSolution ? this.exerciseWithSolution.quizQuestions : this.exercise.quizQuestions;
     }
 
     /**

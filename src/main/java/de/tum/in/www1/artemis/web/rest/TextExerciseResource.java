@@ -390,7 +390,7 @@ public class TextExerciseResource {
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // if no results, check if there are really no results or the relation to results was not

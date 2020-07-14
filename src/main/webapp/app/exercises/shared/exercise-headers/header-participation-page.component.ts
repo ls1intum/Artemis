@@ -36,7 +36,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     /**
      * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
      */
-    get isPublished(): boolean {
+    get resultsPublished(): boolean {
         if (!!this.exercise.exerciseGroup && !!this.exercise.exerciseGroup.exam) {
             if (this.exercise.exerciseGroup.exam.publishResultsDate) {
                 return moment().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);

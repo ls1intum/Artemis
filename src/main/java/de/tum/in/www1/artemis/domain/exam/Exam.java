@@ -376,7 +376,12 @@ public class Exam implements Serializable {
         return startDate.isBefore(ZonedDateTime.now());
     }
 
-    public Boolean isPublished() {
+    /**
+     * check if results of exam are published
+     *
+     * @return true, if the results are published, otherwise false, null if this cannot be determined
+     */
+    public Boolean resultsPublished() {
         if (publishResultsDate == null) {
             return false;
         }

@@ -411,7 +411,7 @@ public class ModelingSubmissionResource {
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (!authCheckService.isAllowedToGetExamResult(modelingExercise, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
