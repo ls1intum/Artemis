@@ -75,6 +75,12 @@ public class Exam implements Serializable {
     @Column(name = "exam_student_review_end")
     private ZonedDateTime examStudentReviewEnd;
 
+    /**
+     * The duration in which the students can do final submissions before the exam ends in seconds
+     */
+    @Column(name = "grace_period", columnDefinition = "integer default 180")
+    private Integer gracePeriod = 180;
+
     @Column(name = "start_text")
     @Lob
     private String startText;
@@ -191,6 +197,14 @@ public class Exam implements Serializable {
 
     public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
         this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public Integer getGracePeriod() {
+        return gracePeriod;
+    }
+
+    public void setGracePeriod(Integer gracePeriod) {
+        this.gracePeriod = gracePeriod;
     }
 
     public String getStartText() {

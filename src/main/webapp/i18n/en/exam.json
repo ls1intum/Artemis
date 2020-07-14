@@ -75,7 +75,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "greeting": "Hello {{ fullName }}, welcome to {{ title }}",
+            "finish": "Hello {{ fullName }}, this is the end of {{ title }}",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
@@ -234,5 +235,9 @@
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully."
         }
+    },
+    "studentExam": {
+        "alreadySubmitted": "You have already submitted.",
+        "submissionNotInTime": "You can only submit between start and end of the exam."
     }
 }
