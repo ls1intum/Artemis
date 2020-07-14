@@ -251,7 +251,7 @@ public class FileUploadSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.exerciseService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        boolean startAssessingSubmissions = this.examSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
         if (!startAssessingSubmissions) {
             return forbidden();
         }

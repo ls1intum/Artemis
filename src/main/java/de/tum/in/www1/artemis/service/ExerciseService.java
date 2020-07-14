@@ -62,13 +62,11 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
-    private final ExamService examService;
-
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamService studentExamService,
-            ExamRepository exampRepository, ExamService examService) {
+            ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
         this.participationService = participationService;
@@ -83,7 +81,6 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamService = studentExamService;
-        this.examService = examService;
     }
 
     /**
@@ -478,29 +475,5 @@ public class ExerciseService {
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
             exercise.setStudentAssignedTeamIdComputed(true);
         }
-    }
-
-    /**
-     * Checks if the current time is after the exercise due date (course exercises)
-     * Checks if the current time is after the latest exam end date (exam exercises)
-     * We need this check in order to see if the assessment of exercises can be started
-     * @param exercise
-     * @return boolean
-     */
-    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        Exam exam = exercise.getExerciseGroup().getExam();
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
-            if (latestIndiviudalExamEndDate != null && latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
-                return false;
-            }
-        }
-        else {
-            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return false;
-            }
-        }
-        return true;
     }
 }

@@ -253,7 +253,7 @@ public class TextSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.exerciseService.checkIfExerciseDueDateIsReached(exercise);
+        boolean startAssessingSubmissions = this.examSubmissionService.checkIfExerciseDueDateIsReached(exercise);
         if (!startAssessingSubmissions) {
             return forbidden();
         }
