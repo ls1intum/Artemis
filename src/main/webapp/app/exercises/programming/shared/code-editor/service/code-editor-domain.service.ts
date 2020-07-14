@@ -11,7 +11,13 @@ export class DomainService {
     protected domain: DomainChange;
     private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | null>(null);
 
-    constructor() {}
+    // ComponentId to verify uniqueness
+    componentId: number;
+
+    constructor() {
+        this.componentId = Math.random() * 1000000000;
+        console.log(`Constructor Service with id ${this.componentId}`);
+    }
 
     /**
      * Sets domain and subject.next according to parameter.

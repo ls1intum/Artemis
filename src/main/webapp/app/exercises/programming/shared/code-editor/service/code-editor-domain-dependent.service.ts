@@ -12,7 +12,13 @@ export abstract class DomainDependentService implements OnDestroy {
     protected domain: DomainChange;
     protected domainChangeSubscription: Subscription;
 
-    constructor(private domainService: DomainService) {}
+    // ComponentId to verify uniqueness
+    componentId: number;
+
+    constructor(private domainService: DomainService) {
+        this.componentId = Math.random() * 1000000000;
+        console.log(`Constructor DomainDependentService (${this.constructor.name}) with id ${this.componentId}`);
+    }
 
     /**
      * Initializes a domain subscription.
@@ -44,5 +50,6 @@ export abstract class DomainDependentService implements OnDestroy {
         if (this.domainChangeSubscription) {
             this.domainChangeSubscription.unsubscribe();
         }
+        console.log(`Destroy DomainDependentService (${this.constructor.toString()}) with id ${this.componentId}`);
     }
 }

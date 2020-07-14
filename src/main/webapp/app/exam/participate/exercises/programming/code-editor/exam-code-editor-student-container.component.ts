@@ -16,10 +16,26 @@ import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitState, DomainType, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
+    providers: [
+        CodeEditorConflictStateService,
+        CodeEditorSessionService,
+        CodeEditorSubmissionService,
+        CodeEditorBuildLogService,
+        CodeEditorRepositoryFileService,
+        CodeEditorRepositoryService,
+        DomainService,
+    ],
 })
 export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -39,6 +55,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
 
     repositoryIsLocked = false;
 
+    // ComponentId to verify uniqueness
+    componentId: number;
+
     constructor(
         private domainService: DomainService,
         translateService: TranslateService,
@@ -47,6 +66,8 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         fileService: CodeEditorFileService,
     ) {
         super(null, translateService, null, jhiAlertService, sessionService, fileService);
+        this.componentId = Math.random() * 1000000000;
+        console.log(`Constructor ExamCodeEditorStudentContainerComponent with id ${this.componentId}`);
     }
 
     /**
@@ -63,10 +84,10 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     }
 
     reload(): void {
-        this.ngOnInit();
-        if (this.instructions) {
-            this.instructions.refreshInstructions();
-        }
+        // this.ngOnInit();
+        // if (this.instructions) {
+        //     this.instructions.refreshInstructions();
+        // }
     }
 
     /**
