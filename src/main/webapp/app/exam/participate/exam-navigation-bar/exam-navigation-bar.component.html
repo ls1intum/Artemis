@@ -54,7 +54,12 @@
                 </button>
             </div>
             <div class="ml-3 mb-2">
-                <jhi-exam-timer class="d-flex justify-content-end" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()"></jhi-exam-timer>
+                <jhi-exam-timer
+                    class="d-flex justify-content-end mx-0"
+                    [criticalTime]="criticalTime"
+                    [endDate]="endDate"
+                    (timerAboutToEnd)="triggerExamAboutToEnd()"
+                ></jhi-exam-timer>
             </div>
         </div>
     </div>
