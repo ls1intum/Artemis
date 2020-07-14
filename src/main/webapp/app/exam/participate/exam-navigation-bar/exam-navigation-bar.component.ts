@@ -2,12 +2,9 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import * as moment from 'moment';
 import { Moment } from 'moment';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { timer } from 'rxjs';
-import { distinctUntilChanged, map, first } from 'rxjs/operators';
 import { Submission } from 'app/entities/submission.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -29,19 +26,11 @@ export class ExamNavigationBarComponent implements OnInit {
     exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    private timer$ = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
+    criticalTime = moment.duration(5, 'minutes');
 
-    displayTime$ = this.timer$.pipe(
-        map((timeLeft: moment.Duration) => this.updateDisplayTime(timeLeft)),
-        distinctUntilChanged(),
-    );
-
-    criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {
-        this.timer$.pipe(first((duration: moment.Duration) => duration.asSeconds() <= 1)).subscribe(() => this.examAboutToEnd.emit());
-    }
+    constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -56,6 +45,10 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
+    }
+
+    triggerExamAboutToEnd() {
+        this.examAboutToEnd.emit();
     }
 
     changeExercise(exerciseIndex: number, force: boolean) {
@@ -83,15 +76,6 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
-    updateDisplayTime(timeDiff: moment.Duration) {
-        if (!this.criticalTime && timeDiff.asMinutes() < 5) {
-            this.criticalTime = true;
-        }
-        return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.asMinutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
-    }
-
     isProgrammingExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
@@ -105,7 +89,6 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             if (submission.isSynced) {
                 // make button blue
-                this.icon = 'check';
                 if (exerciseIndex === this.exerciseIndex) {
                     return 'synced active';
                 } else {

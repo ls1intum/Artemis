@@ -1,6 +1,27 @@
+<div class="w-100 d-flex" *ngIf="!startView">
+    <div class="col-md-3"></div>
+    <h2 class="col-md-6" style="text-align: center;">
+        <span>{{
+            'artemisApp.examParticipation.finish'
+                | translate
+                    : {
+                          title: exam.title,
+                          fullName: accountName
+                      }
+        }}</span>
+    </h2>
+    <jhi-exam-timer class="col-md-3 justify-content-end" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+</div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
     <h2 style="text-align: center;" *ngIf="startView">
-        <span>{{ 'artemisApp.examParticipation.greeting' | translate: { title: exam.title, fullName: accountName } }}</span>
+        <span>{{
+            'artemisApp.examParticipation.greeting'
+                | translate
+                    : {
+                          title: exam.title,
+                          fullName: accountName
+                      }
+        }}</span>
     </h2>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div class="d-flex justify-content-center">
@@ -38,14 +59,14 @@
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
-                    <div class="alert alert-danger mt-1" *ngIf="falseName && inserted">
+                    <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">
                         <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
                     </div>
                 </div>
             </div>
         </div>
         <ng-container #startButton *ngIf="startView; else endButton">
-            <button [disabled]="!startButtonEnabled" type="submit" (click)="startExam()" class="btn btn-primary">
+            <button [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
                 <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
             </button>
         </ng-container>
