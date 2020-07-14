@@ -125,6 +125,17 @@ public class AssessmentService {
      */
     public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
+        // check if exam exercise
+        if (exercise.hasExerciseGroup()) {
+            final Exam exam = exercise.getExerciseGroup().getExam();
+            // tutors cannot assess submissions when the publish result date is in the past
+            if (exam.getPublishResultsDate() != null) {
+                if (!isAtLeastInstructor && exam.getPublishResultsDate().isBefore(ZonedDateTime.now())) {
+                    return false;
+                }
+            }
+        }
+
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAllowedToBeAssessor || isAtLeastInstructor;
