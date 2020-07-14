@@ -158,28 +158,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             this.saveFiles(unsavedFiles);
-            return Observable.of(null);
-        } else {
-            return Observable.of(null);
         }
+        return Observable.of(null);
     }
 
     private saveFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
         this.repositoryFileService.updateFiles(fileUpdates).subscribe(
-            (fileSubmission: FileSubmission | FileSubmissionError) => {
-                if (checkIfSubmissionIsError(fileSubmission)) {
-                    this.repositoryFileService.fileUpdateSubject.error(fileSubmission);
-                    if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
-                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                    }
-                    return;
-                }
+            (fileSubmission: FileSubmission) => {
                 this.onSavedFiles.emit(fileSubmission);
             },
             (err) => {
                 this.onError.emit(err.error);
                 this.editorState = EditorState.UNSAVED_CHANGES;
-                throwError('savingFailed');
             },
         );
     }
