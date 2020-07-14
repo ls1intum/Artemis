@@ -107,8 +107,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
      * @param questionIndex
      */
-    navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex)!.scrollIntoView({
+    navigateToQuestion(questionId: number): void {
+        document.getElementById('question' + questionId)!.scrollIntoView({
             behavior: 'smooth',
         });
     }
