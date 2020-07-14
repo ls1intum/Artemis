@@ -272,13 +272,13 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const commitObservable = new Subject<null>();
         const saveObservable = new Subject<null>();
-        const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
+        const saveChangedFilesStub = stub(comp, 'saveChangedFilesWithTimeout');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
 
         comp.unsavedFiles = unsavedFiles;
-        comp.saveChangedFiles = saveChangedFilesStub;
+        comp.saveChangedFilesWithTimeout = saveChangedFilesStub;
         fixture.detectChanges();
 
         commitStub.returns(commitObservable);
