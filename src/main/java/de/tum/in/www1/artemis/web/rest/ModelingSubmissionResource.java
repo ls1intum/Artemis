@@ -410,8 +410,7 @@ public class ModelingSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (authCheckService.isOnlyStudentInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user) && (modelingExercise.hasExerciseGroup()
-                && modelingExercise.getExerciseGroup().getExam().getEndDate().isBefore(ZonedDateTime.now()) && !modelingExercise.getExerciseGroup().getExam().isPublished())) {
+        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
