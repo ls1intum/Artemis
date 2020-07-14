@@ -2,9 +2,9 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Submission } from 'app/entities/submission.model';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -65,7 +65,8 @@ export class ExamNavigationBarComponent implements OnInit {
     saveExercise() {
         const newIndex = this.exerciseIndex + 1;
         const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
-        if (submission) {
+        // we do not submit programming exercises on a save
+        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
         if (newIndex > this.exercises.length - 1) {
