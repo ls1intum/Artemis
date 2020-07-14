@@ -73,7 +73,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate() {
-        return this.exam.visibleDate;
+        return this.exam.visibleDate && moment(this.exam.visibleDate).isAfter(moment());
     }
 
     get isValidStartDate() {
