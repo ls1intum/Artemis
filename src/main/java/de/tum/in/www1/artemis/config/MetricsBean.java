@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.springframework.boot.actuate.health.*;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
+import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -19,9 +21,9 @@ public class MetricsBean {
 
     private final String ARTEMIS_HEALTH_TAG = "healthindicator";
 
-    public MetricsBean(MeterRegistry meterRegistry, SimpUserRegistry simpUserRegistry, List<HealthContributor> healthContributors) {
+    public MetricsBean(MeterRegistry meterRegistry, WebsocketConfiguration websocketConfiguration, List<HealthContributor> healthContributors) {
         // Publish the number of currently (via WebSockets) connected users
-        Gauge.builder("artemis.instance.websocket.users", simpUserRegistry, SimpUserRegistry::getUserCount).strongReference(true)
+        Gauge.builder("artemis.instance.websocket.users", websocketConfiguration.subProtocolWebSocketHandler(), MetricsBean::extractWebsocketUserCount).strongReference(true)
                 .description("Number of users connected to this Artemis instance").register(meterRegistry);
 
         // Publish the health status for each HealthContributor
@@ -49,6 +51,14 @@ public class MetricsBean {
             }
 
         }
+    }
+
+    private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {
+        if (webSocketHandler instanceof SubProtocolWebSocketHandler) {
+            SubProtocolWebSocketHandler subProtocolWebSocketHandler = (SubProtocolWebSocketHandler) webSocketHandler;
+            return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
+        }
+        return -1;
     }
 
     /**

@@ -1,3 +1,6 @@
+import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/entities/exercise.model';
+
 export abstract class ExamSubmissionComponent {
     abstract hasUnsavedChanges(): boolean;
     abstract updateSubmissionFromView(): void;
@@ -6,4 +9,7 @@ export abstract class ExamSubmissionComponent {
      * is called when the component becomes active / visible
      */
     abstract onActivate(): void;
+
+    abstract getSubmission(): Submission | null;
+    abstract getExercise(): Exercise;
 }
