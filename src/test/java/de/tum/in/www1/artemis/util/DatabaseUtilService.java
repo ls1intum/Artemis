@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -670,6 +671,11 @@ public class DatabaseUtilService {
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.addRegisteredUser(user);
         examRepository.save(exam);
+        var studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        studentExamRepository.save(studentExam);
         return exam;
     }
 
@@ -1144,6 +1150,28 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
+        return course;
+    }
+
+    public Course addCourseWithModelingAndTextAndFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        modelingExercise.setTitle("Modeling");
+        course.addExercises(modelingExercise);
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setTitle("Text");
+        course.addExercises(textExercise);
+
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        fileUploadExercise.setTitle("FileUpload");
+        course.addExercises(fileUploadExercise);
+
+        course = courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
         return course;
     }
 

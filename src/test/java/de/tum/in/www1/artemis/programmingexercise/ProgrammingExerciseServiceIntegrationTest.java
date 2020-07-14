@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -152,14 +154,14 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "tutor1", roles = "TA")
     public void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -182,6 +184,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         doReturn(null).when(bambooServer).publish(any());
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(toBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
         bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTemplateRepositoryName(), templateRepoName);
         bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getSolutionRepositoryName(), solutionRepoName);
@@ -192,6 +195,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+        bambooRequestMockProvider.mockCheckIfProjectExists(toBeImported, false);
         bambooRequestMockProvider.mockGiveProjectPermissions(toBeImported);
         bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
         bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
@@ -200,7 +204,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + TEMPLATE.getName());
         bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + SOLUTION.getName());
 
-        request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
+        request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
         for (final var verifiable : verifications) {
             verifiable.performVerification();

@@ -29,6 +29,7 @@ import { Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -75,7 +76,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde;
     }
 
-    examConfirmed = false;
+    examStartConfirmed = false;
+    examEndConfirmed = false;
 
     /**
      * Websocket channels
@@ -112,24 +114,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * initializes courseId and course
+     * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
-            // TODO: the following approach is error prone. Instead get the exam from a service that has a reference
-            // if (!!window.history.state.exam) {
-            //     this.examTitle = window.history.state.exam?.title;
-            // }
+
             this.loadingExam = true;
-            this.examParticipationService.loadExam(this.courseId, this.examId).subscribe(
-                (exam) => {
-                    this.exam = exam;
-                    this.individualStudentEndDate = exam.endDate ? exam.endDate : this.serverDateService.now();
+            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                (studentExam) => {
+                    this.studentExam = studentExam;
+                    this.exam = studentExam.exam;
+                    this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
                     if (this.isOver()) {
-                        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-                            this.studentExam = studentExam;
+                        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExamWithExercises: StudentExam) => {
+                            this.studentExam = studentExamWithExercises;
                         });
                     }
                     this.loadingExam = false;
@@ -166,18 +166,35 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
-        return this.currentSubmissionComponents.find((submissionComponent, index) => index === this.activeExerciseIndex);
+        // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
+        const currentComponent = this.currentSubmissionComponents.find((submissionComponent) => submissionComponent.getExercise().id === this.activeExercise.id);
+        if (currentComponent) {
+            console.log(
+                'activeSubmissionComponent: Found component for ' +
+                    (this.activeExerciseIndex + 1) +
+                    '. exercise with id ' +
+                    this.activeExercise.id +
+                    ' with component.submission.id ' +
+                    currentComponent.getSubmission()?.id +
+                    ' in ' +
+                    this.currentSubmissionComponents.length +
+                    ' components',
+            );
+        } else {
+            console.log('activeSubmissionComponent: Component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
+        }
+        return currentComponent;
     }
 
     /**
-     * exam start text confirmed and name entered, start button clicked and exam avtive
+     * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
             // set endDate with workingTime
-            this.individualStudentEndDate = this.exam.startDate ? moment(this.exam.startDate).add(studentExam.workingTime, 'seconds') : this.individualStudentEndDate;
+            this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
@@ -189,14 +206,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (participation.submissions && participation.submissions.length > 0) {
                         participation.submissions.forEach((submission) => {
                             submission.isSynced = true;
+                            submission.submitted = false;
                         });
+                    } else if (exercise.type === ExerciseType.PROGRAMMING) {
+                        participation.submissions.push(new ProgrammingSubmission());
                     }
                 });
             });
             const initialExercise = this.studentExam.exercises[0];
             this.initializeExercise(initialExercise);
         }
-        this.examConfirmed = true;
+        this.examStartConfirmed = true;
         this.startAutoSaveTimer();
     }
 
@@ -206,11 +226,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @returns true if valid, false otherwise
      */
     private isExerciseParticipationValid(exercise: Exercise): boolean {
-        // check if there is at least one participation with state === Initialized
+        // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations &&
             exercise.studentParticipations.length !== 0 &&
-            exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED
+            (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED ||
+                exercise.studentParticipations[0].initializationState === InitializationState.FINISHED)
         );
     }
 
@@ -227,9 +248,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }, 1000);
     }
 
+    /**
+     * triggered after student accepted exam end terms, will make final call to update submission on server
+     */
+    onExamEndConfirmed() {
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
+    }
+
+    /**
+     * called when exam ended because the working time is over
+     */
     examEnded() {
-        this.triggerSave(true);
-        window.clearInterval(this.autoSaveInterval);
+        if (this.autoSaveInterval) {
+            window.clearInterval(this.autoSaveInterval);
+        }
+        // update local studentExam for later sync with server
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     /**
@@ -310,24 +347,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             if (programmingSubmissionObj.submission) {
                                 participation.submissions = [programmingSubmissionObj.submission];
                             }
-                            this.submissionComponentVisited[this.activeExerciseIndex] = true;
-                            if (this.activeSubmissionComponent) {
-                                this.activeSubmissionComponent.onActivate();
-                            }
+                            this.activateActiveComponent();
                         });
                     } else {
-                        this.submissionComponentVisited[this.activeExerciseIndex] = true;
-                        if (this.activeSubmissionComponent) {
-                            this.activeSubmissionComponent.onActivate();
-                        }
+                        this.activateActiveComponent();
                     }
                 }
             });
         } else {
-            this.submissionComponentVisited[this.activeExerciseIndex] = true;
-            if (this.activeSubmissionComponent) {
-                this.activeSubmissionComponent.onActivate();
-            }
+            this.activateActiveComponent();
+        }
+    }
+
+    private activateActiveComponent() {
+        this.submissionComponentVisited[this.activeExerciseIndex] = true;
+        console.log('submissionComponentVisited for ' + (this.activeExerciseIndex + 1) + '. exercise = true');
+        const activeComponent = this.activeSubmissionComponent;
+        if (activeComponent) {
+            console.log('activateActiveComponent: Found active component.submission.id: ' + activeComponent?.getSubmission()?.id);
+            activeComponent.onActivate();
+        } else {
+            console.log('activateActiveComponent: component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
         }
     }
 
@@ -373,12 +413,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if ((this.activeSubmissionComponent && force) || this.activeSubmissionComponent?.hasUnsavedChanges()) {
-            // this will lead to a save below, because isSynced will be set to false
-            this.activeSubmissionComponent.updateSubmissionFromView();
+        const activeComponent = this.activeSubmissionComponent;
+
+        if ((activeComponent && force) || activeComponent?.hasUnsavedChanges()) {
+            const activeSubmission = activeComponent?.getSubmission();
+            if (activeSubmission) {
+                // this will lead to a save below, because isSynced will be set to false
+                activeSubmission.isSynced = false;
+            }
+            activeComponent.updateSubmissionFromView();
         }
 
-        // goes through all exercises and checks if there are unsynched submissions
+        // goes through all exercises and checks if there are unsynced submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises.forEach((exercise: Exercise) => {
             exercise.studentParticipations.forEach((participation) => {
@@ -392,7 +438,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             });
         });
 
-        // if no connection available -> don't try to sync
+        // if no connection available -> don't try to sync, except it is forced
         if (force || !this.disconnected) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {

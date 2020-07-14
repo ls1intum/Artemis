@@ -16,6 +16,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -23,6 +25,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 })
 export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
+    course: Course;
     examId: number;
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
@@ -33,6 +36,7 @@ export class ExerciseGroupsComponent implements OnInit {
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
         private examManagementService: ExamManagementService,
+        private courseManagementService: CourseManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -53,7 +57,11 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     loadExerciseGroups() {
         this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
-            (res) => (this.exerciseGroups = res.body!.exerciseGroups),
+            (res) => {
+                this.exerciseGroups = res.body!.exerciseGroups;
+                this.course = res.body!.course;
+                this.courseManagementService.checkAndSetCourseRights(this.course);
+            },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }

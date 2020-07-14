@@ -15,7 +15,8 @@
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
             },
             "title": "Exam",
-            "startExam": "Start Exam",
+            "startExam": "Start",
+            "endExam": "Finish",
             "summary": "Summary",
             "visible": "Visible",
             "startDate": "Start Date",
@@ -28,11 +29,13 @@
             "created": "New exam created",
             "updated": "Exam updated",
             "exercise": "Exercise {{nr}}",
-            "consentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
+            "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
+            "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
+                "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
@@ -64,14 +67,16 @@
             "disconnectedNoCodeEditor": "You are disconnected. Please check your Internet connection.",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
             "timeUntilPlannedStart": "Time until planned start:",
-            "finishExam": "Finish exam",
+            "finishExam": "Finish",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to \"{{ title }}\"",
+            "greeting": "Hello {{ fullName }}, welcome to {{ title }}",
+            "finish": "Hello {{ fullName }}, this is the end of {{ title }}",
+            "submitFinalExam": "Please confirm the text below and click on 'Finish' within the time left to hand in your exam.<br />(Note: If you miss this step, your exam will not be graded)",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
@@ -230,5 +235,9 @@
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully."
         }
+    },
+    "studentExam": {
+        "alreadySubmitted": "You have already submitted.",
+        "submissionNotInTime": "You can only submit between start and end of the exam."
     }
 }

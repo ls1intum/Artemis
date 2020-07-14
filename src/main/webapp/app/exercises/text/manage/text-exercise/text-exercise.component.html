@@ -58,7 +58,7 @@
                     <td>{{ textExercise.maxScore }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-exercise-row-buttons>
+                        <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-text-exercise-row-buttons>
                     </td>
                 </tr>
             </tbody>

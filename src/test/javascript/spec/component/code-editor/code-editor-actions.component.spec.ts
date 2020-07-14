@@ -81,7 +81,7 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
-    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
+    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
     const enableRefreshButtonCombinations = cartesianProduct(
         [EditorState.CLEAN, EditorState.UNSAVED_CHANGES],
         [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED],
@@ -232,7 +232,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -272,13 +272,13 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const commitObservable = new Subject<null>();
         const saveObservable = new Subject<null>();
-        const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
+        const saveChangedFilesStub = stub(comp, 'saveChangedFilesWithTimeout');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
 
         comp.unsavedFiles = unsavedFiles;
-        comp.saveChangedFiles = saveChangedFilesStub;
+        comp.saveChangedFilesWithTimeout = saveChangedFilesStub;
         fixture.detectChanges();
 
         commitStub.returns(commitObservable);
@@ -302,6 +302,6 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 });

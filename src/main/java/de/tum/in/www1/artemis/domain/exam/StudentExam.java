@@ -26,6 +26,9 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "submitted")
+    private Boolean submitted;
+
     /**
      * The working time in seconds
      */
@@ -57,6 +60,14 @@ public class StudentExam implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Boolean isSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
     }
 
     public Integer getWorkingTime() {
