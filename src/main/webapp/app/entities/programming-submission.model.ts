@@ -17,6 +17,7 @@ export class ProgrammingSubmission extends Submission {
     static createInitialCleanSubmissionForExam(): ProgrammingSubmission {
         const submission = new ProgrammingSubmission();
         submission.isSynced = true;
+        submission.submitted = false;
         return submission;
     }
 }
