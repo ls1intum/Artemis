@@ -6,8 +6,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { filter } from 'rxjs/operators';
+import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { cloneDeep } from 'lodash';
 
 @Component({
@@ -41,29 +40,31 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.studentExam.exercises.forEach((exercise) => {
-            exercise.studentParticipations.forEach((studentParticipation) => {
-                this.programmingSubmissionService
-                    .getLatestPendingSubmissionByParticipationId(studentParticipation.id, exercise.id, true)
-                    .pipe(
-                        filter((submissionStateObj) => submissionStateObj !== null),
-                        distinctUntilChanged(),
-                    )
-                    .subscribe((programmingSubmissionObj) => {
-                        const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
-                            programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
-                        );
-                        // TODO: display if programming exercise is still building in summary
-                        // TODO: check if the correct participation is selected
-                        // TODO: participations might don't come in correct order ->
-                        if (exerciseForSubmission && this.getSubmissionForExercise(exerciseForSubmission)) {
-                            if (programmingSubmissionObj.submission) {
-                                exerciseForSubmission.studentParticipations[0].submissions[0] = cloneDeep(programmingSubmissionObj.submission);
+        this.studentExam.exercises
+            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING)
+            .forEach((exercise) => {
+                exercise.studentParticipations.forEach((studentParticipation) => {
+                    this.programmingSubmissionService
+                        .getLatestPendingSubmissionByParticipationId(studentParticipation.id, exercise.id, true)
+                        .pipe(
+                            filter((submissionStateObj) => submissionStateObj !== null),
+                            distinctUntilChanged(),
+                        )
+                        .subscribe((programmingSubmissionObj) => {
+                            const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
+                                programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                            );
+                            // TODO: display if programming exercise is still building in summary
+                            // TODO: check if the correct participation is selected
+                            // TODO: participations might don't come in correct order ->
+                            if (exerciseForSubmission && this.getSubmissionForExercise(exerciseForSubmission)) {
+                                if (programmingSubmissionObj.submission) {
+                                    exerciseForSubmission.studentParticipations[0].submissions[0] = cloneDeep(programmingSubmissionObj.submission);
+                                }
                             }
-                        }
-                    });
+                        });
+                });
             });
-        });
     }
 
     getIcon(exerciseType: ExerciseType) {
