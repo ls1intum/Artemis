@@ -220,36 +220,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // setup subscription for programming exercises
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        const programmingSubmissionSubscription = this.programmingSubmissionService
-                            .getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, false)
-                            .pipe(
-                                filter((submissionStateObj) => submissionStateObj !== null),
-                                distinctUntilChanged(),
-                            )
-                            .subscribe((programmingSubmissionObj) => {
-                                const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
-                                    programmingExercise.studentParticipations.some(
-                                        (exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId,
-                                    ),
-                                );
-                                // TODO: check if the correct participation is selected
-                                // TODO: participations might don't come in correct order ->
-                                if (
-                                    exerciseForSubmission &&
-                                    exerciseForSubmission.studentParticipations &&
-                                    exerciseForSubmission.studentParticipations.length > 0 &&
-                                    exerciseForSubmission.studentParticipations[0] &&
-                                    exerciseForSubmission.studentParticipations[0].submissions &&
-                                    exerciseForSubmission.studentParticipations[0].submissions.length > 0
-                                ) {
-                                    if (programmingSubmissionObj.submission) {
-                                        // delete backwards reference so that it is still serializable
-                                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
-                                        delete submissionCopy.participation;
-                                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
-                                    }
-                                }
-                            });
+                        const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
                         this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
                     }
                 });
@@ -402,15 +373,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 if (participation !== null) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        this.programmingSubmissionService.getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, true).subscribe((programmingSubmissionObj) => {
-                            if (programmingSubmissionObj.submission) {
-                                participation.submissions = [programmingSubmissionObj.submission];
-                            }
-                            this.activateActiveComponent();
-                        });
-                    } else {
-                        this.activateActiveComponent();
+                        const subscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        this.programmingSubmissionSubscriptions.push(subscription);
                     }
+                    this.activateActiveComponent();
                 }
             });
         } else {
@@ -546,5 +512,36 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
+    }
+
+    private createProgrammingExerciseSubmission(exerciseId: number, participationId: number): Subscription {
+        return this.programmingSubmissionService
+            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
+            .pipe(
+                filter((submissionStateObj) => submissionStateObj !== null),
+                distinctUntilChanged(),
+            )
+            .subscribe((programmingSubmissionObj) => {
+                const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
+                    programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                );
+                // TODO: check if the correct participation is selected
+                // TODO: participations might don't come in correct order ->
+                if (
+                    exerciseForSubmission &&
+                    exerciseForSubmission.studentParticipations &&
+                    exerciseForSubmission.studentParticipations.length > 0 &&
+                    exerciseForSubmission.studentParticipations[0] &&
+                    exerciseForSubmission.studentParticipations[0].submissions &&
+                    exerciseForSubmission.studentParticipations[0].submissions.length > 0
+                ) {
+                    if (programmingSubmissionObj.submission) {
+                        // delete backwards reference so that it is still serializable
+                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        delete submissionCopy.participation;
+                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                    }
+                }
+            });
     }
 }
