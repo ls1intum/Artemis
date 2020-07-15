@@ -79,7 +79,7 @@
     </div>
 
     <div class="table-responsive">
-        <div *ngIf="!isExamMode" class="guided-tour-form-check form-check col-6 align-baseline">
+        <div class="guided-tour-form-check form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
