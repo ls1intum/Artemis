@@ -72,7 +72,10 @@ export class ComplaintInteractionsComponent implements OnInit {
     }
 
     /**
-     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * This function is used to check whether the student is allowed to submit a complaint or not.
+     * For exams, submitting a complaint is allowed within the Student Review Period, see {@link isWithinStudentReviewPeriod}.
+     *
+     * For normal course exercises, submitting a complaint is allowed within one week after the student received the
      * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */

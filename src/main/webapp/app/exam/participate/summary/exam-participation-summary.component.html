@@ -64,7 +64,7 @@
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
-                    *ngIf="getSubmissionForExercise(exercise)"
+                    *ngIf="getSubmissionForExercise(exercise) && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd"
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"

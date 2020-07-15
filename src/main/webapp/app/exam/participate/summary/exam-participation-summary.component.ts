@@ -90,6 +90,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
     }
 
+    /**
+     * A guard function used for the ComplaintInteractionsComponent to indicate whether complaint submissions are valid.
+     * These are only allowed if they are submitted within the student review period.
+     */
     isWithinStudentReviewPeriod(): boolean {
         if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
             const present = moment();
