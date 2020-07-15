@@ -288,10 +288,11 @@ public class SubmissionService {
      * @return boolean
      */
     public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        Exam exam = exercise.getExerciseGroup().getExam();
+
+        final boolean isExamMode = exercise.hasExerciseGroup();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exam);
+        if (isExamMode) {
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 return false;
             }

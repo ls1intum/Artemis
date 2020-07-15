@@ -122,7 +122,7 @@ public class AssessmentService {
      * @return true of the the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
+
         final boolean isExamMode = exercise.hasExerciseGroup();
         ZonedDateTime assessmentDueDate;
 
@@ -144,8 +144,10 @@ public class AssessmentService {
                     return false;
                 }
             }
-            return isAllowedToBeAssessor || isAtLeastInstructor;
+            return isAtLeastInstructor;
         }
+
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
 
         // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
         if (existingResult.getCompletionDate() == null) {
