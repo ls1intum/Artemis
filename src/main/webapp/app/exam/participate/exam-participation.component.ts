@@ -541,24 +541,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     exerciseForSubmission.studentParticipations[0].submissions.length > 0
                 ) {
                     if (programmingSubmissionObj.submission) {
-                        // if the local submission has no submissionDate -> take submission from websocket
-                        // if the local submission has a submissionDate before the submission.submissionDate from the websocket -> take submission from websocket
-                        // else keep local submission
-                        if (
-                            !exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate ||
-                            (exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate &&
-                                programmingSubmissionObj.submission.submissionDate &&
-                                moment(programmingSubmissionObj.submission.submissionDate).isAfter(
-                                    moment(exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate),
-                                ))
-                        ) {
-                            // delete backwards reference so that it is still serializable
-                            const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
-                            submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
-                            submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
-                            delete submissionCopy.participation;
-                            exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
-                        }
+                        // delete backwards reference so that it is still serializable
+                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
+                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
+                        delete submissionCopy.participation;
+                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
                     }
                 }
             });
