@@ -12,7 +12,8 @@
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
                 "noCommitHash": "Reload to get the commit hash.",
-                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
+                "viewResult": " View Result"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -86,7 +87,11 @@
             "submitted": "Exercise submitted",
             "notSubmitted": "Exercise not submitted",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
-            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?"
+            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
+            "handInEarly": "Hand in early",
+            "continueAfterHandInEarly": "Continue",
+            "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
+            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer."
         },
         "exerciseGroup": {
             "created": "New exercise group created",

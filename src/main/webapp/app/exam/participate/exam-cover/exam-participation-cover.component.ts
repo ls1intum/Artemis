@@ -26,8 +26,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() handInEarly = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
+    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
     course: Course | null;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -176,6 +178,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //     }
         // });
         this.onExamEnded.emit();
+    }
+
+    /**
+     * Notify the parent component that the user wants to continue after hand in early
+     */
+    continueAfterHandInEarly() {
+        this.onExamContinueAfterHandInEarly.emit();
     }
 
     get startButtonEnabled(): boolean {
