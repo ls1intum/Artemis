@@ -17,6 +17,9 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() result: Result;
     @Input() course: Course | null = null;
 
+    // Refers to the student review period of an exam.
+    @Input() isWithinStudentReviewPeriod: boolean;
+
     showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
     hasComplaint = false;
@@ -74,7 +77,9 @@ export class ComplaintInteractionsComponent implements OnInit {
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     get isTimeOfComplaintValid(): boolean {
-        if (this.result && this.result.completionDate) {
+        if (this.isWithinStudentReviewPeriod != null) {
+            return this.isWithinStudentReviewPeriod && !!this.result.completionDate;
+        } else if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
             if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
                 return resultCompletionDate.isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
