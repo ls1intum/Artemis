@@ -55,13 +55,16 @@
                 <ng-container *ngIf="exercise.type === QUIZ">
                     <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)" [resultsPublished]="resultsPublished"></jhi-quiz-exam-summary>
                 </ng-container>
-                <!-- Programming Exercise -->
-                <ng-container *ngIf="exercise.type === PROGRAMMING">
-                    <jhi-programming-exam-summary [exercise]="exercise" [participation]="getParticipationForExercise(exercise)"></jhi-programming-exam-summary>
-                </ng-container>
                 <!-- File Upload Exercise -->
                 <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+                </ng-container>
+            </ng-container>
+            <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
+            <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise)">
+                <!-- Programming Exercise -->
+                <ng-container *ngIf="exercise.type === PROGRAMMING">
+                    <jhi-programming-exam-summary [exercise]="exercise" [participation]="getParticipationForExercise(exercise)"></jhi-programming-exam-summary>
                 </ng-container>
             </ng-container>
             <ng-template #noSubmission>
