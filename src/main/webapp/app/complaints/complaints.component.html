@@ -19,7 +19,8 @@
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
-                    <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
+                    <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+                    <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
                 </p>
             </ng-template>
         </div>

@@ -119,4 +119,16 @@ export class ComplaintInteractionsComponent implements OnInit {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
+
+    /**
+     * Calculates the maximum number of complaints allowed for the exercise.
+     * In case of exams, it returns an arbitrary number > 0, as we do not limit the number of complaints for exams
+     */
+    calculateMaxComplaints() {
+        if (this.course) {
+            return this.exercise.teamMode ? this.course.maxTeamComplaints : this.course.maxComplaints;
+        } else {
+            return 1;
+        }
+    }
 }

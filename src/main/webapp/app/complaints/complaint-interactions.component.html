@@ -1,4 +1,4 @@
-<div *ngIf="course?.complaintsEnabled">
+<div *ngIf="examId || course?.complaintsEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
@@ -28,7 +28,7 @@
             [resultId]="result?.id"
             [examId]="examId"
             [allowedComplaints]="numberOfAllowedComplaints"
-            [maxComplaintsPerCourse]="exercise.teamMode ? course!.maxTeamComplaints : course!.maxComplaints"
+            [maxComplaintsPerCourse]="calculateMaxComplaints()"
             [complaintType]="ComplaintType.COMPLAINT"
             (submit)="hasComplaint = true"
         ></jhi-complaint-form>
