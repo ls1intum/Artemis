@@ -183,7 +183,7 @@ public class StudentExamService {
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
-        return ResponseEntity.ok().build();
+        return ok();
     }
 
     /**
