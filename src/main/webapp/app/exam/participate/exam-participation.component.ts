@@ -544,7 +544,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             !exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate ||
                             (exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate &&
                                 programmingSubmissionObj.submission.submissionDate &&
-                                programmingSubmissionObj.submission.submissionDate.isAfter(exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate))
+                                moment(programmingSubmissionObj.submission.submissionDate).isAfter(
+                                    moment(exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate),
+                                ))
                         ) {
                             // delete backwards reference so that it is still serializable
                             const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
