@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
@@ -10,10 +11,20 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 
 @NgModule({
-    imports: [ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisQuizQuestionTypesModule, ArtemisModelingEditorModule, ArtemisFullscreenModule, ArtemisComplaintsModule],
+    imports: [
+        RouterModule,
+        ArtemisSharedCommonModule,
+        ArtemisSharedModule,
+        ArtemisQuizQuestionTypesModule,
+        ArtemisModelingEditorModule,
+        ArtemisFullscreenModule,
+        ArtemisResultModule,
+        ArtemisCoursesModule,
+    ],
     declarations: [
         ExamParticipationSummaryComponent,
         ProgrammingExamSummaryComponent,

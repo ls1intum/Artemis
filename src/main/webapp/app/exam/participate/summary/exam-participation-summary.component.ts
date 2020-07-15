@@ -1,16 +1,17 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { getIcon } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import * as moment from 'moment';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-participation-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
 })
-export class ExamParticipationSummaryComponent {
+export class ExamParticipationSummaryComponent implements OnInit {
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -24,12 +25,26 @@ export class ExamParticipationSummaryComponent {
     @Input()
     instructorView = false;
 
-    collapsedSubmissionIds: number[] = [];
+    collapsedExerciseIds: number[] = [];
 
-    constructor() {}
+    courseId: number;
+
+    constructor(private route: ActivatedRoute) {}
+
+    /**
+     * Initialise the courseId from the current url
+     */
+    ngOnInit(): void {
+        // courseId is not part of the exam or the exercise
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+    }
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
+    }
+
+    get resultsPublished() {
+        return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
     /**
@@ -37,13 +52,17 @@ export class ExamParticipationSummaryComponent {
      */
     printPDF() {
         // expand all exercises before printing
-        this.collapsedSubmissionIds = [];
+        this.collapsedExerciseIds = [];
         setTimeout(() => window.print());
+    }
+
+    public generateLink(exercise: Exercise) {
+        return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
     }
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise): Submission | null {
         if (
@@ -61,38 +80,35 @@ export class ExamParticipationSummaryComponent {
 
     /**
      * @param exercise
-     * returns the students submission for the specific exercise
+     * returns the students submission for the exercise, null if no participation could be found
      */
-    getParticipationForProgrammingExercise(exercise: Exercise): Participation {
-        return exercise.studentParticipations[0];
-    }
-
-    /**
-     * checks collapse control of exercise cards depending on submissionId
-     */
-    isCollapsed(exercise: Exercise): boolean {
-        const submission = this.getSubmissionForExercise(exercise);
-        if (submission && submission.id) {
-            const submissionId = submission.id;
-            return this.collapsedSubmissionIds.includes(submissionId);
+    getParticipationForExercise(exercise: Exercise): Participation | null {
+        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
+            return exercise.studentParticipations[0];
+        } else {
+            return null;
         }
-        return false;
     }
 
     /**
-     * adds collapse control of exercise cards depending on submissionId
-     * @param exercise the exercise for which the submission should be collapsed
+     * @param exerciseId
+     * checks collapse control of exercise cards depending on exerciseId
      */
-    toggleCollapseSubmission(exercise: Exercise): void {
-        const submission = this.getSubmissionForExercise(exercise);
-        if (submission && submission.id) {
-            const submissionId = submission.id;
-            const collapsed = this.isCollapsed(exercise);
-            if (collapsed) {
-                this.collapsedSubmissionIds = this.collapsedSubmissionIds.filter((id) => id !== submissionId);
-            } else {
-                this.collapsedSubmissionIds.push(submissionId);
-            }
+    isCollapsed(exerciseId: number): boolean {
+        return this.collapsedExerciseIds.includes(exerciseId);
+    }
+
+    /**
+     * @param exerciseId
+     * adds collapse control of exercise cards depending on exerciseId
+     * @param exerciseId the exercise for which the submission should be collapsed
+     */
+    toggleCollapseExercise(exerciseId: number): void {
+        const collapsed = this.isCollapsed(exerciseId);
+        if (collapsed) {
+            this.collapsedExerciseIds = this.collapsedExerciseIds.filter((id) => id !== exerciseId);
+        } else {
+            this.collapsedExerciseIds.push(exerciseId);
         }
     }
 }

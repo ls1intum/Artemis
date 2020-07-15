@@ -8,15 +8,20 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { TaskArray, TaskArrayWithParticipation } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     public exerciseHints: ExerciseHint[] = [];
     private latestResult: Result | null = null;
+    private participation: Participation;
 
-    private testsForTaskSubject = new Subject<TaskArray>();
+    private testsForTaskSubject = new Subject<TaskArrayWithParticipation>();
     private injectableElementsFoundSubject = new Subject<() => void>();
+
+    // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
+    private taskIndex = 0;
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
@@ -31,6 +36,15 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      */
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
+    }
+
+    /**
+     * Sets the participation. This is needed as multiple instructions components reuse this service and we have to
+     * associate tasks with a participation.
+     * @param participation - participation.
+     */
+    public setParticipation(participation: Participation) {
+        this.participation = participation;
     }
 
     /**
@@ -52,13 +66,13 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ taskName, tests, hints }, index: number) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${index}`);
+        tasks.forEach(({ id, taskName, tests, hints }) => {
+            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-                componentRef.instance.exerciseHints = this.exerciseHints.filter(({ id }) => hints.includes(id.toString(10)));
+                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
@@ -94,20 +108,29 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
                     .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
+                        const nextIndex = this.taskIndex;
+                        this.taskIndex++;
                         return {
+                            id: nextIndex,
                             completeString: testMatch[0],
                             taskName: testMatch[1],
                             tests: testMatch[2].split(',').map((s) => s.trim()),
                             hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });
-                this.testsForTaskSubject.next(testsForTask);
+                const tasksWithParticipationId: TaskArrayWithParticipation = {
+                    participationId: this.participation.id,
+                    tasks: testsForTask,
+                };
+                this.testsForTaskSubject.next(tasksWithParticipationId);
                 // Emit new found elements that need to be injected into html after it is rendered.
-                this.injectableElementsFoundSubject.next(() => this.injectTasks(testsForTask));
+                this.injectableElementsFoundSubject.next(() => {
+                    this.injectTasks(testsForTask);
+                });
                 return testsForTask.reduce(
-                    (acc: string, { completeString: task }, index: number): string =>
+                    (acc: string, { completeString: task, id }): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
+                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, id.toString())),
                     text,
                 );
             },

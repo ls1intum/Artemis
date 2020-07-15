@@ -34,6 +34,20 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     }
 
     /**
+     * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
+     */
+    get resultsPublished(): boolean {
+        if (!!this.exercise.exerciseGroup && !!this.exercise.exerciseGroup.exam) {
+            if (this.exercise.exerciseGroup.exam.publishResultsDate) {
+                return moment().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
+            }
+            // default to false if it is an exam exercise but the publishResultsDate is not set
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Sets the status badge and categories of the exercise on changes
      */
     ngOnChanges(): void {

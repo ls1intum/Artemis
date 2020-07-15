@@ -296,6 +296,11 @@ public class ExamService {
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        // TODO: the validation checks should happen in the resource, before this method is even being called!
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
+        }
+
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
@@ -410,6 +415,7 @@ public class ExamService {
             studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
             studentExam.setUser(user);
+            studentExam.setSubmitted(false);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);

@@ -65,7 +65,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doReturn(null).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
-        database.addUsers(1, 1, 0);
+        database.addUsers(1, 1, 1);
 
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
@@ -113,10 +113,10 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "TA")
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
-        request.get("/api/lti/configuration/" + programmingExercise.getId() + 1, HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+        request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
     }
 
     @Test

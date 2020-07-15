@@ -72,27 +72,18 @@ export class ExamUpdateComponent implements OnInit {
         this.jhiAlertService.error(error.message);
     }
 
-    get isValidPublishResultsDate() {
-        return this.exam.publishResultsDate;
+    get isValidVisibleDate(): boolean {
+        // note: != includes a check for undefined
+        return this.exam.visibleDate != null;
     }
 
-    get isValidExamStudentReviewStart() {
-        return this.exam.examStudentReviewStart;
+    get isValidStartDate(): boolean {
+        // note: != includes a check for undefined
+        return this.exam.startDate != null && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
     }
 
-    get isValidExamStudentReviewEnd() {
-        return this.exam.examStudentReviewEnd;
-    }
-
-    get isValidVisibleDate() {
-        return this.exam.visibleDate && moment(this.exam.visibleDate).isAfter(moment());
-    }
-
-    get isValidStartDate() {
-        return this.isValidVisibleDate && this.exam.startDate && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
-    }
-
-    get isValidEndDate() {
-        return this.isValidStartDate && this.exam.endDate && moment(this.exam.endDate).isAfter(this.exam.startDate);
+    get isValidEndDate(): boolean {
+        // note: != includes a check for undefined
+        return this.exam.endDate != null && moment(this.exam.endDate).isAfter(this.exam.startDate);
     }
 }

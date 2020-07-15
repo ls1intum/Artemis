@@ -352,6 +352,20 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
+    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
+            String[] expectedResponseHeaders) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders).with(csrf())).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+
+        if (expectedResponseHeaders != null) {
+            for (String header : expectedResponseHeaders) {
+                assertThat(res.getResponse().containsHeader(header));
+            }
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }

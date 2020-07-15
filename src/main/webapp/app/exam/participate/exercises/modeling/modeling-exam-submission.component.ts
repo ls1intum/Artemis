@@ -4,8 +4,9 @@ import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -30,7 +31,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.updateViewFromSubmission();
     }
 
-    onActivate(): void {}
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    onActivate(): void {
+        console.log('ModelingExamSubmissionComponent.onActivate() for exercise ' + this.exercise.id);
+    }
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {
@@ -50,28 +61,14 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         const diagramJson = JSON.stringify(currentApollonModel);
         if (this.studentSubmission && diagramJson) {
             this.studentSubmission.model = diagramJson;
-            this.studentSubmission.isSynced = false;
         }
     }
 
     /**
-     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the subission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
-        // TODO: we should have a callback by Apollon. Whenever a student changes anything in the model, this will immediately set
-        // this.studentSubmission.isSynced = false, then we can simply write here: return !this.studentSubmission.isSynced!;
-        if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
-            return false;
-        }
-        const currentApollonModel = this.modelingEditor.getCurrentModel();
-
-        if (this.studentSubmission && this.studentSubmission.model) {
-            const currentSubmissionModel = JSON.parse(this.studentSubmission.model);
-            const versionMatch = currentSubmissionModel.version === currentApollonModel.version;
-            const modelMatch = stringifyIgnoringFields(currentSubmissionModel, 'size') === stringifyIgnoringFields(currentApollonModel, 'size');
-            return versionMatch && !modelMatch;
-        }
-        return false;
+        return !this.studentSubmission.isSynced!;
     }
 
     /**
@@ -79,5 +76,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      */
     get isActive(): boolean {
         return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    modelChanged(model: UMLModel) {
+        this.studentSubmission.isSynced = false;
     }
 }

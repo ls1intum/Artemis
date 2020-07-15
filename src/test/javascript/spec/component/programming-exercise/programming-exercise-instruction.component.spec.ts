@@ -288,10 +288,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+        const participation = { id: 42 } as Participation;
 
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
+        comp.participation = participation;
         comp.latestResult = result;
         // @ts-ignore
         comp.setupMarkdownSubscriptions();
@@ -300,12 +302,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
@@ -336,10 +340,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
-
+        const participation = { id: 42 } as Participation;
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
+        comp.participation = participation;
         comp.latestResult = result;
         // @ts-ignore
         comp.setupMarkdownSubscriptions();
@@ -348,12 +353,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
