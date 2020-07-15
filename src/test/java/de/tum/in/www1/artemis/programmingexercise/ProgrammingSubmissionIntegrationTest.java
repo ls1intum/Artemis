@@ -300,6 +300,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_asTutorWithOneAvailable_returnsSubmission() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
@@ -311,13 +312,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessment_dueDateNotPassedYet_notFound() throws Exception {
+    public void getProgrammingSubmissionWithoutAssessment_dueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
