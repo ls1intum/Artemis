@@ -20,6 +20,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
+    @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
 
@@ -48,6 +49,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     triggerExamAboutToEnd() {
+        this.saveExercise();
         this.examAboutToEnd.emit();
     }
 
@@ -128,6 +130,14 @@ export class ExamNavigationBarComponent implements OnInit {
             // Until then show, that the exercise is synced
             return 'synced';
         }
+    }
+
+    /**
+     * Notify parent component when user wants to hand in early
+     */
+    handInEarly() {
+        this.saveExercise();
+        this.onExamHandInEarly.emit();
     }
 
     // TODO: find usages of similar logic -> put into utils method

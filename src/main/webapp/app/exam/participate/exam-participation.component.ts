@@ -64,6 +64,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     unsavedChanges = false;
     disconnected = false;
 
+    handInEarly = false;
+
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
@@ -268,7 +270,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             window.clearInterval(this.autoSaveInterval);
         }
         // update local studentExam for later sync with server
-        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.updateLocalStudentExam();
+    }
+
+    /**
+     * Called when a user wants to hand in early or decides to continue.
+     */
+    toggleHandInEarly() {
+        this.handInEarly = !this.handInEarly;
+        if (this.handInEarly) {
+            // update local studentExam for later sync with server if the student wants to hand in early
+            this.updateLocalStudentExam();
+        }
     }
 
     /**
@@ -277,6 +290,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     isOver(): boolean {
         if (this.studentExam && this.studentExam.ended) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
+            return true;
+        }
+        if (this.handInEarly || this.studentExam?.submitted) {
+            // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }
         return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
@@ -474,6 +491,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // overwrite studentExam in localStorage
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+    }
+
+    private updateLocalStudentExam() {
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
