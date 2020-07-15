@@ -538,7 +538,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
                         const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
-                        submissionCopy.isSynced = true;
+                        submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
+                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
                         delete submissionCopy.participation;
                         exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
                     }
