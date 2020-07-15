@@ -64,11 +64,11 @@ export class FileUploaderService {
             return Promise.reject(
                 new Error(
                     'Unsupported file type! Only files of type ' +
-                    this.acceptedFileExtensions
-                        .split(',')
-                        .map((extension) => `".${extension}"`)
-                        .join(', ') +
-                    ' allowed.',
+                        this.acceptedFileExtensions
+                            .split(',')
+                            .map((extension) => `".${extension}"`)
+                            .join(', ') +
+                        ' allowed.',
                 ),
             );
         }
