@@ -146,6 +146,7 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "gracePeriod": "Karenzzeit (Sekunden)",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",

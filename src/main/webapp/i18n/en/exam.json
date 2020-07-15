@@ -146,6 +146,7 @@
             "startDate": "Start of working time",
             "endDate": "End of working time",
             "publishResultsDate": "Release Date of Results",
+            "gracePeriod": "Grace period (seconds)",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "maxPoints": "Maximum number of points in exam",
