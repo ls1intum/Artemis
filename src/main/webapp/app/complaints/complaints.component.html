@@ -7,15 +7,15 @@
                 {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | translate }}
                 <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
             </p>
-            <ng-template #complaintDescription *ngIf="!examId">
+            <ng-template #complaintDescription>
                 <p>
                     <span
-                        *ngIf="allowedComplaints === undefined"
+                        *ngIf="!examId && allowedComplaints === undefined"
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                     ></span>
                     <span
-                        *ngIf="allowedComplaints >= 0"
+                        *ngIf="!examId && allowedComplaints >= 0"
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
