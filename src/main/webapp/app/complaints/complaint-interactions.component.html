@@ -2,10 +2,11 @@
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
-            [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
+            [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             (click)="toggleComplaintForm()"
-            [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
-            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            [disabled]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
+            e
+            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
             {{ 'artemisApp.complaint.moreInfo' | translate }}
         </button>
@@ -25,6 +26,7 @@
             class="flex-grow-1"
             [exercise]="exercise"
             [resultId]="result?.id"
+            [examId]="examId"
             [allowedComplaints]="numberOfAllowedComplaints"
             [maxComplaintsPerCourse]="exercise.teamMode ? course!.maxTeamComplaints : course!.maxComplaints"
             [complaintType]="ComplaintType.COMPLAINT"

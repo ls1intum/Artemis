@@ -64,12 +64,12 @@
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
-                    *ngIf="getSubmissionForExercise(exercise) && exercise.type != QUIZ && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd"
+                    *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd"
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"
-                    [course]="studentExam.exam.course"
                     [isWithinStudentReviewPeriod]="isWithinStudentReviewPeriod()"
+                    [examId]="studentExam.exam.id"
                 >
                 </jhi-complaint-interactions>
             </ng-container>

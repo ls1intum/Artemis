@@ -7,7 +7,7 @@
                 {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | translate }}
                 <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
             </p>
-            <ng-template #complaintDescription>
+            <ng-template #complaintDescription *ngIf="!examId">
                 <p>
                     <span
                         *ngIf="allowedComplaints === undefined"
