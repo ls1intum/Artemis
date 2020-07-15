@@ -63,7 +63,14 @@
                 <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                 </ng-container>
-                <jhi-complaint-interactions class="mb-2 mt-2 ml-3" [exercise]="exercise" [participation]="getParticipationForExercise(exercise)" [course]="studentExam.exam.course">
+                <jhi-complaint-interactions
+                    *ngIf="getSubmissionForExercise(exercise)"
+                    class="mb-2 mt-2 ml-3"
+                    [exercise]="exercise"
+                    [participation]="getParticipationForExercise(exercise)"
+                    [course]="studentExam.exam.course"
+                    [isWithinStudentReviewPeriod]="isWithinStudentReviewPeriod()"
+                >
                 </jhi-complaint-interactions>
             </ng-container>
             <ng-template #noSubmission>

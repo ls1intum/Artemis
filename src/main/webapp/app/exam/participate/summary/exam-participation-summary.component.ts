@@ -90,6 +90,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
     }
 
+    isWithinStudentReviewPeriod(): boolean {
+        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+            const present = moment();
+            return this.studentExam.exam.examStudentReviewStart.isBefore(present) && this.studentExam.exam.examStudentReviewEnd.isAfter(present);
+        }
+        return false;
+    }
+
     /**
      * @param exerciseId
      * checks collapse control of exercise cards depending on exerciseId
