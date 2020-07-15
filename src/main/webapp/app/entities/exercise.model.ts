@@ -1,5 +1,4 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -147,18 +146,4 @@ export function getCourseId(exercise: Exercise): number | undefined {
         return exercise.course.id;
     }
     return exercise.exerciseGroup?.exam?.course.id;
-}
-
-/**
- * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
- */
-export function examResultsPublished(exercise: Exercise): boolean {
-    if (!!exercise.exerciseGroup && !!exercise.exerciseGroup.exam) {
-        if (exercise.exerciseGroup.exam.publishResultsDate) {
-            return moment().isAfter(exercise.exerciseGroup.exam.publishResultsDate);
-        }
-        // default to false if it is an exam exercise but the publishResultsDate is not set
-        return false;
-    }
-    return true;
 }

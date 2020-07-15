@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
 import * as moment from 'moment';
-import { examResultsPublished, Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -33,8 +33,18 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
-    get examResultsPublished() {
-        return examResultsPublished(this.exercise);
+    /**
+     * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
+     */
+    get resultsPublished(): boolean {
+        if (!!this.exercise.exerciseGroup && !!this.exercise.exerciseGroup.exam) {
+            if (this.exercise.exerciseGroup.exam.publishResultsDate) {
+                return moment().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
+            }
+            // default to false if it is an exam exercise but the publishResultsDate is not set
+            return false;
+        }
+        return true;
     }
 
     /**
