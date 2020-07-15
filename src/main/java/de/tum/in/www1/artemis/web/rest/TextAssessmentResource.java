@@ -181,7 +181,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
-        StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+        studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             // TODO: we should send a result object here that includes the feedback (this might already be the case)
             messagingService.broadcastNewResult(studentParticipation, result);
