@@ -283,12 +283,10 @@ public class SubmissionService {
 
     /**
      * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
-     * We can then ensure
-     * @param exercise
+     * @param exercise course exercise or exam exercise that is checked
      * @return boolean
      */
     public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-
         final boolean isExamMode = exercise.hasExerciseGroup();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {

@@ -867,6 +867,10 @@ public abstract class Exercise implements Serializable {
         this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
     }
 
+    /**
+     * Checks whether the exercise is released
+     * @return boolean
+     */
     public boolean isReleased() {
         // Exam
         ZonedDateTime releaseDate;
