@@ -91,7 +91,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.exams.forEach((exam) => {
                     this.examManagementService
                         .getLatestIndividualEndDateOfExam(this.course.id, exam.id)
-                        .subscribe((res: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id, res.body!));
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id, examInformationDTORes.body!));
                 });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
