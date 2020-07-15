@@ -64,7 +64,11 @@
             <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise)">
                 <!-- Programming Exercise -->
                 <ng-container *ngIf="exercise.type === PROGRAMMING">
-                    <jhi-programming-exam-summary [exercise]="exercise" [participation]="getParticipationForExercise(exercise)"></jhi-programming-exam-summary>
+                    <jhi-programming-exam-summary
+                        [exercise]="exercise"
+                        [participation]="getParticipationForExercise(exercise)"
+                        [submission]="getSubmissionForExercise(exercise)"
+                    ></jhi-programming-exam-summary>
                 </ng-container>
             </ng-container>
             <ng-template #noSubmission>
