@@ -112,6 +112,7 @@ public class ResultResource {
     public ResponseEntity<Result> createProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result newResult) throws URISyntaxException {
         log.debug("REST request to create a new result : {}", newResult);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         final var latestExistingResult = participation.findLatestResult();
         if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
             // prevent that tutors create multiple manual results
@@ -127,6 +128,11 @@ public class ResultResource {
         }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
+        }
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, participation, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         if (newResult.getId() != null) {
