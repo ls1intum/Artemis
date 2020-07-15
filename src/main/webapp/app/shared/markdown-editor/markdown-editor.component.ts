@@ -449,7 +449,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;
             } else {
-                this.fileUploaderService.uploadFile(file).then(
+                this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
                         const textToAdd = `![${file.name}](${res.path})\n`;
                         aceEditor.insert(textToAdd);
