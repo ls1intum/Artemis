@@ -203,4 +203,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
     }
+
+    private endTime() {
+        if (this.studentExam && this.studentExam.workingTime) {
+            return this.exam.startDate?.add(this.studentExam.workingTime, 'seconds');
+        }
+        return this.exam.endDate;
+    }
 }
