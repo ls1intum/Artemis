@@ -28,6 +28,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { cloneDeep } from 'lodash';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -213,6 +214,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
                         // TODO: this could be removed after the latest submission for programming exercises if fetched through websockets and passed to the exam participation
+                        // TODO: check if we have already a submission from server
                         participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                     }
 
@@ -231,6 +233,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     ),
                                 );
                                 // TODO: check if the correct participation is selected
+                                // TODO: participations might don't come in correct order ->
                                 if (
                                     exerciseForSubmission &&
                                     exerciseForSubmission.studentParticipations &&
@@ -241,8 +244,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 ) {
                                     if (programmingSubmissionObj.submission) {
                                         // delete backwards reference so that it is still serializable
-                                        delete programmingSubmissionObj.submission.participation;
-                                        exerciseForSubmission.studentParticipations[0].submissions[0] = programmingSubmissionObj.submission;
+                                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                                        delete submissionCopy.participation;
+                                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
                                     }
                                 }
                             });
