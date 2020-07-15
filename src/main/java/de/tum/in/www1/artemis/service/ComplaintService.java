@@ -49,10 +49,12 @@ public class ComplaintService {
     }
 
     /**
-     * Create a new complaint checking the user has still enough complaint to create
+     * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
+     * whether the user still enough complaints left.
      *
      * @param complaint the complaint to create
      * @param principal the current Principal
+     * @param examId the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
     @Transactional
