@@ -153,7 +153,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 

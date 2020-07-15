@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -288,10 +287,11 @@ public class SubmissionService {
      * @return boolean
      */
     public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        Exam exam = exercise.getExerciseGroup().getExam();
+
+        final boolean isExamMode = exercise.hasExerciseGroup();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exam);
+        if (isExamMode) {
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 return false;
             }

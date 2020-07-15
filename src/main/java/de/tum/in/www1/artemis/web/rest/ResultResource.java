@@ -192,7 +192,7 @@ public class ResultResource {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, participation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
