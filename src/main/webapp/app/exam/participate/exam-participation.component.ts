@@ -213,9 +213,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
-                        // TODO: this could be removed after the latest submission for programming exercises if fetched through websockets and passed to the exam participation
-                        // TODO: check if we have already a submission from server
-                        participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        if (participation.submissions && participation.submissions.length === 0) {
+                            participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        }
                     }
 
                     // setup subscription for programming exercises
