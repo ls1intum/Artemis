@@ -405,14 +405,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
             map((createdParticipation: StudentParticipation) => {
-                // if the same participations is not yet present in the exercise -> add it
-                if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
-                    // remove because of circular dependency when converting to JSON
-                    delete createdParticipation.exercise;
-                    exercise.studentParticipations = [createdParticipation];
-                    if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
-                        createdParticipation.submissions[0].isSynced = true;
-                    }
+                // remove because of circular dependency when converting to JSON
+                delete createdParticipation.exercise;
+                exercise.studentParticipations = [createdParticipation];
+                if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
+                    createdParticipation.submissions[0].isSynced = true;
                 }
                 this.generateParticipationStatus.next('success');
                 return createdParticipation;
