@@ -106,27 +106,6 @@ public abstract class AssessmentResource {
         return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
-    /**
-     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
-     * or if an instructor overrides it.
-     *
-     * If the result does not yet exist or is not yet submitted, this method returns true
-     *
-     * @param resultId the id of a potentially existing result in case the result is updated (submitted or overridden)
-     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
-     * @param user the user who initiates a request
-     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
-     * @return true of the the given user can override a potentially existing result
-     */
-    protected boolean isAllowedToOverrideExistingResult(long resultId, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var existingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId);
-        if (existingResult.isEmpty()) {
-            // if there is no result yet, we can always save, submit and potentially "override"
-            return true;
-        }
-        return assessmentService.isAllowedToOverrideExistingResult(existingResult.get(), exercise, user, isAtLeastInstructor);
-    }
-
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResult(submissionId);
