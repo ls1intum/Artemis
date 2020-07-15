@@ -121,7 +121,7 @@ public class AssessmentService {
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @return true of the the given user can override a potentially existing result
      */
-    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
 
         final boolean isExamMode = exercise.hasExerciseGroup();
         ZonedDateTime assessmentDueDate;
@@ -134,6 +134,8 @@ public class AssessmentService {
             assessmentDueDate = exercise.getAssessmentDueDate();
         }
 
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, participation, user);
+
         // check if no result is available (first assessment)
         if (existingResult == null) {
             // tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
@@ -144,10 +146,8 @@ public class AssessmentService {
                     return false;
                 }
             }
-            return isAtLeastInstructor;
+            return isAllowedToBeAssessor || isAtLeastInstructor;
         }
-
-        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
 
         // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
         if (existingResult.getCompletionDate() == null) {
@@ -193,14 +193,17 @@ public class AssessmentService {
      * @param user User for whom to check if they can be the assessor of the given result
      * @return true if the user is allowed to be the assessor, false otherwise
      */
-    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
+    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
         if (exercise.isTeamMode()) {
             // for team exercises only the team tutor is allowed to be the assessor
-            return ((StudentParticipation) result.getParticipation()).getTeam().orElseThrow().isOwner(user);
+            return participation.getTeam().orElseThrow().isOwner(user);
         }
-        else {
+        else if (result != null) {
             // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
             return result.getAssessor() == null || user.equals(result.getAssessor());
+        }
+        else {
+            return true;
         }
     }
 

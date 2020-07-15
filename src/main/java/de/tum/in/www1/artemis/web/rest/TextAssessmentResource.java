@@ -134,8 +134,10 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
+        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -170,8 +172,10 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
+        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
