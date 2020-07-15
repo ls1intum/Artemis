@@ -135,7 +135,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!isAllowedToCreateOrOverrideResult(optionalTextSubmission.get(), textExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -171,7 +171,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!isAllowedToCreateOrOverrideResult(optionalTextSubmission.get(), textExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 

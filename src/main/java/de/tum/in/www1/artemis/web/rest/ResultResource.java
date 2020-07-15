@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -194,39 +192,12 @@ public class ResultResource {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
-    }
-
-    protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-
-        // if the assessor is null, the user is allowed to save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
-        }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        ZonedDateTime assessmentDueDate;
-
-        if (exercise.hasExerciseGroup()) {
-            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
-        }
-        else {
-            assessmentDueDate = exercise.getAssessmentDueDate();
-        }
-
-        // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
-        // and tutors should be able to override the created results when the assessmentDueDate is null
-        final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
-
-        // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
-        // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
     /**
