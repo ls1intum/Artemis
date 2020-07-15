@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,10 +110,10 @@ public class AssessmentService {
     }
 
     /**
-     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
-     * or if an instructor overrides it.
-     *
-     * If the result does not yet exist or is not yet submitted, this method returns true
+     * Checks if the user can create or override a submitted result.
+     * If the result does not yet exist or is not yet submitted, this tutors can create or override results.
+     * Overriding is only possible if the same tutor overrides before the assessment due date.
+     * Instructors can always create and override results also after the assessment due date.
      *
      * @param existingResult the existing result in case the result is updated (submitted or overridden)
      * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
@@ -123,25 +121,38 @@ public class AssessmentService {
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @return true of the the given user can override a potentially existing result
      */
-    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
-        // check if exam exercise
-        if (exercise.hasExerciseGroup()) {
-            final Exam exam = exercise.getExerciseGroup().getExam();
-            // tutors cannot assess submissions when the publish result date is in the past
-            if (exam.getPublishResultsDate() != null) {
-                if (!isAtLeastInstructor && exam.getPublishResultsDate().isBefore(ZonedDateTime.now())) {
+        final boolean isExamMode = exercise.hasExerciseGroup();
+        ZonedDateTime assessmentDueDate;
+
+        // for exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)
+        if (isExamMode) {
+            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
+        }
+        else {
+            assessmentDueDate = exercise.getAssessmentDueDate();
+        }
+
+        // check if no result is available (first assessment)
+        if (existingResult == null) {
+            // tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
+            if (isExamMode && !isAtLeastInstructor) {
+                final Exam exam = exercise.getExerciseGroup().getExam();
+                ZonedDateTime latestExamDueDate = examService.getLatestIndiviudalExamEndDate(exam.getId());
+                if (latestExamDueDate.isAfter(ZonedDateTime.now()) || exam.getPublishResultsDate().isBefore(ZonedDateTime.now())) {
                     return false;
                 }
             }
-        }
-
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAllowedToBeAssessor || isAtLeastInstructor;
         }
+
+        // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+        if (existingResult.getCompletionDate() == null) {
+            return isAllowedToBeAssessor || isAtLeastInstructor;
+        }
+
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
         final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
