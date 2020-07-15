@@ -150,6 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
             var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
+            assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises().size()).isEqualTo(4);
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
@@ -161,14 +162,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var participation2 = quizExercise.getStudentParticipations().iterator().next();
             assertThat(participation2.getParticipant()).isEqualTo(user);
             assertThat(participation2.getSubmissions()).hasSize(1);
-            // Check that sensitive information has been removed
 
+            // Ensure that student exam was marked as started
+            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+
+            // Check that sensitive information has been removed
             assertThat(textExercise.getGradingCriteria()).isEmpty();
             assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
             assertThat(textExercise.getSampleSolution()).isEqualTo(null);
 
             // Check that sensitive information has been removed
-
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
             assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
             assertThat(quizExercise.getQuizQuestions().size()).isEqualTo(3);
