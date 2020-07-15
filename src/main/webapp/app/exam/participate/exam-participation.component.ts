@@ -512,6 +512,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         console.error(error);
     }
 
+    /**
+     * Creates a subscription for the latest programming exercise submission for a given exerciseId and participationId
+     * This is done here, because this component exists throughout the whole lifecycle of an exam
+     * (e.g. programming-exam-submission exists only while the exam is not over)
+     * @param exerciseId id of the exercise we want to subscribe to
+     * @param participationId id of the participation we want to subscribe to
+     */
     private createProgrammingExerciseSubmission(exerciseId: number, participationId: number): Subscription {
         return this.programmingSubmissionService
             .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
