@@ -407,7 +407,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             map((createdParticipation: StudentParticipation) => {
                 // remove because of circular dependency when converting to JSON
                 delete createdParticipation.exercise;
-                exercise.studentParticipations = [createdParticipation];
+                exercise.studentParticipations.push(createdParticipation);
                 if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
                     createdParticipation.submissions[0].isSynced = true;
                 }
