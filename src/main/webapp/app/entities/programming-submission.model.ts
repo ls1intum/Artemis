@@ -8,4 +8,16 @@ export class ProgrammingSubmission extends Submission {
     constructor() {
         super(SubmissionExerciseType.PROGRAMMING);
     }
+
+    /**
+     * Returns an empty programming submission with the {@link Submission#isSynced} flag set to true.
+     * This is required to update the navigation bar GUI in the exam conduction.
+     */
+    // TODO: this could be removed after the latest submission for programming exercises if fetched through websockets and passed to the exam participation
+    static createInitialCleanSubmissionForExam(): ProgrammingSubmission {
+        const submission = new ProgrammingSubmission();
+        submission.isSynced = true;
+        submission.submitted = false;
+        return submission;
+    }
 }
