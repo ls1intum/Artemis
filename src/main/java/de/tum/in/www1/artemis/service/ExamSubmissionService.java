@@ -125,28 +125,4 @@ public class ExamSubmissionService {
         }
         return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }
-
-    /**
-     * Checks if the current time is after the exercise due date (course exercises)
-     * Checks if the current time is after the latest exam end date (exam exercises)
-     * We need this check in order to see if the assessment of exercises can be started
-     * @param exercise
-     * @return boolean
-     */
-    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
-        Exam exam = exercise.getExerciseGroup().getExam();
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exam != null) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exam);
-            if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                return false;
-            }
-        }
-        else {
-            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

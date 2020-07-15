@@ -282,7 +282,7 @@ public class ModelingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.examSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        boolean startAssessingSubmissions = this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
         if (!startAssessingSubmissions) {
             return forbidden();
         }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -38,13 +39,16 @@ public class SubmissionService {
 
     protected AuthorizationCheckService authCheckService;
 
+    private final ExamService examService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ExamService examService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+        this.examService = examService;
     }
 
     /**
@@ -275,5 +279,37 @@ public class SubmissionService {
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * We can then ensure
+     * @param exercise
+     * @return boolean
+     */
+    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
+        Exam exam = exercise.getExerciseGroup().getExam();
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exam != null) {
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exam);
+            if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        else {
+            // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                    return false;
+                }
+            }
+
+            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

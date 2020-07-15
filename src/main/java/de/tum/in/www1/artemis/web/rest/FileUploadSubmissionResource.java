@@ -56,9 +56,11 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final AssessmentService assessmentService;
+
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, AssessmentService assessmentService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -68,6 +70,7 @@ public class FileUploadSubmissionResource {
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
+        this.assessmentService = assessmentService;
     }
 
     /**
@@ -251,7 +254,7 @@ public class FileUploadSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        boolean startAssessingSubmissions = this.examSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        boolean startAssessingSubmissions = this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
         if (!startAssessingSubmissions) {
             return forbidden();
         }
