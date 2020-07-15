@@ -13,7 +13,7 @@
             "submit": "Eine Beschwerde einreichen",
             "created": "Deine Beschwerde wurde eingereicht!",
             "moreInfo": "Beschwerde einreichen",
-            "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Bewertung ist älter als eine Woche",
+            "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Einsichtsperiode ist vorbei.",
             "responseExists": "Antwort auf deine Beschwerde ",
             "hint": "Scrolle nach unten um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
