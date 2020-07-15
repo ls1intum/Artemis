@@ -374,7 +374,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         const subscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
-                        participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
                     this.activateActiveComponent();
