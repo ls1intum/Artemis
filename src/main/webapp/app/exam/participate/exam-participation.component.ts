@@ -374,6 +374,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         const subscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
                     this.activateActiveComponent();
@@ -536,12 +537,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     exerciseForSubmission.studentParticipations[0].submissions.length > 0
                 ) {
                     if (programmingSubmissionObj.submission) {
-                        // delete backwards reference so that it is still serializable
-                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
-                        submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
-                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
-                        delete submissionCopy.participation;
-                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                        // if the local submission has no submissionDate -> take submission from websocket
+                        // if the local submission has a submissionDate before the submission.submissionDate from the websocket -> take submission from websocket
+                        // else keep local submission
+                        if (
+                            !exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate ||
+                            (exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate &&
+                                programmingSubmissionObj.submission.submissionDate &&
+                                programmingSubmissionObj.submission.submissionDate.isAfter(exerciseForSubmission.studentParticipations[0].submissions[0].submissionDate))
+                        ) {
+                            // delete backwards reference so that it is still serializable
+                            const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                            submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
+                            submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
+                            delete submissionCopy.participation;
+                            exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                        }
                     }
                 }
             });
