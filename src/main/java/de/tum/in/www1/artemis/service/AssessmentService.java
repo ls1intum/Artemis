@@ -53,9 +53,7 @@ public class AssessmentService {
         Double maxScore = exercise.getMaxScore();
 
         if (exercise.hasExerciseGroup()) {
-            Exam exam = exercise.getExerciseGroup().getExam();
-            ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
-            result.setRatedIfNotExceeded(latestIndividualExamEndDate, result.getSubmission().getSubmissionDate());
+            result.setRated(true);
         }
         else {
             result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
