@@ -30,17 +30,6 @@
             >
                 <fa-icon size="2x" [icon]="isCollapsed(exercise.id) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
-            <jhi-complaint-interactions
-                class="mb-2 mt-2 ml-3"
-                [exercise]="exercise"
-                [participation]="exercise.studentParticipations[exercise.studentParticipations.length - 1]"
-                [result]="
-                    exercise.studentParticipations[exercise.studentParticipations.length - 1].results[
-                        exercise.studentParticipations[exercise.studentParticipations.length - 1].results.length - 1
-                    ]
-                "
-            >
-            </jhi-complaint-interactions>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
@@ -74,6 +63,8 @@
                 <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                 </ng-container>
+                <jhi-complaint-interactions class="mb-2 mt-2 ml-3" [exercise]="exercise" [participation]="getParticipationForExercise(exercise)" [course]="studentExam.exam.course">
+                </jhi-complaint-interactions>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | translate }}

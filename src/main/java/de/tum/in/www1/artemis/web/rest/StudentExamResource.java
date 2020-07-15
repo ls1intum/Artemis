@@ -227,9 +227,6 @@ public class StudentExamResource {
         examSession.hideDetails();
         studentExam.setExamSessions(Set.of(examSession));
 
-        // not needed
-        studentExam.getExam().setCourse(null);
-
         log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());
         return ResponseEntity.ok(studentExam);

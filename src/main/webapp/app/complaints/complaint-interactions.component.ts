@@ -15,6 +15,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() result: Result;
+    @Input() course: Course | null = null;
 
     showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
@@ -32,9 +33,19 @@ export class ComplaintInteractionsComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
+        if (!this.result && this.participation && this.participation.id && this.exercise) {
+            if (this.participation.results && this.participation.results.length > 0) {
+                // Make sure result and participation are connected
+                this.result = this.participation.results[0];
+                this.result.participation = this.participation;
+            }
+        }
+        if (this.course == null) {
+            this.course = this.exercise.course;
+        }
         if (this.course) {
-            if (this.course!.complaintsEnabled) {
-                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+            if (this.course.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
                     this.numberOfAllowedComplaints = allowedComplaints;
                 });
             } else {
@@ -55,10 +66,6 @@ export class ComplaintInteractionsComponent implements OnInit {
                 }
             }
         }
-    }
-
-    get course(): Course | null {
-        return this.exercise.course;
     }
 
     /**
