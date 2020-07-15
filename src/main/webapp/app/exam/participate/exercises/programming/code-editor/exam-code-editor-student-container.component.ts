@@ -121,4 +121,9 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
             this.participation.submissions[0].isSynced = false;
         }
     }
+
+    onRefreshFiles() {
+        this.participation.submissions[0].isSynced = true;
+        this.participation.submissions[0].submitted = true;
+    }
 }
