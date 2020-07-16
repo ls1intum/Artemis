@@ -135,10 +135,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                             }),
                         );
                     } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                        this.programmingExerciseTaskWrapper.setExercise(this.exercise);
                         this.problemStatement = this.exercise.problemStatement!;
                         this.updateMarkdown();
                         return of(null);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
+                        this.programmingExerciseTaskWrapper.setExercise(this.exercise);
                         this.problemStatement = this.exercise.problemStatement!;
                         return of(null);
                     } else {
