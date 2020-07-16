@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
             <div *ngIf="!exam.id; else edit">
                 <h4>{{ 'artemisApp.examManagement.createExam' | translate }}</h4>
@@ -24,6 +24,22 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
+
+            <div class="form-row">
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="examiner" jhiTranslate="artemisApp.examManagement.examiner">Examiner</label>
+                    <input class="form-control" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
+                </div>
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="moduleNumber" jhiTranslate="artemisApp.examManagement.moduleNumber">Module number</label>
+                    <input class="form-control" type="text" name="moduleNumber" id="moduleNumber" [(ngModel)]="exam.moduleNumber" />
+                </div>
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="courseName" jhiTranslate="artemisApp.examManagement.courseName">Course name</label>
+                    <input class="form-control" type="text" name="courseName" id="courseName" [(ngModel)]="exam.courseName" />
+                </div>
+            </div>
+
             <div class="form-row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -53,6 +69,7 @@
                     ></jhi-date-time-picker>
                 </div>
             </div>
+
             <div class="form-row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -78,6 +95,11 @@
                         id="examStudentReviewEnd"
                     ></jhi-date-time-picker>
                 </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
+                <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
             </div>
 
             <div class="form-row mb-3">

@@ -19,6 +19,8 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/alert/alert.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -56,6 +58,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private complaintService: ComplaintService,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
+        private examManagementService: ExamManagementService,
     ) {}
 
     /**
@@ -137,7 +140,15 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 tap(({ body: participation }) => {
                     this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
-                    this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+
+                    if (!!this.exercise.exerciseGroup) {
+                        const exam = this.participation.exercise.exerciseGroup!.exam!;
+                        this.examManagementService
+                            .getLatestIndividualEndDateOfExam(exam.course!.id, exam.id)
+                            .subscribe((res: HttpResponse<ExamInformationDTO>) => (this.isOpenForSubmission = res.body!.latestIndividualEndDate.isAfter(moment())));
+                    } else {
+                        this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+                    }
                 }),
                 catchError((err: any) => {
                     this.alertService.error(err);

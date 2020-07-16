@@ -119,12 +119,6 @@
                         <th>
                             <span>{{ 'artemisApp.examManagement.exerciseGroup.maxPoints' | translate }}</span>
                         </th>
-                        <th>
-                            <span>{{ 'artemisApp.exercise.releaseDate' | translate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.exercise.dueDate' | translate }}</span>
-                        </th>
                         <th></th>
                     </tr>
                 </thead>
@@ -141,12 +135,6 @@
                         </td>
                         <td class="align-middle">
                             {{ exercise.maxScore }}
-                        </td>
-                        <td class="align-middle">
-                            {{ exercise.releaseDate | artemisDate }}
-                        </td>
-                        <td class="align-middle">
-                            {{ exercise.dueDate | artemisDate }}
                         </td>
                         <td class="d-flex justify-content-end">
                             <jhi-exam-exercise-row-buttons

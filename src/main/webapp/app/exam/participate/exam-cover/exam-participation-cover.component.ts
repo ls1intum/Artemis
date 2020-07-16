@@ -203,4 +203,14 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
     }
+
+    /**
+     * Calculates the end time depending on the individual working time
+     */
+    endTime(): moment.Moment {
+        if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
+            return moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        }
+        return this.exam.endDate!;
+    }
 }

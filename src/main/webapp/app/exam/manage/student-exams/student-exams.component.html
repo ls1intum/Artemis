@@ -125,7 +125,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="workingTime" [minWidth]="120" [width]="120">
+                <ngx-datatable-column prop="workingTime" [minWidth]="170" [width]="170">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime">
@@ -139,7 +139,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="started" [minWidth]="60" [width]="60">
+                <ngx-datatable-column prop="started" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started">
@@ -153,7 +153,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="submitted" [minWidth]="60" [width]="60">
+                <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted">
@@ -167,7 +167,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="submissionDate" [minWidth]="100" [width]="100">
+                <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate">
@@ -192,20 +192,6 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         {{ value }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="exam" [width]="180">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exam')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.created">
-                                Created
-                            </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('creationDate')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <!-- {{ value?.startDate | artemisDate: 'long':true }} -->
                     </ng-template>
                 </ngx-datatable-column>
 

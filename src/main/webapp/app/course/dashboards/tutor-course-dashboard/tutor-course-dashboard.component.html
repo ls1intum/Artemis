@@ -16,6 +16,14 @@
             </h2>
         </div>
     </div>
+    <div *ngIf="isExamMode" class="row justify-content-between">
+        <div class="col-8">
+            <ul>
+                <li><span jhiTranslate="artemisApp.exam.endDate">Exam End Date</span> : {{ exam?.endDate | artemisDate }}</li>
+                <li><span jhiTranslate="artemisApp.exam.publishResultsDate">Publish Results Date</span> : {{ exam?.publishResultsDate | artemisDate }}</li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <jhi-alert></jhi-alert>
@@ -89,12 +97,13 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
-                    <th jhiSortBy="dueDate">
+                    <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentDueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                    <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.actions' | translate }}</th>
                 </tr>
@@ -130,12 +139,12 @@
                         >
                         </jhi-tutor-participation-graph>
                     </td>
-                    <td>
+                    <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | amTimeAgo }}
                         </span>
                     </td>
-                    <td>
+                    <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
                             {{ exercise.assessmentDueDate | amTimeAgo }}
                         </span>

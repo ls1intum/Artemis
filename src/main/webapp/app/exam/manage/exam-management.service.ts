@@ -11,6 +11,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -100,6 +101,18 @@ export class ExamManagementService {
         return this.http
             .get<Exam>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
+    getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
+        return this.http
+            .get<ExamInformationDTO>(url, { observe: 'response' })
+            .pipe(
+                map((res: HttpResponse<ExamInformationDTO>) => {
+                    res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
+                    return res;
+                }),
+            );
     }
 
     /**

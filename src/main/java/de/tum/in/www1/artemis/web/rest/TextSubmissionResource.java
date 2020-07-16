@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
@@ -256,6 +256,11 @@ public class TextSubmissionResource {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
+        Exam exam = null;
+        if (exercise.hasExerciseGroup()) {
+            exam = exercise.getExerciseGroup().getExam();
+        }
+
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -263,9 +268,10 @@ public class TextSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Tutors cannot start assessing submissions if Athene is currently processing
