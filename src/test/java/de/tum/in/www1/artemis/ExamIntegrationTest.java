@@ -524,6 +524,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(optionalStudent1Exam.get()).isNotNull();
         var studentExam2 = optionalStudent1Exam.get();
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         // Remove student2 from the exam
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
 
