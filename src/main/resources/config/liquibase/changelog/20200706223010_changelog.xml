@@ -12,25 +12,25 @@
         </createTable>
         <createTable tableName="user_achievement">
             <column name="user_id" type="BIGINT">
-                <constraints nullable="false">
+                <constraints nullable="false"/>
             </column>
             <column name="achievement_id" type="BIGINT">
-                <constraints nullable="false">
+                <constraints nullable="false"/>
             </column>
-            <addPrimaryKey columnNames="user_id, achievement_id" tableName="user_achievement"/>
-            <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement"/>
-            <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         </createTable>
         <createTable tableName="course_achievement">
             <column name="course_id" type="BIGINT">
-                <constraints nullable="false">
+                <constraints nullable="false"/>
             </column>
             <column name="achievement_id" type="BIGINT">
-                <constraints nullable="false">
+                <constraints nullable="false"/>
             </column>
-            <addPrimaryKey columnNames="course_id, achievement_id" tableName="course_achievement"/>
-            <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="course_achievement" constraintName="FK66fjjqlaf90a259wu8juadmlg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement"/>
-            <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_achievement" constraintName="FKprwjjvxfjl5k4ywq6a2oqt6l0" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         </createTable>
+        <addPrimaryKey columnNames="user_id, achievement_id" tableName="user_achievement"/>
+        <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addPrimaryKey columnNames="course_id, achievement_id" tableName="course_achievement"/>
+        <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="course_achievement" constraintName="FK66fjjqlaf90a259wu8juadmlg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_achievement" constraintName="FKprwjjvxfjl5k4ywq6a2oqt6l0" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
     </changeSet>
 </databaseChangeLog>
