@@ -6,6 +6,10 @@ export interface FileUploadResponse {
     path: string;
 }
 
+type Options = {
+    keepFileName: boolean;
+};
+
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
     // NOTE: this list has to be the same as in FileResource.java
@@ -20,7 +24,7 @@ export class FileUploaderService {
      * @param {string} fileName
      * @param options
      */
-    uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
+    uploadFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         /** Check file extension **/
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
         if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
@@ -55,7 +59,7 @@ export class FileUploaderService {
      * @param {string} fileName
      * @param options
      */
-    uploadMarkdownFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
+    uploadMarkdownFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         /** Check file extension **/
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
         if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
