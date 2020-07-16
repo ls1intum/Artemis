@@ -26,7 +26,6 @@ export class QuizExamSummaryComponent implements OnInit {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     exerciseWithSolution: QuizExercise;
-    examResultsPublished: boolean;
     showMissingResultsNotice = false;
 
     @Input()
@@ -51,7 +50,9 @@ export class QuizExamSummaryComponent implements OnInit {
                 this.exerciseWithSolution = response.body!;
             });
         }
-        this.showMissingResultsNotice = this.exam!.publishResultsDate!.isBefore(moment()) && !this.exercise.studentParticipations[0].results[0];
+        // we only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
+        this.showMissingResultsNotice =
+            this.exam != null && this.exam.publishResultsDate != null && this.exam.publishResultsDate.isBefore(moment()) && !this.exercise.studentParticipations[0].results[0];
     }
 
     get quizQuestions() {
