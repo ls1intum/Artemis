@@ -228,7 +228,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         let isBeforeAssessmentDueDate = true;
         // Add check as the assessmentDueDate must not be set for exercises
-        if (this.modelingExercise.asssessmentDueDate) {
+        if (this.modelingExercise?.assessmentDueDate) {
             isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         }
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
