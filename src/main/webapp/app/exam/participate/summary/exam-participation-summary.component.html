@@ -53,7 +53,12 @@
                 </ng-container>
                 <!-- Quiz Exercise -->
                 <ng-container *ngIf="exercise.type === QUIZ">
-                    <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)" [resultsPublished]="resultsPublished"></jhi-quiz-exam-summary>
+                    <jhi-quiz-exam-summary
+                        [exercise]="exercise"
+                        [exam]="studentExam.exam"
+                        [submission]="getSubmissionForExercise(exercise)"
+                        [resultsPublished]="resultsPublished"
+                    ></jhi-quiz-exam-summary>
                 </ng-container>
                 <!-- File Upload Exercise -->
                 <ng-container *ngIf="exercise.type === FILE_UPLOAD">

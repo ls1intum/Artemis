@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import { Component, Input, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -9,6 +10,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -25,6 +27,7 @@ export class QuizExamSummaryComponent implements OnInit {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     exerciseWithSolution: QuizExercise;
     examResultsPublished: boolean;
+    showMissingResultsNotice = false;
 
     @Input()
     exercise: QuizExercise;
@@ -34,6 +37,9 @@ export class QuizExamSummaryComponent implements OnInit {
 
     @Input()
     resultsPublished: boolean;
+
+    @Input()
+    exam: Exam;
 
     constructor(private exerciseService: QuizExerciseService) {}
 
@@ -45,6 +51,7 @@ export class QuizExamSummaryComponent implements OnInit {
                 this.exerciseWithSolution = response.body!;
             });
         }
+        this.showMissingResultsNotice = this.exam!.publishResultsDate!.isBefore(moment()) && !this.exercise.studentParticipations[0].results[0];
     }
 
     get quizQuestions() {

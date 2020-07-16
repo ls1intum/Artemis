@@ -13,7 +13,8 @@
                 "lastCommitHash": "Last Commit Hash",
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
-                "viewResult": " View Result"
+                "viewResult": " View Result",
+                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor."
             },
             "title": "Exam",
             "startExam": "Start",

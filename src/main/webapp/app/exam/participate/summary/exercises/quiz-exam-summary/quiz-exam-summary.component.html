@@ -1,4 +1,7 @@
 <div class="quiz-content container">
+    <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice">
+        {{ 'artemisApp.exam.examSummary.missingResultNotice' | translate }}
+    </div>
     <div *ngFor="let question of quizQuestions; let i = index">
         <jhi-multiple-choice-question
             id="question{{ i }}"
