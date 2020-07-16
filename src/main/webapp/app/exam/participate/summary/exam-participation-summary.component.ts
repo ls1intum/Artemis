@@ -6,6 +6,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -30,6 +31,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     courseId: number;
 
+    examWithOnlyIdAndStudentReviewPeriod: Exam;
+
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
@@ -38,6 +41,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
     getIcon(exerciseType: ExerciseType) {
@@ -111,6 +115,17 @@ export class ExamParticipationSummaryComponent implements OnInit {
         } else {
             this.collapsedExerciseIds.push(exerciseId);
         }
+    }
+
+    /**
+     * We only need to pass these values to the ComplaintInteractionComponent
+     */
+    setExamWithOnlyIdAndStudentReviewPeriod() {
+        const exam = new Exam();
+        exam.id = this.studentExam.exam.id;
+        exam.examStudentReviewStart = this.studentExam.exam.examStudentReviewStart;
+        exam.examStudentReviewEnd = this.studentExam.exam.examStudentReviewEnd;
+        this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
     /**

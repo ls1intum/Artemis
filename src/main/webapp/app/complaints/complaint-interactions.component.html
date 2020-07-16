@@ -1,4 +1,4 @@
-<div *ngIf="(isExamMode && !NoValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
+<div *ngIf="(isExamMode && !noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"

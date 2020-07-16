@@ -82,8 +82,8 @@ export class ComplaintInteractionsComponent implements OnInit {
     /**
      * We disable the component, if no complaint or feedback request has been made by the user during the Student Review period, for exam exercises.
      */
-    get NoValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
-        return !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
+    get noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
+        return this.isExamMode && !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
     }
 
     /**
