@@ -10,6 +10,10 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
     @Value("${jhipster.clientApp.name}")
     private static String applicationName;
 
+    public static <X> ResponseEntity<X> ok() {
+        return ResponseEntity.ok().build();
+    }
+
     public static <X> ResponseEntity<X> notFound() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
