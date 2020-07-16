@@ -242,4 +242,63 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         attachmentRepo.save(attachment);
         return attachmentPath;
     }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void uploadImageMarkdownAsStudent_forbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadImageMarkdownAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        assertThat(responsePath.contains("markdown")).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void uploadFileAsStudentForbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "TA")
+    public void uploadFileAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        assertThat(responsePath.contains("temp")).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "TA")
+    public void uploadFileUnsupportedFileExtension() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+    }
 }
