@@ -245,7 +245,16 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void uploadImageMarkdown() throws Exception {
+    public void uploadImageMarkdownAsStudent_forbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/markdownFileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadImageMarkdownAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         // upload file
@@ -256,8 +265,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void uploadFileMarkdownUnsupportedFileExtension() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
         // upload file
