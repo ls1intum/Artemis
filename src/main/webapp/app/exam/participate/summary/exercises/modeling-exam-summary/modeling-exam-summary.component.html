@@ -1,4 +1,4 @@
-<div *ngIf="umlModel; else noSubmission" [style.maxWidth.px]="maxWidth" [style.maxHeight.px]="maxHeight" class="editor-outline-background">
+<div *ngIf="umlModel; else noSubmission">
     <jhi-modeling-editor [readOnly]="true" [diagramType]="exercise.diagramType || null" [umlModel]="umlModel"></jhi-modeling-editor>
 </div>
 <ng-template #noSubmission>
