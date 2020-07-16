@@ -12,11 +12,12 @@
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
                 "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
-                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
+                "viewResult": " Ergebnis ansehen"
             },
             "title": "Klausur",
-            "startExam": "Klausur starten",
-            "endExam": "Klausur beenden",
+            "startExam": "Starten",
+            "endExam": "Beenden",
             "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
@@ -67,7 +68,7 @@
             "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
-            "finishExam": "Klausur abgeben",
+            "finishExam": "Beenden",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an deinen Dozenten.",
@@ -75,7 +76,8 @@
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
             "greeting": "Hallo {{ fullName }}, willkommen zu {{ title }}",
-            "finish": "Hallo {{ fullName }}, das ist das Ende von {{ title }} ",
+            "finish": "Hallo {{ fullName }}, das ist das Ende von {{ title }}",
+            "submitFinalExam": "Bitte bestätige den Text unten und klicke innerhalb der verbleibenden Zeit auf 'Beenden', um die Prüfung abzugeben.<br />(Hinweis: Wenn du diesen Schritt versäumst, wird deine Prüfung nicht benotet)",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
@@ -85,7 +87,11 @@
             "submitted": "Aufgabe eingereicht",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
-            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
+            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
+            "handInEarly": "Vorzeitig abgeben",
+            "continueAfterHandInEarly": "Weitermachen",
+            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen."
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

@@ -8,6 +8,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -41,7 +42,17 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
-    onActivate(): void {}
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
+
+    onActivate(): void {
+        console.log('TextExamSubmissionComponent.onActivate() for exercise ' + this.exercise.id);
+    }
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.text) {
@@ -58,7 +69,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     public updateSubmissionFromView(): void {
         this.studentSubmission.text = this.answer;
         this.studentSubmission.language = this.textService.predictLanguage(this.answer);
-        this.studentSubmission.isSynced = false;
     }
 
     get wordCount(): number {
