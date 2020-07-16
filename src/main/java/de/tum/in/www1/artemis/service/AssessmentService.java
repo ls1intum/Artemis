@@ -141,7 +141,7 @@ public class AssessmentService {
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
                 ZonedDateTime latestExamDueDate = examService.getLatestIndiviudalExamEndDate(exam.getId());
-                if (latestExamDueDate.isAfter(ZonedDateTime.now()) || exam.getPublishResultsDate().isBefore(ZonedDateTime.now())) {
+                if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }
             }
