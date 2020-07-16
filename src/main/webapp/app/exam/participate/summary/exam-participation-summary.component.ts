@@ -5,6 +5,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -29,7 +30,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     courseId: number;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
      * Initialise the courseId from the current url
@@ -96,8 +97,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     isWithinStudentReviewPeriod(): boolean {
         if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            const present = moment();
-            return this.studentExam.exam.examStudentReviewStart.isBefore(present) && this.studentExam.exam.examStudentReviewEnd.isAfter(present);
+            return this.serverDateService.now().isBetween(this.studentExam.exam.examStudentReviewStart, this.studentExam.exam.examStudentReviewEnd);
         }
         return false;
     }
