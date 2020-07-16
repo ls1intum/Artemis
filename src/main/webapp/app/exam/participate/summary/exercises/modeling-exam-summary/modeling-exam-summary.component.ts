@@ -24,6 +24,7 @@ export class ModelingExamSummaryComponent implements OnInit {
     ngOnInit() {
         if (this.submission && this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
+            // TODO: fix this when we have a more reliable solution (currently diagram is not centered)
             // margin on all sides
             const margin = 100;
             this.maxWidth = this.umlModel.size.width += 2 * margin;
