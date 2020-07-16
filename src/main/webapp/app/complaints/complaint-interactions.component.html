@@ -1,4 +1,4 @@
-<div *ngIf="examId || course?.complaintsEnabled">
+<div *ngIf="(isExamMode && !NoValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
@@ -26,7 +26,7 @@
             class="flex-grow-1"
             [exercise]="exercise"
             [resultId]="result?.id"
-            [examId]="examId"
+            [examId]="exam.id"
             [allowedComplaints]="numberOfAllowedComplaints"
             [maxComplaintsPerCourse]="calculateMaxComplaints()"
             [complaintType]="ComplaintType.COMPLAINT"

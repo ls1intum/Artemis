@@ -7,6 +7,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -16,14 +18,10 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() result: Result;
-    @Input()
-    examId: number;
-
-    // Refers to the student review period of an exam.
-    @Input() isWithinStudentReviewPeriod: boolean;
+    @Input() exam: Exam;
 
     get isExamMode() {
-        return this.isWithinStudentReviewPeriod != null;
+        return this.exam != null;
     }
 
     showRequestMoreFeedbackForm = false;
@@ -36,16 +34,13 @@ export class ComplaintInteractionsComponent implements OnInit {
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService, private activatedRoute: ActivatedRoute) {}
+    constructor(private complaintService: ComplaintService, private activatedRoute: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
         if (this.isExamMode) {
-            this.activatedRoute.params.subscribe((params) => {
-                this.examId = params['examId'];
-            });
             if (this.participation && this.participation.id && this.exercise) {
                 if (this.participation.results && this.participation.results.length > 0) {
                     // Make sure result and participation are connected
@@ -85,6 +80,13 @@ export class ComplaintInteractionsComponent implements OnInit {
     }
 
     /**
+     * We disable the component, if no complaint or feedback request has been made by the user during the Student Review period, for exam exercises.
+     */
+    get NoValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
+        return !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
+    }
+
+    /**
      * This function is used to check whether the student is allowed to submit a complaint or not.
      * For exams, submitting a complaint is allowed within the Student Review Period, see {@link isWithinStudentReviewPeriod}.
      *
@@ -105,6 +107,18 @@ export class ComplaintInteractionsComponent implements OnInit {
             return false;
         }
     }
+
+    /**
+     * A guard function used to indicate whether complaint submissions are valid.
+     * These are only allowed if they are submitted within the student review period.
+     */
+    private isWithinStudentReviewPeriod(): boolean {
+        if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd);
+        }
+        return false;
+    }
+
     /**
      * toggles between showing the complaint form
      */
@@ -112,6 +126,7 @@ export class ComplaintInteractionsComponent implements OnInit {
         this.showRequestMoreFeedbackForm = false;
         this.showComplaintForm = !this.showComplaintForm;
     }
+
     /**
      * toggles between showing the feedback request form
      */

@@ -69,13 +69,12 @@
                         exercise.type !== QUIZ &&
                         studentExam.exam.examStudentReviewStart &&
                         studentExam.exam.examStudentReviewEnd &&
-                        isWithinStudentReviewPeriod()
+                        isAfterStudentReviewStart()
                     "
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"
-                    [isWithinStudentReviewPeriod]="isWithinStudentReviewPeriod()"
-                    [examId]="studentExam.exam.id"
+                    [exam]="studentExam.exam"
                 >
                 </jhi-complaint-interactions>
             </ng-container>

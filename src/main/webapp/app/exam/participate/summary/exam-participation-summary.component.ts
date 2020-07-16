@@ -92,17 +92,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     /**
-     * A guard function used for the ComplaintInteractionsComponent to indicate whether complaint submissions are valid.
-     * These are only allowed if they are submitted within the student review period.
-     */
-    isWithinStudentReviewPeriod(): boolean {
-        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBetween(this.studentExam.exam.examStudentReviewStart, this.studentExam.exam.examStudentReviewEnd);
-        }
-        return false;
-    }
-
-    /**
      * @param exerciseId
      * checks collapse control of exercise cards depending on exerciseId
      */
@@ -122,5 +111,16 @@ export class ExamParticipationSummaryComponent implements OnInit {
         } else {
             this.collapsedExerciseIds.push(exerciseId);
         }
+    }
+
+    /**
+     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
+     * the review dates are set and the review start date has passed.
+     */
+    isAfterStudentReviewStart() {
+        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
+        }
+        return false;
     }
 }
