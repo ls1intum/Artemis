@@ -16,7 +16,6 @@ export class FileUploaderService {
     /**
      * Function which uploads a file. It checks for supported file extensions and file size.
      * Options must be passed as a dictionary. E.g: { keepFileName: true }
-     * @async
      * @param {Blob | File} file
      * @param {string} fileName
      * @param options
@@ -52,7 +51,6 @@ export class FileUploaderService {
     /**
      * Function which uploads a file. It checks for supported file extensions and file size.
      * Options must be passed as a dictionary. E.g: { keepFileName: true }
-     * @async
      * @param {Blob | File} file
      * @param {string} fileName
      * @param options
