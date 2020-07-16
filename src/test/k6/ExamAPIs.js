@@ -39,6 +39,7 @@ const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
+const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -46,6 +47,7 @@ export function setup() {
     console.log('__ENV.TIMEOUT_EXERCISE: ' + __ENV.TIMEOUT_EXERCISE);
     console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
+    console.log('__ENV.ONLY_PREPARE: ' + onlyPrepare);
 
     let artemis, exerciseId, course, userId, textExercise, quizExercise;
 
@@ -105,6 +107,10 @@ export function setup() {
             }
         }
 
+        if (onlyPrepare) {
+            return;
+        }
+
         startExercises(artemis, exam);
 
         sleep(2);
@@ -112,11 +118,14 @@ export function setup() {
         return { courseId: exam.course.id, examId: exam.id };
     } else {
         console.log('Using existing course and exercise');
-        return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
+        return { examId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
     }
 }
 
 export default function (data) {
+    if (onlyPrepare) {
+        return;
+    }
     const websocketConnectionTime = parseFloat(__ENV.TIMEOUT_PARTICIPATION); // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 50 users per second
@@ -209,6 +218,9 @@ export default function (data) {
 }
 
 export function teardown(data) {
+    if (onlyPrepare) {
+        return;
+    }
     const instructorUsername = baseUsername.replace('USERID', '1');
     const instructorPassword = basePassword.replace('USERID', '1');
 
