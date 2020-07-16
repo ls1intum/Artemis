@@ -191,7 +191,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
         database.updateAssessmentDueDate(programmingExercise.getId(), null);
-        // TODO: in the future, this should be forbidden, see ResultResource.isAllowedToOverrideExistingResult
         overrideAssessment(HttpStatus.OK);
     }
 

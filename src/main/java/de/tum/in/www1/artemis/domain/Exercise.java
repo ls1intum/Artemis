@@ -867,8 +867,19 @@ public abstract class Exercise implements Serializable {
         this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
     }
 
+    /**
+     * Checks whether the exercise is released
+     * @return boolean
+     */
     public boolean isReleased() {
-        ZonedDateTime releaseDate = getReleaseDate();
+        // Exam
+        ZonedDateTime releaseDate;
+        if (this.hasExerciseGroup()) {
+            releaseDate = this.getExerciseGroup().getExam().getStartDate();
+        }
+        else {
+            releaseDate = getReleaseDate();
+        }
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 

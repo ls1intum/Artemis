@@ -5,18 +5,36 @@
                 <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
             </h3>
-            <h4>
-                <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
-                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                    {{ exercise.dueDate | amTimeAgo }}
-                </span>
-            </h4>
-            <h4 *ngIf="exercise.assessmentDueDate">
-                <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
-                <span [ngClass]="exerciseStatusBadge" class="badge">
-                    {{ exercise.assessmentDueDate | amTimeAgo }}
-                </span>
-            </h4>
+
+            <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
+                <h4>
+                    <span class="mr-2"> {{ 'artemisApp.exam.endDate' | translate }} : {{ exam?.endDate | artemisDate }} </span>
+                    <span *ngIf="exam?.endDate" [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ exam?.endDate | amTimeAgo }}
+                    </span>
+                </h4>
+                <h4>
+                    <span class="mr-2"> {{ 'artemisApp.exam.publishResultsDate' | translate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
+                    <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ exam?.publishResultsDate | artemisDate }}
+                    </span>
+                </h4>
+            </ng-template>
+            <ng-template #courseMode>
+                <h4>
+                    <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
+                    <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ exercise.dueDate | amTimeAgo }}
+                    </span>
+                </h4>
+                <h4 *ngIf="exercise.assessmentDueDate">
+                    <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }} : {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+                    <span [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ exercise.assessmentDueDate | amTimeAgo }}
+                    </span>
+                </h4>
+            </ng-template>
+
             <div class="d-md-flex" *ngIf="exercise.categories">
                 <h4 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | translate }}</h4>
                 <h4 *ngFor="let category of exerciseCategories">

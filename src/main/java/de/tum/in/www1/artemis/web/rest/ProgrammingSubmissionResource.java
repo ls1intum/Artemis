@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -384,10 +383,10 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // TODO: Handle lock limit.

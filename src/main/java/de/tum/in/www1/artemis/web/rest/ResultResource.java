@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -60,6 +59,8 @@ public class ResultResource {
 
     private final ResultService resultService;
 
+    private final ExamService examService;
+
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
@@ -81,7 +82,7 @@ public class ResultResource {
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            AssessmentService assessmentService) {
+            AssessmentService assessmentService, ExamService examService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -94,6 +95,7 @@ public class ResultResource {
         this.programmingSubmissionService = programmingSubmissionService;
         this.assessmentService = assessmentService;
         this.userService = userService;
+        this.examService = examService;
     }
 
     /**
@@ -110,6 +112,7 @@ public class ResultResource {
     public ResponseEntity<Result> createProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result newResult) throws URISyntaxException {
         log.debug("REST request to create a new result : {}", newResult);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         final var latestExistingResult = participation.findLatestResult();
         if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
             // prevent that tutors create multiple manual results
@@ -125,6 +128,11 @@ public class ResultResource {
         }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
+        }
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, participation, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         if (newResult.getId() != null) {
@@ -190,31 +198,12 @@ public class ResultResource {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, participation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
-    }
-
-    protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-
-        // if the assessor is null, the user is allowed to save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
-        }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
-        // and tutors should be able to override the created results when the assessmentDueDate is null
-        final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
-
-        // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
-        // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
     /**
@@ -535,10 +524,22 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
-                    "External submissions are not supported before the exercise due date.")).build();
+
+        if (!exercise.hasExerciseGroup()) {
+            if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the exercise due date.")).build();
+            }
         }
+        else {
+            Exam exam = exercise.getExerciseGroup().getExam();
+            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+            if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the end of the exam.")).build();
+            }
+        }
+
         if (exercise instanceof QuizExercise) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
                     "External submissions are not supported for Quiz exercises.")).build();

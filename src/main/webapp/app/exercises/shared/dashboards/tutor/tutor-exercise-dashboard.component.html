@@ -1,4 +1,4 @@
-<jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="back.bind(this)">
+<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [onBackClick]="back.bind(this)">
     <span pagetitle>{{ 'artemisApp.tutorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
@@ -21,7 +21,7 @@
             </jhi-tutor-participation-graph>
         </div>
         <div class="col-5">
-            <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
+            <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
                 <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">
                     <div class="col-8"></div>
                     <div class="col-4">
@@ -449,5 +449,5 @@
 
     <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
 
-    <jhi-tutor-leaderboard [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
 </div>
