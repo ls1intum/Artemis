@@ -80,6 +80,7 @@
             (click)="updateConfirmation()"
             style="place-self: flex-start;"
             class="mt-1"
+            [required]="inserted"
             [disabled]="startView ? waitingForExamStart : false"
         />
         <span id="formatted-confirmation-text" class="d-inline-block ml-2" [innerHTML]="formattedConfirmationText"></span>
@@ -107,6 +108,9 @@
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
+                    <div class="alert alert-danger mt-1" *ngIf="!!!confirmed && inserted">
+                        <span [innerHTML]="'artemisApp.exam.notConfirmed' | translate"></span>
+                    </div>
                     <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">
                         <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
                     </div>
