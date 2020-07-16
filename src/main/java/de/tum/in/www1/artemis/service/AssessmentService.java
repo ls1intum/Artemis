@@ -154,7 +154,7 @@ public class AssessmentService {
         }
 
         // If the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null ? ZonedDateTime.now().isBefore(assessmentDueDate) : true;
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
