@@ -82,7 +82,7 @@
                     <td class="text-right">
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
-                                *ngIf="isAtLeastTutor"
+                                *ngIf="(isAtLeastTutor && examHasFinished(exam.id)) || isAtLeastInstructor"
                                 type="submit"
                                 [routerLink]="[exam.id, 'tutor-exam-dashboard']"
                                 class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"

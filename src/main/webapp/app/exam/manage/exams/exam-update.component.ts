@@ -35,6 +35,9 @@ export class ExamUpdateComponent implements OnInit {
                 },
                 (err: HttpErrorResponse) => this.onError(err),
             );
+            if (!this.exam.gracePeriod) {
+                this.exam.gracePeriod = 180;
+            }
         });
     }
 
