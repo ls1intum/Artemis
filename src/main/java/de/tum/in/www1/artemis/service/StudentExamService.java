@@ -178,11 +178,12 @@ public class StudentExamService {
             }
         }
 
-        // if everything worked -> set studentExam to submitted
+        // if everything worked -> set studentExam to submitted and set submission date
         studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
-        return ResponseEntity.ok().build();
+        return ok();
     }
 
     /**

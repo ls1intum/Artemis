@@ -35,6 +35,12 @@ public class StudentExam implements Serializable {
     @Column(name = "working_time")
     private Integer workingTime;
 
+    @Column(name = "started")
+    private Boolean started;
+
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
+
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -76,6 +82,22 @@ public class StudentExam implements Serializable {
 
     public void setWorkingTime(Integer workingTime) {
         this.workingTime = workingTime;
+    }
+
+    public Boolean isStarted() {
+        return started;
+    }
+
+    public void setStarted(Boolean started) {
+        this.started = started;
+    }
+
+    public ZonedDateTime getSubmissionDate() {
+        return submissionDate;
+    }
+
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
     }
 
     public Exam getExam() {
