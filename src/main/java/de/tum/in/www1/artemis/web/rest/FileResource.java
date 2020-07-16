@@ -91,7 +91,7 @@ public class FileResource {
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
         return handleSaveFile(file, keepFileName, false);
 
