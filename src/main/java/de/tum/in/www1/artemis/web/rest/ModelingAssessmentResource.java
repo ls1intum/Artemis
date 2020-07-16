@@ -57,8 +57,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
-            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository);
+            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
+            ExamService examService) {
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository, examService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
@@ -152,7 +153,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        if (!isAllowedToCreateOrOverrideResult(modelingSubmission, modelingExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 

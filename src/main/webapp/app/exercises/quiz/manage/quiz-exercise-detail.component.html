@@ -71,27 +71,6 @@
                             <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                         </div>
                     </ng-container>
-                    <div *ngIf="isExamMode" class="d-flex">
-                        <div class="form-group flex-grow-1">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
-                                [(ngModel)]="quizExercise.releaseDate"
-                                (ngModelChange)="onDurationChange()"
-                                [error]="false"
-                                name="releaseDate"
-                            ></jhi-date-time-picker>
-                        </div>
-                        <div class="form-group flex-grow-1 ml-3">
-                            <jhi-date-time-picker
-                                name="dueDate"
-                                [error]="quizExercise.dueDateError"
-                                labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
-                                (ngModelChange)="onDurationChange()"
-                                [(ngModel)]="quizExercise.dueDate"
-                            ></jhi-date-time-picker>
-                            <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
-                        </div>
-                    </div>
                     <div class="form-group-narrow">
                         <label jhiTranslate="artemisApp.quizExercise.options">Options</label>
                         <div class="form-check custom-control custom-checkbox">

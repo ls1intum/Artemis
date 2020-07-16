@@ -246,9 +246,11 @@ public class QuizExercise extends Exercise implements Serializable {
             return false;
         }
 
-        // check duration
-        if (getDuration() == null || getDuration() < 0) {
-            return false;
+        // check duration (only for course exercises)
+        if (hasCourse()) {
+            if (getDuration() == null || getDuration() < 0) {
+                return false;
+            }
         }
 
         // check quizQuestions

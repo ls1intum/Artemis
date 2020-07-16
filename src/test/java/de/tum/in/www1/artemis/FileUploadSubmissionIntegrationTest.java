@@ -257,7 +257,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getFileUploadSubmissionWithoutAssessment_inFuture() throws Exception {
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().plusHours(1));
 
-        request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+        request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.FORBIDDEN, FileUploadSubmission.class);
     }
 
     @Test
