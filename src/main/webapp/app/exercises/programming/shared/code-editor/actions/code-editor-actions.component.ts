@@ -44,8 +44,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     onSavedFiles = new EventEmitter<{ [fileName: string]: string | null }>();
     @Output()
     onError = new EventEmitter<string>();
-    @Output()
-    onRefreshFiles = new EventEmitter<void>();
 
     isBuilding: boolean;
     editorStateValue: EditorState;
@@ -120,7 +118,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.repositoryService.pull().subscribe(() => {
             this.unsavedFiles = {};
             this.editorState = EditorState.CLEAN;
-            this.onRefreshFiles.emit();
         });
     }
 
