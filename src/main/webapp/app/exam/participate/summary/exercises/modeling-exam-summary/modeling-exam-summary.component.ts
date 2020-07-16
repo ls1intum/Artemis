@@ -22,6 +22,10 @@ export class ModelingExamSummaryComponent implements OnInit {
     ngOnInit() {
         if (this.submission && this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
+            this.umlModel.elements.forEach((element) => {
+                element.bounds.x += 5;
+                element.bounds.y += 5;
+            });
         }
     }
 }
