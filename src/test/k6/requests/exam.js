@@ -119,8 +119,6 @@ export function getStudentExams(artemis, exam) {
 export function updateWorkingTime(artemis, exam, studentExam, workingTime) {
     const res = artemis.patch(STUDENT_EXAM_WORKINGTIME(exam.course.id, exam.id, studentExam.id), workingTime);
     console.log('Updated student Exam for exam ' + exam.id + ' status: ' + res[0].status);
-
-    return JSON.parse(res[0].body);
 }
 
 export function evaluateQuizzes(artemis, courseId, examId) {
