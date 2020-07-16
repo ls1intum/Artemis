@@ -5,7 +5,7 @@
                 "katex": "Formel",
                 "fullscreen": "Vollbild"
             },
-            "fileUpload": "Füge Datein durch Drag & Drop oder auswählen hinzu.",
+            "fileUpload": "Füge Dateien durch Drag & Drop oder durch Auswählen hinzu.",
             "guide": "Styling mit Markdown ist unterstützt"
         }
     }
