@@ -53,6 +53,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     modelingExercise: ModelingExercise;
     courseId: number;
     exam: Exam | null = null;
+    // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
 
     statsForDashboard = new StatsForDashboard();
