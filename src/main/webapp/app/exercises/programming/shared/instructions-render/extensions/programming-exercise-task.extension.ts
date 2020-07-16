@@ -8,16 +8,16 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { TaskArray, TaskArrayWithParticipation } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     public exerciseHints: ExerciseHint[] = [];
     private latestResult: Result | null = null;
-    private participation: Participation;
+    private exercise: Exercise;
 
-    private testsForTaskSubject = new Subject<TaskArrayWithParticipation>();
+    private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
@@ -39,12 +39,12 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     }
 
     /**
-     * Sets the participation. This is needed as multiple instructions components reuse this service and we have to
-     * associate tasks with a participation.
-     * @param participation - participation.
+     * Sets the exercise. This is needed as multiple instructions components use this service in parallel and we have to
+     * associate tasks with an exercise to identify tasks properly
+     * @param exercise - the current exercise.
      */
-    public setParticipation(participation: Participation) {
-        this.participation = participation;
+    public setExercise(exercise: Exercise) {
+        this.exercise = exercise;
     }
 
     /**
@@ -118,8 +118,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });
-                const tasksWithParticipationId: TaskArrayWithParticipation = {
-                    participationId: this.participation.id,
+                const tasksWithParticipationId: TaskArrayWithExercise = {
+                    exerciseId: this.exercise.id,
                     tasks: testsForTask,
                 };
                 this.testsForTaskSubject.next(tasksWithParticipationId);
