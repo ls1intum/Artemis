@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
@@ -450,17 +451,18 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer noOfgeneratedParticipations = examService.startExercises(examId);
+        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
 
-        log.info("Generated {} participations for student exams of exam {}", noOfgeneratedParticipations, examId);
+        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
-        return ResponseEntity.ok().body(noOfgeneratedParticipations);
+        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
     }
 
     /**

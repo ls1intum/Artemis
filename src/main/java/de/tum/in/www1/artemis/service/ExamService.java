@@ -551,7 +551,6 @@ public class ExamService {
         List<Participation> generatedParticipations = new ArrayList<>();
 
         studentExams.parallelStream().forEach(studentExam -> {
-            SecurityUtils.setAuthorizationObject();
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -559,6 +558,7 @@ public class ExamService {
                         .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
                                 && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
+                        SecurityUtils.setAuthorizationObject();
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
