@@ -13,6 +13,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
         ArtemisFullscreenModule,
         ArtemisResultModule,
         ArtemisCoursesModule,
+        ArtemisComplaintsModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,

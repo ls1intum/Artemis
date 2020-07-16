@@ -59,6 +59,20 @@
                 <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                     <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                 </ng-container>
+                <jhi-complaint-interactions
+                    *ngIf="
+                        getSubmissionForExercise(exercise) &&
+                        exercise.type !== QUIZ &&
+                        studentExam.exam.examStudentReviewStart &&
+                        studentExam.exam.examStudentReviewEnd &&
+                        isAfterStudentReviewStart()
+                    "
+                    class="mb-2 mt-2 ml-3"
+                    [exercise]="exercise"
+                    [participation]="getParticipationForExercise(exercise)"
+                    [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                >
+                </jhi-complaint-interactions>
             </ng-container>
             <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
             <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise)">
