@@ -32,7 +32,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorge
+     * Retrieves a {@link StudentExam} from server or localstorage
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
@@ -92,7 +92,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server
+     * Retrieves a {@link StudentExam} from server. Will also mark the student exam as started
      */
     private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
