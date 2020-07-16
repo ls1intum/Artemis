@@ -16,12 +16,22 @@ export class ModelingExamSummaryComponent implements OnInit {
     submission: ModelingSubmission;
 
     umlModel: UMLModel;
+    maxWidth: number;
+    maxHeight: number;
 
     constructor() {}
 
     ngOnInit() {
         if (this.submission && this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
+            // margin on all sides
+            const margin = 100;
+            this.maxWidth = this.umlModel.size.width += 2 * margin;
+            this.maxHeight = this.umlModel.size.height += 2 * margin;
+            this.umlModel.elements.forEach((element) => {
+                element.bounds.x += margin / 2;
+                element.bounds.y += margin / 2;
+            });
         }
     }
 }
