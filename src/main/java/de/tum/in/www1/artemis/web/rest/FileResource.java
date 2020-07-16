@@ -297,7 +297,7 @@ public class FileResource {
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @NotNull
-    private ResponseEntity<String> handleSaveFile(@RequestParam("file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName, boolean markdown)
+    private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown)
             throws URISyntaxException {
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
