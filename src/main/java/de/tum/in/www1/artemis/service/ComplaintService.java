@@ -64,12 +64,11 @@ public class ComplaintService {
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-        originalResult.getParticipation().getExercise().hasExerciseGroup();
 
         if (examId.isPresent()) {
             final Exam exam = examService.findOne(examId.getAsLong());
             if (!isTimeOfComplaintValid(exam)) {
-                throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
+                throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
             }
         }
         else {
