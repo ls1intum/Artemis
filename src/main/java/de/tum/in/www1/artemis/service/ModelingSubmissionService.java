@@ -217,7 +217,10 @@ public class ModelingSubmissionService extends SubmissionService {
         // versioning of submission
         try {
             if (modelingExercise.isTeamMode()) {
-                submissionVersionService.save(modelingSubmission, username);
+                submissionVersionService.saveVersionForTeam(modelingSubmission, username);
+            }
+            else {
+                submissionVersionService.saveVersionForIndividual(modelingSubmission, username);
             }
         }
         catch (Exception ex) {

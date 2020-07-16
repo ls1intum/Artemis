@@ -11,7 +11,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * A ShortAnswerQuestionStatistic.
