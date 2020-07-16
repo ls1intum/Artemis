@@ -431,7 +431,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
         let isBeforeAssessmentDueDate = true;
         // Add check as the assessmentDueDate must not be set for exercises
-        if (this.exercise.asssessmentDueDate) {
+        if (this.exercise.assessmentDueDate) {
             isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
         }
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
