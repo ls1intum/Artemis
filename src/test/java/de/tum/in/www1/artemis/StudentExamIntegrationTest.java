@@ -150,6 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
             var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
+            assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises().size()).isEqualTo(4);
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
@@ -161,14 +162,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var participation2 = quizExercise.getStudentParticipations().iterator().next();
             assertThat(participation2.getParticipant()).isEqualTo(user);
             assertThat(participation2.getSubmissions()).hasSize(1);
-            // Check that sensitive information has been removed
 
+            // Ensure that student exam was marked as started
+            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+
+            // Check that sensitive information has been removed
             assertThat(textExercise.getGradingCriteria()).isEmpty();
             assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
             assertThat(textExercise.getSampleSolution()).isEqualTo(null);
 
             // Check that sensitive information has been removed
-
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
             assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
             assertThat(quizExercise.getQuizQuestions().size()).isEqualTo(3);
@@ -344,5 +347,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam1.setStartDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(exam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSubmitStudentExam() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK, null);
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
+        // Ensure that student exam has been marked as submitted
+        assertThat(submittedStudentExam.isSubmitted()).isTrue();
+        // Ensure that student exam has been set
+        assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
     }
 }
