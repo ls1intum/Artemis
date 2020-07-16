@@ -11,7 +11,7 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
+                "noCommitHash": "Kein Commit wurde gemacht",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen"
             },
