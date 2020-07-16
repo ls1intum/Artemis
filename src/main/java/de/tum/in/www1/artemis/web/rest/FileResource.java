@@ -120,7 +120,8 @@ public class FileResource {
      */
     @PostMapping("/markdown-file-upload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
+    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
+            throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
         return handleSaveFile(file, keepFileName, true);
     }
@@ -297,8 +298,7 @@ public class FileResource {
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @NotNull
-    private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown)
-            throws URISyntaxException {
+    private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) throws URISyntaxException {
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
 
