@@ -175,6 +175,8 @@ public class StudentExamResource {
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
+     * NOTE: when this is called it will also mark the student exam as started
+     *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
      * @param request   the http request, used to extract headers
@@ -201,12 +203,16 @@ public class StudentExamResource {
 
         loadExercisesForStudentExam(studentExam);
 
-        // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // 2nd: mark the student exam as started
+        studentExam.setStarted(true);
+        studentExamRepository.save(studentExam);
+
+        // 3rd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
                 studentExam.getExercises());
 
-        // 3rd: connect the exercises and student participations correctly and make sure all relevant associations are available
+        // 4th: connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
             filterForExam(exercise, participations);
