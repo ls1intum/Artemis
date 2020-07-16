@@ -110,6 +110,15 @@ public class Exam implements Serializable {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
+    @Column(name = "examiner")
+    private String examiner;
+
+    @Column(name = "module_number")
+    private String moduleNumber;
+
+    @Column(name = "course_name")
+    private String courseName;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -261,6 +270,30 @@ public class Exam implements Serializable {
 
     public void setRandomizeExerciseOrder(Boolean randomizeExerciseOrder) {
         this.randomizeExerciseOrder = randomizeExerciseOrder;
+    }
+
+    public String getExaminer() {
+        return examiner;
+    }
+
+    public void setExaminer(String examiner) {
+        this.examiner = examiner;
+    }
+
+    public String getModuleNumber() {
+        return moduleNumber;
+    }
+
+    public void setModuleNumber(String moduleNumber) {
+        this.moduleNumber = moduleNumber;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
     }
 
     public Course getCourse() {
