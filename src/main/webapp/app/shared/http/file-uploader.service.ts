@@ -83,7 +83,7 @@ export class FileUploaderService {
         const formData = new FormData();
         formData.append('file', file, fileName);
         const keepFileName: boolean = !!options && options.keepFileName;
-        const url = `/api/markdownFileUpload?keepFileName=${keepFileName}`;
+        const url = `/api/markdown-file-upload?keepFileName=${keepFileName}`;
         return this.http.post<FileUploadResponse>(url, formData).toPromise();
     }
 

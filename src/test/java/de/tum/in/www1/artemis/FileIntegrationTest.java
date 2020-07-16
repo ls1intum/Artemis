@@ -249,7 +249,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         // upload file
-        request.postWithMultipartFile("/api/markdownFileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -258,7 +258,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         // upload file
-        JsonNode response = request.postWithMultipartFile("/api/markdownFileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+        JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
         assertThat(responsePath.contains("markdown")).isTrue();
@@ -270,7 +270,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
         // upload file
-        request.postWithMultipartFile("/api/markdownFileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

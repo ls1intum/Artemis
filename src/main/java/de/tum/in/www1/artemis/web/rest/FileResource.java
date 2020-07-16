@@ -111,14 +111,14 @@ public class FileResource {
     }
 
     /**
-     * POST /markdownFileUpload : Upload a new file for markdown.
+     * POST /markdown-file-upload : Upload a new file for markdown.
      *
      * @param file The file to save
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("/markdownFileUpload")
+    @PostMapping("/markdown-file-upload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
