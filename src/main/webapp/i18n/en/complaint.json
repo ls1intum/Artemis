@@ -14,7 +14,7 @@
             "submit": "Submit a complaint",
             "created": "Your complaint has been submitted!",
             "moreInfo": "Complain",
-            "complaintNotAllowedTooltip": "Currently not allowed: complaint limit reached or assessment review period is over",
+            "complaintNotAllowedTooltip": "Currently not allowed: complaint limit reached or assessment review period is over.",
             "responseExists": "Response to your complaint",
             "hint": "Scroll down to review the complaint",
             "accepted": "Accepted",
