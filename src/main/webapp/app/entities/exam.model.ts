@@ -18,6 +18,9 @@ export class Exam implements BaseEntity {
      * grace period in seconds - time in which students can still submit even though working time is over
      */
     public gracePeriod: number;
+    public examiner: string;
+    public moduleNumber: string;
+    public courseName: string;
 
     public startText: string;
     public endText: string;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,8 +10,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-
-import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**

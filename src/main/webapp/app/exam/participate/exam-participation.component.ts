@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -18,18 +18,17 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { catchError, map, throttleTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { Subject } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { cloneDeep } from 'lodash';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -92,6 +91,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     autoSaveInterval: number;
 
     private synchronizationAlert$ = new Subject();
+
+    private programmingSubmissionSubscriptions: Subscription[] = [];
 
     loadingExam: boolean;
 
@@ -212,8 +213,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
                         // We need to provide a submission to update the navigation bar status indicator
-                        // TODO: this could be removed after the latest submission for programming exercises if fetched through websockets and passed to the exam participation
-                        participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        if (participation.submissions && participation.submissions.length === 0) {
+                            participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        }
+                    }
+
+                    // setup subscription for programming exercises
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
                     }
                 });
             });
@@ -320,6 +328,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     ngOnDestroy(): void {
+        this.programmingSubmissionSubscriptions.forEach((subscription) => {
+            subscription.unsubscribe();
+        });
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -362,15 +373,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 if (participation !== null) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        this.programmingSubmissionService.getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, true).subscribe((programmingSubmissionObj) => {
-                            if (programmingSubmissionObj.submission) {
-                                participation.submissions = [programmingSubmissionObj.submission];
-                            }
-                            this.activateActiveComponent();
-                        });
-                    } else {
-                        this.activateActiveComponent();
+                        const subscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
+                        this.programmingSubmissionSubscriptions.push(subscription);
                     }
+                    this.activateActiveComponent();
                 }
             });
         } else {
@@ -398,14 +405,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
             map((createdParticipation: StudentParticipation) => {
-                // if the same participations is not yet present in the exercise -> add it
-                if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
-                    // remove because of circular dependency when converting to JSON
-                    delete createdParticipation.exercise;
-                    exercise.studentParticipations.push(createdParticipation);
-                    if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
-                        createdParticipation.submissions[0].isSynced = true;
-                    }
+                // remove because of circular dependency when converting to JSON
+                delete createdParticipation.exercise;
+                exercise.studentParticipations.push(createdParticipation);
+                if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
+                    createdParticipation.submissions[0].isSynced = true;
                 }
                 this.generateParticipationStatus.next('success');
                 return createdParticipation;
@@ -506,5 +510,43 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
+    }
+
+    /**
+     * Creates a subscription for the latest programming exercise submission for a given exerciseId and participationId
+     * This is done here, because this component exists throughout the whole lifecycle of an exam
+     * (e.g. programming-exam-submission exists only while the exam is not over)
+     * @param exerciseId id of the exercise we want to subscribe to
+     * @param participationId id of the participation we want to subscribe to
+     */
+    private createProgrammingExerciseSubmission(exerciseId: number, participationId: number): Subscription {
+        return this.programmingSubmissionService
+            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
+            .pipe(
+                filter((submissionStateObj) => submissionStateObj !== null),
+                distinctUntilChanged(),
+            )
+            .subscribe((programmingSubmissionObj) => {
+                const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
+                    programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                );
+                if (
+                    exerciseForSubmission &&
+                    exerciseForSubmission.studentParticipations &&
+                    exerciseForSubmission.studentParticipations.length > 0 &&
+                    exerciseForSubmission.studentParticipations[0] &&
+                    exerciseForSubmission.studentParticipations[0].submissions &&
+                    exerciseForSubmission.studentParticipations[0].submissions.length > 0
+                ) {
+                    if (programmingSubmissionObj.submission) {
+                        // delete backwards reference so that it is still serializable
+                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
+                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
+                        delete submissionCopy.participation;
+                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                    }
+                }
+            });
     }
 }

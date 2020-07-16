@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz.scoring;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
  * Proportional with Penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x

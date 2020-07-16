@@ -13,7 +13,6 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * A QuizQuestionStatistic.
