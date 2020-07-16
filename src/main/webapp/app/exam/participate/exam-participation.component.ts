@@ -530,8 +530,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
                     programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
-                // TODO: check if the correct participation is selected
-                // TODO: participations might don't come in correct order ->
                 if (
                     exerciseForSubmission &&
                     exerciseForSubmission.studentParticipations &&
