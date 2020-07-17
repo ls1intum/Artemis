@@ -524,6 +524,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(optionalStudent1Exam.get()).isNotNull();
         var studentExam2 = optionalStudent1Exam.get();
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         // Remove student2 from the exam
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
 
@@ -611,6 +613,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
 
         // Remove student1 from the exam and his participations
         var params = new LinkedMultiValueMap<String, String>();
@@ -918,6 +923,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
+
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
@@ -955,6 +963,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 resultRepository.save(result);
             }
         }
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
