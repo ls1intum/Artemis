@@ -27,7 +27,6 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 import { ExamTimerComponent } from './timer/exam-timer.component';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -61,7 +60,6 @@ const ENTITY_STATES = [...examParticipationState];
         ExamNavigationBarComponent,
         ExamCodeEditorStudentContainerComponent,
         ExamTimerComponent,
-        ExamInformationComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}

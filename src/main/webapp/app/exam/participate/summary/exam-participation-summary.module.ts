@@ -14,6 +14,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 
 @NgModule({
     imports: [
@@ -34,7 +35,8 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
         FileUploadExamSummaryComponent,
         TextExamSummaryComponent,
         QuizExamSummaryComponent,
+        ExamInformationComponent,
     ],
-    exports: [ExamParticipationSummaryComponent],
+    exports: [ExamParticipationSummaryComponent, ExamInformationComponent],
 })
 export class ArtemisParticipationSummaryModule {}
