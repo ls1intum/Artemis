@@ -4,7 +4,9 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -579,11 +581,21 @@ public class ExamService {
         return generatedParticipations.size();
     }
 
-    private static void executeInParallel(Runnable task) {
+    private void executeInParallel(Runnable task) {
         final int numberOfParallelThreads = 10;
         ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
-        forkJoinPool.submit(task);
+        Future<?> future = forkJoinPool.submit(task);
         forkJoinPool.shutdown();
+        // Wait for the operation to complete
+        try {
+            future.get();
+        }
+        catch (InterruptedException e) {
+            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
+        }
+        catch (ExecutionException e) {
+            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        }
     }
 
     /**
