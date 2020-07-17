@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
@@ -547,9 +548,9 @@ public class ExamService {
 
         var studentExams = exam.getStudentExams();
 
-        List<Participation> generatedParticipations = new ArrayList<>();
+        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        for (StudentExam studentExam : studentExams) {
+        studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -557,6 +558,7 @@ public class ExamService {
                         .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
                                 && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
+                        SecurityUtils.setAuthorizationObject();
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
@@ -571,7 +573,7 @@ public class ExamService {
                     }
                 }
             }
-        }
+        });
 
         return generatedParticipations.size();
     }

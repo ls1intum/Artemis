@@ -92,13 +92,13 @@ public class ProgrammingExerciseExportService {
                     + "' of the following students or teams: " + participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> zippedRepoFiles = new ArrayList<>();
-        for (ProgrammingExerciseStudentParticipation participation : participations) {
+        List<Path> zippedRepoFiles = Collections.synchronizedList(new ArrayList<>());
+        participations.parallelStream().forEach(participation -> {
             Repository repo = null;
             try {
                 if (participation.getRepositoryUrlAsUrl() == null) {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
-                    continue;
+                    return;
                 }
                 repo = zipRepositoryForParticipation(programmingExercise, participation, repositoryExportOptions, zippedRepoFiles);
             }
@@ -109,7 +109,7 @@ public class ProgrammingExerciseExportService {
             finally {
                 deleteTempLocalRepository(participation, repo);
             }
-        }
+        });
 
         if (zippedRepoFiles.isEmpty()) {
             log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
@@ -217,8 +217,6 @@ public class ProgrammingExerciseExportService {
                 + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
         createZipFile(zipFilePath, pathsToZippedRepos);
         scheduleForDeletion(zipFilePath, 15);
-        log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
-
         return new File(zipFilePath.toString());
     }
 
