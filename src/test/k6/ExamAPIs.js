@@ -15,6 +15,7 @@ import {
     getStudentExams,
     updateWorkingTime,
     evaluateQuizzes,
+    submitExam,
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
@@ -176,19 +177,19 @@ export default function (data) {
                     case 'quiz':
                         submissions = studentParticipations[0].submissions;
                         submissionId = submissions[0].id;
-                        submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
+                        submissions[0] = submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
                         break;
 
                     case 'text':
                         submissions = studentParticipations[0].submissions;
                         submissionId = submissions[0].id;
-                        submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                        submissions[0] = submitRandomTextAnswerExam(artemis, exercise, submissionId);
                         break;
 
                     case 'modeling':
                         submissions = studentParticipations[0].submissions;
                         submissionId = submissions[0].id;
-                        submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+                        submissions[0] = submitRandomModelingAnswerExam(artemis, exercise, submissionId);
                         break;
 
                     case 'programming':
@@ -210,6 +211,10 @@ export default function (data) {
                 sleep(1);
             }
         }
+
+        studentExam.started = true;
+        console.log('Submitting exam: ' + JSON.stringify(studentExam));
+        submitExam(artemis, data.courseId, data.examId, studentExam);
 
         // console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
     });
