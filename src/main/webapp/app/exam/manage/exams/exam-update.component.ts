@@ -98,22 +98,25 @@ export class ExamUpdateComponent implements OnInit {
 
     get isValidPublishResultsDate(): boolean {
         // allow instructors to set publishResultsDate later
-        if(!this.exam.publishResultsDate)
+        if (!this.exam.publishResultsDate) {
             return true;
+        }
         return moment(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
         // allow instructors to set examStudentReviewStart later
-        if(!this.exam.examStudentReviewStart)
+        if (!this.exam.examStudentReviewStart) {
             return true;
+        }
         return moment(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
         // allow instructors to set examStudentReviewEnd later
-        if(!this.exam.examStudentReviewEnd)
+        if (!this.exam.examStudentReviewEnd) {
             return true;
+        }
         return moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 }
