@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -19,8 +20,8 @@ export class ExamPointsSummaryComponent {
      * - we are after the exam.publishResultsDate
      * - at least one exercise has a result
      */
-    show() {
-        return !!(this.exam && this.exam.publishResultsDate && this.exam.publishResultsDate.isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
+    show(): boolean {
+        return !!(this.exam && this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
     }
 
     /**
