@@ -10,7 +10,7 @@
                       }
         }}</span>
     </h2>
-    <jhi-exam-timer class="col-md-3 justify-content-end" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>

@@ -19,6 +19,9 @@ export class ExamTimerComponent implements OnInit {
     @Input()
     criticalTime: moment.Duration;
 
+    @Input()
+    isEndView = false;
+
     @Output()
     timerAboutToEnd: EventEmitter<void> = new EventEmitter<void>();
 
