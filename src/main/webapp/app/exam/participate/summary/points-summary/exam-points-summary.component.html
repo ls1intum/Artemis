@@ -1,4 +1,4 @@
-<div *ngIf="hasResults()">
+<div *ngIf="show()" style="max-width: 980px;">
     <h4>{{ 'artemisApp.exam.examSummary.points.yourPoints' | translate }}</h4>
     <table class="table table-striped">
         <thead>
@@ -12,14 +12,20 @@
         <tbody>
             <tr *ngFor="let exercise of exercises; let i = index">
                 <th scope="row">{{ i }}</th>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td>
+                    <span *ngIf="exercise.title">{{ exercise.title }}</span>
+                </td>
+                <td>
+                    {{ calculateAchievedPointsForExercise(exercise) }}
+                </td>
+                <td>
+                    <span *ngIf="exercise.maxScore">{{ exercise.maxScore }}</span>
+                </td>
             </tr>
             <tr>
                 <th colspan="2" class="text-right">{{ 'artemisApp.exam.examSummary.points.sum' | translate }}</th>
-                <td></td>
-                <td></td>
+                <td>{{ calculatePointsSum() }}</td>
+                <td>{{ calculateMaxPointsSum() }}</td>
             </tr>
         </tbody>
     </table>

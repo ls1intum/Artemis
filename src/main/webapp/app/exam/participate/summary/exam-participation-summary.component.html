@@ -13,8 +13,8 @@
     </h2>
 </div>
 <jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-5" *ngIf="studentExam && studentExam.exercises">
-    <jhi-exam-points-summary [exercises]="studentExam.exercises"></jhi-exam-points-summary>
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
+    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam"></jhi-exam-points-summary>
 </div>
 <h4 class="mb-0">{{ 'artemisApp.exam.exercises' | translate }}</h4>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
