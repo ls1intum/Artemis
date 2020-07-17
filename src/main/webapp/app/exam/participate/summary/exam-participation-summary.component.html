@@ -12,6 +12,7 @@
         </button>
     </h2>
 </div>
+<jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
