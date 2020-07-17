@@ -14,7 +14,13 @@
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
                 "viewResult": " View Result",
-                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor."
+                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
+                "points": {
+                    "exercise": "Exercise",
+                    "yourPoints": "Your points",
+                    "maxPoints": "Max. points",
+                    "sum": "Sum"
+                }
             },
             "title": "Exam",
             "startExam": "Start",
