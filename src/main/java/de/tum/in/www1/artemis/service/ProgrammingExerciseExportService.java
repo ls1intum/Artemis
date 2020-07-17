@@ -92,7 +92,7 @@ public class ProgrammingExerciseExportService {
                     + "' of the following students or teams: " + participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> zippedRepoFiles = new ArrayList<>();
+        List<Path> zippedRepoFiles = Collections.synchronizedList(new ArrayList<>());
         participations.parallelStream().forEach(participation -> {
             Repository repo = null;
             try {

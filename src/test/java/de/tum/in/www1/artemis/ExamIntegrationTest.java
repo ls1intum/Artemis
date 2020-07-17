@@ -614,6 +614,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
+
         // Remove student1 from the exam and his participations
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withParticipationsAndSubmission", "true");
@@ -960,6 +963,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 resultRepository.save(result);
             }
         }
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO

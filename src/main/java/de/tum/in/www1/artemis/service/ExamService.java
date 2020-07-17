@@ -548,7 +548,7 @@ public class ExamService {
 
         var studentExams = exam.getStudentExams();
 
-        List<Participation> generatedParticipations = new ArrayList<>();
+        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
         studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
