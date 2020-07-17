@@ -222,7 +222,7 @@ export default function (data) {
 
                                 break;
                         }
-                        sleep(1);
+                        sleep(10);
                     }
                 }
 
