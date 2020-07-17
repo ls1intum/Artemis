@@ -11,6 +11,7 @@
             {{ 'artemisApp.complaint.moreInfo' | translate }}
         </button>
         <button
+            *ngIf="!isExamMode"
             class="btn btn-primary ml-1"
             [class.not-allowed]="!isTimeOfComplaintValid"
             (click)="toggleRequestMoreFeedbackForm()"
