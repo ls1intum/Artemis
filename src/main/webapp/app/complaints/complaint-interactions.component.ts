@@ -96,7 +96,7 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     get isTimeOfComplaintValid(): boolean {
         if (this.isExamMode) {
-            return this.isWithinStudentReviewPeriod && !!this.result.completionDate;
+            return this.isWithinStudentReviewPeriod && !!this.result && !!this.result.completionDate;
         } else if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
             if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
