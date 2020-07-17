@@ -9,7 +9,6 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 
 import * as moment from 'moment';
 
@@ -20,8 +19,9 @@ import * as moment from 'moment';
 export class ExamExerciseRowButtonsComponent {
     @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() exam: Exam;
+    @Input() examId: number;
     @Input() exerciseGroupId: number;
+    @Input() latestIndividualEndDate: moment.Moment | null;
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -36,12 +36,11 @@ export class ExamExerciseRowButtonsComponent {
         private eventManager: JhiEventManager,
     ) {}
 
-    // TODO: We should rather use the latest individual endDate
     /**
-     * Checks whether the exam is over using the exam endDate
+     * Checks whether the exam is over using the latestIndividualEndDate
      */
     isExamOver() {
-        return this.exam.endDate ? this.exam.endDate.isBefore(moment()) : false;
+        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(moment()) : false;
     }
 
     /**
