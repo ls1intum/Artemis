@@ -1,4 +1,3 @@
-import * as moment from 'moment';
 import { Component, Input, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -11,6 +10,7 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -26,7 +26,6 @@ export class QuizExamSummaryComponent implements OnInit {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     exerciseWithSolution: QuizExercise;
-    showMissingResultsNotice = false;
 
     @Input()
     exercise: QuizExercise;
@@ -40,7 +39,7 @@ export class QuizExamSummaryComponent implements OnInit {
     @Input()
     exam: Exam;
 
-    constructor(private exerciseService: QuizExerciseService) {}
+    constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
@@ -50,9 +49,6 @@ export class QuizExamSummaryComponent implements OnInit {
                 this.exerciseWithSolution = response.body!;
             });
         }
-        // we only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
-        this.showMissingResultsNotice =
-            this.exam != null && this.exam.publishResultsDate != null && this.exam.publishResultsDate.isBefore(moment()) && !this.exercise.studentParticipations[0].results[0];
     }
 
     get quizQuestions() {
@@ -119,5 +115,18 @@ export class QuizExamSummaryComponent implements OnInit {
     getScoreForQuizQuestion(quizQuestionId: number) {
         const submittedAnswer = this.submission.submittedAnswers.find((answer) => answer.quizQuestion.id === quizQuestionId);
         return Math.round(submittedAnswer!.scoreInPoints * 100) / 100;
+    }
+
+    /**
+     * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
+     */
+    showMissingResultsNotice(): boolean {
+        if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+            return (
+                this.exam.publishResultsDate.isBefore(this.serverDateService.now()) &&
+                (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
+            );
+        }
+        return false;
     }
 }
