@@ -98,9 +98,20 @@
     </button>
 
     <button
+        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        type="submit"
+        [hidden]="!isExamOver()"
+        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
+        class="btn btn-primary btn-sm mr-1"
+    >
+        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
+    </button>
+
+    <button
         *ngIf="course.isAtLeastInstructor"
         type="submit"
-        [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>

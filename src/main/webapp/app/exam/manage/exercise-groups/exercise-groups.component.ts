@@ -18,6 +18,7 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -27,6 +28,7 @@ export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
     course: Course;
     examId: number;
+    exam: Exam;
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -58,6 +60,7 @@ export class ExerciseGroupsComponent implements OnInit {
     loadExerciseGroups() {
         this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
             (res) => {
+                this.exam = res.body!;
                 this.exerciseGroups = res.body!.exerciseGroups;
                 this.course = res.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
