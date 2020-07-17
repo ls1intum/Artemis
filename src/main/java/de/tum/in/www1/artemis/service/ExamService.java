@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -550,7 +551,7 @@ public class ExamService {
 
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        studentExams.parallelStream().forEach(studentExam -> {
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -573,9 +574,23 @@ public class ExamService {
                     }
                 }
             }
-        });
+        }));
 
         return generatedParticipations.size();
+    }
+
+    private static void executeInParallel(Runnable task) {
+        final int numberOfParallelThreads = 10;
+        ForkJoinPool forkJoinPool = null;
+        try {
+            forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
+            forkJoinPool.submit(task);
+        }
+        finally {
+            if (forkJoinPool != null) {
+                forkJoinPool.shutdown();
+            }
+        }
     }
 
     /**
