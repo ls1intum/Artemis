@@ -45,7 +45,7 @@ export class QuizExamSummaryComponent implements OnInit {
     ngOnInit(): void {
         this.updateViewFromSubmission();
         // get quiz-exercise with solution after result is published
-        if (this.resultsPublished) {
+        if (this.resultsPublished && this.exercise) {
             this.exerciseService.find(this.exercise.id).subscribe((response) => {
                 this.exerciseWithSolution = response.body!;
             });
@@ -69,7 +69,7 @@ export class QuizExamSummaryComponent implements OnInit {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise.quizQuestions && this.submission) {
+        if (this.exercise && this.exercise.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
             this.exercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
@@ -115,8 +115,12 @@ export class QuizExamSummaryComponent implements OnInit {
 
     getScoreForQuizQuestion(quizQuestionId: number): number {
         if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
-            const submittedAnswer = this.submission.submittedAnswers.find((answer) => answer.quizQuestion?.id === quizQuestionId);
-            return Math.round(submittedAnswer!.scoreInPoints * 100) / 100;
+            const submittedAnswer = this.submission.submittedAnswers.find((answer) => {
+                return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
+            });
+            if (submittedAnswer && submittedAnswer.scoreInPoints) {
+                return Math.round(submittedAnswer.scoreInPoints * 100) / 100;
+            }
         }
         return 0;
     }
