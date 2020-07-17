@@ -98,9 +98,8 @@
     </button>
 
     <button
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastInstructor && isExamOver() && exercise.type === exerciseType.QUIZ"
         type="submit"
-        [hidden]="!isExamOver()"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
         class="btn btn-primary btn-sm mr-1"
     >
