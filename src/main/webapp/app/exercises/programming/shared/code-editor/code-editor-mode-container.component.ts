@@ -53,7 +53,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
     /**
      * Setting unsaved files also updates the editorState / commitState.
      * - unsaved files empty -> EditorState.CLEAN
-     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES
+     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES and CommitState.UNCOMMITTED_CHANGES
      * - unsaved files empty AND editorState.SAVING -> CommitState.UNCOMMITTED_CHANGES
      * @param unsavedFiles
      */
@@ -66,6 +66,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
             this.editorState = EditorState.CLEAN;
         } else {
             this.editorState = EditorState.UNSAVED_CHANGES;
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
     }
 
