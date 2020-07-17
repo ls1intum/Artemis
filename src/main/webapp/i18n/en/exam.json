@@ -17,6 +17,7 @@
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
+                    "overview": "Overview",
                     "yourPoints": "Your points",
                     "maxPoints": "Max. points",
                     "sum": "Sum"
