@@ -90,8 +90,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to {{ title }}",
-            "finish": "Hello {{ fullName }}, this is the end of {{ title }}",
+            "greeting": "Welcome to {{ title }}. Your full name is: ",
+            "finish": "This is the end of {{ title }}. Your full name is:",
             "submitFinalExam": "Please confirm the text below and click on 'Finish' within the time left to hand in your exam.<br />(Note: If you miss this step, your exam will not be graded)",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
@@ -106,7 +106,8 @@
             "handInEarly": "Hand in early",
             "continueAfterHandInEarly": "Continue",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
-            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer."
+            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer.",
+            "namePlaceholder": "Enter your full name here"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
