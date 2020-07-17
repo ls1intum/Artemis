@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import * as moment from 'moment';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -121,7 +122,14 @@ export class QuizExamSummaryComponent implements OnInit {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+        if (
+            this.exam &&
+            this.exam.publishResultsDate &&
+            moment.isMoment(this.exam.publishResultsDate) &&
+            this.exercise &&
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0
+        ) {
             return (
                 this.exam.publishResultsDate.isBefore(this.serverDateService.now()) &&
                 (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
