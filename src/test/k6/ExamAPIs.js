@@ -153,10 +153,22 @@ export default function (data) {
         const timeUntilExamStart = differenceInMilliSeconds / 1000;
 
         console.log(`Waiting ${timeUntilExamStart}s for exam start`);
-        sleep(1 + timeUntilExamStart);
 
         const workingTime = studentExam.workingTime;
         const individualEndDate = new Date(parsedStartDate.getTime() + workingTime * 1000);
+
+        artemis.websocket(function (socket) {
+            // Send heartbeat to server so session is kept alive
+            socket.setInterval(function timeout() {
+                socket.send('\n');
+            }, 10000);
+
+            socket.setInterval(function timeout() {
+                socket.close();
+            }, individualEndDate.getTime() - Date.now());
+        });
+
+        sleep(1 + timeUntilExamStart);
 
         console.log('Individual end date: ' + individualEndDate.toISOString());
 
