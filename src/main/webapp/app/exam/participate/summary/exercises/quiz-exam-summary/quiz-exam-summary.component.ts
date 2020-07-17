@@ -113,7 +113,7 @@ export class QuizExamSummaryComponent implements OnInit {
         }
     }
 
-    getScoreForQuizQuestion(quizQuestionId: number): number {
+    getScoreForQuizQuestion(quizQuestionId: number): number | undefined {
         if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
             const submittedAnswer = this.submission.submittedAnswers.find((answer) => {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
@@ -122,7 +122,6 @@ export class QuizExamSummaryComponent implements OnInit {
                 return Math.round(submittedAnswer.scoreInPoints * 100) / 100;
             }
         }
-        return 0;
     }
 
     /**
