@@ -113,9 +113,12 @@ export class QuizExamSummaryComponent implements OnInit {
         }
     }
 
-    getScoreForQuizQuestion(quizQuestionId: number) {
-        const submittedAnswer = this.submission.submittedAnswers.find((answer) => answer.quizQuestion.id === quizQuestionId);
-        return Math.round(submittedAnswer!.scoreInPoints * 100) / 100;
+    getScoreForQuizQuestion(quizQuestionId: number): number {
+        if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
+            const submittedAnswer = this.submission.submittedAnswers.find((answer) => answer.quizQuestion?.id === quizQuestionId);
+            return Math.round(submittedAnswer!.scoreInPoints * 100) / 100;
+        }
+        return 0;
     }
 
     /**
