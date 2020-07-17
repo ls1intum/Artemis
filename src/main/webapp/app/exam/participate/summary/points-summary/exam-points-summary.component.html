@@ -11,7 +11,7 @@
         </thead>
         <tbody>
             <tr *ngFor="let exercise of exercises; let i = index">
-                <th scope="row">{{ i }}</th>
+                <th scope="row">{{ i + 1 }}</th>
                 <td>
                     <span *ngIf="exercise.title">{{ exercise.title }}</span>
                 </td>
