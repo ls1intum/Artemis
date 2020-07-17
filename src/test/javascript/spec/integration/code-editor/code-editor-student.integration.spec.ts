@@ -396,13 +396,14 @@ describe('CodeEditorStudentIntegration', () => {
         const newFileContent = 'new lorem ipsum';
         const saveFilesSubject = new Subject();
         saveFilesStub.returns(saveFilesSubject);
+        // Changes commit state to UNCOMMITTED_CHANGES and editor state to UNSAVED_CHANGES
         container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
         loadFile(selectedFile, fileContent);
         containerFixture.detectChanges();
 
         // init saving
         container.actions.saveChangedFilesWithTimeout().subscribe();
-        expect(container.commitState).to.equal(CommitState.CLEAN);
+        expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         expect(container.editorState).to.equal(EditorState.SAVING);
 
         // emit saving result
