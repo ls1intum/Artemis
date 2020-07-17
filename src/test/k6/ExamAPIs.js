@@ -166,67 +166,71 @@ export default function (data) {
             socket.setInterval(function timeout() {
                 socket.close();
             }, individualEndDate.getTime() - Date.now());
-        });
 
-        sleep(1 + timeUntilExamStart);
+            socket.setTimeout(function timeout() {
+                console.log('Sleeping now');
 
-        console.log('Individual end date: ' + individualEndDate.toISOString());
+                sleep(1 + timeUntilExamStart);
 
-        console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
+                console.log('Individual end date: ' + individualEndDate.toISOString());
 
-        let programmingSubmissionCounter = 0;
-        endDateLoop: while (true) {
-            let submissions, submissionId;
-            for (const exercise of studentExam.exercises) {
-                if (individualEndDate.getTime() - Date.now() < 5000) {
-                    console.log(`End date is reached`);
-                    break endDateLoop;
-                }
-                console.log(`Exercise is of type ${exercise.type}`);
-                let studentParticipations = exercise.studentParticipations;
+                console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
 
-                switch (exercise.type) {
-                    case 'quiz':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submissions[0] = submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
-                        break;
-
-                    case 'text':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submissions[0] = submitRandomTextAnswerExam(artemis, exercise, submissionId);
-                        break;
-
-                    case 'modeling':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submissions[0] = submitRandomModelingAnswerExam(artemis, exercise, submissionId);
-                        break;
-
-                    case 'programming':
-                        console.log('Programming submission counter is ' + programmingSubmissionCounter);
-                        if (programmingSubmissionCounter === 0) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, someSuccessfulErrorContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
-                        } else if (programmingSubmissionCounter === 1) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.SUCCESS);
-                        } else if (programmingSubmissionCounter === 2) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, buildErrorContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+                let programmingSubmissionCounter = 0;
+                endDateLoop: while (true) {
+                    let submissions, submissionId;
+                    for (const exercise of studentExam.exercises) {
+                        if (individualEndDate.getTime() - Date.now() < 5000) {
+                            console.log(`End date is reached`);
+                            break endDateLoop;
                         }
-                        programmingSubmissionCounter++;
+                        console.log(`Exercise is of type ${exercise.type}`);
+                        let studentParticipations = exercise.studentParticipations;
 
-                        break;
+                        switch (exercise.type) {
+                            case 'quiz':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
+                                break;
+
+                            case 'text':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                                break;
+
+                            case 'modeling':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+                                break;
+
+                            case 'programming':
+                                console.log('Programming submission counter is ' + programmingSubmissionCounter);
+                                if (programmingSubmissionCounter === 0) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, someSuccessfulErrorContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
+                                } else if (programmingSubmissionCounter === 1) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.SUCCESS);
+                                } else if (programmingSubmissionCounter === 2) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, buildErrorContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+                                }
+                                programmingSubmissionCounter++;
+
+                                break;
+                        }
+                        sleep(1);
+                    }
                 }
-                sleep(1);
-            }
-        }
 
-        studentExam.started = true;
-        console.log('Submitting exam: ' + JSON.stringify(studentExam));
-        submitExam(artemis, data.courseId, data.examId, studentExam);
+                studentExam.started = true;
+                console.log('Submitting exam: ' + JSON.stringify(studentExam));
+                submitExam(artemis, data.courseId, data.examId, studentExam);
+            }, 1000);
+        });
 
         // console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
     });
