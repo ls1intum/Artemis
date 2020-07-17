@@ -1,4 +1,4 @@
-<div class="quiz-content container">
+<div class="quiz-content container" *ngIf="quizQuestions && quizQuestions.length > 0">
     <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice()">
         {{ 'artemisApp.exam.examSummary.missingResultNotice' | translate }}
     </div>
