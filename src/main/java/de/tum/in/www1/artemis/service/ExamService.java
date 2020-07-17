@@ -581,16 +581,9 @@ public class ExamService {
 
     private static void executeInParallel(Runnable task) {
         final int numberOfParallelThreads = 10;
-        ForkJoinPool forkJoinPool = null;
-        try {
-            forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
-            forkJoinPool.submit(task);
-        }
-        finally {
-            if (forkJoinPool != null) {
-                forkJoinPool.shutdown();
-            }
-        }
+        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
+        forkJoinPool.submit(task);
+        forkJoinPool.shutdown();
     }
 
     /**
