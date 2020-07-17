@@ -101,7 +101,8 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.publishResultsDate) {
             return true;
         }
-        return moment(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.endDate !== undefined && moment(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -109,7 +110,8 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.examStudentReviewStart) {
             return true;
         }
-        return moment(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.publishResultsDate !== undefined && moment(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
@@ -117,6 +119,7 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.examStudentReviewEnd) {
             return true;
         }
-        return moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 }
