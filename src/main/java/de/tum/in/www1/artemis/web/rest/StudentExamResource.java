@@ -288,6 +288,7 @@ public class StudentExamResource {
                         QuizQuestion question = submittedAnswer.getQuizQuestion();
                         if (question instanceof ShortAnswerQuestion) {
                             ((ShortAnswerQuestion) question).setCorrectMappings(null);
+                            ((ShortAnswerQuestion) question).setSolutions(null);
                         }
                         else if (question instanceof DragAndDropQuestion) {
                             ((DragAndDropQuestion) question).setCorrectMappings(null);
