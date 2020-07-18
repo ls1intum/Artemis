@@ -294,6 +294,9 @@ describe('CodeEditorActionsComponent', () => {
 
         // save completed
         saveObservable.next(null);
+        // Because of stubbing and the missing container which propagates the unsavedFiles property to this component
+        // unsavedFiles won't get updated correctly and we have to do this ourselves
+        comp.unsavedFiles = {};
         expect(comp.commitState).to.equal(CommitState.COMMITTING);
 
         // commit result returns

@@ -503,7 +503,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: null });
 
-        // Make sure the state propagates through the components after savesFilesStub returns
+        // Make sure the state propagates through the components after saveFilesStub returns
         containerFixture.detectChanges();
 
         expect(container.editorState).to.equal(EditorState.CLEAN);
