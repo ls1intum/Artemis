@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -181,6 +182,8 @@ public class StudentExamService {
 
         // if everything worked -> set studentExam to submitted and set submission date
         studentExam.setSubmitted(true);
+        // Set the claimed working time by the student
+        studentExam.setWorkingTime(Math.toIntExact(Duration.between(studentExam.getExam().getStartDate(), ZonedDateTime.now()).toSeconds()));
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
