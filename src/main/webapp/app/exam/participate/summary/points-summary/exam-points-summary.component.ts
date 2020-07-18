@@ -41,7 +41,10 @@ export class ExamPointsSummaryComponent {
      */
     calculatePointsSum(): number {
         if (this.exercises) {
-            return this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0);
+            return round(
+                this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0),
+                1,
+            );
         }
         return 0;
     }
@@ -51,7 +54,10 @@ export class ExamPointsSummaryComponent {
      */
     calculateMaxPointsSum(): number {
         if (this.exercises) {
-            return this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0);
+            return round(
+                this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0),
+                1,
+            );
         }
         return 0;
     }
