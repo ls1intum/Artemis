@@ -501,9 +501,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        if (this.guardExamEnded()) {
-            return;
-        }
         this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 

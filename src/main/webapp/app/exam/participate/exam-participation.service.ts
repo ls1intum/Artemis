@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
