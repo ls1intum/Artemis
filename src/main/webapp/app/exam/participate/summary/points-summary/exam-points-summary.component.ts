@@ -83,7 +83,7 @@ export class ExamPointsSummaryComponent {
 
     private static getResultPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return exercise.maxScore * (exercise.studentParticipations[0].results[0].score / 100);
+            return Math.round(exercise.maxScore * (exercise.studentParticipations[0].results[0].score / 100) * 100) / 100;
         }
         return 0;
     }
