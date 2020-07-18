@@ -76,6 +76,15 @@ export class ExamScoresComponent implements OnInit {
         csvExporter.generateCsv(data);
     }
 
+    /**
+     * Wrapper for round utility function so it can be used in the template.
+     * @param value
+     * @param exp
+     */
+    round(value: any, exp: number) {
+        return round(value, exp);
+    }
+
     private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
