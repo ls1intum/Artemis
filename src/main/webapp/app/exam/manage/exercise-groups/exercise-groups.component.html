@@ -139,9 +139,10 @@
                         <td class="d-flex justify-content-end">
                             <jhi-exam-exercise-row-buttons
                                 [course]="course"
+                                [examId]="exam.id"
                                 [exercise]="exercise"
-                                [examId]="examId"
                                 [exerciseGroupId]="exerciseGroup.id"
+                                [latestIndividualEndDate]="latestIndividualEndDate"
                                 (onDeleteExercise)="loadExerciseGroups()"
                             ></jhi-exam-exercise-row-buttons>
                         </td>

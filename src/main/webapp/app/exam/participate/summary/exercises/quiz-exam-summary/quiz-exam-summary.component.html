@@ -1,5 +1,5 @@
-<div class="quiz-content container">
-    <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice">
+<div class="quiz-content container" *ngIf="quizQuestions && quizQuestions.length > 0">
+    <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice()">
         {{ 'artemisApp.exam.examSummary.missingResultNotice' | translate }}
     </div>
     <div *ngFor="let question of quizQuestions; let i = index">
@@ -11,7 +11,9 @@
             [clickDisabled]="true"
             [showResult]="resultsPublished && !showMissingResultsNotice"
             [submittedQuizExercise]="exercise"
-            [submittedResult]="exercise.studentParticipations[0].results[0]"
+            [submittedResult]="
+                exercise.studentParticipations[0]?.results && exercise.studentParticipations[0]?.results.length > 0 ? exercise.studentParticipations[0].results[0] : null
+            "
             [forceSampleSolution]="false"
             [questionIndex]="i + 1"
             [score]="getScoreForQuizQuestion(question.id)"
