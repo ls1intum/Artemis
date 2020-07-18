@@ -22,7 +22,8 @@
         justify-content: center;
 
         @media (max-width: 1199.98px) {
-            display: block;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* background image and click-layer styles */
