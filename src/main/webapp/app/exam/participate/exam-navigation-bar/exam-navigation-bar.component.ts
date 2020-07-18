@@ -64,18 +64,24 @@ export class ExamNavigationBarComponent implements OnInit {
         this.setExerciseButtonStatus(exerciseIndex);
     }
 
-    saveExercise() {
+    /**
+     * Save the currently active exercise and go to the next exercise.
+     * @param changeExercise whether to go to the next exercise {boolean}
+     */
+    saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
         const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
-        if (newIndex > this.exercises.length - 1) {
-            // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-            this.changeExercise(this.exerciseIndex, true);
-        } else {
-            this.changeExercise(newIndex, true);
+        if (changeExercise) {
+            if (newIndex > this.exercises.length - 1) {
+                // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+                this.changeExercise(this.exerciseIndex, true);
+            } else {
+                this.changeExercise(newIndex, true);
+            }
         }
     }
 
@@ -136,7 +142,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * Notify parent component when user wants to hand in early
      */
     handInEarly() {
-        this.saveExercise();
+        this.saveExercise(false);
         this.onExamHandInEarly.emit();
     }
 
