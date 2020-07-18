@@ -10,6 +10,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 
+import * as moment from 'moment';
+
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
@@ -19,6 +21,7 @@ export class ExamExerciseRowButtonsComponent {
     @Input() exercise: Exercise;
     @Input() examId: number;
     @Input() exerciseGroupId: number;
+    @Input() latestIndividualEndDate: moment.Moment | null;
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -32,6 +35,13 @@ export class ExamExerciseRowButtonsComponent {
         private quizExerciseService: QuizExerciseService,
         private eventManager: JhiEventManager,
     ) {}
+
+    /**
+     * Checks whether the exam is over using the latestIndividualEndDate
+     */
+    isExamOver() {
+        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(moment()) : false;
+    }
 
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
