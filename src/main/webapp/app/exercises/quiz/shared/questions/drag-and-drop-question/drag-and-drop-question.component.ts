@@ -77,10 +77,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    @HostListener('window:resize') onResize() {
-        resizeImage();
-    }
-
     ngOnChanges(): void {
         this.countCorrectMappings();
     }
