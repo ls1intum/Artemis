@@ -267,7 +267,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe((studentExam) => (this.studentExam = studentExam));
     }
 
     /**
