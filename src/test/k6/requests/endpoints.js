@@ -29,6 +29,7 @@ export const STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/st
 export const STUDENT_EXAM_WORKINGTIME = (courseId, examId, studentExamId) => `${EXAM(courseId, examId)}/studentExams/${studentExamId}/workingTime`;
 export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/start-exercises`;
 export const EVALUATE_QUIZ_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/evaluate-quiz-exercises`;
+export const SUBMIT_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/submit`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/studentExams/conduction`;
 export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
 export const MODELING_EXERCISE = '/modeling-exercises';

@@ -31,7 +31,7 @@ export const quizManagementRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/re-evaluate',
         component: QuizReEvaluateComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

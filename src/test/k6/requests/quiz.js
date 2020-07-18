@@ -134,6 +134,7 @@ export function submitRandomAnswerRESTExam(artemis, exercise, numberOfQuestions,
         }
         fail('ERROR: Could not submit quiz (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
+    return answer;
 }
 
 export function generateAnswer(question) {

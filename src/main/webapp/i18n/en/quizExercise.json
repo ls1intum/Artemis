@@ -133,6 +133,7 @@
                     "no_changes": "No changes, which affect the existing results",
                     "quizStatistic": "The existing statistics must be recalculated!",
                     "results": "The existing results must be recalculated!",
+                    "exam": "This is an exam exercise. Make sure to evaluate the quiz before attempting to re-evaluate it!",
                     "resulttext": {
                         "element_deleted": "The question-element will be removed from all results",
                         "element_invalid": "All participants receive the points for the invalid question-element",
