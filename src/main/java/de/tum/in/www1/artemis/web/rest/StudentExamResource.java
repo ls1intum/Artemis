@@ -53,9 +53,11 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
+    private final ExamService examService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, ExamRepository examRepository) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository, ExamService examService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -65,6 +67,7 @@ public class StudentExamResource {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.examRepository = examRepository;
+        this.examService = examService;
     }
 
     /**
@@ -96,7 +99,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(exercise, participations);
+            filterForExam(studentExam, exercise, participations);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -151,15 +154,15 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
      * Updates all submissions and marks student exam as submitted according to given student exam
-     *
+     * <p>
      * NOTE: the studentExam has to be sent with all exercises, participations and submissions
      *
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExam   the student exam with exercises, participations and submissions
-     * @return              empty response with status code:
-     *                          200 if successful
-     *                          400 if student exam was in an illegal state
+     * @param courseId    the course to which the student exams belong to
+     * @param examId      the exam to which the student exams belong to
+     * @param studentExam the student exam with exercises, participations and submissions
+     * @return empty response with status code:
+     * 200 if successful
+     * 400 if student exam was in an illegal state
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -174,12 +177,12 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
-     *
+     * <p>
      * NOTE: when this is called it will also mark the student exam as started
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @param request   the http request, used to extract headers
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @param request  the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
@@ -215,13 +218,17 @@ public class StudentExamResource {
         // 4th: connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(exercise, participations);
+            filterForExam(studentExam, exercise, participations);
 
             // Filter attributes of exercises that should not be visible to the student
             // Note: sensitive information for quizzes was already removed in the for loop above
             if (!(exercise instanceof QuizExercise)) {
                 // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
                 exercise.filterSensitiveInformation();
+            }
+            else {
+                // filter out information depending on quiz state
+                ((QuizExercise) exercise).filterForStudentsDuringQuiz();
             }
         }
 
@@ -244,10 +251,10 @@ public class StudentExamResource {
     /**
      * Find the participation in participations that belongs to the given exercise that includes the exercise data
      *
-     * @param exercise the exercise for which the user participation should be filtered
+     * @param exercise       the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
      */
-    public void filterForExam(Exercise exercise, List<StudentParticipation> participations) {
+    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
@@ -259,6 +266,8 @@ public class StudentExamResource {
 
         // get user's participation for the exercise
         StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+
+        ZonedDateTime latestEndDate = this.examService.getLatestIndiviudalExamEndDate(studentExam.getExam());
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
@@ -272,6 +281,22 @@ public class StudentExamResource {
                 Result result = latestSubmission.get().getResult();
                 if (result != null) {
                     participation.setResults(Set.of(result));
+                }
+                // for quiz exercises remove correct answer options / mappings from response
+                if (ZonedDateTime.now().isBefore(latestEndDate) && exercise instanceof QuizExercise) {
+                    QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
+                    quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                        QuizQuestion question = submittedAnswer.getQuizQuestion();
+                        if (question instanceof ShortAnswerQuestion) {
+                            ((ShortAnswerQuestion) question).setCorrectMappings(null);
+                        }
+                        else if (question instanceof DragAndDropQuestion) {
+                            ((DragAndDropQuestion) question).setCorrectMappings(null);
+                        }
+                        else if (question instanceof MultipleChoiceQuestion) {
+                            ((MultipleChoiceQuestion) question).setAnswerOptions(null);
+                        }
+                    });
                 }
             }
             // add participation into an array
