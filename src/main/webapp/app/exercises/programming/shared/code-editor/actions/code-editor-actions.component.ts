@@ -176,9 +176,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => this.repositoryService.commit()),
                 tap(() => {
-                    // The user might have changed files while the commit was executed
+                    // The user might have changed files while the commit was executing
                     if (_isEmpty(this.unsavedFiles)) {
                         this.commitState = CommitState.CLEAN;
+                    } else {
+                        this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     }
                     // Note: this is not 100% clean, but not setting it here would complicate the state model.
                     // We just assume that after the commit a build happens if the repo is buildable.
