@@ -12,19 +12,15 @@ import { Submission } from 'app/entities/submission.model';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input()
-    exercises: Exercise[] = [];
-
-    @Input()
-    endDate: Moment;
+    @Input() exercises: Exercise[] = [];
+    @Input() exerciseIndex = 0;
+    @Input() endDate: Moment;
 
     @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
-
-    exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
     criticalTime = moment.duration(5, 'minutes');
