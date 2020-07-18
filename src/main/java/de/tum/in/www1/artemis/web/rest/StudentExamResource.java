@@ -253,6 +253,7 @@ public class StudentExamResource {
      *
      * @param exercise       the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
+     * @param studentExam the student exam which is prepared
      */
     public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations) {
         // remove the unnecessary inner course attribute
