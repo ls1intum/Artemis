@@ -181,7 +181,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Notify the parent component that the user decided against handing in early
+     * Notify the parent component that the user wants to continue after hand in early
      */
     continueAfterHandInEarly() {
         this.onExamContinueAfterHandInEarly.emit();
