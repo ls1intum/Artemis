@@ -1,16 +1,20 @@
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
     <h2 class="col-md-6" style="text-align: center;">
-        <span>{{
-            'artemisApp.examParticipation.finish'
-                | translate
-                    : {
-                          title: exam.title,
-                          fullName: accountName
-                      }
-        }}</span>
+        <span
+            >{{
+                'artemisApp.examParticipation.finish'
+                    | translate
+                        : {
+                              title: exam.title
+                          }
+            }}
+        </span>
+        <span style="color: blue;">
+            {{ accountName }}
+        </span>
     </h2>
-    <jhi-exam-timer class="col-md-3 justify-content-end" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
@@ -24,10 +28,12 @@
             'artemisApp.examParticipation.greeting'
                 | translate
                     : {
-                          title: exam.title,
-                          fullName: accountName
+                          title: exam.title
                       }
         }}</span>
+        <span style="color: blue;">
+            {{ accountName }}
+        </span>
     </h2>
     <div class="mt-3 mb-4 text-center">
         <div class="mb-2">
@@ -95,11 +101,12 @@
             <div class="row justify-content-center">
                 <div class="form-group">
                     <input
+                        size="50"
                         type="text"
                         class="form-control"
                         name="fullname"
                         id="fullname"
-                        placeholder="Name"
+                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | translate"
                         [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'change' }"
                         [disabled]="startView ? waitingForExamStart : false"

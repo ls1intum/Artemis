@@ -68,6 +68,7 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
+            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
@@ -83,8 +84,8 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Hallo {{ fullName }}, willkommen zu {{ title }}",
-            "finish": "Hallo {{ fullName }}, das ist das Ende von {{ title }}",
+            "greeting": "Willkommen zu {{ title }}. Ihr voller Name ist: ",
+            "finish": "Das ist das Ende von {{ title }}. Ihr voller Name ist: ",
             "submitFinalExam": "Bitte bestätige den Text unten und klicke innerhalb der verbleibenden Zeit auf 'Beenden', um die Prüfung abzugeben.<br />(Hinweis: Wenn du diesen Schritt versäumst, wird deine Prüfung nicht benotet)",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
@@ -99,7 +100,8 @@
             "handInEarly": "Vorzeitig abgeben",
             "continueAfterHandInEarly": "Weitermachen",
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
-            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen."
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "namePlaceholder": "Trage deinen vollen Namen hier ein"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
