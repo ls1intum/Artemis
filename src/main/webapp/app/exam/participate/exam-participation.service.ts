@@ -84,19 +84,19 @@ export class ExamParticipationService {
     }
 
     /**
-     * check to see whether the exam has ended.
-     * If the exam has ended, it sets the {@link StudentExam#ended} flag which updates the UI.
+     * check to see whether the exam has already been submitted.
+     * If the exam has been submitted, it sets the {@link StudentExam#ended} flag which updates the UI.
      *
      * @param courseId
      * @param examId
      * @param studentExam
      */
-    public synchronizeEndedFlag(courseId: number, examId: number, studentExam: StudentExam) {
+    public synchronizeSubmittedFlag(courseId: number, examId: number, studentExam: StudentExam) {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
         // get whether the exam has already been submitted
         this.httpClient.get<StudentExam>(url).subscribe((res: StudentExam) => {
-            if (res.ended) {
-                studentExam.ended = true;
+            if (res.submitted) {
+                studentExam.submitted = true;
             }
         });
     }

@@ -432,7 +432,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
     triggerSave(force: boolean) {
-        if (this.guardExamEnded()) {
+        if (this.guardExamSubmitted()) {
             return;
         }
         // before the request, we would mark the submission as isSynced = true
@@ -501,7 +501,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        if (this.guardExamEnded()) {
+        if (this.guardExamSubmitted()) {
             return;
         }
         this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
@@ -518,8 +518,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         console.error(error);
     }
 
-    private guardExamEnded(): boolean {
-        this.examParticipationService.synchronizeEndedFlag(this.courseId, this.examId, this.studentExam);
+    private guardExamSubmitted(): boolean {
+        this.examParticipationService.synchronizeSubmittedFlag(this.courseId, this.examId, this.studentExam);
         return this.studentExam.ended;
     }
 
