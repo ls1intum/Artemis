@@ -520,7 +520,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private guardExamSubmitted(): boolean {
         this.examParticipationService.synchronizeSubmittedFlag(this.courseId, this.examId, this.studentExam);
-        return this.studentExam.submitted;
+        return this.studentExam.ended;
     }
 
     /**
