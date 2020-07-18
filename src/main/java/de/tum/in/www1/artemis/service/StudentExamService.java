@@ -47,13 +47,16 @@ public class StudentExamService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
+    private final SubmissionVersionService submissionVersionService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.submissionVersionService = submissionVersionService;
     }
 
     /**
@@ -130,6 +133,15 @@ public class StudentExamService {
         }
 
         for (Exercise exercise : studentExam.getExercises()) {
+            // we do not apply the following checks for programming exercises or file upload exercises
+            if (exercise instanceof ProgrammingExercise) {
+                // TODO: lock the student repository in the VCS Service in case the student handed in early
+                continue;
+            }
+            if (exercise instanceof FileUploadExercise) {
+                continue;
+            }
+
             // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
             if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                 for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
@@ -143,10 +155,7 @@ public class StudentExamService {
                         }
                         studentParticipation.setExercise(exercise);
                         for (Submission submission : studentParticipation.getSubmissions()) {
-                            // we do not apply the following checks for programming exercises
-                            if (exercise instanceof ProgrammingExercise) {
-                                continue;
-                            }
+
                             // check that the submission belongs to the already saved participation
                             if (!existingParticipation.getSubmissions().contains(submission)) {
                                 return forbidden();
@@ -178,6 +187,14 @@ public class StudentExamService {
                             }
                             else if (exercise instanceof ModelingExercise) {
                                 modelingSubmissionRepository.save((ModelingSubmission) submission);
+                            }
+
+                            // versioning of submission
+                            try {
+                                submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            }
+                            catch (Exception ex) {
+                                log.error("Submission version could not be saved: " + ex);
                             }
                         }
                     }

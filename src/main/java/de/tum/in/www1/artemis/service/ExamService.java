@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -598,8 +599,11 @@ public class ExamService {
             }
         }
 
+        long start = System.nanoTime();
+        log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
     }

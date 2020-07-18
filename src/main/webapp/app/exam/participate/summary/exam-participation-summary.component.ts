@@ -62,7 +62,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        }
     }
 
     /**

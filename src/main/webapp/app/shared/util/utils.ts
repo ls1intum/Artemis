@@ -48,3 +48,29 @@ export const stringifyCircular = (val: any): string => {
 export const stringifyIgnoringFields = (val: any, ...ignoredFields: string[]): string => {
     return JSON.stringify(omit(val, ignoredFields));
 };
+
+/**
+ * Helper function to make actually rounding possible
+ * @param value
+ * @param exp
+ */
+export const round = (value: any, exp: number) => {
+    if (typeof exp === 'undefined' || +exp === 0) {
+        return Math.round(value);
+    }
+
+    value = +value;
+    exp = +exp;
+
+    if (isNaN(value) || !(exp % 1 === 0)) {
+        return NaN;
+    }
+
+    // Shift
+    value = value.toString().split('e');
+    value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
+
+    // Shift back
+    value = value.toString().split('e');
+    return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
+};
