@@ -282,16 +282,8 @@ public class StudentExamResource {
                     QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
                     quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
                         QuizQuestion question = submittedAnswer.getQuizQuestion();
-                        if (question instanceof ShortAnswerQuestion) {
-                            ((ShortAnswerQuestion) question).setCorrectMappings(null);
-                            ((ShortAnswerQuestion) question).setSolutions(null);
-                        }
-                        else if (question instanceof DragAndDropQuestion) {
-                            ((DragAndDropQuestion) question).setCorrectMappings(null);
-                        }
-                        else if (question instanceof MultipleChoiceQuestion) {
-                            ((MultipleChoiceQuestion) question).setAnswerOptions(null);
-                        }
+                        // Dynamic binding will call the right overridden method for different question types
+                        question.filterForStudentsDuringQuiz();
                     });
                 }
             }
