@@ -154,7 +154,6 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
      * Updates all submissions and marks student exam as submitted according to given student exam
-     * <p>
      * NOTE: the studentExam has to be sent with all exercises, participations and submissions
      *
      * @param courseId    the course to which the student exams belong to
@@ -177,7 +176,6 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
-     * <p>
      * NOTE: when this is called it will also mark the student exam as started
      *
      * @param courseId the course to which the student exam belongs to
