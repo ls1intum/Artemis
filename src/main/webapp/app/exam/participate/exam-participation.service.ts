@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
@@ -81,6 +81,24 @@ export class ExamParticipationService {
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExam));
+    }
+
+    /**
+     * check to see whether the exam has ended.
+     * If the exam has ended, it sets the {@link StudentExam#ended} flag which updates the UI.
+     *
+     * @param courseId
+     * @param examId
+     * @param studentExam
+     */
+    public synchronizeEndedFlag(courseId: number, examId: number, studentExam: StudentExam) {
+        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
+        // get whether the exam has already been submitted
+        this.httpClient.get<StudentExam>(url).subscribe((res: StudentExam) => {
+            if (res.ended) {
+                studentExam.ended = true;
+            }
+        });
     }
 
     /**

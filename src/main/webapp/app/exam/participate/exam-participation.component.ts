@@ -432,6 +432,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param force is set to true, when the current exercise should be saved (even if there are no changes)
      */
     triggerSave(force: boolean) {
+        if (this.guardExamEnded()) {
+            return;
+        }
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
@@ -510,6 +513,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
+    }
+
+    private guardExamEnded(): boolean {
+        this.examParticipationService.synchronizeEndedFlag(this.courseId, this.examId, this.studentExam);
+        return this.studentExam.ended;
     }
 
     /**
