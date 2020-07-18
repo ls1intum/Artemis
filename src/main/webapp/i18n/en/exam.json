@@ -67,7 +67,8 @@
             "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
         },
         "examParticipation": {
-            "timer": "Time Left: ",
+            "timer": "Time left: ",
+            "timerEndView": "Time left to submit exam: ",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
