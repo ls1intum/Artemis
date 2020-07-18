@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-points-summary',
@@ -28,11 +29,11 @@ export class ExamPointsSummaryComponent {
      * Calculate the achieved points of an exercise.
      * @param exercise
      */
-    calculateAchievedPointsForExercise(exercise: Exercise): number | '-' {
+    calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return ExamPointsSummaryComponent.getResultPoints(exercise);
+            return round(exercise.maxScore * (exercise.studentParticipations[0].results[0].score / 100), 1);
         }
-        return '-';
+        return 0;
     }
 
     /**
@@ -40,7 +41,7 @@ export class ExamPointsSummaryComponent {
      */
     calculatePointsSum(): number {
         if (this.exercises) {
-            return this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getResultPoints(nextExercise), 0);
+            return this.exercises.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0);
         }
         return 0;
     }
@@ -79,13 +80,6 @@ export class ExamPointsSummaryComponent {
             exercise.studentParticipations[0].results.length > 0 &&
             exercise.studentParticipations[0].results[0].score
         );
-    }
-
-    private static getResultPoints(exercise: Exercise): number {
-        if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return round(exercise.maxScore * (exercise.studentParticipations[0].results[0].score / 100), 1);
-        }
-        return 0;
     }
 
     private static getMaxScore(exercise: Exercise): number {
