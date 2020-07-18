@@ -163,7 +163,12 @@
                         class="drop-location"
                         *ngFor="let dropLocation of question.dropLocations"
                         [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                        [ngStyle]="{ top: dropLocation.posY / 2 + '%', left: dropLocation.posX / 2 + '%', width: dropLocation.width / 2 + '%', height: dropLocation.height / 2 + '%' }"
+                        [ngStyle]="{
+                            top: dropLocation.posY / 2 + '%',
+                            left: dropLocation.posX / 2 + '%',
+                            width: dropLocation.width / 2 + '%',
+                            height: dropLocation.height / 2 + '%'
+                        }"
                         (mousedown)="dropLocationMouseDown(dropLocation)"
                         (onDropSuccess)="onDragDrop(dropLocation, $event)"
                         dnd-droppable

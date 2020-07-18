@@ -20,10 +20,10 @@
     .drag-and-drop-area {
         display: flex;
         justify-content: center;
+        align-items: center;
 
         @media (max-width: 1199.98px) {
             flex-direction: column;
-            align-items: center;
         }
 
         /* background image and click-layer styles */
