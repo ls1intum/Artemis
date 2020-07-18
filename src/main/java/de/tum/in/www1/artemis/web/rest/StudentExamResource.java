@@ -138,12 +138,7 @@ public class StudentExamResource {
         if (workingTime <= 0) {
             return badRequest();
         }
-        Optional<Exam> optionalExam = examRepository.findById(examId);
-        if (optionalExam.isEmpty()) {
-            return notFound();
-        }
-        var exam = optionalExam.get();
-
+        Exam exam = examRepository.findById(examId).get();
         // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
         if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
             return badRequest();
