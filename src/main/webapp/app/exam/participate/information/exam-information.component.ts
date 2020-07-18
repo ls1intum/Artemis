@@ -1,0 +1,26 @@
+import { Component, Input } from '@angular/core';
+import * as moment from 'moment';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { Exam } from 'app/entities/exam.model';
+
+@Component({
+    selector: 'jhi-exam-information',
+    templateUrl: './exam-information.component.html',
+})
+export class ExamInformationComponent {
+    @Input() exam: Exam;
+    @Input() studentExam: StudentExam;
+
+    /**
+     * Calculates the end time depending on the individual working time.
+     */
+    endTime(): moment.Moment | null {
+        if (!this.exam || !this.exam.endDate) {
+            return null;
+        }
+        if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
+            return moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        }
+        return this.exam.endDate;
+    }
+}
