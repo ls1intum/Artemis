@@ -75,6 +75,7 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
+            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
