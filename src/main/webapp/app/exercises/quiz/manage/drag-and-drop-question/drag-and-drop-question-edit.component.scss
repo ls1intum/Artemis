@@ -87,6 +87,7 @@
 
     .background-area {
         position: relative;
+        margin: auto;
         @include user-select(none);
 
         img {
