@@ -224,10 +224,6 @@ public class StudentExamResource {
                 // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
                 exercise.filterSensitiveInformation();
             }
-            else {
-                // filter out information depending on quiz state
-                ((QuizExercise) exercise).filterForStudentsDuringQuiz();
-            }
         }
 
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
