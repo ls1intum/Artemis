@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -76,8 +74,8 @@ public class StudentExamService {
     /**
      * Get one student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
@@ -90,8 +88,8 @@ public class StudentExamService {
     /**
      * Get one optional student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
@@ -108,7 +106,7 @@ public class StudentExamService {
      * @param currentUser the current user
      * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
-    public ResponseEntity<Void> submitStudentExam(StudentExam studentExam, User currentUser) {
+    public ResponseEntity<StudentExam> submitStudentExam(StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
         StudentExam existingStudentExam = findOne(studentExam.getId());
@@ -173,6 +171,14 @@ public class StudentExamService {
                                 // recreate pointers back to submission in each submitted answer
                                 for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submission).getSubmittedAnswers()) {
                                     submittedAnswer.setSubmission(((QuizSubmission) submission));
+                                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                                        ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
+                                                .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+                                    }
+                                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                                        ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
+                                                .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+                                    }
                                 }
                                 quizSubmissionRepository.save((QuizSubmission) submission);
                             }
@@ -201,7 +207,7 @@ public class StudentExamService {
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
-        return ok();
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
@@ -242,7 +248,7 @@ public class StudentExamService {
      * Get one student exam by exercise and user
      *
      * @param exerciseId the id of an exam exercise
-     * @param userId the id of the student taking the exam
+     * @param userId     the id of the student taking the exam
      * @return the student exam without associated entities
      */
     @NotNull

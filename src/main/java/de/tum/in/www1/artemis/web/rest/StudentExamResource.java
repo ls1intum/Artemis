@@ -151,22 +151,21 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
      * Updates all submissions and marks student exam as submitted according to given student exam
-     *
      * NOTE: the studentExam has to be sent with all exercises, participations and submissions
      *
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExam   the student exam with exercises, participations and submissions
-     * @return              empty response with status code:
-     *                          200 if successful
-     *                          400 if student exam was in an illegal state
+     * @param courseId    the course to which the student exams belong to
+     * @param examId      the exam to which the student exams belong to
+     * @param studentExam the student exam with exercises, participations and submissions
+     * @return empty response with status code:
+     * 200 if successful
+     * 400 if student exam was in an illegal state
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
+    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
+        Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
         return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam, currentUser));
     }
 
@@ -174,12 +173,11 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
-     *
      * NOTE: when this is called it will also mark the student exam as started
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @param request   the http request, used to extract headers
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @param request  the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
@@ -244,7 +242,7 @@ public class StudentExamResource {
     /**
      * Find the participation in participations that belongs to the given exercise that includes the exercise data
      *
-     * @param exercise the exercise for which the user participation should be filtered
+     * @param exercise       the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
      */
     public void filterForExam(Exercise exercise, List<StudentParticipation> participations) {
