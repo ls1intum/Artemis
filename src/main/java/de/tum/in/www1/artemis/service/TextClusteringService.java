@@ -97,6 +97,7 @@ public class TextClusteringService {
 
     /**
      * Calculates the similarity clusters for a given TextExercise
+     * Also saves the cluster tree and the distance matrix
      * Can Take a long time and should not be called in the main Thread
      * @param exercise the TextExercise
      */
@@ -115,7 +116,15 @@ public class TextClusteringService {
             networkingError.printStackTrace();
             return;
         }
-        List<TextEmbedding> embeddings = computeEmbeddings(new ArrayList<>(textBlockMap.values()), exercise);
+        List<TextBlock> blocks = new ArrayList<>(textBlockMap.values());
+
+        List<TextEmbedding> embeddings = computeEmbeddings(blocks, exercise);
+
+        for(int i = 0; i < blocks.size(); i++) {
+            TextBlock block = blocks.get(i);
+            block.setTreeId(i);
+            textBlockRepository.save(block);
+        }
 
         // Invoke clustering for Text Blocks
         final Map<Integer, TextCluster> clusters;
@@ -132,8 +141,17 @@ public class TextClusteringService {
             return;
         }
 
-        // Update exercise of the treeNodes and store in Database
         final List<TreeNode> treeNodes = treeNodeRepository.saveAll(clusterTree);
+        // Add an artificial root node
+        long rootIndex = distanceMatrix.size() - 1;
+        TreeNode rootNode = new TreeNode();
+        rootNode.setChild(rootIndex);
+        rootNode.setParent(rootIndex);
+        rootNode.setChild_size(0);
+        rootNode.setLambda_val(-1);
+        treeNodes.add((int) rootIndex, rootNode);
+
+        // Update exercise of the treeNodes and store in Database
         for(TreeNode node: treeNodes) {
             node.setExercise(exercise);
         }

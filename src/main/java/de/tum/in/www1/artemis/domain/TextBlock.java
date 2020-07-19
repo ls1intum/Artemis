@@ -56,6 +56,10 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private Double addedDistance;
 
+    @Column(name = "tree_id")
+    @JsonIgnore
+    private Integer treeId;
+
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
@@ -171,6 +175,10 @@ public class TextBlock implements Serializable {
     void setPositionInCluster(Integer positionInCluster) {
         this.positionInCluster = positionInCluster;
     }
+
+    public int getTreeId() { return treeId; }
+
+    public void setTreeId(int treeId) { this.treeId = treeId; }
 
     @Override
     public boolean equals(Object o) {

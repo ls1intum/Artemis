@@ -21,11 +21,9 @@ public class PairwiseDistance implements Serializable {
     @JsonIgnore
     private Long id;
 
-    @NaturalId
     @Column(name = "block_i", nullable = false)
     private long block_i;
 
-    @NaturalId
     @Column(name = "block_j", nullable = false)
     private long block_j;
 
