@@ -686,8 +686,9 @@ public class ExamService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
     public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
     }
@@ -714,8 +715,9 @@ public class ExamService {
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
     public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }

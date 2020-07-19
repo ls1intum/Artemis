@@ -53,11 +53,9 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
-    private final ExamService examService;
-
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, ExamRepository examRepository, ExamService examService) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -67,7 +65,6 @@ public class StudentExamResource {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.examRepository = examRepository;
-        this.examService = examService;
     }
 
     /**
@@ -262,8 +259,6 @@ public class StudentExamResource {
         // get user's participation for the exercise
         StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
 
-        ZonedDateTime latestEndDate = this.examService.getLatestIndiviudalExamEndDate(studentExam.getExam());
-
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
             // remove inner exercise from participation
@@ -278,13 +273,16 @@ public class StudentExamResource {
                     participation.setResults(Set.of(result));
                 }
                 // for quiz exercises remove correct answer options / mappings from response
-                if (ZonedDateTime.now().isBefore(latestEndDate) && exercise instanceof QuizExercise) {
-                    QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
-                    quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
-                        QuizQuestion question = submittedAnswer.getQuizQuestion();
-                        // Dynamic binding will call the right overridden method for different question types
-                        question.filterForStudentsDuringQuiz();
-                    });
+                if (exercise instanceof QuizExercise) {
+                    // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
+                    if (studentExam.getExam().getPublishResultsDate() == null || ZonedDateTime.now().isBefore(studentExam.getExam().getPublishResultsDate())) {
+                        QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
+                        quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                            QuizQuestion question = submittedAnswer.getQuizQuestion();
+                            // Dynamic binding will call the right overridden method for different question types
+                            question.filterForStudentsDuringQuiz();
+                        });
+                    }
                 }
             }
             // add participation into an array
