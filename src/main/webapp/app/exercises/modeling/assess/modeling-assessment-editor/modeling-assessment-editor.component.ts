@@ -226,7 +226,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.modelingExercise && this.modelingExercise.course
                 ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
                 : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+        let isBeforeAssessmentDueDate = true;
+        // Add check as the assessmentDueDate must not be set for exercises
+        if (this.modelingExercise?.assessmentDueDate) {
+            isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+        }
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
@@ -262,7 +266,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
+        if ((this.model && this.referencedFeedback.length < this.model.elements.length) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button

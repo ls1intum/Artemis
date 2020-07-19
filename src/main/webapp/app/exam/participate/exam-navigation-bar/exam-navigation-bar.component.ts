@@ -4,9 +4,6 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { timer } from 'rxjs';
-import { distinctUntilChanged, map, first } from 'rxjs/operators';
 import { Submission } from 'app/entities/submission.model';
 
 @Component({
@@ -15,33 +12,22 @@ import { Submission } from 'app/entities/submission.model';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input()
-    exercises: Exercise[] = [];
-
-    @Input()
-    endDate: Moment;
+    @Input() exercises: Exercise[] = [];
+    @Input() exerciseIndex = 0;
+    @Input() endDate: Moment;
 
     @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
+    @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
-
-    exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    private timer$ = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
+    criticalTime = moment.duration(5, 'minutes');
 
-    displayTime$ = this.timer$.pipe(
-        map((timeLeft: moment.Duration) => this.updateDisplayTime(timeLeft)),
-        distinctUntilChanged(),
-    );
-
-    criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {
-        this.timer$.pipe(first((duration: moment.Duration) => duration.asSeconds() <= 1)).subscribe(() => this.examAboutToEnd.emit());
-    }
+    constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -58,6 +44,11 @@ export class ExamNavigationBarComponent implements OnInit {
         });
     }
 
+    triggerExamAboutToEnd() {
+        this.saveExercise();
+        this.examAboutToEnd.emit();
+    }
+
     changeExercise(exerciseIndex: number, force: boolean) {
         // out of index -> do nothing
         if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -69,27 +60,25 @@ export class ExamNavigationBarComponent implements OnInit {
         this.setExerciseButtonStatus(exerciseIndex);
     }
 
-    saveExercise() {
+    /**
+     * Save the currently active exercise and go to the next exercise.
+     * @param changeExercise whether to go to the next exercise {boolean}
+     */
+    saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
         const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
-        if (submission) {
+        // we do not submit programming exercises on a save
+        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
-        if (newIndex > this.exercises.length - 1) {
-            // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-            this.changeExercise(this.exerciseIndex, true);
-        } else {
-            this.changeExercise(newIndex, true);
+        if (changeExercise) {
+            if (newIndex > this.exercises.length - 1) {
+                // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+                this.changeExercise(this.exerciseIndex, true);
+            } else {
+                this.changeExercise(newIndex, true);
+            }
         }
-    }
-
-    updateDisplayTime(timeDiff: moment.Duration) {
-        if (!this.criticalTime && timeDiff.asMinutes() < 5) {
-            this.criticalTime = true;
-        }
-        return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.asMinutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
     }
 
     isProgrammingExercise() {
@@ -105,7 +94,6 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             if (submission.isSynced) {
                 // make button blue
-                this.icon = 'check';
                 if (exerciseIndex === this.exerciseIndex) {
                     return 'synced active';
                 } else {
@@ -144,6 +132,14 @@ export class ExamNavigationBarComponent implements OnInit {
             // Until then show, that the exercise is synced
             return 'synced';
         }
+    }
+
+    /**
+     * Notify parent component when user wants to hand in early
+     */
+    handInEarly() {
+        this.saveExercise(false);
+        this.onExamHandInEarly.emit();
     }
 
     // TODO: find usages of similar logic -> put into utils method

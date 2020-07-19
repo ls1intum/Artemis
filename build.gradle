@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.28.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.29.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "4.5.1"
+    id "com.diffplug.spotless" version "5.1.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.3.2"
+version = "4.3.6"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -158,7 +158,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.14.30'
+    implementation 'org.gitlab4j:gitlab4j-api:4.15.1'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -166,7 +166,7 @@ dependencies {
     implementation files('libs/acli-9.0.0.jar')
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.8.0.202006091008-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.8.1.202007141445-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -190,7 +190,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:4.0.2"
-    implementation "com.hazelcast:hazelcast-hibernate53:2.0.0"
+    implementation "com.hazelcast:hazelcast-hibernate53:2.1.0"
     implementation "com.hazelcast:hazelcast-spring:4.0.2"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
@@ -226,7 +226,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.49.Final"
     implementation "io.projectreactor.netty:reactor-netty:0.9.9.RELEASE"
     implementation "org.springframework:spring-messaging:5.2.7.RELEASE"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.6.RELEASE_1"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.7.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -240,8 +240,8 @@ dependencies {
     implementation ("io.springfox:springfox-swagger2:2.10.5") {
         exclude module: "mapstruct"
     }
-    implementation "io.springfox:springfox-bean-validators:2.10.5"
-    implementation "mysql:mysql-connector-java:8.0.20"
+    implementation "io.springfox:springfox-bean-validators:3.0.0"
+    implementation "mysql:mysql-connector-java:8.0.21"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
@@ -265,8 +265,8 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.14.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.14.1'
-    testImplementation "org.mockito:mockito-core:3.3.3"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.3.3"
+    testImplementation "org.mockito:mockito-core:3.4.4"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.4.4"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"
@@ -358,6 +358,7 @@ task buildJarForDocker (type: Exec) {
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
+// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates

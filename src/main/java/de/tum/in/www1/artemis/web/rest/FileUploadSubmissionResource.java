@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,9 +56,11 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final AssessmentService assessmentService;
+
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, AssessmentService assessmentService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -69,6 +70,7 @@ public class FileUploadSubmissionResource {
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
+        this.assessmentService = assessmentService;
     }
 
     /**
@@ -251,9 +253,10 @@ public class FileUploadSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

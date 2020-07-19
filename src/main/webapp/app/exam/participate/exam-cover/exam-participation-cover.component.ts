@@ -11,6 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -24,8 +25,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     @Input() startView: boolean;
     @Input() exam: Exam;
+    @Input() studentExam: StudentExam;
+    @Input() handInEarly = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
+    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
     course: Course | null;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -42,6 +46,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     accountName = '';
     enteredName = '';
 
+    graceEndDate: moment.Moment;
+    criticalTime = moment.duration(30, 'seconds');
+
     constructor(
         private courseService: CourseManagementService,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -52,7 +59,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * on init use the correct information to display in either start or final view
+     * on init uses the correct information to display in either start or final view
      * changes in the exam and subscription is handled in the exam-participation.component
      */
     ngOnInit(): void {
@@ -65,6 +72,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         } else {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
+            // this should be the individual working end + the grace period
+            this.graceEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds').add(this.exam.gracePeriod, 'seconds');
         }
 
         this.accountService.identity().then((user) => {
@@ -104,7 +113,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * displays popup or start exam participation immediately
      */
     startExam() {
-        this.examParticipationService.loadStudentExam(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+            this.studentExam = studentExam;
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
             if (this.hasStarted()) {
                 this.onExamStarted.emit(studentExam);
@@ -170,17 +180,24 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         this.onExamEnded.emit();
     }
 
+    /**
+     * Notify the parent component that the user wants to continue after hand in early
+     */
+    continueAfterHandInEarly() {
+        this.onExamContinueAfterHandInEarly.emit();
+    }
+
     get startButtonEnabled(): boolean {
-        return !!(!this.falseName && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
+        return !!(this.nameIsCorrect && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
     }
 
     get endButtonEnabled(): boolean {
         // TODO: add logic when confirm can be clicked
-        return !!(!this.falseName && this.confirmed && this.exam);
+        return !!(this.nameIsCorrect && this.confirmed && this.exam);
     }
 
-    get falseName(): boolean {
-        return this.enteredName.trim() !== this.accountName.trim();
+    get nameIsCorrect(): boolean {
+        return this.enteredName.trim() === this.accountName.trim();
     }
 
     get inserted(): boolean {

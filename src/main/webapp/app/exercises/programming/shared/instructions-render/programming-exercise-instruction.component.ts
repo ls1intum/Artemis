@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -50,6 +50,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     set latestResult(result: Result | null) {
         this.latestResultValue = result;
+        this.programmingExerciseTaskWrapper.setExercise(this.exercise);
         this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
         this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
     }
@@ -134,10 +135,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                             }),
                         );
                     } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                        // Refreshes the state in the singleton task and uml extension service
+                        this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
                         this.updateMarkdown();
                         return of(null);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
+                        // Refreshes the state in the singleton task and uml extension service
+                        this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
                         return of(null);
                     } else {
@@ -175,8 +180,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
         }
-        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArray) => {
-            this.tasks = tasks;
+        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArrayWithExercise) => {
+            // Multiple instances of the code editor use the TaskWrapperService. We have to check, that the returned tasks belong to this exercise
+            if (tasks.exerciseId === this.exercise.id) {
+                this.tasks = tasks.tasks;
+            }
         });
     }
 

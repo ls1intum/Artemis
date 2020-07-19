@@ -167,6 +167,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.checkPermissions();
         this.computeTotalScore();
         this.isLoading = false;
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -192,6 +195,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
+
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -211,6 +217,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -419,7 +428,12 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = moment().isBefore(this.exercise?.assessmentDueDate!);
+
+        let isBeforeAssessmentDueDate = true;
+        // Add check as the assessmentDueDate must not be set for exercises
+        if (this.exercise?.assessmentDueDate) {
+            isBeforeAssessmentDueDate = moment().isBefore(this.exercise?.assessmentDueDate!);
+        }
         // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }

@@ -52,7 +52,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         rules: [{
             test: /\.(j|t)s$/,
             enforce: 'pre',
-            loader: 'tslint-loader',
+            loader: 'eslint-loader',
             exclude: /node_modules/
         },
         {

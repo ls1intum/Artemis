@@ -143,26 +143,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function onDurationChange
-     * @desc Reach to changes of duration inputs by updating model and ui
-     */
-    onDurationChange(): void {
-        const duration = moment.duration(this.duration);
-        this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
-        this.updateDuration();
-    }
-
-    /**
-     * @function updateDuration
-     * @desc Update ui to current value of duration
-     */
-    updateDuration(): void {
-        const duration = moment.duration(this.quizExercise.duration, 'seconds');
-        this.duration.minutes = 60 * duration.hours() + duration.minutes();
-        this.duration.seconds = duration.seconds();
-    }
-
-    /**
      * @function durationString
      * @desc Gives the duration time in a String with this format: <minutes>:<seconds>
      * @returns {String} the duration as String

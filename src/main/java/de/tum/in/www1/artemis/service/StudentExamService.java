@@ -1,17 +1,30 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -20,12 +33,30 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class StudentExamService {
 
+    private static final String ENTITY_NAME = "studentExam";
+
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
+
+    private final ParticipationService participationService;
 
     private final StudentExamRepository studentExamRepository;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService) {
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final SubmissionVersionService submissionVersionService;
+
+    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService) {
+        this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.submissionVersionService = submissionVersionService;
     }
 
     /**
@@ -43,8 +74,8 @@ public class StudentExamService {
     /**
      * Get one student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
@@ -57,14 +88,126 @@ public class StudentExamService {
     /**
      * Get one optional student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
     public Optional<StudentExam> findOneWithExercisesByUserIdAndExamIdOptional(Long userId, Long examId) {
         log.debug("Request to get optional student exam by userId {} and examId {}", userId, examId);
         return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
+    }
+
+    /**
+     * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
+     * and if it was submitted after exam startDate and before individual endDate + gracePeriod
+     *
+     * @param studentExam latest studentExam object which will be submitted (final submission)
+     * @param currentUser the current user
+     * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
+     */
+    public ResponseEntity<StudentExam> submitStudentExam(StudentExam studentExam, User currentUser) {
+        log.debug("Submit student exam with id {}", studentExam.getId());
+        // checks if student exam is already marked as submitted
+        StudentExam existingStudentExam = findOne(studentExam.getId());
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            return conflict(ENTITY_NAME, "alreadySubmitted", "You have already submitted.");
+        }
+
+        // gets individual exam end or exam.endDate if individual cannot be calculated
+        ZonedDateTime examEndDate = existingStudentExam.getExam().getStartDate() != null && existingStudentExam.getWorkingTime() != null
+                ? existingStudentExam.getExam().getStartDate().plusSeconds(existingStudentExam.getWorkingTime())
+                : existingStudentExam.getExam().getEndDate();
+
+        // checks if student exam is live (after start date, before end date + grace period)
+        if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
+                || (examEndDate != null && !(ZonedDateTime.now().isBefore(examEndDate.plusSeconds(existingStudentExam.getExam().getGracePeriod()))))) {
+            return forbidden(ENTITY_NAME, "submissionNotInTime", "You can only submit between start and end of the exam.");
+        }
+
+        List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
+                studentExam.getExercises());
+
+        if (studentExam.getExercises() == null) {
+            return badRequest();
+        }
+
+        for (Exercise exercise : studentExam.getExercises()) {
+            // we do not apply the following checks for programming exercises or file upload exercises
+            if (exercise instanceof ProgrammingExercise) {
+                // TODO: lock the student repository in the VCS Service in case the student handed in early
+                continue;
+            }
+            if (exercise instanceof FileUploadExercise) {
+                continue;
+            }
+
+            // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
+            if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
+                for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+                    StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId()))
+                            .collect(Collectors.toList()).get(0);
+                    // if exactly one submission exists we save the submission
+                    if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
+                        // check that the current user owns the participation
+                        if (!studentParticipation.isOwnedBy(currentUser) || !existingParticipation.isOwnedBy(currentUser)) {
+                            return forbidden();
+                        }
+                        studentParticipation.setExercise(exercise);
+                        for (Submission submission : studentParticipation.getSubmissions()) {
+
+                            // check that the submission belongs to the already saved participation
+                            if (!existingParticipation.getSubmissions().contains(submission)) {
+                                return forbidden();
+                            }
+                            // check that no result has been injected
+                            if (submission.getResult() != null) {
+                                return forbidden();
+                            }
+                            submission.setParticipation(studentParticipation);
+                            submission.submissionDate(ZonedDateTime.now());
+                            submission.submitted(true);
+                            if (exercise instanceof QuizExercise) {
+                                // recreate pointers back to submission in each submitted answer
+                                for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submission).getSubmittedAnswers()) {
+                                    submittedAnswer.setSubmission(((QuizSubmission) submission));
+                                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                                        ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
+                                                .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+                                    }
+                                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                                        ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
+                                                .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+                                    }
+                                }
+                                quizSubmissionRepository.save((QuizSubmission) submission);
+                            }
+                            else if (exercise instanceof TextExercise) {
+                                textSubmissionRepository.save((TextSubmission) submission);
+                            }
+                            else if (exercise instanceof ModelingExercise) {
+                                modelingSubmissionRepository.save((ModelingSubmission) submission);
+                            }
+
+                            // versioning of submission
+                            try {
+                                submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            }
+                            catch (Exception ex) {
+                                log.error("Submission version could not be saved: " + ex);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // if everything worked -> set studentExam to submitted and set submission date
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now());
+        studentExamRepository.save(studentExam);
+
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
@@ -105,7 +248,7 @@ public class StudentExamService {
      * Get one student exam by exercise and user
      *
      * @param exerciseId the id of an exam exercise
-     * @param userId the id of the student taking the exam
+     * @param userId     the id of the student taking the exam
      * @return the student exam without associated entities
      */
     @NotNull

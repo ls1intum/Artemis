@@ -1,5 +1,5 @@
 <div class="col-12 mt-4">
-    <jhi-alert></jhi-alert>
+    <jhi-alert *ngIf="!examId"></jhi-alert>
     <div class="row">
         <div class="col-12">
             <h3>{{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}</h3>
@@ -10,16 +10,17 @@
             <ng-template #complaintDescription>
                 <p>
                     <span
-                        *ngIf="allowedComplaints === undefined"
+                        *ngIf="!examId && allowedComplaints === undefined"
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
                     ></span>
                     <span
-                        *ngIf="allowedComplaints >= 0"
+                        *ngIf="!examId && allowedComplaints >= 0"
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
-                    <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
+                    <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+                    <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
                 </p>
             </ng-template>
         </div>

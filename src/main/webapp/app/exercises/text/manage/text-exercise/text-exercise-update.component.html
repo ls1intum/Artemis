@@ -33,7 +33,7 @@
             </div>
         </div>
         <jhi-team-config-form-group [exercise]="textExercise"></jhi-team-config-form-group>
-        <div class="d-flex">
+        <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
@@ -54,7 +54,7 @@
                 <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 name="assessmentDueDate"
                 [error]="textExercise.assessmentDueDateError"

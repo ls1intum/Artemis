@@ -14,6 +14,8 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -25,6 +27,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     exams: Exam[];
     isAtLeastInstructor = false;
     isAtLeastTutor = false;
+    examIdToExamInformation: Map<number, ExamInformationDTO> = new Map();
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -85,6 +88,11 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.examManagementService.findAllExamsForCourse(this.course.id).subscribe(
             (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
+                this.exams.forEach((exam) => {
+                    this.examManagementService
+                        .getLatestIndividualEndDateOfExam(this.course.id, exam.id)
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id, examInformationDTORes.body!));
+                });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
@@ -125,5 +133,12 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     sortRows() {
         this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
+    }
+
+    examHasFinished(examId: number): boolean {
+        if (this.examIdToExamInformation.has(examId)) {
+            return this.examIdToExamInformation.get(examId)!.latestIndividualEndDate.isBefore(moment());
+        }
+        return true;
     }
 }

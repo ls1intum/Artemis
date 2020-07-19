@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -93,7 +94,43 @@ public class ComplaintResource {
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
+        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().setAssessor(null);
+
+        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+    }
+
+    /**
+     * POST /complaint/exam/examId: create a new complaint for an exam exercise
+     *
+     * @param complaint the complaint to create
+     * @param principal that wants to complain
+     * @param examId the examId of the exam which contains the exercise
+     * @return the ResponseEntity with status 201 (Created) and with body the new complaints
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/complaints/exam/{examId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
+        log.debug("REST request to save Complaint for exam exercise: {}", complaint);
+        if (complaint.getId() != null) {
+            throw new BadRequestAlertException("A new complaint cannot already have an id", ENTITY_NAME, "idexists");
+        }
+
+        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
+            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
+        }
+
+        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
+        }
+
+        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
+        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
+        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
 
         // Remove assessor information from client request
         savedComplaint.getResult().setAssessor(null);

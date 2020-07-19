@@ -35,6 +35,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { Exam } from 'app/entities/exam.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -51,6 +52,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+    exam: Exam | null = null;
+    // TODO fix tutorLeaderboard and side panel for exam exercises
+    isExamMode = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -189,6 +193,12 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
+                }
+
+                // exercise belongs to an exam
+                if (this.exercise?.exerciseGroup) {
+                    this.isExamMode = true;
+                    this.exam = this.exercise?.exerciseGroup?.exam;
                 }
 
                 this.getSubmissions();

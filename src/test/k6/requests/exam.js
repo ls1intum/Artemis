@@ -9,6 +9,7 @@ import {
     STUDENT_EXAMS,
     STUDENT_EXAM_WORKINGTIME,
     EVALUATE_QUIZ_EXAM,
+    SUBMIT_EXAM,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -30,6 +31,7 @@ export function newExam(artemis, course) {
         started: false,
         title: 'exam' + nextAlphanumeric(5),
         visible: false,
+        gracePeriod: 180,
     };
 
     const res = artemis.post(EXAMS(course.id), exam);
@@ -119,11 +121,14 @@ export function getStudentExams(artemis, exam) {
 export function updateWorkingTime(artemis, exam, studentExam, workingTime) {
     const res = artemis.patch(STUDENT_EXAM_WORKINGTIME(exam.course.id, exam.id, studentExam.id), workingTime);
     console.log('Updated student Exam for exam ' + exam.id + ' status: ' + res[0].status);
-
-    return JSON.parse(res[0].body);
 }
 
 export function evaluateQuizzes(artemis, courseId, examId) {
     const res = artemis.post(EVALUATE_QUIZ_EXAM(courseId, examId));
+    console.log('Evaluated quiz exercises in exam ' + examId + ' status: ' + res[0].status);
+}
+
+export function submitExam(artemis, courseId, examId, studentExam) {
+    const res = artemis.post(SUBMIT_EXAM(courseId, examId), studentExam);
     console.log('Evaluated quiz exercises in exam ' + examId + ' status: ' + res[0].status);
 }
