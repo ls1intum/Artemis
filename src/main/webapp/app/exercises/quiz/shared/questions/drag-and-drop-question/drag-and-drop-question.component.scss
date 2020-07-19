@@ -20,9 +20,10 @@
     .drag-and-drop-area {
         display: flex;
         justify-content: center;
+        align-items: center;
 
         @media (max-width: 1199.98px) {
-            display: block;
+            flex-direction: column;
         }
 
         /* background image and click-layer styles */
@@ -36,6 +37,8 @@
 
             .click-layer {
                 @include position-style(absolute, 0, 0, 0, 0, 1);
+                width: 100%;
+                height: 100%;
 
                 /* dotted drop-location */
                 .drop-location {
