@@ -20,7 +20,12 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TreeNode;
+import de.tum.in.www1.artemis.domain.PairwiseDistance;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.PairwiseDistanceRepository;
+import de.tum.in.www1.artemis.repository.TreeNodeRepository;
 
 @Service
 @Profile("automaticText")
@@ -32,9 +37,16 @@ public class AutomaticTextFeedbackService {
 
     private final TextBlockRepository textBlockRepository;
 
-    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
+    private final TreeNodeRepository treeNodeRepository;
+
+    private final PairwiseDistanceRepository pairwiseDistanceRepository;
+
+    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository,
+                                        TreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository) {
         this.feedbackService = feedbackService;
         this.textBlockRepository = textBlockRepository;
+        this.treeNodeRepository = treeNodeRepository;
+        this.pairwiseDistanceRepository = pairwiseDistanceRepository;
     }
 
     /**
@@ -53,6 +65,8 @@ public class AutomaticTextFeedbackService {
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
+            final TextExercise exercise = cluster.getExercise();
+            final TreeNode[] clusterTree = fetchClusterTreeForExercise(exercise);
 
             // if TextBlock is part of a cluster, we try to find an existing Feedback Element
             if (cluster != null) {
@@ -78,10 +92,25 @@ public class AutomaticTextFeedbackService {
                 }
             }
 
+            findNeighboringClusterWithFeedback(clusterTree, block);
+
             return null;
         }).filter(Objects::nonNull).collect(toList());
 
         result.setFeedbacks(suggestedFeedback);
+    }
+
+    private void findNeighboringClusterWithFeedback(TreeNode[] clusterTree, TextBlock block){
+        // TODO: Traverse the tree here to find feedback
+    }
+
+    private TreeNode[] fetchClusterTreeForExercise(TextExercise exercise) {
+        final List<TreeNode> unorderedTreeNodes = treeNodeRepository.findAllByExercise(exercise);
+        final TreeNode[] clusterTree = new TreeNode[unorderedTreeNodes.size()];
+        for (TreeNode node: unorderedTreeNodes) {
+            clusterTree[(int) node.getChild()] = node;
+        }
+        return clusterTree;
     }
 
 }
