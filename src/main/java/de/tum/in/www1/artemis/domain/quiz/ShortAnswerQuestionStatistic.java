@@ -155,7 +155,8 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
                         continue;
                     }
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
-                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()) {
+                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
+                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
                         }
                     }
