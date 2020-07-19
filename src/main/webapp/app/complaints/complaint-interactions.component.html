@@ -1,15 +1,17 @@
-<div *ngIf="course?.complaintsEnabled">
+<div *ngIf="(isExamMode && !noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
-            [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
+            [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             (click)="toggleComplaintForm()"
-            [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
-            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            [disabled]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
+            e
+            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
             {{ 'artemisApp.complaint.moreInfo' | translate }}
         </button>
         <button
+            *ngIf="!isExamMode"
             class="btn btn-primary ml-1"
             [class.not-allowed]="!isTimeOfComplaintValid"
             (click)="toggleRequestMoreFeedbackForm()"
@@ -25,8 +27,9 @@
             class="flex-grow-1"
             [exercise]="exercise"
             [resultId]="result?.id"
+            [examId]="exam?.id"
             [allowedComplaints]="numberOfAllowedComplaints"
-            [maxComplaintsPerCourse]="exercise.teamMode ? course!.maxTeamComplaints : course!.maxComplaints"
+            [maxComplaintsPerCourse]="calculateMaxComplaints()"
             [complaintType]="ComplaintType.COMPLAINT"
             (submit)="hasComplaint = true"
         ></jhi-complaint-form>

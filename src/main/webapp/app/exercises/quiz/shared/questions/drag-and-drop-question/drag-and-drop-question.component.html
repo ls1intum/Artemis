@@ -214,7 +214,7 @@
                     </div>
                 </div>
             </div>
-            <div class="drag-and-drop-items">
+            <div class="drag-and-drop-items" [ngStyle]="{ 'max-height': '100vh' }">
                 <div class="dnd-instructions" *ngIf="!showResult">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
@@ -223,6 +223,7 @@
                     *ngIf="!showResult"
                     class="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                    [ngStyle]="{ overflow: 'auto', 'max-height': '80vh' }"
                     (onDropSuccess)="onDragDrop(null, $event)"
                     (onDragEnter)="preventDefault($event)"
                     (onDragOver)="preventDefault($event)"

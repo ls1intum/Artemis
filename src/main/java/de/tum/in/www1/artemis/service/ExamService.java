@@ -29,8 +29,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -547,9 +549,9 @@ public class ExamService {
 
         var studentExams = exam.getStudentExams();
 
-        List<Participation> generatedParticipations = new ArrayList<>();
+        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        for (StudentExam studentExam : studentExams) {
+        studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -557,6 +559,7 @@ public class ExamService {
                         .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
                                 && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
+                        SecurityUtils.setAuthorizationObject();
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
@@ -571,7 +574,7 @@ public class ExamService {
                     }
                 }
             }
-        }
+        });
 
         return generatedParticipations.size();
     }
@@ -596,8 +599,11 @@ public class ExamService {
             }
         }
 
+        long start = System.nanoTime();
+        log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
     }
@@ -680,8 +686,9 @@ public class ExamService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
     public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
     }
@@ -708,8 +715,9 @@ public class ExamService {
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
     public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }

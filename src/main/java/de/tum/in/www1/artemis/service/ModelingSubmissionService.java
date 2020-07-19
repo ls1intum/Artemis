@@ -34,16 +34,19 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExamService examService;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, CourseService courseService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository);
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.examService = examService;
     }
 
     /**
@@ -217,7 +220,10 @@ public class ModelingSubmissionService extends SubmissionService {
         // versioning of submission
         try {
             if (modelingExercise.isTeamMode()) {
-                submissionVersionService.save(modelingSubmission, username);
+                submissionVersionService.saveVersionForTeam(modelingSubmission, username);
+            }
+            else {
+                submissionVersionService.saveVersionForIndividual(modelingSubmission, username);
             }
         }
         catch (Exception ex) {

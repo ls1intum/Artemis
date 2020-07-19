@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -449,17 +451,18 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer noOfgeneratedParticipations = examService.startExercises(examId);
+        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
 
-        log.info("Generated {} participations for student exams of exam {}", noOfgeneratedParticipations, examId);
+        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
-        return ResponseEntity.ok().body(noOfgeneratedParticipations);
+        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
     }
 
     /**
@@ -673,4 +676,36 @@ public class ExamResource {
 
         return ResponseEntity.ok(exam.getExerciseGroups());
     }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/latest-end-date : Get an exam for conduction.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it culd not be
+     * determined
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/latest-end-date")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get latest individual end date of exam : {}", examId);
+
+        Optional<ResponseEntity<ExamInformationDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
+
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndiviudalExamEndDate(examId);
+
+        if (latestIndividualEndDateOfExam == null) {
+            return ResponseEntity.notFound().build();
+        }
+        else {
+            ExamInformationDTO examInformationDTO = new ExamInformationDTO();
+            examInformationDTO.latestIndividualEndDate = latestIndividualEndDateOfExam;
+            return ResponseEntity.ok().body(examInformationDTO);
+        }
+    }
+
 }

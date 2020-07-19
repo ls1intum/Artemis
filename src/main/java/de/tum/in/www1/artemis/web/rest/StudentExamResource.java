@@ -96,7 +96,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(exercise, participations);
+            filterForExam(studentExam, exercise, participations);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -151,22 +151,21 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/studentExams/submit : Submits the student exam
      * Updates all submissions and marks student exam as submitted according to given student exam
-     *
      * NOTE: the studentExam has to be sent with all exercises, participations and submissions
      *
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExam   the student exam with exercises, participations and submissions
-     * @return              empty response with status code:
-     *                          200 if successful
-     *                          400 if student exam was in an illegal state
+     * @param courseId    the course to which the student exams belong to
+     * @param examId      the exam to which the student exams belong to
+     * @param studentExam the student exam with exercises, participations and submissions
+     * @return empty response with status code:
+     * 200 if successful
+     * 400 if student exam was in an illegal state
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/studentExams/submit")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
+    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        Optional<ResponseEntity<Void>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
+        Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
         return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam, currentUser));
     }
 
@@ -174,10 +173,11 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/studentExams/conduction : Find a student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
+     * NOTE: when this is called it will also mark the student exam as started
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @param request   the http request, used to extract headers
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @param request  the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/conduction")
@@ -201,15 +201,19 @@ public class StudentExamResource {
 
         loadExercisesForStudentExam(studentExam);
 
-        // 2nd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // 2nd: mark the student exam as started
+        studentExam.setStarted(true);
+        studentExamRepository.save(studentExam);
+
+        // 3rd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
                 studentExam.getExercises());
 
-        // 3rd: connect the exercises and student participations correctly and make sure all relevant associations are available
+        // 4th: connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(exercise, participations);
+            filterForExam(studentExam, exercise, participations);
 
             // Filter attributes of exercises that should not be visible to the student
             // Note: sensitive information for quizzes was already removed in the for loop above
@@ -238,10 +242,11 @@ public class StudentExamResource {
     /**
      * Find the participation in participations that belongs to the given exercise that includes the exercise data
      *
-     * @param exercise the exercise for which the user participation should be filtered
+     * @param exercise       the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
+     * @param studentExam the student exam which is prepared
      */
-    public void filterForExam(Exercise exercise, List<StudentParticipation> participations) {
+    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
@@ -266,6 +271,18 @@ public class StudentExamResource {
                 Result result = latestSubmission.get().getResult();
                 if (result != null) {
                     participation.setResults(Set.of(result));
+                }
+                // for quiz exercises remove correct answer options / mappings from response
+                if (exercise instanceof QuizExercise) {
+                    // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
+                    if (studentExam.getExam().getPublishResultsDate() == null || ZonedDateTime.now().isBefore(studentExam.getExam().getPublishResultsDate())) {
+                        QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
+                        quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                            QuizQuestion question = submittedAnswer.getQuizQuestion();
+                            // Dynamic binding will call the right overridden method for different question types
+                            question.filterForStudentsDuringQuiz();
+                        });
+                    }
                 }
             }
             // add participation into an array

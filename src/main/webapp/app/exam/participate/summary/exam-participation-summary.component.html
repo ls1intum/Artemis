@@ -12,6 +12,11 @@
         </button>
     </h2>
 </div>
+<jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
+    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam"></jhi-exam-points-summary>
+</div>
+<h4 class="mb-0">{{ 'artemisApp.exam.exercises' | translate }}</h4>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
@@ -33,7 +38,11 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <button class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
+                <button
+                    *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0"
+                    class="btn btn-primary float-right"
+                    [routerLink]="generateLink(exercise)"
+                >
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </button>
             </div>
@@ -41,28 +50,69 @@
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
-            <!-- Show submission of student - if no submission found -> display that student did not participate -->
-            <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise) && getSubmissionForExercise(exercise)?.submitted; else noSubmission">
-                <!-- Text Exercise -->
-                <ng-container *ngIf="exercise.type === TEXT">
-                    <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+            <ng-container *ngIf="exercise.type !== PROGRAMMING">
+                <!-- Show submission of student - if no submission found -> display that student did not participate -->
+                <ng-container
+                    *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise) && getSubmissionForExercise(exercise)?.submitted; else noSubmission"
+                >
+                    <!-- Text Exercise -->
+                    <ng-container *ngIf="exercise.type === TEXT">
+                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+                    </ng-container>
+                    <!-- Modeling Exercise -->
+                    <ng-container *ngIf="exercise.type === MODELING">
+                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+                    </ng-container>
+                    <!-- Quiz Exercise -->
+                    <ng-container *ngIf="exercise.type === QUIZ">
+                        <jhi-quiz-exam-summary
+                            [exercise]="exercise"
+                            [exam]="studentExam.exam"
+                            [submission]="getSubmissionForExercise(exercise)"
+                            [resultsPublished]="resultsPublished"
+                        ></jhi-quiz-exam-summary>
+                    </ng-container>
+                    <!-- File Upload Exercise -->
+                    <ng-container *ngIf="exercise.type === FILE_UPLOAD">
+                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+                    </ng-container>
+                    <jhi-complaint-interactions
+                        *ngIf="
+                            getSubmissionForExercise(exercise) &&
+                            exercise.type !== QUIZ &&
+                            studentExam.exam.examStudentReviewStart &&
+                            studentExam.exam.examStudentReviewEnd &&
+                            isAfterStudentReviewStart()
+                        "
+                        class="mb-2 mt-2 ml-3"
+                        [exercise]="exercise"
+                        [participation]="getParticipationForExercise(exercise)"
+                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                    >
+                    </jhi-complaint-interactions>
                 </ng-container>
-                <!-- Modeling Exercise -->
-                <ng-container *ngIf="exercise.type === MODELING">
-                    <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+            </ng-container>
+            <ng-container *ngIf="exercise.type === PROGRAMMING">
+                <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
+                <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise); else noSubmission">
+                    <!-- Programming Exercise -->
+                    <jhi-programming-exam-summary
+                        [exercise]="exercise"
+                        [participation]="getParticipationForExercise(exercise)"
+                        [submission]="getSubmissionForExercise(exercise)"
+                    ></jhi-programming-exam-summary>
                 </ng-container>
-                <!-- Quiz Exercise -->
-                <ng-container *ngIf="exercise.type === QUIZ">
-                    <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)" [resultsPublished]="resultsPublished"></jhi-quiz-exam-summary>
-                </ng-container>
-                <!-- Programming Exercise -->
-                <ng-container *ngIf="exercise.type === PROGRAMMING">
-                    <jhi-programming-exam-summary [exercise]="exercise" [participation]="getParticipationForExercise(exercise)"></jhi-programming-exam-summary>
-                </ng-container>
-                <!-- File Upload Exercise -->
-                <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                    <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
-                </ng-container>
+                <jhi-complaint-interactions
+                    *ngIf="
+                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC;
+                        getSubmissionForExercise: exercise && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd && isAfterStudentReviewStart()
+                    "
+                    class="mb-2 mt-2 ml-3"
+                    [exercise]="exercise"
+                    [participation]="getParticipationForExercise(exercise)"
+                    [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                >
+                </jhi-complaint-interactions>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | translate }}

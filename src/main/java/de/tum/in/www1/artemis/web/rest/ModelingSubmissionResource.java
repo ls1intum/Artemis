@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -282,9 +281,10 @@ public class ModelingSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

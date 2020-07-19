@@ -69,6 +69,11 @@ public class ExamSubmissionService {
                 return false;
             }
 
+            // if the student exam was already submitted, the user cannot save any more
+            if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
+                return false;
+            }
+
             // Check that the submission is in time
             return isSubmissionInTime(exercise, studentExam);
         }

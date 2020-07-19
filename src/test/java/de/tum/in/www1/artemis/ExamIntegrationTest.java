@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -522,6 +524,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(optionalStudent1Exam.get()).isNotNull();
         var studentExam2 = optionalStudent1Exam.get();
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         // Remove student2 from the exam
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student2", HttpStatus.OK);
 
@@ -609,6 +613,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
 
         // Remove student1 from the exam and his participations
         var params = new LinkedMultiValueMap<String, String>();
@@ -916,6 +923,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Optional.empty(), Integer.class, HttpStatus.OK);
         assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
 
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
+
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
@@ -953,6 +963,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 resultRepository.save(result);
             }
         }
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        database.changeUser("instructor1");
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1046,4 +1058,35 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testLatestExamEndDate() throws Exception {
+        // Setup exam and user
+        User user = userRepo.findOneByLogin("student1").get();
+
+        // Set student exam without working time and save into database
+        StudentExam studentExam = new StudentExam();
+        studentExam.setUser(user);
+        studentExam = studentExamRepository.save(studentExam);
+
+        // Add student exam to exam and save into database
+        exam2.addStudentExam(studentExam);
+        exam2 = examRepository.save(exam2);
+
+        // Get latest exam end date DTO from server -> This returns the endDate as no specific student working time is set
+        ExamInformationDTO examInfo = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
+                ExamInformationDTO.class);
+        // Check that latest end date is equal to endDate (no specific student working time)
+        assertTrue(examInfo.latestIndividualEndDate.isEqual(exam2.getEndDate()));
+
+        // Set student exam with working time and save
+        studentExam.setWorkingTime(3600);
+        studentExamRepository.save(studentExam);
+
+        // Get latest exam end date DTO from server -> This returns the startDate + workingTime
+        ExamInformationDTO examInfo2 = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
+                ExamInformationDTO.class);
+        // Check that latest end date is equal to startDate + workingTime
+        assertTrue(examInfo2.latestIndividualEndDate.isEqual(exam2.getStartDate().plusHours(1)));
+    }
 }

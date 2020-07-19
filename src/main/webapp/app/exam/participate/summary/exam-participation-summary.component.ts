@@ -5,6 +5,9 @@ import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Exam } from 'app/entities/exam.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -18,6 +21,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly AssessmentType = AssessmentType;
 
     @Input()
     studentExam: StudentExam;
@@ -29,7 +33,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     courseId: number;
 
-    constructor(private route: ActivatedRoute) {}
+    examWithOnlyIdAndStudentReviewPeriod: Exam;
+
+    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
      * Initialise the courseId from the current url
@@ -37,6 +43,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
     getIcon(exerciseType: ExerciseType) {
@@ -57,7 +64,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        }
     }
 
     /**
@@ -110,5 +119,27 @@ export class ExamParticipationSummaryComponent implements OnInit {
         } else {
             this.collapsedExerciseIds.push(exerciseId);
         }
+    }
+
+    /**
+     * We only need to pass these values to the ComplaintInteractionComponent
+     */
+    setExamWithOnlyIdAndStudentReviewPeriod() {
+        const exam = new Exam();
+        exam.id = this.studentExam.exam.id;
+        exam.examStudentReviewStart = this.studentExam.exam.examStudentReviewStart;
+        exam.examStudentReviewEnd = this.studentExam.exam.examStudentReviewEnd;
+        this.examWithOnlyIdAndStudentReviewPeriod = exam;
+    }
+
+    /**
+     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
+     * the review dates are set and the review start date has passed.
+     */
+    isAfterStudentReviewStart() {
+        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
+        }
+        return false;
     }
 }

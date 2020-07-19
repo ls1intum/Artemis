@@ -1,16 +1,20 @@
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
     <h2 class="col-md-6" style="text-align: center;">
-        <span>{{
-            'artemisApp.examParticipation.finish'
-                | translate
-                    : {
-                          title: exam.title,
-                          fullName: accountName
-                      }
-        }}</span>
+        <span
+            >{{
+                'artemisApp.examParticipation.finish'
+                    | translate
+                        : {
+                              title: exam.title
+                          }
+            }}
+        </span>
+        <span style="color: blue;">
+            {{ accountName }}
+        </span>
     </h2>
-    <jhi-exam-timer class="col-md-3 justify-content-end" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
@@ -24,11 +28,14 @@
             'artemisApp.examParticipation.greeting'
                 | translate
                     : {
-                          title: exam.title,
-                          fullName: accountName
+                          title: exam.title
                       }
         }}</span>
+        <span style="color: blue;">
+            {{ accountName }}
+        </span>
     </h2>
+    <jhi-exam-information [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
     <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
     <div class="d-flex justify-content-center">
         <input
@@ -38,6 +45,7 @@
             (click)="updateConfirmation()"
             style="place-self: flex-start;"
             class="mt-1"
+            [required]="inserted"
             [disabled]="startView ? waitingForExamStart : false"
         />
         <span id="formatted-confirmation-text" class="d-inline-block ml-2" [innerHTML]="formattedConfirmationText"></span>
@@ -52,11 +60,12 @@
             <div class="row justify-content-center">
                 <div class="form-group">
                     <input
+                        size="50"
                         type="text"
                         class="form-control"
                         name="fullname"
                         id="fullname"
-                        placeholder="Name"
+                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | translate"
                         [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'change' }"
                         [disabled]="startView ? waitingForExamStart : false"
@@ -65,6 +74,9 @@
             </div>
             <div class="row justify-content-center">
                 <div class="form-group">
+                    <div class="alert alert-danger mt-1" *ngIf="!!!confirmed && inserted">
+                        <span [innerHTML]="'artemisApp.exam.notConfirmed' | translate"></span>
+                    </div>
                     <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">
                         <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
                     </div>

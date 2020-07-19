@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
@@ -731,7 +732,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     /**
@@ -765,12 +766,14 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
                 .collect(Collectors.toList());
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
-    // TODO: Should not throw the IOException but handle it!
-    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
-            RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+
+        long start = System.nanoTime();
+
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -778,13 +781,17 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
+                programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
+
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 

@@ -6,6 +6,10 @@ export interface FileUploadResponse {
     path: string;
 }
 
+type Options = {
+    keepFileName: boolean;
+};
+
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
     // NOTE: this list has to be the same as in FileResource.java
@@ -16,12 +20,11 @@ export class FileUploaderService {
     /**
      * Function which uploads a file. It checks for supported file extensions and file size.
      * Options must be passed as a dictionary. E.g: { keepFileName: true }
-     * @async
      * @param {Blob | File} file
      * @param {string} fileName
      * @param options
      */
-    uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
+    uploadFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         /** Check file extension **/
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
         if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
@@ -46,6 +49,41 @@ export class FileUploaderService {
         formData.append('file', file, fileName);
         const keepFileName: boolean = !!options && options.keepFileName;
         const url = `/api/fileUpload?keepFileName=${keepFileName}`;
+        return this.http.post<FileUploadResponse>(url, formData).toPromise();
+    }
+
+    /**
+     * Function which uploads a file. It checks for supported file extensions and file size.
+     * Options must be passed as a dictionary. E.g: { keepFileName: true }
+     * @param {Blob | File} file
+     * @param {string} fileName
+     * @param options
+     */
+    uploadMarkdownFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
+        /** Check file extension **/
+        const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
+        if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
+            return Promise.reject(
+                new Error(
+                    'Unsupported file type! Only files of type ' +
+                        this.acceptedFileExtensions
+                            .split(',')
+                            .map((extension) => `".${extension}"`)
+                            .join(', ') +
+                        ' allowed.',
+                ),
+            );
+        }
+
+        /** Check file size **/
+        if (file.size > MAX_FILE_SIZE) {
+            return Promise.reject(new Error('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.'));
+        }
+
+        const formData = new FormData();
+        formData.append('file', file, fileName);
+        const keepFileName: boolean = !!options && options.keepFileName;
+        const url = `/api/markdown-file-upload?keepFileName=${keepFileName}`;
         return this.http.post<FileUploadResponse>(url, formData).toPromise();
     }
 

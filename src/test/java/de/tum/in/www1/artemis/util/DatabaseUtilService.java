@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -97,6 +96,7 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -944,6 +944,16 @@ public class DatabaseUtilService {
         return textExercise;
     }
 
+    public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(textExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return textExercise;
+    }
+
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -957,6 +967,39 @@ public class DatabaseUtilService {
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        final var courseNrBefore = courseRepo.count();
+        final var examNrBefore = examRepository.count();
+        final var exerciseGroupNrBefore = exerciseGroupRepository.count();
+
+        courseRepo.save(course);
+        examRepository.save(exam);
+
+        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        assertThat(examNrBefore + 1).as("an exam got stored").isEqualTo(examRepository.count());
+        assertThat(exerciseGroupNrBefore + 1).as("an exerciseGroup got stored").isEqualTo(exerciseGroupRepository.count());
+
+        Optional<Course> optionalCourse = courseRepo.findById(course.getId());
+        assertThat(optionalCourse).as("course can be retrieved").isPresent();
+        Course courseDB = optionalCourse.get();
+
+        Optional<Exam> optionalExam = examRepository.findById(exam.getId());
+        assertThat(optionalCourse).as("exam can be retrieved").isPresent();
+        Exam examDB = optionalExam.get();
+
+        Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
+        assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+
+        assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
+        assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+
+        return exerciseGroup;
+    }
+
+    public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
         final var examNrBefore = examRepository.count();

@@ -14,6 +14,7 @@
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
                 [exercises]="studentExam.exercises"
+                [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 (onExerciseChanged)="onExerciseChange($event)"
                 (examAboutToEnd)="examEnded()"
@@ -23,8 +24,8 @@
                 <jhi-alert></jhi-alert>
             </div>
             <!-- exercises -->
-            <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
-                <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+            <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+                <ng-container *ngIf="exercise.studentParticipations && exercise.studentParticipations[0]">
                     <ng-container *ngIf="submissionComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
                             <div [hidden]="i !== activeExerciseIndex">
