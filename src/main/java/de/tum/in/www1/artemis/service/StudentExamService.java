@@ -207,17 +207,20 @@ public class StudentExamService {
             }
         }
 
-        // use the programming exercises in the DB to lock the repositories (for safety)
-        for (Exercise exercise : existingStudentExam.getExercises()) {
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-                ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
-                        currentUser.getLogin());
-                try {
-                    programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
-                }
-                catch (Exception e) {
-                    log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);
+        // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
+        if (ZonedDateTime.now().isBefore(examEndDate)) {
+            // Use the programming exercises in the DB to lock the repositories (for safety)
+            for (Exercise exercise : existingStudentExam.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                    ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
+                            currentUser.getLogin());
+                    try {
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+                    }
+                    catch (Exception e) {
+                        log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);
+                    }
                 }
             }
         }
