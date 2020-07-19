@@ -107,6 +107,10 @@ public final class Constants {
 
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
+    public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
+
+    public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
