@@ -196,7 +196,7 @@
                             </button>
                             <fa-icon
                                 class="mx-3"
-                                *ngIf="value.submission.result.hasComplaint"
+                                *ngIf="value.submission?.result?.hasComplaint"
                                 [icon]="'flag'"
                                 ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | translate }}"
                             ></fa-icon>
