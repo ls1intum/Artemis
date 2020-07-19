@@ -34,7 +34,8 @@ public class PairwiseDistance implements Serializable {
 
     @ManyToOne
     @JsonIgnore
-    private ClusteringResult clusteringResult;
+    private TextExercise exercise;
+    // private ClusteringResult clusteringResult;
 
     public long getId() {
         return id;
@@ -56,12 +57,23 @@ public class PairwiseDistance implements Serializable {
 
     public void setDistance(double distance) { this.distance = distance; }
 
-    public ClusteringResult getClusteringResult() { return clusteringResult; }
+    // public ClusteringResult getClusteringResult() { return clusteringResult; }
 
-    public void setClusteringResult(ClusteringResult clusteringResult) { this.clusteringResult = clusteringResult; }
 
-    public PairwiseDistance clusteringResult(ClusteringResult clusteringResult) {
-        setClusteringResult(clusteringResult);
+    public TextExercise getExercise() { return exercise; }
+
+    // public void setClusteringResult(ClusteringResult clusteringResult) { this.clusteringResult = clusteringResult; }
+
+
+    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+
+    // public PairwiseDistance clusteringResult(ClusteringResult clusteringResult) {
+    //     setClusteringResult(clusteringResult);
+    //     return this;
+    // }
+
+    public PairwiseDistance exercise(TextExercise exercise) {
+        setExercise(exercise);
         return this;
     }
 }

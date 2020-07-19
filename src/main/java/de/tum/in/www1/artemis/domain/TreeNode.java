@@ -37,7 +37,8 @@ public class TreeNode implements Serializable {
 
     @ManyToOne
     @JsonIgnore
-    private ClusteringResult clusteringResult;
+    private TextExercise exercise;
+    // private ClusteringResult clusteringResult;
 
     public Long getId() { return id; }
 
@@ -59,14 +60,23 @@ public class TreeNode implements Serializable {
 
     public void setChild_size(long child_size) { this.child_size = child_size; }
 
-    public ClusteringResult getClusteringResult() { return clusteringResult; }
+    // public ClusteringResult getClusteringResult() { return clusteringResult; }
 
-    public void setClusteringResult(ClusteringResult clusteringResult) {
-        this.clusteringResult = clusteringResult;
-    }
+    public TextExercise getExercise() { return exercise; }
 
-    public TreeNode clusteringResult(ClusteringResult clusteringResult) {
-        setClusteringResult(clusteringResult);
+    // public void setClusteringResult(ClusteringResult clusteringResult) {
+    //     this.clusteringResult = clusteringResult;
+    // }
+
+    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+
+    // public TreeNode clusteringResult(ClusteringResult clusteringResult) {
+    //     setClusteringResult(clusteringResult);
+    //     return this;
+    // }
+
+    public TreeNode exercise(TextExercise exercise) {
+        setExercise(exercise);
         return this;
     }
 

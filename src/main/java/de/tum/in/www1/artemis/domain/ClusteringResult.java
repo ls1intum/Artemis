@@ -13,6 +13,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *      - List of clusters
  *      - Tree structure of the cluster hierarchy
  */
+
+// TODO: Implement this after implementing the tree traversal as an Embeddable
+
+/*
 @Entity
 public class ClusteringResult implements Serializable {
 
@@ -56,4 +60,8 @@ public class ClusteringResult implements Serializable {
         }
         return distMatrix;
     }
+
+    public TextExercise getExercise() { return exercise; }
 }
+
+ */

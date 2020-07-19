@@ -24,9 +24,20 @@ public class TextExercise extends Exercise implements Serializable {
     @JsonIgnore
     private List<TextCluster> clusters;
 
+    /*
     @OneToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ClusteringResult clusteringResult;
+     */
+
+    @OneToMany(mappedBy = "exercise")
+    @JsonIgnore
+    private List<PairwiseDistance> pairwiseDistances;
+
+    @OneToMany(mappedBy = "exercise")
+    @OrderBy("child")
+    @JsonIgnore
+    private List<TreeNode> clusterTree;
 
     public String getSampleSolution() {
         return sampleSolution;

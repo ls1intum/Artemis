@@ -1,0 +1,49 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="canarisan (generated)" id="1595161157595-30">
+        <createTable tableName="pairwise_distance">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pairwise_distancePK"/>
+            </column>
+            <column name="block_i" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="block_j" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distance" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="canarisan (generated)" id="1595161157595-31">
+        <createTable tableName="tree_node">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tree_nodePK"/>
+            </column>
+            <column name="child" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="child_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lambda_val" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="canarisan (generated)" id="1595161157595-37">
+        <addUniqueConstraint columnNames="block_i, block_j" constraintName="UK_bb0tq4qi707duccplqwy994ud" tableName="pairwise_distance"/>
+        <addUniqueConstraint columnNames="child" constraintName="UK_fyfypxkg8lye4rktl4qdxos4c" tableName="tree_node"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="tree_node" constraintName="FKbe1y8e79ekof4dw17godufhgc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="pairwise_distance" constraintName="FKh30sknaj0ukms6xpnwgbw6dra" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
