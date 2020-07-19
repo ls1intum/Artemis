@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
@@ -49,7 +48,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @Transactional
     public void testManyToManyRelation() {
         assertThat(user.getAchievements().size()).isEqualTo(0);
 
