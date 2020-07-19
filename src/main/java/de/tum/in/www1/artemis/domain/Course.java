@@ -497,8 +497,16 @@ public class Course implements Serializable {
         this.achievements = achievements;
     }
 
-    public void addAchievements(Set<Achievement> achievements) {
-        this.achievements.addAll(achievements);
+    public Course addAchievement(Achievement achievement) {
+        this.achievements.add(achievement);
+        achievement.getCourses().add(this);
+        return this;
+    }
+
+    public Course removeAchievement(Achievement achievement) {
+        this.achievements.remove(achievement);
+        achievement.getCourses().remove(this);
+        return this;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

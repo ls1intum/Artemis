@@ -101,6 +101,30 @@ public class Achievement implements Serializable {
         this.courses = courses;
     }
 
+    public Achievement addUser(User user) {
+        this.users.add(user);
+        user.getAchievements().add(this);
+        return this;
+    }
+
+    public Achievement removeUser(User user) {
+        this.users.remove(user);
+        user.getAchievements().remove(this);
+        return this;
+    }
+
+    public Achievement addCourse(Course course) {
+        this.courses.add(course);
+        course.getAchievements().add(this);
+        return this;
+    }
+
+    public Achievement removeCourse(Course course) {
+        this.courses.remove(course);
+        course.getAchievements().remove(this);
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank=" + getRank()
