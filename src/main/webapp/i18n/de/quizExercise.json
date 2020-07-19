@@ -133,6 +133,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "exam": "Dieses Quiz ist eine Klausur Aufgabe. Stellen Sie sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
                     "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
                         "element_invalid": "Alle Teilnehmer erhalten die Punkte für das ungültige Frage-Element",
