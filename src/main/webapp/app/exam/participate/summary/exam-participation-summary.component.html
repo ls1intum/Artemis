@@ -51,7 +51,12 @@
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
             <!-- Show submission of student - if no submission found -> display that student did not participate -->
-            <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise) && getSubmissionForExercise(exercise)?.submitted; else noSubmission">
+            <ng-container
+                *ngIf="
+                    exercise.type !== PROGRAMMING && getParticipationForExercise(exercise) && getSubmissionForExercise(exercise) && getSubmissionForExercise(exercise)?.submitted;
+                    else noSubmission
+                "
+            >
                 <!-- Text Exercise -->
                 <ng-container *ngIf="exercise.type === TEXT">
                     <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
@@ -89,15 +94,13 @@
                 </jhi-complaint-interactions>
             </ng-container>
             <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-            <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise)">
+            <ng-container *ngIf="exercise.type === PROGRAMMING && getParticipationForExercise(exercise) && getSubmissionForExercise(exercise); else noSubmission">
                 <!-- Programming Exercise -->
-                <ng-container *ngIf="exercise.type === PROGRAMMING">
-                    <jhi-programming-exam-summary
-                        [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)"
-                        [submission]="getSubmissionForExercise(exercise)"
-                    ></jhi-programming-exam-summary>
-                </ng-container>
+                <jhi-programming-exam-summary
+                    [exercise]="exercise"
+                    [participation]="getParticipationForExercise(exercise)"
+                    [submission]="getSubmissionForExercise(exercise)"
+                ></jhi-programming-exam-summary>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | translate }}
