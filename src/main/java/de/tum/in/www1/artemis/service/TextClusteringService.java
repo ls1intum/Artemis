@@ -111,7 +111,7 @@ public class TextClusteringService {
         // Invoke clustering for Text Blocks
         final Map<Integer, TextCluster> clusters;
         try {
-            clusters = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
+            clusters = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3).clusters;
         }
         catch (NetworkingError networkingError) {
             networkingError.printStackTrace();

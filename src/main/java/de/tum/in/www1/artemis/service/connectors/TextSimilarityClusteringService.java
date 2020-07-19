@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConn
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,9 +31,11 @@ public class TextSimilarityClusteringService {
         }
     }
 
-    private static class Response {
+    public static class Response {
 
         public LinkedHashMap<Integer, TextCluster> clusters;
+        public List<List<Double>> distanceMatrix;
+        public List<TreeNode> clusterTree;
 
     }
     // endregion
@@ -45,7 +48,7 @@ public class TextSimilarityClusteringService {
 
     private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
-    public Map<Integer, TextCluster> clusterTextBlocks(List<TextEmbedding> embeddings) throws NetworkingError {
+    public Response clusterTextBlocks(List<TextEmbedding> embeddings) throws NetworkingError {
         return clusterTextBlocks(embeddings, 1);
     }
 
@@ -57,12 +60,12 @@ public class TextSimilarityClusteringService {
      * @return a Map of ClusterIDs and Clusters
      * @throws NetworkingError if the request isn't successful
      */
-    public Map<Integer, TextCluster> clusterTextBlocks(List<TextEmbedding> embeddings, int maxRetries) throws NetworkingError {
+    public Response clusterTextBlocks(List<TextEmbedding> embeddings, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to cluster student text answers.");
         final Request request = new Request(embeddings);
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
 
-        return response.clusters;
+        return response;
     }
 
 }

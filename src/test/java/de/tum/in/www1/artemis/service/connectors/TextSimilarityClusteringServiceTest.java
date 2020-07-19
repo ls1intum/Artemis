@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +32,27 @@ public class TextSimilarityClusteringServiceTest {
         final TextSimilarityClusteringService service = new TextSimilarityClusteringService();
         ReflectionTestUtils.setField(service, "API_ENDPOINT", CLUSTERING_ENDPOINT);
 
-        final List<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text).startIndex(0).endIndex(3)).peek(TextBlock::computeId).collect(toList());
+        // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
+        final String[] sentences = {
+            "The purpose of science is to describe and understand complex systems, such as a system of atoms, a society of human beings, or a solar system.",
+            "Traditionally, a distinction is made between natural sciences and social sciences to distinguish between two major types of systems.",
+            "The purpose of natural sciences is to understand nature and its subsystems.",
+            "Natural sciences include, for example, biology, chemistry, physics, and paleontology.",
+            "The purpose of the social sciences is to understand human beings.",
+            "Social sciences include psychology and sociology.",
+            "There is another type of system that we call an artificial system.",
+            "Examples of artificial systems include the space shuttle, airline reservation systems, and stock trading systems.",
+            "Herbert Simon coined the term sciences of the artificial to describe the sciences that deal with artificial systems [Simon, 1970].",
+            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent.",
+            "Computer science, for example, the science of understanding computer systems, is a child of the twentieth century.",
+            "Many methods that have been successfully applied in the natural sciences and humanities can be applied to the sciences of the artificial as well.",
+            "By looking at the other sciences, we can learn quite a bit.",
+            "One of the basic methods of science is modeling.",
+            "A model is an abstract representation of a system that enables us to answer questions about the system.",
+            "Models are useful when dealing with systems that are too large, too small, too complicated, or too expensive to experience firsthand.",
+            "Models also allow us to visualize and understand systems that either no longer exist or that are only claimed to exist."
+        };
+        final List<TextBlock> blocks = Stream.of(sentences).map(text -> new TextBlock().text(text).startIndex(0).endIndex(text.length())).peek(TextBlock::computeId).collect(toList());
         final Course course = new Course();
         course.setId(1L);
         final TextExercise exercise = new TextExercise();
@@ -42,18 +64,25 @@ public class TextSimilarityClusteringServiceTest {
         ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", EMBEDDING_ENDPOINT);
         final List<TextEmbedding> embeddings = textEmbeddingService.embedTextBlocks(blocks, exercise);
 
-        final Map<Integer, TextCluster> clusterDictionary = service.clusterTextBlocks(embeddings);
+        final TextSimilarityClusteringService.Response response = service.clusterTextBlocks(embeddings, 3);
+        final Map<Integer, TextCluster> clusterDictionary = response.clusters;
 
-        assertThat(clusterDictionary.keySet(), hasSize(1));
+        assertThat(clusterDictionary.keySet(), hasSize(5));
         assertThat(clusterDictionary.keySet(), hasItem(-1));
-        final TextCluster cluster = clusterDictionary.get(-1);
-        final List<TextBlock> blocks1 = cluster.getBlocks();
 
-        assertThat(blocks1.toArray(), is(equalTo(blocks.toArray())));
+        List<List<Double>> matrix = response.distanceMatrix;
+        assertThat(matrix, hasSize(blocks.size()));
 
-        final double[][] distanceMatrix = cluster.getDistanceMatrix();
-        assertThat(distanceMatrix[0][1], is(equalTo(distanceMatrix[1][0])));
-        assertThat(distanceMatrix[0][1], is(both(greaterThan(0.5)).and(lessThan(0.7))));
+        List<TreeNode> clusterTree = response.clusterTree;
+        List<TreeNode> blocksInTree = clusterTree.stream().filter(treeNode -> treeNode.isBlockNode()).collect(Collectors.toList());
+        // Assert that number of blockNodes in the tree equals number of blocks
+        assertThat(blocksInTree, hasSize(blocks.size()));
+        List<Long> groupByChild = clusterTree.stream().map(treeNode -> treeNode.getChild()).distinct().collect(Collectors.toList());
+        // Assert that child is a unique property of a TreeNode
+        assertThat(groupByChild, hasSize(clusterTree.size()));
+        List<Long> groupByParent = clusterTree.stream().map(treeNode -> treeNode.getParent()).distinct().collect(Collectors.toList());
+        // Assert that parent is not a unique property of a TreeNode
+        assertThat(groupByParent.size(), lessThan(clusterTree.size()));
     }
 
     @BeforeAll

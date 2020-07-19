@@ -19,6 +19,7 @@ public class TreeNode implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private Long id;
 
     @Column(name = "parent", nullable = false)

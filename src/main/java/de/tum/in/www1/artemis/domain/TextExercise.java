@@ -24,7 +24,7 @@ public class TextExercise extends Exercise implements Serializable {
     @JsonIgnore
     private List<TextCluster> clusters;
 
-    @OneToOne(mappedBy = "exercise")
+    @OneToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ClusteringResult clusteringResult;
 
