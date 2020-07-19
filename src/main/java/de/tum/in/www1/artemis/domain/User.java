@@ -121,7 +121,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "user_achievement", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "achievement_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "users" })
+    @JsonIgnoreProperties({ "users", "courses" })
     private Set<Achievement> achievements = new HashSet<>();
 
     public Long getId() {
