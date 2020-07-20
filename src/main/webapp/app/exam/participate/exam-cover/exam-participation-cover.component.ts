@@ -178,7 +178,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         // error message
         //     }
         // });
-        this.handInPossible = false;
+        // temporary lock the submit button in order to protect against spam
         this.onExamEnded.emit();
     }
 
@@ -195,7 +195,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get endButtonEnabled(): boolean {
         // TODO: add logic when confirm can be clicked
-        return !!(this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible);
+        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 
     get nameIsCorrect(): boolean {
