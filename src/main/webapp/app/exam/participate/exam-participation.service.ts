@@ -68,9 +68,9 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
-        return this.httpClient.post<HttpResponse<StudentExam>>(url, studentExam).pipe(
-            map((res: HttpResponse<StudentExam>) => {
-                return this.convertStudentExamFromServer(res.body!);
+        return this.httpClient.post<StudentExam>(url, studentExam).pipe(
+            map((studentExam: StudentExam) => {
+                return this.convertStudentExamFromServer(studentExam);
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
