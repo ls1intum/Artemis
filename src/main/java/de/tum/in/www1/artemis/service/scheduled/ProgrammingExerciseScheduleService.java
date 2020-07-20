@@ -76,7 +76,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 return;
             }
             SecurityUtils.setAuthorizationObject();
-            // TODO: also take exercises with manual assessments into account here
+
             List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
                     .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
@@ -97,7 +97,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Will cancel a scheduled task if the buildAndTestAfterDueDate is null or has passed already.
+     * Will cancel or reschedule tasks for updated programming exercises
      *
      * @param exercise ProgrammingExercise
      */
