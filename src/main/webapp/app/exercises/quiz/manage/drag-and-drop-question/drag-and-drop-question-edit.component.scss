@@ -87,6 +87,7 @@
 
     .background-area {
         position: relative;
+        margin: auto;
         @include user-select(none);
 
         img {
@@ -96,6 +97,8 @@
         .click-layer {
             cursor: crosshair !important;
             @include position-style(absolute, 0, 0, 0, 0, 1);
+            width: 100%;
+            height: 100%;
 
             /* medium-purple dotted drop-location */
             .drop-location {

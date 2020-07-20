@@ -7,6 +7,7 @@ import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -38,32 +39,6 @@ export class ExamScoresComponent implements OnInit {
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
         });
-    }
-
-    /**
-     * Helper function to make actually rounding possible
-     * @param value
-     * @param exp
-     */
-    round(value: any, exp: number) {
-        if (typeof exp === 'undefined' || +exp === 0) {
-            return Math.round(value);
-        }
-
-        value = +value;
-        exp = +exp;
-
-        if (isNaN(value) || !(exp % 1 === 0)) {
-            return NaN;
-        }
-
-        // Shift
-        value = value.toString().split('e');
-        value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
-
-        // Shift back
-        value = value.toString().split('e');
-        return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
     sortRows() {
@@ -101,6 +76,15 @@ export class ExamScoresComponent implements OnInit {
         csvExporter.generateCsv(data);
     }
 
+    /**
+     * Wrapper for round utility function so it can be used in the template.
+     * @param value
+     * @param exp
+     */
+    round(value: any, exp: number) {
+        return round(value, exp);
+    }
+
     private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
@@ -114,9 +98,9 @@ export class ExamScoresComponent implements OnInit {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] =
-                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null ? '' : this.round(exerciseResult.achievedPoints, 1);
+                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null ? '' : round(exerciseResult.achievedPoints, 1);
                 csvRow[exerciseGroup.title + 'AchievedScore(%)'] =
-                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null ? '' : this.round(exerciseResult.achievedScore, 2);
+                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null ? '' : round(exerciseResult.achievedScore, 2);
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
@@ -125,9 +109,9 @@ export class ExamScoresComponent implements OnInit {
         });
 
         csvRow.overAllPoints =
-            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : this.round(studentResult.overallPointsAchieved, 1);
+            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : round(studentResult.overallPointsAchieved, 1);
         csvRow.overAllScore =
-            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : this.round(studentResult.overallScoreAchieved, 2);
+            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : round(studentResult.overallScoreAchieved, 2);
         return csvRow;
     }
 }

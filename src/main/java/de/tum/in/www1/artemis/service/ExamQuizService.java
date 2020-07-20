@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
 public class ExamQuizService {
@@ -50,15 +51,15 @@ public class ExamQuizService {
      * @param quizExercise the QuizExercise that should be evaluated
      */
     public void evaluateQuizAndUpdateStatistics(@NotNull QuizExercise quizExercise) {
+        long start = System.nanoTime();
+        log.info("Starting quiz evaluation for quiz " + quizExercise.getId());
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
+        log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
-
-        // The updateStatistics method filters the answer options, so we have to fetch them again
-        quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExercise);
+        log.info("Statistic update for quiz {} finished after {}", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start));
     }
 
     /**

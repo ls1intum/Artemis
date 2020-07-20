@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -20,6 +21,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly AssessmentType = AssessmentType;
 
     @Input()
     studentExam: StudentExam;
@@ -62,7 +64,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+        }
     }
 
     /**

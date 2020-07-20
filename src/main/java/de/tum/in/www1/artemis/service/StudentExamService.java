@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -49,13 +47,16 @@ public class StudentExamService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
+    private final SubmissionVersionService submissionVersionService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.submissionVersionService = submissionVersionService;
     }
 
     /**
@@ -73,8 +74,8 @@ public class StudentExamService {
     /**
      * Get one student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
@@ -87,8 +88,8 @@ public class StudentExamService {
     /**
      * Get one optional student exam by exam id and user.
      *
-     * @param examId    the id of the exam
-     * @param userId    the id of the user
+     * @param examId the id of the exam
+     * @param userId the id of the user
      * @return the student exam with exercises
      */
     @NotNull
@@ -105,7 +106,7 @@ public class StudentExamService {
      * @param currentUser the current user
      * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
-    public ResponseEntity<Void> submitStudentExam(StudentExam studentExam, User currentUser) {
+    public ResponseEntity<StudentExam> submitStudentExam(StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
         StudentExam existingStudentExam = findOne(studentExam.getId());
@@ -132,6 +133,15 @@ public class StudentExamService {
         }
 
         for (Exercise exercise : studentExam.getExercises()) {
+            // we do not apply the following checks for programming exercises or file upload exercises
+            if (exercise instanceof ProgrammingExercise) {
+                // TODO: lock the student repository in the VCS Service in case the student handed in early
+                continue;
+            }
+            if (exercise instanceof FileUploadExercise) {
+                continue;
+            }
+
             // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
             if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                 for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
@@ -145,10 +155,7 @@ public class StudentExamService {
                         }
                         studentParticipation.setExercise(exercise);
                         for (Submission submission : studentParticipation.getSubmissions()) {
-                            // we do not apply the following checks for programming exercises
-                            if (exercise instanceof ProgrammingExercise) {
-                                continue;
-                            }
+
                             // check that the submission belongs to the already saved participation
                             if (!existingParticipation.getSubmissions().contains(submission)) {
                                 return forbidden();
@@ -164,6 +171,14 @@ public class StudentExamService {
                                 // recreate pointers back to submission in each submitted answer
                                 for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submission).getSubmittedAnswers()) {
                                     submittedAnswer.setSubmission(((QuizSubmission) submission));
+                                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                                        ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
+                                                .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+                                    }
+                                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                                        ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
+                                                .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+                                    }
                                 }
                                 quizSubmissionRepository.save((QuizSubmission) submission);
                             }
@@ -172,6 +187,14 @@ public class StudentExamService {
                             }
                             else if (exercise instanceof ModelingExercise) {
                                 modelingSubmissionRepository.save((ModelingSubmission) submission);
+                            }
+
+                            // versioning of submission
+                            try {
+                                submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            }
+                            catch (Exception ex) {
+                                log.error("Submission version could not be saved: " + ex);
                             }
                         }
                     }
@@ -184,7 +207,7 @@ public class StudentExamService {
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
-        return ok();
+        return ResponseEntity.ok(studentExam);
     }
 
     /**
@@ -225,7 +248,7 @@ public class StudentExamService {
      * Get one student exam by exercise and user
      *
      * @param exerciseId the id of an exam exercise
-     * @param userId the id of the student taking the exam
+     * @param userId     the id of the student taking the exam
      * @return the student exam without associated entities
      */
     @NotNull

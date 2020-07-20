@@ -375,6 +375,12 @@ public class ExamResource {
             userService.addUserToGroup(student.get(), course.getStudentGroupName());
         }
         examRepository.save(exam);
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has added user " + studentLogin + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+
         return ResponseEntity.ok().body(null);
     }
 
@@ -618,6 +624,13 @@ public class ExamResource {
             // Delete the student exam
             studentExamService.deleteStudentExam(studentExam.getId());
         }
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has removed user " + studentLogin + " from the exam " + exam.getTitle() + " with id " + exam.getId()
+                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+
         return ResponseEntity.ok().body(null);
     }
 
