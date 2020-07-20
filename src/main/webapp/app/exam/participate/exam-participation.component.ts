@@ -64,6 +64,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     disconnected = false;
 
     handInEarly = false;
+    handInPossible = true;
 
     exerciseIndex = 0;
 
@@ -269,7 +270,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe((studentExam) => (this.studentExam = studentExam));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
+            (studentExam) => (this.studentExam = studentExam),
+            (error) => {
+                // Explicitly check whether the error was caused because the submission was not in-time
+                if (error.status === 403 && error.errorKey === 'submissionNotInTime') {
+                    this.alertService.error(error.errorKey);
+                    this.handInPossible = false;
+                } else {
+                    this.alertService.error('handInFailed');
+                    this.handInPossible = true;
+                }
+            },
+        );
     }
 
     /**

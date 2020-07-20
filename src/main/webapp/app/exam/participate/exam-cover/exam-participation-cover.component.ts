@@ -27,6 +27,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
     @Input() handInEarly = false;
+    @Input() handInPossible = true;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
@@ -177,6 +178,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         // error message
         //     }
         // });
+        this.handInPossible = false;
         this.onExamEnded.emit();
     }
 
@@ -193,7 +195,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get endButtonEnabled(): boolean {
         // TODO: add logic when confirm can be clicked
-        return !!(this.nameIsCorrect && this.confirmed && this.exam);
+        return !!(this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible);
     }
 
     get nameIsCorrect(): boolean {
