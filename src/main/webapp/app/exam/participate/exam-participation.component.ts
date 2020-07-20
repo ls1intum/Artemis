@@ -276,7 +276,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             (studentExam) => (this.studentExam = studentExam),
             (error: Error) => {
                 this.alertService.error(error.message);
-                // Explicitly check whether the error was caused because the submission was not in-time, in this case, set hand in not possible
+                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
                 this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
             },
         );
