@@ -585,7 +585,6 @@ public class ExamService {
         final int numberOfParallelThreads = 10;
         ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
         Future<?> future = forkJoinPool.submit(task);
-        forkJoinPool.shutdown();
         // Wait for the operation to complete
         try {
             future.get();
@@ -595,6 +594,9 @@ public class ExamService {
         }
         catch (ExecutionException e) {
             log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        }
+        finally {
+            forkJoinPool.shutdown();
         }
     }
 
