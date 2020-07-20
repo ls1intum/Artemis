@@ -102,7 +102,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated.
+     * Results with a complaint
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutorId    - the id of the tutor we are interested in
@@ -111,7 +112,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional(readOnly = true)
     public List<FileUploadSubmission> getAllFileUploadSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
+        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorIdAndHasComplaintFalse(exerciseId, tutorId);
 
         // TODO: properly load the submissions with all required data from the database without using @Transactional
         return results.stream().map(result -> {
