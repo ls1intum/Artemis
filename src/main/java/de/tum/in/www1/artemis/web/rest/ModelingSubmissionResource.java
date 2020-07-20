@@ -207,7 +207,7 @@ public class ModelingSubmissionResource {
 
         final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
-            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorWithNoComplaintsForExercise(exerciseId, user);
         }
         else {
             modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);

@@ -218,7 +218,7 @@ public class TextSubmissionResource {
 
         final List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
-            textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
+            textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithNoComplaintsForExercise(exerciseId, user);
         }
         else {
             textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);

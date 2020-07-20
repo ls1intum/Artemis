@@ -569,10 +569,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorWithNoComplaintsForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
-                .collect(Collectors.toList());
+                .filter(submission -> !Boolean.TRUE.equals(submission.getResult().hasComplaint())).collect(Collectors.toList());
     }
 
     /**

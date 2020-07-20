@@ -159,29 +159,19 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the modeling submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the modeling submissions where the tutor has a result associated.
+     * Submissions which contain results with a complaint are filtered out.
      *
      * @param exerciseId - the id of the exercise we are looking for
-     * @param tutorId    - the id of the tutor we are interested in
+     * @param tutor - the tutor we are interested in
      * @return a list of modeling submissions
      */
-    @Transactional(readOnly = true)
-    public List<ModelingSubmission> getAllModelingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorIdAndHasComplaintFalse(exerciseId, tutorId);
-
-        // TODO: properly load the submissions with all required data from the database without using @Transactional
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            ModelingSubmission modelingSubmission = new ModelingSubmission();
-
-            result.setSubmission(null);
-            modelingSubmission.setResult(result);
-            modelingSubmission.setParticipation(submission.getParticipation());
-            modelingSubmission.setId(submission.getId());
-            modelingSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return modelingSubmission;
+    public List<ModelingSubmission> getAllModelingSubmissionsAssessedByTutorWithNoComplaintsForExercise(Long exerciseId, User tutor) {
+        // Retrieve all submissions assessed by the tutor and filter out ones which contain complaints
+        List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        return submissions.stream().filter(submission -> !Boolean.TRUE.equals(submission.getResult().hasComplaint())).map(submission -> {
+            submission.getResult().setSubmission(null);
+            return (ModelingSubmission) submission;
         }).collect(Collectors.toList());
     }
 
