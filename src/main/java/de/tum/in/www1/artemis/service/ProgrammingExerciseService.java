@@ -762,6 +762,7 @@ public class ProgrammingExerciseService {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             // Editing is allowed if build and test after due date is not set and no manual correction is involved
+            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
             boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
                     && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
             return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
