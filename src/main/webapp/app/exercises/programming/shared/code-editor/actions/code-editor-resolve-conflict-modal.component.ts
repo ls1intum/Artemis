@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -13,16 +13,16 @@ import { GitConflictState } from 'app/exercises/programming/shared/code-editor/m
 export class CodeEditorResolveConflictModalComponent {
     constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: CodeEditorConflictStateService) {}
 
+    shouldReset: EventEmitter<void> = new EventEmitter<void>();
+
     /**
      * Reset the git repository to its last commit.
      *
      * @function resetRepository
      */
     resetRepository() {
-        this.repositoryService.resetRepository().subscribe(() => {
-            this.conflictService.notifyConflictState(GitConflictState.OK);
-            this.closeModal();
-        });
+        this.activeModal.close();
+        this.shouldReset.emit();
     }
 
     closeModal() {
