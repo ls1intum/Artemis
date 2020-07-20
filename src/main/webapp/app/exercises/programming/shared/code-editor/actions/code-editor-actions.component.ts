@@ -201,8 +201,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
                     this.executeRefresh();
                 },
-                (error) => {
-                    this.onError.emit(error.message);
+                () => {
+                    this.onError.emit('resetFailed');
                 },
             );
         });

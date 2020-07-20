@@ -88,7 +88,8 @@
                 "notAllowedExam": "Du kannst (nicht mehr) abgeben",
                 "connectionTimeoutSave": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
                 "undefined": "Vorgang ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
-                "connectionTimeoutRefresh": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal."
+                "connectionTimeoutRefresh": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
+                "resetFailed": "Dein Repository konnte nicht zurückgesetzt werden."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
