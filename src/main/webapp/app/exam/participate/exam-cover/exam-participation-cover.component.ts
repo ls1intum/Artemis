@@ -177,8 +177,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         console.log('Something went wrong');
         //         // error message
         //     }
-        // });
-        // temporary lock the submit button in order to protect against spam
+        // })
         this.onExamEnded.emit();
     }
 
@@ -204,5 +203,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
+    }
+
+    studentFailedToSubmit() {
+        const individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        return individualStudentEndDate.add(this.exam.gracePeriod, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

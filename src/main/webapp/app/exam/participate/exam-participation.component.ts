@@ -29,7 +29,6 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
-import { HttpErrorResponse } from '@angular/common/http';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -268,16 +267,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
         this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
             (studentExam) => (this.studentExam = studentExam),
-            (error) => {
-                this.alertService.error(error);
+            (error: Error) => {
+                this.alertService.error(error.message);
                 // Explicitly check whether the error was caused because the submission was not in-time, in this case, set hand in not possible
-                this.handInPossible = error !== 'studentExam.submissionNotInTime';
+                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
             },
         );
     }

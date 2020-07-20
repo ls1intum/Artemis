@@ -74,9 +74,9 @@ export class ExamParticipationService {
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                    return throwError('studentExam.submissionNotInTime');
+                    return throwError(new Error('studentExam.submissionNotInTime'));
                 } else {
-                    return throwError('studentExam.handInFailed');
+                    return throwError(new Error('studentExam.handInFailed'));
                 }
             }),
         );
