@@ -586,8 +586,7 @@ public class ExamService {
      * @return number of evaluated exercises
      */
     public Integer evaluateQuizExercises(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -602,7 +601,9 @@ public class ExamService {
         long start = System.nanoTime();
         log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        quizExercises.forEach(quiz -> {
+            examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId());
+        });
         log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
