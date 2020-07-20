@@ -238,7 +238,6 @@ public class TextSubmissionService extends SubmissionService {
      * @param tutor - the tutor we are interested in
      * @return a list of text Submissions
      */
-    @Transactional(readOnly = true)
     public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithNoComplaintsForExercise(Long exerciseId, User tutor) {
         // Retrieve all submissions assessed by the tutor and filter out ones which contain complaints
         List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
