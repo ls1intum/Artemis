@@ -53,10 +53,14 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
         user.addAchievement(achievement);
         assertThat(user.getAchievements().size()).isEqualTo(1).as("Number of achievements for user should be 1");
+        assertThat(user.getAchievements().contains(achievement)).isTrue().as("User has correct achievement");
         assertThat(achievement.getUsers().size()).isEqualTo(1).as("Number of users for achievement should be 1");
+        assertThat(achievement.getUsers().contains(user)).isTrue().as("Achievement has correct user");
 
         course.addAchievement(achievement);
         assertThat(course.getAchievements().size()).isEqualTo(1).as("Number of achievements for course should be 1");
+        assertThat(course.getAchievements().contains(achievement)).isTrue().as("Course has correct achievement");
         assertThat(achievement.getCourses().size()).isEqualTo(1).as("Number of courses for achievement should be 1");
+        assertThat(achievement.getCourses().contains(course)).isTrue().as("Achievement has correct course");
     }
 }
