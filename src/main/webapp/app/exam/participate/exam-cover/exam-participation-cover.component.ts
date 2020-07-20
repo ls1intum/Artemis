@@ -205,7 +205,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         return this.enteredName.trim() !== '';
     }
 
-    studentFailedToSubmit() {
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
         const individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         return individualStudentEndDate.add(this.exam.gracePeriod, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
