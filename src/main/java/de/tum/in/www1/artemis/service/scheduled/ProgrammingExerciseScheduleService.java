@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.config.JHipsterConstants;
@@ -46,20 +45,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final ParticipationService participationService;
 
     private final ExamService examService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
-            ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, Optional<VersionControlService> versionControlService,
-            ParticipationService participationService, ExamService examService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ParticipationService participationService,
+            ExamService examService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
-        this.versionControlService = versionControlService;
         this.participationService = participationService;
         this.examService = examService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
