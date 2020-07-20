@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -6,7 +6,6 @@ import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-q
 import { DragState } from 'app/entities/quiz/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { resizeImage } from 'app/shared/util/drag-and-drop.utils';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -91,8 +90,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
-    resizeImage = resizeImage();
-
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -136,13 +133,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
-    }
-
-    /**
-     * Action when resizing the window.
-     */
-    @HostListener('window:resize') onResize() {
-        resizeImage();
     }
 
     /**
@@ -190,7 +180,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
                 this.backgroundFileName = '';
-                resizeImage();
             },
             (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
@@ -752,7 +741,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
-        resizeImage();
         this.prepareForSave();
     }
 

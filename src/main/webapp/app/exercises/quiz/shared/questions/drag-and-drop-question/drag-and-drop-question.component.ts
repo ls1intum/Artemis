@@ -1,10 +1,9 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { resizeImage } from 'app/shared/util/drag-and-drop.utils';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
@@ -77,10 +76,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    @HostListener('window:resize') onResize() {
-        resizeImage();
-    }
-
     ngOnChanges(): void {
         this.countCorrectMappings();
     }
@@ -113,9 +108,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
-        if (this.loadingState === 'success') {
-            resizeImage();
-        }
     }
 
     /**

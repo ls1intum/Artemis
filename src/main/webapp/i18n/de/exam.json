@@ -14,7 +14,14 @@
                 "noCommitHash": "Kein Commit wurde gemacht",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
-                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Instruktor."
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Instruktor.",
+                "points": {
+                    "exercise": "Aufgabe",
+                    "overview": "Übersicht",
+                    "yourPoints": "Deine Punkte",
+                    "maxPoints": "Max. Punkte",
+                    "sum": "Summe"
+                }
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -68,6 +75,7 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
+            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",

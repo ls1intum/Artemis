@@ -14,6 +14,7 @@
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
                 [exercises]="studentExam.exercises"
+                [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 (onExerciseChanged)="onExerciseChange($event)"
                 (examAboutToEnd)="examEnded()"

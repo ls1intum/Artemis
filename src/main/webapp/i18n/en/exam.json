@@ -14,7 +14,14 @@
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
                 "viewResult": " View Result",
-                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor."
+                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
+                "points": {
+                    "exercise": "Exercise",
+                    "overview": "Overview",
+                    "yourPoints": "Your points",
+                    "maxPoints": "Max. points",
+                    "sum": "Sum"
+                }
             },
             "title": "Exam",
             "startExam": "Start",
@@ -67,7 +74,8 @@
             "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
         },
         "examParticipation": {
-            "timer": "Time Left: ",
+            "timer": "Time left: ",
+            "timerEndView": "Time left to submit exam: ",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",

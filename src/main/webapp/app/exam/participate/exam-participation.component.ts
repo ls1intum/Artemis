@@ -65,6 +65,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     handInEarly = false;
 
+    exerciseIndex = 0;
+
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
@@ -267,7 +269,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe((studentExam) => (this.studentExam = studentExam));
     }
 
     /**
@@ -289,6 +291,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
+        } else if (this.studentExam?.exercises && this.activeExercise) {
+            const index = this.studentExam.exercises.findIndex((exercise) => exercise.id === this.activeExercise.id);
+            this.exerciseIndex = index ? index : 0;
         }
     }
 

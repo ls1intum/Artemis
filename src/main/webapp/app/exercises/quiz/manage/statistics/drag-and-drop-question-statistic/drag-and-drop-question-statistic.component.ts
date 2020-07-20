@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +8,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
-import { resizeImage } from 'app/shared/util/drag-and-drop.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -63,8 +62,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
-    resizeImage = resizeImage(true);
-
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -110,10 +107,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-    }
-
-    @HostListener('window:resize') onResize() {
-        resizeImage(true);
     }
 
     getDataSets() {
