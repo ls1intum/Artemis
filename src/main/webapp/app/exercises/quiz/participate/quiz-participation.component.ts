@@ -94,6 +94,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     quizId: number;
     courseId: number;
     interval: any;
+    quizStarted = false;
 
     /**
      * Websocket channels
@@ -402,6 +403,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                // Check if websocket has updated the quiz exercise and check that following block is only executed once
+                if (!this.quizExercise.started && !this.quizStarted) {
+                    this.quizStarted = true;
+                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                    setTimeout(() => {
+                        // Check again if websocket has updated the quiz exercise within the 5 seconds
+                        if (!this.quizExercise.started) {
+                            this.refreshQuiz(true);
+                        }
+                    }, 5000);
+                }
             }
         } else {
             this.timeUntilStart = '';
