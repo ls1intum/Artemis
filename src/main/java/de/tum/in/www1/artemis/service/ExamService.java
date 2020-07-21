@@ -304,7 +304,8 @@ public class ExamService {
             throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
         }
 
-        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
+        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
         // now fetch the exam with additional information
         Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
