@@ -298,13 +298,17 @@ public class ExamService {
     public List<StudentExam> generateStudentExams(Long examId) {
         // Delete all existing student exams via orphan removal
         Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
         // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (exam.getNumberOfExercisesInExam() == null) {
+        if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
             throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
         }
+
+        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
+
+        // now fetch the exam with additional information
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
 
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
@@ -326,22 +330,27 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Long examId) {
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
+
+        // TODO: the validation checks should happen in the resource, before this method is even being called!
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
+        }
+
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Validate settings of the exam
         validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Get all users who already have an individual exam
-        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        Set<User> usersWithExam = examWithExistingStudentExams.getStudentExams().stream().map(studentExam -> studentExam.getUser()).collect(Collectors.toSet());
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
 
         // Get all registered users
         Set<User> allRegisteredUsers = exam.getRegisteredUsers();
 
         // Get all students who don't have an exam yet
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
-        missingUsers.removeAll(usersWithExam);
+        missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
         List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
@@ -608,8 +617,7 @@ public class ExamService {
      * @return number of evaluated exercises
      */
     public Integer evaluateQuizExercises(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -624,7 +632,9 @@ public class ExamService {
         long start = System.nanoTime();
         log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        quizExercises.forEach(quiz -> {
+            examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId());
+        });
         log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
@@ -637,8 +647,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are unlocked
      */
     public Integer unlockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
@@ -665,8 +674,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are locked
      */
     public Integer lockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
