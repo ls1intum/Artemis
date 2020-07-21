@@ -304,7 +304,7 @@ public class ExamService {
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         // now fetch the exam with additional information
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
 
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
