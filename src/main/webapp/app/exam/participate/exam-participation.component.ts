@@ -64,6 +64,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     disconnected = false;
 
     handInEarly = false;
+    handInPossible = true;
 
     exerciseIndex = 0;
 
@@ -266,10 +267,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        // temporary lock the submit button in order to protect against spam
+        this.handInPossible = false;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe((studentExam) => (this.studentExam = studentExam));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
+            (studentExam) => (this.studentExam = studentExam),
+            (error: Error) => {
+                this.alertService.error(error.message);
+                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
+                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+            },
+        );
     }
 
     /**
