@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 /**
@@ -38,4 +39,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Query("select distinct se.workingTime from StudentExam se where se.exam.id = :#{#examId}")
     Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
+
+    @Query("select u from StudentExam se left join se.user u where se.exam.id = :#{#examId}")
+    Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 }
