@@ -53,7 +53,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
-    canOverride = false;
     isLoading = true;
     courseId: number;
 
@@ -428,14 +427,37 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+    }
 
-        let isBeforeAssessmentDueDate = true;
-        // Add check as the assessmentDueDate must not be set for exercises
-        if (this.exercise.assessmentDueDate) {
-            isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                console.log('Can override because instructor');
+                return true;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            if (this.complaint) {
+                // If there is a complaint, the original assessor cannot override the result anymore. Another tutor must handle it
+                console.log('Can override complaint: ', !this.isAssessor && isBeforeAssessmentDueDate);
+                return !this.isAssessor && isBeforeAssessmentDueDate;
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            console.log('tutors are allowed to override one of their assessments before the assessment due date.');
+            return this.isAssessor && isBeforeAssessmentDueDate;
         }
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        return false;
     }
 
     toggleCollapse($event: any) {
