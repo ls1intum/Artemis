@@ -207,15 +207,31 @@ public class StudentExamService {
             }
         }
 
+        // if everything worked -> set studentExam to submitted and set submission date
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now());
+        studentExamRepository.save(studentExam);
+        
+        try {
+            lockStudentRepositories(currentUser, existingStudentExam, examEndDate);
+        }
+        catch (Exception e) {
+            log.error("lockStudentRepositories threw an exception", e);
+        }
+
+        return ResponseEntity.ok(studentExam);
+    }
+
+    private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam, ZonedDateTime examEndDate) {
         // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
-        if (ZonedDateTime.now().isBefore(examEndDate)) {
+        if (examEndDate != null && ZonedDateTime.now().isBefore(examEndDate)) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : existingStudentExam.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
                     ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                    try {
                     ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                             currentUser.getLogin());
-                    try {
                         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
@@ -224,13 +240,6 @@ public class StudentExamService {
                 }
             }
         }
-
-        // if everything worked -> set studentExam to submitted and set submission date
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.save(studentExam);
-
-        return ResponseEntity.ok(studentExam);
     }
 
     /**
