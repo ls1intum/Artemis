@@ -8,10 +8,9 @@ import { GitConflictState } from 'app/exercises/programming/shared/code-editor/m
     selector: 'jhi-code-editor-resolve-conflict-modal',
     templateUrl: './code-editor-resolve-conflict-modal.component.html',
     styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
-    providers: [CodeEditorRepositoryFileService],
 })
 export class CodeEditorResolveConflictModalComponent {
-    constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: CodeEditorConflictStateService) {}
+    constructor(public activeModal: NgbActiveModal) {}
 
     shouldReset: EventEmitter<void> = new EventEmitter<void>();
 
