@@ -36,9 +36,11 @@ public class AssessmentService {
 
     private final SubmissionRepository submissionRepository;
 
+    protected final AchievementService achievementService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService) {
+            SubmissionRepository submissionRepository, ExamService examService, AchievementService achievementService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -47,6 +49,7 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionRepository = submissionRepository;
         this.examService = examService;
+        this.achievementService = achievementService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -63,6 +66,9 @@ public class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
+
+        achievementService.assignPointBasedAchievmentIfEarned(result);
+
         return resultRepository.save(result);
     }
 
