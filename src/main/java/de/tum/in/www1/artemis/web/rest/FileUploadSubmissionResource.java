@@ -209,7 +209,7 @@ public class FileUploadSubmissionResource {
 
         final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorWithNoComplaintsForExercise(exerciseId, user);
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user);
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);

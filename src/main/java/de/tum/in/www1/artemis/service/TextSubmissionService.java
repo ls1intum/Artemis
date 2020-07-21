@@ -232,16 +232,15 @@ public class TextSubmissionService extends SubmissionService {
 
     /**
      * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
-     * Submissions which contain results with a complaint are filtered out.
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutor - the tutor we are interested in
      * @return a list of text Submissions
      */
-    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithNoComplaintsForExercise(Long exerciseId, User tutor) {
+    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor) {
         // Retrieve all submissions assessed by the tutor and filter out ones which contain complaints
         List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-        return submissions.stream().filter(submission -> !Boolean.TRUE.equals(submission.getResult().hasComplaint())).map(submission -> {
+        return submissions.stream().map(submission -> {
             submission.getResult().setSubmission(null);
             return (TextSubmission) submission;
         }).collect(Collectors.toList());
