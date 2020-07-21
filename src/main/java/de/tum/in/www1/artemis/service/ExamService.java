@@ -326,7 +326,7 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Long examId) {
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
 
         // TODO: the validation checks should happen in the resource, before this method is even being called!
         if (exam.getNumberOfExercisesInExam() == null) {
@@ -339,14 +339,14 @@ public class ExamService {
         validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Get all users who already have an individual exam
-        Set<User> usersWithExam = exam.getStudentExams().stream().map(StudentExam::getUser).collect(Collectors.toSet());
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
 
         // Get all registered users
         Set<User> allRegisteredUsers = exam.getRegisteredUsers();
 
         // Get all students who don't have an exam yet
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
-        missingUsers.removeAll(usersWithExam);
+        missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
         List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
