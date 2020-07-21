@@ -713,7 +713,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
 
         // Exercises should be preserved
-        Exam savedExam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(exam.getId()).get();
+        Exam savedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
         ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
         ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
