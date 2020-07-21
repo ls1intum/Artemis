@@ -295,13 +295,16 @@ public class ExamService {
     public List<StudentExam> generateStudentExams(Long examId) {
         // Delete all existing student exams via orphan removal
         Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
         // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (exam.getNumberOfExercisesInExam() == null) {
+        if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
             throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
         }
+
+        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
+
+        // now fetch the exam with additional information
+        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
 
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
@@ -324,14 +327,19 @@ public class ExamService {
      */
     public List<StudentExam> generateMissingStudentExams(Long examId) {
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+
+        // TODO: the validation checks should happen in the resource, before this method is even being called!
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
+        }
+
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Validate settings of the exam
         validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Get all users who already have an individual exam
-        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        Set<User> usersWithExam = examWithExistingStudentExams.getStudentExams().stream().map(studentExam -> studentExam.getUser()).collect(Collectors.toSet());
+        Set<User> usersWithExam = exam.getStudentExams().stream().map(StudentExam::getUser).collect(Collectors.toSet());
 
         // Get all registered users
         Set<User> allRegisteredUsers = exam.getRegisteredUsers();
