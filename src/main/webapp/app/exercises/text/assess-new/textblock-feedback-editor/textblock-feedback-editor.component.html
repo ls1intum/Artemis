@@ -16,7 +16,7 @@
             (keyup)="textareaAutogrow()"
             (keydown.escape)="escKeyup()"
             (focus)="inFocus()"
-            [readOnly]="readonly"
+            [readOnly]="readOnly"
             (ngModelChange)="didChange()"
         ></textarea>
     </div>
@@ -32,7 +32,7 @@
             (click)="onScoreClick($event)"
             (focus)="inFocus()"
             (ngModelChange)="didChange()"
-            [readOnly]="disableEditScore || readonly"
+            [readOnly]="disableEditScore || readOnly"
         />
     </div>
 </div>
