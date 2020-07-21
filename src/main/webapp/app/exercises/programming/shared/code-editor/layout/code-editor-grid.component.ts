@@ -30,11 +30,11 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     interactResizableLeft: Interactable;
     resizableMinWidthLeft: number;
-    resizableMaxWidthLeft = 1200;
+    resizableMaxWidthLeft = 2000;
 
     interactResizableRight: Interactable;
     resizableMinWidthRight: number;
-    resizableMaxWidthRight = 1200;
+    resizableMaxWidthRight = 2000;
 
     interactResizableBottom: Interactable;
     resizableMinHeightBottom = 300;
@@ -104,7 +104,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             });
 
         this.resizableMinWidthRight = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 2;
+        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 1.3;
         this.interactResizableRight = interact('.editor-sidebar-right')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
