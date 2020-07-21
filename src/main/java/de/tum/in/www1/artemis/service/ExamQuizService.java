@@ -83,6 +83,8 @@ public class ExamQuizService {
 
         for (var participation : studentParticipations) {
             try {
+                // reconnect so that the quiz questions are available later on (otherwise there will be a org.hibernate.LazyInitializationException)
+                participation.setExercise(quizExercise);
                 Set<Submission> submissions = participation.getSubmissions();
                 QuizSubmission quizSubmission;
                 if (submissions.size() == 0) {
