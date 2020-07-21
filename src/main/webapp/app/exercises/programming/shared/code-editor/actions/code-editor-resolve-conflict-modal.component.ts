@@ -11,8 +11,6 @@ export class CodeEditorResolveConflictModalComponent {
 
     shouldReset: EventEmitter<void> = new EventEmitter<void>();
 
-    shouldReset: EventEmitter<void> = new EventEmitter<void>();
-
     /**
      * Reset the git repository to its last commit.
      *
