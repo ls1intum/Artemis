@@ -178,7 +178,7 @@ public class ComplaintResource {
         }
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         var isTeamParticipation = participation.getParticipant() instanceof Team;
-        var isTutorOfTeam = user.equals(participation.getTeam().map(Team::getOwner).orElse(null));
+        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
         if (!isAtLeastInstructor) {
             complaint.getResult().setAssessor(null);
