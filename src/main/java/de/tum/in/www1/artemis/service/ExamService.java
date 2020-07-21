@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -56,6 +57,8 @@ public class ExamService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final ExamSessionRepository examSessionRepository;
+
     private final ParticipationService participationService;
 
     private final ProgrammingExerciseService programmingExerciseService;
@@ -65,7 +68,8 @@ public class ExamService {
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, InstanceMessageSendService instanceMessageSendService,
+            ExamSessionRepository examSessionRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -73,6 +77,7 @@ public class ExamService {
         this.programmingExerciseService = programmingExerciseService;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.examSessionRepository = examSessionRepository;
     }
 
     @Autowired
@@ -297,7 +302,9 @@ public class ExamService {
      */
     public List<StudentExam> generateStudentExams(Long examId) {
         // Delete all existing student exams via orphan removal
-        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
+        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsAndExamSessionsById(examId).get();
+        examSessionRepository
+                .deleteInBatch(examWithExistingStudentExams.getStudentExams().stream().flatMap(studentExam -> studentExam.getExamSessions().stream()).collect(Collectors.toSet()));
         studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
         Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
