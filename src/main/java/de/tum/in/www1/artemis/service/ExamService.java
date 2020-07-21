@@ -246,7 +246,7 @@ public class ExamService {
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
-                    studentResult.overallPointsAchieved += achievedPoints;
+                    studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
 
@@ -278,7 +278,7 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        Double sumOverallPoints = scores.studentResults.stream().map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
+        Double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
 
         int numberOfStudentResults = scores.studentResults.size();
 
