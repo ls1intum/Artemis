@@ -177,10 +177,15 @@ public class ComplaintResource {
             return forbidden();
         }
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isTeamParticipation = participation.getParticipant() instanceof Team;
+        var isTutorOfTeam = user.equals(participation.getTeam().map(Team::getOwner).orElse(null));
 
         if (!isAtLeastInstructor) {
             complaint.getResult().setAssessor(null);
-            complaint.filterSensitiveInformation();
+
+            if (!isTeamParticipation || !isTutorOfTeam) {
+                complaint.filterSensitiveInformation();
+            }
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);
