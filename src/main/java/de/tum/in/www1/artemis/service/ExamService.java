@@ -4,6 +4,9 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -559,7 +562,7 @@ public class ExamService {
 
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        studentExams.parallelStream().forEach(studentExam -> {
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -582,9 +585,28 @@ public class ExamService {
                     }
                 }
             }
-        });
+        }));
 
         return generatedParticipations.size();
+    }
+
+    private void executeInParallel(Runnable task) {
+        final int numberOfParallelThreads = 10;
+        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
+        Future<?> future = forkJoinPool.submit(task);
+        // Wait for the operation to complete
+        try {
+            future.get();
+        }
+        catch (InterruptedException e) {
+            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
+        }
+        catch (ExecutionException e) {
+            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        }
+        finally {
+            forkJoinPool.shutdown();
+        }
     }
 
     /**
