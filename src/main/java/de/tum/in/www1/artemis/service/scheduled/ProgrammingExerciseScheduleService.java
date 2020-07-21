@@ -111,11 +111,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private static boolean needsToBeScheduled(ProgrammingExercise exercise) {
         // Exam exercises need to be scheduled
-        if (isExamExercise(exercise))
+        if (isExamExercise(exercise)) {
             return true;
+        }
         // Manual assessed programming exercises as well
-        if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC)
+        if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
             return true;
+        }
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
         return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
