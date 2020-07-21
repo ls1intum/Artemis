@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -187,5 +188,24 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryOperation(true);
         verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+    }
+
+    @Test
+    void shouldScheduleExercisesWithManualAssessment() throws Exception {
+        mockStudentRepoLocks();
+        long delayMS = 200;
+        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        // Only lock participations
+        verifyLockStudentRepositoryOperation(true);
+        // but do not build all
+        verify(programmingSubmissionService, Mockito.times(0)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 }
