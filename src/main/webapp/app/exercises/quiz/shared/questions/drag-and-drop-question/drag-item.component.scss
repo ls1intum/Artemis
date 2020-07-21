@@ -25,6 +25,7 @@
         cursor: move;
         padding: 0;
         margin: 0;
+        text-align: center;
     }
 
     .drag-item-text {
@@ -36,11 +37,18 @@
         width: 100%;
         white-space: pre-wrap;
 
+        div {
+            display: flex;
+            overflow: hidden;
+        }
+
         span {
             border: 1px solid #000;
             background: white;
             color: black;
             padding: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 }
