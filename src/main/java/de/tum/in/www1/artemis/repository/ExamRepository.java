@@ -43,6 +43,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
+    // TODO: for exams with many users, this DB query crashes the server due to memory issues
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "registeredUsers", "studentExams" })
     Optional<Exam> findWithExercisesRegisteredUsersStudentExamsById(Long examId);
 
