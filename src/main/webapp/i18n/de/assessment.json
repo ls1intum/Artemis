@@ -12,6 +12,7 @@
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
             "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
+            "assessmentReadOnly": "Es gibt eine Beschwerde für diese Bewertung. Ein anderer Tutor muss antworten.",
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",

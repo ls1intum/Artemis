@@ -16,6 +16,9 @@
         >
             Assessment locked by: otherUser
         </span>
+        <span id="assessmentReadOnly" *ngIf="isAssessor && isComplaint" class="ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentReadOnly">
+            There is a complaint for this assessment. Another tutor must respond
+        </span>
         <span
             *ngIf="!isAssessor && isComplaint"
             class="ml-3"
@@ -25,7 +28,13 @@
         >
             Original Assessor: otherUser
         </span>
-        <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
+        <span
+            id="assessmentLockedCurrentUser"
+            *ngIf="isAssessor && !isComplaint"
+            class="text-danger ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
+        >
             You have the lock for this assessment
         </span>
         <ng-container *ngIf="!result?.completionDate">

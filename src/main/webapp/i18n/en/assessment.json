@@ -12,6 +12,7 @@
             "assessmentLocked": "Assessment locked by: {{otherUser}}",
             "assessmentLockedComplaintView": "Original Assessor: {{otherUser}}",
             "assessmentLockedCurrentUser": "You have the lock for this assessment",
+            "assessmentReadOnly": "There is a complaint for this assessment. Another tutor must respond.",
             "button": {
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
