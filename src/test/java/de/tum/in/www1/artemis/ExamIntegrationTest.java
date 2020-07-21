@@ -975,7 +975,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         double calculatedAverageScore = 0.0;
         for (var exerciseGroup : exam.getExerciseGroups()) {
             var exercise = exerciseGroup.getExercises().stream().findAny().get();
-            calculatedAverageScore += exercise.getMaxScore() * resultScore / 100.00;
+            calculatedAverageScore += Math.round(exercise.getMaxScore() * resultScore / 100.00 * 10) / 10.0;
         }
         // TODO: the rest of the test is flaky and does not pass. We should investigate and fix this!!
 
