@@ -19,12 +19,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -49,14 +47,18 @@ public class StudentExamService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService) {
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -109,7 +111,7 @@ public class StudentExamService {
     public ResponseEntity<StudentExam> submitStudentExam(StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
         // checks if student exam is already marked as submitted
-        StudentExam existingStudentExam = findOne(studentExam.getId());
+        StudentExam existingStudentExam = findOneWithExercises(studentExam.getId());
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             return conflict(ENTITY_NAME, "alreadySubmitted", "You have already submitted.");
         }
@@ -135,7 +137,7 @@ public class StudentExamService {
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
             if (exercise instanceof ProgrammingExercise) {
-                // TODO: lock the student repository in the VCS Service in case the student handed in early
+                // lock student repositories in a second loop using all exercises in the DB
                 continue;
             }
             if (exercise instanceof FileUploadExercise) {
@@ -207,7 +209,34 @@ public class StudentExamService {
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
 
+        try {
+            lockStudentRepositories(currentUser, existingStudentExam, examEndDate);
+        }
+        catch (Exception e) {
+            log.error("lockStudentRepositories threw an exception", e);
+        }
+
         return ResponseEntity.ok(studentExam);
+    }
+
+    private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam, ZonedDateTime examEndDate) {
+        // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
+        if (examEndDate != null && ZonedDateTime.now().isBefore(examEndDate)) {
+            // Use the programming exercises in the DB to lock the repositories (for safety)
+            for (Exercise exercise : existingStudentExam.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                    try {
+                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
+                                currentUser.getLogin());
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+                    }
+                    catch (Exception e) {
+                        log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);
+                    }
+                }
+            }
+        }
     }
 
     /**

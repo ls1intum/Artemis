@@ -114,13 +114,14 @@
             [exam]="exam"
             [studentExam]="studentExam"
             [handInEarly]="handInEarly"
+            [handInPossible]="handInPossible"
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
     <ng-template #alert>
-        <div class="d-flex my-2">
+        <div class="d-flex justify-content-center mt-2 mb-4">
             <jhi-alert></jhi-alert>
         </div>
     </ng-template>

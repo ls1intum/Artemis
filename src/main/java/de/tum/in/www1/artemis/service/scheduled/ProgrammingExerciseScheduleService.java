@@ -18,13 +18,11 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.config.JHipsterConstants;
@@ -43,24 +41,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final GroupNotificationService groupNotificationService;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final GroupNotificationService groupNotificationService;
 
     private final ParticipationService participationService;
 
     private final ExamService examService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
-            ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, Optional<VersionControlService> versionControlService,
-            ParticipationService participationService, ExamService examService) {
+            ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ParticipationService participationService,
+            ExamService examService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
-        this.versionControlService = versionControlService;
         this.participationService = participationService;
         this.examService = examService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.env = env;
     }
 
@@ -237,7 +235,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockAndCollectOperation = (programmingExercise, participation) -> {
                     var dueDate = participationService.getIndividualDueDate(programmingExercise, participation);
                     individualDueDates.add(new Tuple<>(dueDate, participation));
-                    unlockStudentRepository(programmingExercise, participation);
+                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, participation -> true, "add write permissions to all student repositories");
@@ -329,7 +327,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, this::lockStudentRepository, condition,
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepository, condition,
                 "remove write permissions from all student repositories");
     }
 
@@ -344,7 +342,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @throws EntityNotFoundException  if the programming exercise can't be found.
      */
     public List<ProgrammingExerciseStudentParticipation> addWritePermissionsToAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, this::unlockStudentRepository, participation -> true,
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::unlockStudentRepository, participation -> true,
                 "add write permissions to all student repositories");
     }
 
@@ -390,23 +388,5 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
         }
         return failedOperations;
-    }
-
-    private void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), participation.getStudents());
-        }
-        else {
-            log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
-        }
-    }
-
-    private void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
-        }
-        else {
-            log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
-        }
     }
 }
