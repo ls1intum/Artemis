@@ -50,7 +50,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
-    canOverride = false;
     isLoading = true;
     hasAutomaticFeedback = false;
 
@@ -222,17 +221,37 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
-        this.isAtLeastInstructor =
-            this.modelingExercise && this.modelingExercise.course
-                ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
-                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        let isBeforeAssessmentDueDate = true;
-        // Add check as the assessmentDueDate must not be set for exercises
-        if (this.modelingExercise?.assessmentDueDate) {
-            isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.modelingExercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                console.log('Can override because instructor');
+                return true;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.modelingExercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
+            }
+            if (this.complaint) {
+                // If there is a complaint, the original assessor cannot override the result anymore. Another tutor must handle it
+                console.log('Can override complaint: ', !this.isAssessor && isBeforeAssessmentDueDate);
+                return !this.isAssessor && isBeforeAssessmentDueDate;
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            console.log('tutors are allowed to override one of their assessments before the assessment due date.');
+            return this.isAssessor && isBeforeAssessmentDueDate;
         }
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        return false;
     }
 
     onError(): void {
