@@ -8,7 +8,7 @@
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor && !isComplaint"
+            *ngIf="!isAssessor && !hasComplaint"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
@@ -17,16 +17,25 @@
             Assessment locked by: otherUser
         </span>
         <span
-            id="assessmentReadOnly"
-            *ngIf="isAssessor && !isAtLeastInstructor && isComplaint"
+            id="assessmentReadOnlyUnhandledComplaint"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !complaintHandled"
             class="ml-3"
             style="font-size: 65%;"
-            jhiTranslate="artemisApp.assessment.assessmentReadOnly"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
         >
-            There is a complaint for this assessment. Another tutor must respond
+            There is a complaint for this assessment. Another tutor must respond.
         </span>
         <span
-            *ngIf="!isAssessor && isComplaint"
+            id="assessmentReadOnlyhandled"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
+            class="ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
+        >
+            The complaint about your assessment has been resolved.
+        </span>
+        <span
+            *ngIf="!isAssessor && hasComplaint"
             class="ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
@@ -36,7 +45,7 @@
         </span>
         <span
             id="assessmentLockedCurrentUser"
-            *ngIf="(isAssessor && !isComplaint) || (isAssessor && isAtLeastInstructor)"
+            *ngIf="(isAssessor && !hasComplaint) || (isAssessor && isAtLeastInstructor)"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
