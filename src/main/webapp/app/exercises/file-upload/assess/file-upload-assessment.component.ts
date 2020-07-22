@@ -520,7 +520,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     get readOnly(): boolean {
-        return !!this.complaint && this.isAssessor;
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     private onError(error: string) {

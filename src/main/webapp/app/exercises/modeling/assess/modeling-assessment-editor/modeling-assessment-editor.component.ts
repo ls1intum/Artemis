@@ -256,7 +256,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !!this.complaint && this.isAssessor;
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     onError(): void {
