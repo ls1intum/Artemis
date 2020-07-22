@@ -20,6 +20,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
     @Input() disableEditScore = false;
+    @Input() readOnly: boolean;
     private textareaElement: HTMLTextAreaElement;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;

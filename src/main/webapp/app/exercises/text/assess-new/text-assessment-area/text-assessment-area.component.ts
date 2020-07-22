@@ -17,6 +17,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 export class TextAssessmentAreaComponent implements OnChanges {
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
+    @Input() readOnly: boolean;
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
     autoTextBlockAssessment = true;

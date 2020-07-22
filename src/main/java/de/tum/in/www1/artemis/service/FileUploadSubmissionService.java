@@ -102,30 +102,17 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated.
      *
      * @param exerciseId - the id of the exercise we are looking for
-     * @param tutorId    - the id of the tutor we are interested in
+     * @param tutor - the tutor we are interested in
      * @return a list of file upload Submissions
      */
-    @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getAllFileUploadSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
-
-        // TODO: properly load the submissions with all required data from the database without using @Transactional
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-
-            result.setSubmission(null);
-            fileUploadSubmission.setLanguage(submission.getLanguage());
-            fileUploadSubmission.setResult(result);
-            fileUploadSubmission.setParticipation(submission.getParticipation());
-            fileUploadSubmission.setId(submission.getId());
-            fileUploadSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return fileUploadSubmission;
+    public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor) {
+        List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        return submissions.stream().map(submission -> {
+            submission.getResult().setSubmission(null);
+            return (FileUploadSubmission) submission;
         }).collect(Collectors.toList());
     }
 

@@ -18,6 +18,7 @@ export class ManualTextblockSelectionComponent {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
     @Input() selectedRef: TextBlockRef | null = null;
+    @Input() readOnly: boolean;
     @Output() selectedRefChange = new EventEmitter<TextBlockRef | null>();
     @Input() submission: TextSubmission;
     textBlockRefGroups: TextBlockRefGroup[];
