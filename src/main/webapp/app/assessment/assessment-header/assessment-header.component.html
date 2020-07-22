@@ -45,7 +45,7 @@
         </span>
         <span
             id="assessmentLockedCurrentUser"
-            *ngIf="(isAssessor && !hasComplaint) || (isAssessor && isAtLeastInstructor)"
+            *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"

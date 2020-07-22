@@ -429,8 +429,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
         if (this.exercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
-        } else {
-            this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR', 'ROLE_ADMIN']);
         }
     }
 

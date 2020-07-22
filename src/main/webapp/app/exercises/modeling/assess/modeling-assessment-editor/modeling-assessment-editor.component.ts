@@ -222,8 +222,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
         if (this.modelingExercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
-        } else {
-            this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR', 'ROLE_ADMIN']);
         }
     }
 
