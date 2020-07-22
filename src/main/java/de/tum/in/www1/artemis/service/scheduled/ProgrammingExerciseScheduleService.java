@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -73,10 +74,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 return;
             }
             SecurityUtils.setAuthorizationObject();
-            // TODO: also take exercises with manual assessments into account here
+
             List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
                     .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
+
+            List<ProgrammingExercise> programmingExercisesWithFutureManualAssessment = programmingExerciseRepository
+                    .findAllByManualAssessmentAndDueDateAfterDate(ZonedDateTime.now());
+            programmingExercisesWithFutureManualAssessment.forEach(this::scheduleExercise);
+
             // for exams (TODO take info account that the individual due dates can be after the exam end date)
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
@@ -89,23 +95,38 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Will cancel a scheduled task if the buildAndTestAfterDueDate is null or has passed already.
+     * Will cancel or reschedule tasks for updated programming exercises
      *
-     * // TODO: the method name and logic is really hard to understand, we should improve this
      * @param exercise ProgrammingExercise
      */
     @Override
-    public void scheduleExerciseIfRequired(ProgrammingExercise exercise) {
-        // TODO: also take exercises with manual assessments into account here and deal better with exams
-        if (!isExamExercise(exercise)
-                && (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null || exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now()))) {
-            // this only cancels a schedule, but does not schedule one
-            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
-            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+    public void updateScheduling(ProgrammingExercise exercise) {
+        if (!needsToBeScheduled(exercise)) {
+            // If a programming exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
+            cancelAllScheduledTasks(exercise);
             return;
         }
-        // exam exercises are always scheduled, course exercises are only scheduled if buildAndTestStudentSubmissionsAfterDueDate is set and in the future
         scheduleExercise(exercise);
+    }
+
+    private static boolean needsToBeScheduled(ProgrammingExercise exercise) {
+        // Exam exercises need to be scheduled
+        if (isExamExercise(exercise)) {
+            return true;
+        }
+        // Manual assessed programming exercises as well
+        if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+            return true;
+        }
+        // If tests are run after due date and that due date lies in the future, we need to schedule that as well
+        return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+    }
+
+    private void cancelAllScheduledTasks(ProgrammingExercise exercise) {
+        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.RELEASE);
+        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
+        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.ASSESSMENT_DUE);
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
@@ -123,11 +144,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
-        // TODO: there is small logic error here. When build and run test date is after the due date, the lock operation might be executed even if it is not necessary.
-        scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockAllStudentRepositories(exercise));
-        scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
-        log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
+        // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
+        if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockAllStudentRepositories(exercise));
+            log.debug("Scheduled lock student repositories after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
+                    + exercise.getDueDate() + ".");
+        }
+        else {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
+        }
+        // For exercises with buildAndTestAfterDueDate
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
+            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
+                    + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
+        }
+        else {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        }
     }
 
     private void scheduleExamExercise(ProgrammingExercise exercise) {
