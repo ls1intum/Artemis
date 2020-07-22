@@ -85,7 +85,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe((params) => {
@@ -221,6 +220,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        if (this.modelingExercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
+        } else {
+            this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR', 'ROLE_ADMIN']);
+        }
     }
 
     /**
@@ -234,24 +238,25 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.modelingExercise) {
             if (this.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
-                console.log('Can override because instructor');
                 return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
             }
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise.assessmentDueDate) {
                 isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
             }
-            if (this.complaint) {
-                // If there is a complaint, the original assessor cannot override the result anymore. Another tutor must handle it
-                console.log('Can override complaint: ', !this.isAssessor && isBeforeAssessmentDueDate);
-                return !this.isAssessor && isBeforeAssessmentDueDate;
-            }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            console.log('tutors are allowed to override one of their assessments before the assessment due date.');
             return this.isAssessor && isBeforeAssessmentDueDate;
         }
         return false;
+    }
+
+    get readOnly(): boolean {
+        return !!this.complaint && this.isAssessor;
     }
 
     onError(): void {

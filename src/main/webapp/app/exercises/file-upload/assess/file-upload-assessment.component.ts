@@ -427,6 +427,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        if (this.exercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
+        } else {
+            this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR', 'ROLE_ADMIN']);
+        }
     }
 
     /**
@@ -440,21 +445,18 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         if (this.exercise) {
             if (this.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
-                console.log('Can override because instructor');
                 return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
             }
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
                 isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
             }
-            if (this.complaint) {
-                // If there is a complaint, the original assessor cannot override the result anymore. Another tutor must handle it
-                console.log('Can override complaint: ', !this.isAssessor && isBeforeAssessmentDueDate);
-                return !this.isAssessor && isBeforeAssessmentDueDate;
-            }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            console.log('tutors are allowed to override one of their assessments before the assessment due date.');
             return this.isAssessor && isBeforeAssessmentDueDate;
         }
         return false;
@@ -515,6 +517,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+    }
+
+    get readOnly(): boolean {
+        return !!this.complaint && this.isAssessor;
     }
 
     private onError(error: string) {

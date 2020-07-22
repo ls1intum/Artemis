@@ -155,9 +155,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
 
-        // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
-
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
@@ -437,14 +434,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 // Instructors can override any assessment at any time.
                 return true;
             }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
                 isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
-            }
-            if (this.complaint) {
-                // If there is a complaint, the original assessor cannot override the result anymore. Another tutor must handle it
-                return !this.isAssessor && isBeforeAssessmentDueDate;
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -452,8 +449,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return false;
     }
 
+    get readOnly(): boolean {
+        return !!this.complaint && this.isAssessor;
+    }
+
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
+        // case distinction for exam mode
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     private handleError(error: HttpErrorResponse): void {
