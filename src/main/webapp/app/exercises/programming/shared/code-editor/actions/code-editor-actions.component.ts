@@ -194,6 +194,17 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
+        const modal = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
+        modal.componentInstance.shouldReset.subscribe(() => {
+            this.repositoryService.resetRepository().subscribe(
+                () => {
+                    this.conflictService.notifyConflictState(GitConflictState.OK);
+                    this.executeRefresh();
+                },
+                () => {
+                    this.onError.emit('resetFailed');
+                },
+            );
+        });
     }
 }
