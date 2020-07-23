@@ -497,7 +497,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 questions.push(question);
             }
         }
-        this.verifyImportedQuestions(questions);
+        this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
         this.selectedCourseId = null;
         this.allExistingQuestions = this.existingQuestions = [];
@@ -513,7 +513,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
         this.quizIsValid = this.validQuiz();
         this.pendingChangesCache = this.pendingChanges();
-        this.checkInvalidFlaggedQuestions();
+        this.checkForInvalidFlaggedQuestions();
         this.computeInvalidReasons();
         this.computeInvalidWarnings();
         this.changeDetector.detectChanges();
@@ -658,7 +658,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         return isGenerallyValid && areAllQuestionsValid && this.isEmpty(this.invalidFlaggedQuestions);
     }
 
-    checkInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
+    /**
+     * Iterates through the questions is search for invalid flags. Updates {@link invalidFlaggedQuestions} accordingly.
+     * Check the invalid flag of the question as well as all elements which can be set as invalid, for each quiz exercise type.
+     * @param questions optional parameter, if it is not set, it iterates over the exercise questions.
+     */
+    checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
         if (!this.quizExercise) {
             return;
         }
@@ -951,7 +956,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             try {
                 // Read the file and get list of questions from the file
                 const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
-                this.verifyImportedQuestions(questions);
+                this.verifyAndImportQuestions(questions);
                 // Clearing html elements,
                 this.importFile = null;
                 this.importFileName = '';
@@ -966,13 +971,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * Calls {@link checkInvalidFlaggedQuestions} to verify whether any question or its elements have the invalid flag set.
+     * Calls {@link checkForInvalidFlaggedQuestions} to verify whether any question or its elements have the invalid flag set.
      * If this is the case, the user is notified using the {@link QuizConfirmImportInvalidQuestionsModalComponent} modal.
      * If the user accepts importing the questions with invalid flags, all these flags are reset. See {@link addQuestions}.
      * @param questions the question which are being imported.
      */
-    verifyImportedQuestions(questions: QuizQuestion[]) {
-        this.checkInvalidFlaggedQuestions(questions);
+    verifyAndImportQuestions(questions: QuizQuestion[]) {
+        this.checkForInvalidFlaggedQuestions(questions);
         if (!this.isEmpty(this.invalidFlaggedQuestions)) {
             const modal = this.modalService.open(QuizConfirmImportInvalidQuestionsModalComponent, { keyboard: true, size: 'lg' });
             modal.componentInstance.invalidFlaggedQuestions = questions
