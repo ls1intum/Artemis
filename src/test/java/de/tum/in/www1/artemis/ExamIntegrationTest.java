@@ -418,6 +418,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
+    public void testCreateExam_checkCourseAccess_InstructorNotInCourse_forbidden() throws Exception {
+        Exam exam = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExam_asInstructor() throws Exception {
         // Test for bad request when exam id is already set.
@@ -431,26 +438,67 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test for conflict when course deviates from course specified in route.
         Exam examC = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        // Test invalid dates
+        List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
+        for (var exam : examsWithInvalidDate) {
+            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        }
         // Test for forbidden when user tries to create an exam with exercise groups.
-        Exam examD = ModelFactory.generateExam(course1);
-        examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.FORBIDDEN);
+        Exam examK = ModelFactory.generateExam(course1);
+        examK.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
+        request.post("/api/courses/" + course1.getId() + "/exams", examK, HttpStatus.FORBIDDEN);
         // Test examAccessService.
-        Exam examE = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
+        Exam examL = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examL, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAccessForInstructor(course1.getId());
+    }
+
+    private List<Exam> createExamsWithInvalidDates(Course course) {
+        // Test for conflict, visible date not set
+        Exam examA = ModelFactory.generateExam(course);
+        examA.setVisibleDate(null);
+        // Test for conflict, start date not set
+        Exam examB = ModelFactory.generateExam(course);
+        examB.setStartDate(null);
+        // Test for conflict, end date not set
+        Exam examC = ModelFactory.generateExam(course);
+        examC.setEndDate(null);
+        // Test for conflict, start date not after visible date
+        Exam examD = ModelFactory.generateExam(course);
+        examD.setStartDate(examD.getVisibleDate());
+        // Test for conflict, end date not after start date
+        Exam examE = ModelFactory.generateExam(course);
+        examE.setEndDate(examE.getStartDate());
+        return List.of(examA, examB, examC, examD, examE);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateExam_asInstructor() throws Exception {
+        // Create instead of update if no id was set
         Exam exam = ModelFactory.generateExam(course1);
-        exam.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        exam.setTitle("Over 9000!");
+        long examCountBefore = examRepository.count();
+        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        createdExam.setId(null);
+        assertEquals(exam, createdExam);
+        assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
+        // No course is set -> conflict
         exam = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        exam.setId(1L);
+        exam.setCourse(null);
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        // Course id in the updated exam and in the REST resource url do not match -> conflict
+        exam = ModelFactory.generateExam(course1);
+        exam.setId(1L);
+        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        // Dates in the updated exam are not valid -> conflict
+        List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
+        for (var examWithInvDate : examsWithInvalidDate) {
+            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
+        }
+        // Update the exam -> ok
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAccessForInstructor(course1.getId());
     }
 
     @Test
