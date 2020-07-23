@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -986,7 +985,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Ensure that all exerciseGroups of the exam are present in the DTO
         List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
         List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
-        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
+        assertThat(exerciseGroupIdsInExam).containsExactlyInAnyOrderElementsOf(exerciseGroupIdsInDTO);
 
         // Compare exerciseGroups in DTO to exam exerciseGroups
         for (var exerciseGroupDTO : response.exerciseGroups) {
@@ -1003,13 +1002,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
             // Collect titles of all exercises in the exam group
             List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
-            assertThat(exerciseGroupDTO.containedExercises).isEqualTo(exerciseTitlesInGroupFromExam);
+            assertThat(exerciseGroupDTO.containedExercises).containsExactlyInAnyOrderElementsOf(exerciseTitlesInGroupFromExam);
         }
 
         // Ensure that all registered students have a StudentResult
         List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
         List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
-        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
+        assertThat(studentIdsWithStudentResults).containsExactlyInAnyOrderElementsOf(registeredUsersIds);
 
         // Compare StudentResult with the generated results
         for (var studentResult : response.studentResults) {
@@ -1035,7 +1034,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
                     .collect(Collectors.toList());
             List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
-            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
+            assertThat(exerciseIdsOfStudentResult).containsExactlyInAnyOrderElementsOf(exerciseIdsInStudentExam);
             for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
                 var exerciseResult = entry.getValue();
 
@@ -1076,8 +1075,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Get latest exam end date DTO from server -> This returns the endDate as no specific student working time is set
         ExamInformationDTO examInfo = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
                 ExamInformationDTO.class);
-        // Check that latest end date is equal to endDate (no specific student working time)
-        assertTrue(examInfo.latestIndividualEndDate.isEqual(exam2.getEndDate()));
+        // Check that latest end date is equal to endDate (no specific student working time). Do not check for equality as we lose precision when saving to the database
+        assertThat(examInfo.latestIndividualEndDate).isEqualToIgnoringNanos(exam2.getEndDate());
 
         // Set student exam with working time and save
         studentExam.setWorkingTime(3600);
@@ -1087,7 +1086,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         ExamInformationDTO examInfo2 = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
                 ExamInformationDTO.class);
         // Check that latest end date is equal to startDate + workingTime
-        assertTrue(examInfo2.latestIndividualEndDate.isEqual(exam2.getStartDate().plusHours(1)));
+        assertThat(examInfo2.latestIndividualEndDate).isEqualToIgnoringNanos(exam2.getStartDate().plusHours(1));
     }
 
     @Test
