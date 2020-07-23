@@ -670,12 +670,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (questions.length === 0) {
             questions = this.quizExercise.quizQuestions;
         }
-        let invalidQuestions: {
+        const invalidQuestions: {
             [questionId: number]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | null;
         } = {};
         questions.forEach(function (question) {
             const invalidQuestion = question.invalid;
-            let invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
+            const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions !== undefined) {
                 (<MultipleChoiceQuestion>question).answerOptions!.forEach(function (option) {
                     if (option.invalid) {
@@ -739,7 +739,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     computeInvalidWarnings(): Warning[] {
-        let invalidWarnings = !this.quizExercise
+        const invalidWarnings = !this.quizExercise
             ? []
             : this.quizExercise.quizQuestions
                   .map((question, index) => {
