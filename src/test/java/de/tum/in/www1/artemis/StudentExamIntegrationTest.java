@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -16,11 +17,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -51,7 +52,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Course course1;
 
+    private Course course2;
+
     private Exam exam1;
+
+    private Exam exam2;
 
     private StudentExam studentExam1;
 
@@ -110,35 +115,41 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExams.size()).isEqualTo(2);
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetStudentExamForConduction() throws Exception {
+    private List<StudentExam> prepareStudentExamsForConduction() throws Exception {
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = database.addEmptyCourse();
-        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+        course2 = database.addEmptyCourse();
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate);
 
         // register user
-        exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setRandomizeExerciseOrder(false);
-        exam = examRepository.save(exam);
+        exam2.setRegisteredUsers(new HashSet<>(users));
+        exam2.setRandomizeExerciseOrder(false);
+        exam2 = examRepository.save(exam2);
 
         // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
-                StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
 
         assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3); // we generate two additional student exams in the @Before method
 
         // start exercises
 
-        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
 
+        return studentExams;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetStudentExamForConduction() throws Exception {
+
+        List<StudentExam> studentExams = prepareStudentExamsForConduction();
         // TODO: also write a 2nd test where the submission already contains some content
 
         for (var studentExam : studentExams) {
@@ -148,7 +159,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             headers.set("User-Agent", "foo");
             headers.set("X-Artemis-Client-Fingerprint", "bar");
             headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
-            var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
+            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises().size()).isEqualTo(4);
@@ -211,7 +222,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // change back to instructor user
         database.changeUser("instructor1");
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + course2.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -361,27 +372,67 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testSubmitRealisticStudentExam() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitStudentExam_Realistic() throws Exception {
 
-        // TODO: get a realistic student exam (with exercises (quiz, programming, text, modeling), participations and submissions) using the conduction call to cover more code on
-        // the server
+        // TODO: add a programming exercise
+        List<StudentExam> studentExams = prepareStudentExamsForConduction();
 
-        // TODO: Change some submission objects (quiz, modeling, text)
+        List<StudentExam> studentExamsAfterStart = new ArrayList<>();
+        for (var studentExam : studentExams) {
+            database.changeUser(studentExam.getUser().getLogin());
+            var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
 
-        // TODO: submit and check that the submitted version gets created
+            for (var exercise : studentExamResponse.getExercises()) {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                if (exercise instanceof ProgrammingExercise) {
+                    // TODO: also add some programming submissions here
+                    continue;
+                }
+                var submission = participation.getSubmissions().iterator().next();
+                if (exercise instanceof ModelingExercise) {
+                    // TODO: Change submission.model and invoke the corresponding REST Call
+                    // check that the submission was saved and that a submitted version was created
+                    var modelingSubmission = (ModelingSubmission) submission;
+                    modelingSubmission.setModel("New Model");
+                }
+                else if (exercise instanceof TextExercise) {
+                    // TODO: Change submission.text and invoke the corresponding REST Call
+                    // check that the submission was saved and that a submitted version was created
+                    var textSubmission = (TextSubmission) submission;
+                    textSubmission.setText("New Text");
+                }
+                else if (exercise instanceof QuizExercise) {
+                    // TODO: Change submission.submittedAnswers and invoke the corresponding REST Call
+                    // check that the submission was saved and that a submitted version was created
+                    var quizSubmission = (QuizSubmission) submission;
+                    // quizSubmission.setSubmittedAnswers();
+                }
+            }
 
-        // TODO: Change some submission objects (quiz, modeling, text)
+            studentExamsAfterStart.add(studentExamResponse);
+        }
 
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK, null);
-        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
-        // Ensure that student exam has been marked as submitted
-        assertThat(submittedStudentExam.isSubmitted()).isTrue();
-        // Ensure that student exam has been set
-        assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
+        // now we change to the point of time when the student exam needs to be submitted
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
 
-        // TODO: check that the REST Call to studentExams/submit has stored the latest submissions and has created another submitted version
+        // TODO: add some new programming submissions to check if the call below includes them
+        List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
+        for (var studentExam : studentExamsAfterStart) {
+            database.changeUser(studentExam.getUser().getLogin());
+            var studentExamResponse = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam,
+                    StudentExam.class, HttpStatus.OK);
+            // TODO check that all text/quiz/modeling submissions were saved and that submitted versions were created
+            studentExamsAfterFinish.add(studentExamResponse);
 
-        // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
+            assertThat(studentExamResponse.isSubmitted()).isTrue();
+            assertThat(studentExamResponse.getSubmissionDate()).isNotNull();
+
+            // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
+
+        }
+
     }
 }

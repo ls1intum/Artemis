@@ -661,6 +661,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
     }

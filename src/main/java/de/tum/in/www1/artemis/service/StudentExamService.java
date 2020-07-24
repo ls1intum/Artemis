@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -47,11 +48,13 @@ public class StudentExamService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
             TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -59,6 +62,7 @@ public class StudentExamService {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -137,7 +141,19 @@ public class StudentExamService {
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
             if (exercise instanceof ProgrammingExercise) {
-                // lock student repositories in a second loop using all exercises in the DB
+                // there is an edge case in which the student exam does not contain the latest programming submission (e.g. when the user was offline in between)
+                // we fetch the latest programming submission from the DB here and replace it in the participation of the exercise so that the latest one will be returned below
+                try {
+                    if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
+                        var studentParticipation = exercise.getStudentParticipations().iterator().next();
+                        var latestSubmission = programmingSubmissionRepository.findLatestSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
+                                .findFirst();
+                        latestSubmission.ifPresent(programmingSubmission -> studentParticipation.setSubmissions(Set.of(programmingSubmission)));
+                    }
+                }
+                catch (Exception ex) {
+                    log.error("An error occurred when trying to find the latest submissions for programming exercise {} for user {}", exercise.getId(), currentUser.getLogin());
+                }
                 continue;
             }
             if (exercise instanceof FileUploadExercise) {
