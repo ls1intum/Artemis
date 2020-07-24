@@ -1136,6 +1136,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testLatestExamEndDate_noStartDate_notFound() throws Exception {
+        exam1.setStartDate(null);
+        examRepository.save(exam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/latest-end-date", HttpStatus.NOT_FOUND, ExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testLatestExamEndDate() throws Exception {
         // Setup exam and user
         User user = userRepo.findOneByLogin("student1").get();
