@@ -223,4 +223,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     elementWithMethod(method: string, umlModel: UMLModel) {
         return umlModel.elements.find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
     }
+
+    get isFullScreen(): boolean {
+        if (window.innerHeight === screen.height) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
