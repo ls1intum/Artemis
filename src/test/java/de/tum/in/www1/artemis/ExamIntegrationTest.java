@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -90,6 +91,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @SpyBean
     ExamAccessService examAccessService;
+
+    @SpyBean
+    InstanceMessageSendService instanceMessageSendService;
 
     // Tolerated absolute difference for floating-point number comparisons
     private final Double EPSILON = 0000.1;
@@ -515,7 +519,42 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
         }
         // Update the exam -> ok
-        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        exam1.setTitle("Best exam ever");
+        var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+        assertEquals(exam1, returnedExam);
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExam_reschedule_visibleAndStartDateChanged() throws Exception {
+        // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
+        var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
+        examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExam_reschedule_visibleDateChanged() throws Exception {
+        var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExam_reschedule_startDateChanged() throws Exception {
+        var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
     @Test
