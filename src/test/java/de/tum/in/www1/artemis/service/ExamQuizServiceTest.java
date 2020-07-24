@@ -126,7 +126,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "USER")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz_notOver_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
