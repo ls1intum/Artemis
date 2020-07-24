@@ -116,6 +116,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = database.addExamWithExerciseGroup(course1, true);
 
         // Add users that are not in the course
+        userRepo.save(ModelFactory.generateActivatedUser("student42"));
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor6"));
     }
@@ -123,6 +124,21 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @AfterEach
     public void resetDatabase() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+
+        List<User> studentsInCourseBefore = userRepo.findAllInGroup(course1.getStudentGroupName());
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
+        SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
+        List<User> studentsInCourseAfter = userRepo.findAllInGroup(course1.getStudentGroupName());
+        User student42 = database.getUserByLogin("student42");
+        studentsInCourseBefore.add(student42);
+        assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
 
     @Test
@@ -918,6 +934,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User user = userRepo.findOneByLogin("student1").get();
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/for-exam-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForExamTutorDashboard_courseIdDoesNotMatch_conflict() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-dashboard", HttpStatus.CONFLICT, Course.class);
     }
 
     @Test
