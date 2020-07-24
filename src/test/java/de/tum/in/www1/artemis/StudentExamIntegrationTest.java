@@ -48,6 +48,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     ExerciseRepository exerciseRepository;
 
+    @Autowired
+    SubmissionVersionRepository submissionVersionRepository;
+
     private List<User> users;
 
     private Course course1;
@@ -393,8 +396,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ModelingExercise) {
                     // TODO: Change submission.model and invoke the corresponding REST Call
                     // check that the submission was saved and that a submitted version was created
+                    String newModel = "This is a new model";
                     var modelingSubmission = (ModelingSubmission) submission;
-                    modelingSubmission.setModel("New Model");
+                    modelingSubmission.setModel(newModel);
+                    request.put("api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                    var savedModelingSubmission = request.get("/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
+                            HttpStatus.OK, ModelingSubmission.class);
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
+                    assertThat(versionedSubmission.isPresent());
+                    assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
+                    assertThat(newModel).isEqualTo(versionedSubmission.get().getContent());
                 }
                 else if (exercise instanceof TextExercise) {
                     // TODO: Change submission.text and invoke the corresponding REST Call
