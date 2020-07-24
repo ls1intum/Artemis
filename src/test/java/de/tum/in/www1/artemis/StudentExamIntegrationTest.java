@@ -352,7 +352,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSubmitStudentExam() throws Exception {
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK, null);
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
         // Ensure that student exam has been marked as submitted
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
@@ -373,7 +373,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // TODO: Change some submission objects (quiz, modeling, text)
 
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK, null);
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
         // Ensure that student exam has been marked as submitted
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
