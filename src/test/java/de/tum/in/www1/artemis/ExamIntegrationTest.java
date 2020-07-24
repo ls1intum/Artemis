@@ -495,6 +495,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Dates in the updated exam are not valid -> conflict
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var examWithInvDate : examsWithInvalidDate) {
+            examWithInvDate.setId(1L);
             request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
         }
         // Update the exam -> ok
