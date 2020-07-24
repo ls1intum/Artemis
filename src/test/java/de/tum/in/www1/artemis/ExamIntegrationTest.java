@@ -464,12 +464,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
         }
         // Test for forbidden when user tries to create an exam with exercise groups.
-        Exam examK = ModelFactory.generateExam(course1);
-        examK.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
-        request.post("/api/courses/" + course1.getId() + "/exams", examK, HttpStatus.FORBIDDEN);
+        Exam examD = ModelFactory.generateExam(course1);
+        examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.FORBIDDEN);
         // Test examAccessService.
-        Exam examL = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", examL, HttpStatus.CREATED);
+        Exam examE = ModelFactory.generateExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAccessForInstructor(course1.getId());
     }
 
