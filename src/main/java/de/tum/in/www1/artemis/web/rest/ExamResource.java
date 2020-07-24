@@ -185,8 +185,8 @@ public class ExamResource {
 
         Exam result = examService.save(updatedExam);
 
-        // We can't test dates for equality as the dates retrieved from the database lose precision
-        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS));
+        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
+        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
