@@ -134,7 +134,7 @@ public class StudentExamService {
         List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
                 studentExam.getExercises());
 
-        if (studentExam.getExercises() == null) {
+        if (studentExam.getExercises() == null || studentExam.getExercises().size() == 0) {
             return badRequest();
         }
 
