@@ -37,6 +37,18 @@ export interface ICodeEditorRepositoryService {
     resetRepository: () => Observable<void>;
 }
 
+export class ConnectionError extends Error {
+    constructor() {
+        super('InternetDisconnected');
+        // Set the prototype explicitly.
+        Object.setPrototypeOf(this, ConnectionError.prototype);
+    }
+
+    static get message(): string {
+        return 'InternetDisconnected';
+    }
+}
+
 /**
  * Type guard for checking if the file submission received through the websocket is an error object.
  * @param toBeDetermined either a FileSubmission or a FileSubmissionError.
@@ -48,7 +60,7 @@ const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissio
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
 /**
  * Check a HttpErrorResponse for specific status codes that are relevant for the code-editor.
- * Atm we only check the conflict status code (409) and inform the conflictService about it.
+ * Atm we only check the conflict status code (409) & inform the conflictService about it, and 'internet disconnected' status code (0).
  *
  * @param conflictService
  */
@@ -57,6 +69,9 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
         catchError((err: HttpErrorResponse) => {
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+            }
+            if (err.status === 0) {
+                return throwError(new ConnectionError());
             }
             return throwError(err);
         }),
@@ -192,10 +207,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
                     return;
                 }
                 this.fileUpdateSubject.next(fileSubmission);
-            }),
-            catchError(() => {
-                this.fileUpdateSubject.error(new Error('savingFailed'));
-                throw Error('savingFailed');
             }),
         );
     }
