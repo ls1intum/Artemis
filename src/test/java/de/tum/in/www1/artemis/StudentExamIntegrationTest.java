@@ -435,7 +435,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitStudentExam_Realistic() throws Exception {
 
-        // TODO: add a programming exercise
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
 
         List<StudentExam> studentExamsAfterStart = new ArrayList<>();
@@ -502,7 +501,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
         for (var studentExamAfterStart : studentExamsAfterStart) {
             database.changeUser(studentExamAfterStart.getUser().getLogin());
-            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExamAfterStart,
+            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamAfterStart,
                     StudentExam.class, HttpStatus.OK);
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
             for (var exercise : studentExamFinished.getExercises()) {
