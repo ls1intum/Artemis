@@ -13,7 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,11 +30,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -89,17 +85,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     ParticipationTestRepository participationTestRepository;
 
-    @SpyBean
-    ExamAccessService examAccessService;
-
-    @SpyBean
-    InstanceMessageSendService instanceMessageSendService;
-
     // Tolerated absolute difference for floating-point number comparisons
     private final Double EPSILON = 0000.1;
-
-    @SpyBean
-    ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private List<User> users;
 
@@ -248,7 +235,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // creating exercise
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);
@@ -305,8 +292,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2.setVisibleDate(now().plusHours(1));
 
         // creating exercise
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
-                DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
         exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
         exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
         modelingExercise = exerciseRepo.save(modelingExercise);
@@ -582,7 +568,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         var now = now();
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
@@ -786,12 +772,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
         exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
 
-        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
-        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
-        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup2);
-        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
-        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
-        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
+        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
+        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
         exercise1_1 = textExerciseRepository.save(exercise1_1);
         exercise1_2 = textExerciseRepository.save(exercise1_2);
         exercise2_1 = textExerciseRepository.save(exercise2_1);
@@ -873,13 +859,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 
@@ -919,13 +903,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 

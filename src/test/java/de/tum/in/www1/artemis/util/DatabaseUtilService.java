@@ -596,29 +596,29 @@ public class DatabaseUtilService {
         // TODO: also add other exercise types
 
         // add exercises
-        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
-        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
-        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(0));
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
 
-        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
-        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
-        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(1));
+        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
+        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
+        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
         exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
 
-        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
-        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
-        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(2));
+        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
+        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
+        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
         exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
 
-        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
-        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
-        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(3));
+        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
+        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
+        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
         exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
 
-        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
-        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
-        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(1), exam.getExerciseGroups().get(4));
+        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
+        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
+        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
         exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
@@ -686,45 +686,53 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime startDate, ZonedDateTime endDate) {
-        var assessmentDueDate = ZonedDateTime.now().plusDays(8);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
-        exam.setNumberOfExercisesInExam(4);
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime examStartDate, ZonedDateTime examEndDate) {
+        ModelFactory.generateExerciseGroup(true, exam); // text
+        ModelFactory.generateExerciseGroup(true, exam); // quiz
+        ModelFactory.generateExerciseGroup(true, exam); // file upload
+        ModelFactory.generateExerciseGroup(true, exam); // modeling
+        ModelFactory.generateExerciseGroup(true, exam); // programming
+        exam.setNumberOfExercisesInExam(5);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
+        var exerciseGroup4 = exam.getExerciseGroups().get(4);
 
-        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup0);
-        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup0);
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
 
-        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1, startDate, endDate);
-        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1, startDate, endDate);
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
 
-        FileUploadExercise fileUploadExercise1 = ModelFactory.generateFileUploadExerciseForExam(startDate, endDate, endDate.plusDays(5), "pdf", exerciseGroup2);
-        FileUploadExercise fileUploadExercise2 = ModelFactory.generateFileUploadExerciseForExam(startDate, endDate, endDate.plusDays(5), "pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise1 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise2 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
         exerciseGroup2.setExercises(Set.of(fileUploadExercise1, fileUploadExercise2));
         exerciseRepo.save(fileUploadExercise1);
         exerciseRepo.save(fileUploadExercise2);
 
-        ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(startDate, endDate, endDate.plusDays(5), DiagramType.ClassDiagram, exerciseGroup3);
-        ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(startDate, endDate, endDate.plusDays(5), DiagramType.ClassDiagram, exerciseGroup3);
+        ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
+        ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
         exerciseGroup3.setExercises(Set.of(modelingExercise1, modelingExercise2));
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
         // Programming exercises need a proper setup for 'prepare exam start' to work
+        ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+        exerciseRepo.save(programmingExercise1);
+        addTemplateParticipationForProgrammingExercise(programmingExercise1);
+        addSolutionParticipationForProgrammingExercise(programmingExercise1);
+
+        exerciseGroup4.setExercises(Set.of(programmingExercise1));
+
         return exam;
     }
 
@@ -938,7 +946,7 @@ public class DatabaseUtilService {
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
@@ -948,7 +956,7 @@ public class DatabaseUtilService {
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
@@ -958,7 +966,7 @@ public class DatabaseUtilService {
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", exerciseGroup);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
         exerciseRepo.save(fileUploadExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
@@ -1736,7 +1744,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());

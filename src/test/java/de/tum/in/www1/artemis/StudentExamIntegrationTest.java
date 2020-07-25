@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -63,8 +61,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private StudentExam studentExam1;
 
+    LocalRepository exerciseRepo = new LocalRepository();
+
+    LocalRepository testRepo = new LocalRepository();
+
+    LocalRepository solutionRepo = new LocalRepository();
+
+    LocalRepository studentRepo = new LocalRepository();
+
     @BeforeEach
-    public void initTestCase() {
+    public void initTestCase() throws Exception {
         users = database.addUsers(10, 1, 1);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
@@ -86,6 +92,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
 
         database.resetDatabase();
+
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
+
+        exerciseRepo.resetLocalRepo();
+        testRepo.resetLocalRepo();
+        solutionRepo.resetLocalRepo();
+        studentRepo.resetLocalRepo();
     }
 
     @Test
@@ -119,16 +133,23 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private List<StudentExam> prepareStudentExamsForConduction() throws Exception {
+
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
+
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate);
 
         // register user
-        exam2.setRegisteredUsers(new HashSet<>(users));
+        var student1 = database.getUserByLogin("student1");
+        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
+        // exam2.setRegisteredUsers(new HashSet<>(users));
+        exam2.setRegisteredUsers(Set.of(student1));
         exam2.setRandomizeExerciseOrder(false);
         exam2 = examRepository.save(exam2);
 
@@ -137,13 +158,37 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3); // we generate two additional student exams in the @Before method
+        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
+        // assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3);
+        assertThat(studentExamRepository.findAll()).hasSize(1 + 3); // we generate three additional student exams in the @Before method
 
         // start exercises
+        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+        studentRepo.configureRepos("studentRepo", "studentOriginRepo");
+
+        List<ProgrammingExercise> programmingExercises = new ArrayList<ProgrammingExercise>();
+        for (var exercise : exam2.getExerciseGroups().get(4).getExercises()) {
+            var programmingExercse = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercse);
+
+            setupRepositoryMocks(programmingExercse, exerciseRepo, solutionRepo, testRepo);
+            setupRepositoryMocksParticipant(programmingExercse, "student1", studentRepo);
+        }
+
+        for (var programmingExercise : programmingExercises) {
+            for (var user : users) {
+                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user));
+            }
+        }
 
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
+
+        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
+        // assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(1 * exam2.getExerciseGroups().size());
 
         return studentExams;
     }
@@ -165,7 +210,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
-            assertThat(response.getExercises().size()).isEqualTo(4);
+            assertThat(response.getExercises().size()).isEqualTo(exam2.getNumberOfExercisesInExam());
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
             assertThat(textExercise.getStudentParticipations().size()).isEqualTo(1);

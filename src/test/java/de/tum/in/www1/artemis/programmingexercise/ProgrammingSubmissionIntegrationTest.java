@@ -24,7 +24,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -54,9 +53,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;

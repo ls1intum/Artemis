@@ -93,7 +93,9 @@ public class BambooRequestMockProvider {
     }
 
     public void reset() {
-        mockServer.reset();
+        if (mockServer != null) {
+            mockServer.reset();
+        }
     }
 
     /**
