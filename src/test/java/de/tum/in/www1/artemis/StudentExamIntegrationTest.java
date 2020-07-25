@@ -596,42 +596,40 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
             for (var exercise : studentExamFinished.getExercises()) {
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
-                if (participationAfterFinish.getSubmissions().size() > 0) {
-                    var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
+                var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                    var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
-                    var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
-                    var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
+                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
+                var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
-                    if (exercise instanceof ModelingExercise) {
-                        var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
-                        var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
-                        assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
-                        assertVersionedSubmission(modelingSubmissionAfterStart);
-                        assertVersionedSubmission(modelingSubmissionAfterFinish);
-                    }
-                    else if (exercise instanceof TextExercise) {
-                        var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
-                        var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
-                        assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
-                        assertVersionedSubmission(textSubmissionAfterStart);
-                        assertVersionedSubmission(textSubmissionAfterFinish);
-                    }
-                    else if (exercise instanceof QuizExercise) {
-                        var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
-                        var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
-                        assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
-                        assertVersionedSubmission(quizSubmissionAfterStart);
-                        assertVersionedSubmission(quizSubmissionAfterFinish);
-                    }
-                    else if (exercise instanceof ProgrammingExercise) {
-                        var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
-                        var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
-                        // assert that we did not update the submission prematurely
-                        assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
-                        // assert that we get the correct commit hash after submit
-                        assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
-                    }
+                if (exercise instanceof ModelingExercise) {
+                    var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
+                    var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
+                    assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
+                    assertVersionedSubmission(modelingSubmissionAfterStart);
+                    assertVersionedSubmission(modelingSubmissionAfterFinish);
+                }
+                else if (exercise instanceof TextExercise) {
+                    var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
+                    var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
+                    assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
+                    assertVersionedSubmission(textSubmissionAfterStart);
+                    assertVersionedSubmission(textSubmissionAfterFinish);
+                }
+                else if (exercise instanceof QuizExercise) {
+                    var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
+                    var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
+                    assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
+                    assertVersionedSubmission(quizSubmissionAfterStart);
+                    assertVersionedSubmission(quizSubmissionAfterFinish);
+                }
+                else if (exercise instanceof ProgrammingExercise) {
+                    var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
+                    var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
+                    // assert that we did not update the submission prematurely
+                    assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
+                    // assert that we get the correct commit hash after submit
+                    assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
                 }
 
             }
