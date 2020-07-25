@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,8 +198,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
         assertThat(noGeneratedParticipations).isEqualTo(1 * exam2.getExerciseGroups().size());
 
-        // wait for exam to start
-        TimeUnit.SECONDS.sleep(5);
+        // simulate "wait" for exam to start
+        exam2.setStartDate(ZonedDateTime.now());
+        examRepository.save(exam2);
 
         return studentExams;
     }
@@ -456,9 +456,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     String newModel = "This is a new model";
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
-                    request.put("api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                    var savedModelingSubmission = request.get("api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
-                            HttpStatus.OK, ModelingSubmission.class);
+                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                    var savedModelingSubmission = request.get(
+                            "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                            ModelingSubmission.class);
+                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
                     var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
                     assertThat(versionedSubmission.isPresent());
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
