@@ -134,10 +134,6 @@ public class StudentExamService {
         List<StudentParticipation> existingParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
                 studentExam.getExercises());
 
-        if (studentExam.getExercises() == null || studentExam.getExercises().size() == 0) {
-            return badRequest();
-        }
-
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
             if (exercise instanceof ProgrammingExercise) {
@@ -243,6 +239,7 @@ public class StudentExamService {
                 if (exercise instanceof ProgrammingExercise) {
                     ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                     try {
+                        log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                                 currentUser.getLogin());
                         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);

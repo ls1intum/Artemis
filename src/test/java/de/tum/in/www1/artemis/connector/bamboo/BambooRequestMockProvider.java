@@ -88,8 +88,16 @@ public class BambooRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        MockitoAnnotations.initMocks(this);
+        enableMockingOfRequests(false);
+    }
+
+    public void enableMockingOfRequests(boolean ignoreExpectOrder) {
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(true);
+        mockServer = builder.build();
+
+        // necessary for injecting bambooClient above
+        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {

@@ -155,8 +155,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
@@ -486,18 +486,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSubmitExamWithNoExercise_badRequest() throws Exception {
+    public void testSubmitStudentExam_early() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
-        database.changeUser(studentExams.get(0).getUser().getLogin());
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
-        studentExamResponse.setExercises(null);
-        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.BAD_REQUEST);
-    }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSubmitStudentExamEarly() throws Exception {
-        List<StudentExam> studentExams = prepareStudentExamsForConduction();
+        // we have to reset the mock provider and enable it again so that we can mock additional requests below
+        bitbucketRequestMockProvider.reset();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+
         database.changeUser(studentExams.get(0).getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
@@ -507,18 +502,21 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
                 studentProgrammingParticipations.add((ProgrammingExerciseStudentParticipation) participation);
-                exercisesToBeLocked.add((ProgrammingExercise) exercise);
+                var programmingExercise = (ProgrammingExercise) exercise;
+                exercisesToBeLocked.add(programmingExercise);
+                final var repositorySlug = (programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
+                bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), participation.getStudents());
             }
         }
 
         // submit early
-        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.OK);
-        var submittedStudentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/" + studentExamResponse.getId(), HttpStatus.OK,
-                StudentExam.class);
+        var submittedStudentExam = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+                StudentExam.class, HttpStatus.OK);
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
+        assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
 
         // assert that the user cannot submit again
-        request.post("/api/courses/" + course2.getId() + "exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.CONFLICT);
 
         // assert that all repositories of programming exercises have been locked
         assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
@@ -529,7 +527,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSubmitStudentExam_Realistic() throws Exception {
+    public void testSubmitStudentExam_realistic() throws Exception {
 
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
 
@@ -659,6 +657,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // reset to exchange expectation for newCommitHash
         bambooRequestMockProvider.reset();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
         final String newCommitHash = "2ec6050142b9c187909abede819c083c8745c19b";
         final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
 
@@ -726,8 +725,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(studentExamFinished.isSubmitted()).isTrue();
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
-        // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
-        // The method lockStudentRepository will only be called if the student hands in early. Make a separate test for this
+        // The method lockStudentRepository will only be called if the student hands in early (see separate test)
         verify(programmingExerciseParticipationServiceSpy, never()).lockStudentRepository(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
     }

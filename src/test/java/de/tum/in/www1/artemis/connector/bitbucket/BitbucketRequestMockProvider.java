@@ -56,7 +56,13 @@ public class BitbucketRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
+        enableMockingOfRequests(false);
+    }
+
+    public void enableMockingOfRequests(boolean ignoreExpectOrder) {
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(true);
+        mockServer = builder.build();
     }
 
     public void reset() {
