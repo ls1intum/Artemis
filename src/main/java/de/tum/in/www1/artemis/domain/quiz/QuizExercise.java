@@ -170,7 +170,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**

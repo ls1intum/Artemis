@@ -4,14 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -20,7 +18,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -32,9 +29,6 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     RequestUtilService request;
-
-    @SpyBean
-    ExamAccessService examAccessService;
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
@@ -56,7 +50,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course1, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
-        var textEx = ModelFactory.generateTextExerciseForExam(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), exerciseGroup1);
+        var textEx = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
         textExercise1 = textExerciseRepository.save(textEx);
     }
 

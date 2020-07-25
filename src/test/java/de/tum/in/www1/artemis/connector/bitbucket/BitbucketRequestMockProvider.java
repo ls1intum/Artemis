@@ -60,7 +60,9 @@ public class BitbucketRequestMockProvider {
     }
 
     public void reset() {
-        mockServer.reset();
+        if (mockServer != null) {
+            mockServer.reset();
+        }
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
@@ -131,7 +133,10 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            mockGiveWritePermission(exercise, repoName, user.getLogin());
+            if (exercise.hasCourse()) {
+                mockGiveWritePermission(exercise, repoName, user.getLogin());
+            }
+            // exam exercises receive write permissions when the exam starts
         }
         mockProtectBranches(exercise, repoName);
     }

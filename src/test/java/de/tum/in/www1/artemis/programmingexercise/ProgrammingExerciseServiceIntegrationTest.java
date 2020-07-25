@@ -28,8 +28,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -64,12 +62,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Autowired
     RequestUtilService request;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     private Course additionalEmptyCourse;
 
