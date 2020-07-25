@@ -143,8 +143,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private List<StudentExam> prepareStudentExamsForConduction() throws Exception {
 
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
-        var examStartDate = ZonedDateTime.now().plusSeconds(5);
-        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+        var examStartDate = ZonedDateTime.now().plusMinutes(1);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        // --> 2 min = 120s working time
 
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -200,6 +201,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // simulate "wait" for exam to start
         exam2.setStartDate(ZonedDateTime.now());
+        exam2.setEndDate(ZonedDateTime.now().plusMinutes(2));
         examRepository.save(exam2);
 
         return studentExams;
@@ -493,6 +495,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         }
 
         // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam2 = examRepository.save(exam2);
