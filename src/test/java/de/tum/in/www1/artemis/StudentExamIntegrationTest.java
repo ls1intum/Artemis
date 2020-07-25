@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -13,9 +14,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -25,6 +29,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -50,6 +55,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     SubmissionVersionRepository submissionVersionRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @SpyBean
+    ProgrammingExerciseParticipationService programmingExerciseParticipationServiceSpy;
 
     private List<User> users;
 
@@ -400,7 +411,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
                     request.put("api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                    var savedModelingSubmission = request.get("/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
+                    var savedModelingSubmission = request.get("api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
                             HttpStatus.OK, ModelingSubmission.class);
                     var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
                     assertThat(versionedSubmission.isPresent());
@@ -411,7 +422,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     // TODO: Change submission.text and invoke the corresponding REST Call
                     // check that the submission was saved and that a submitted version was created
                     var textSubmission = (TextSubmission) submission;
-                    textSubmission.setText("New Text");
+                    String newText = "This is a new text";
+                    textSubmission.setText(newText);
+                    request.put("api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                    var savedTextSubmission = request.get("api/text-submissions/" + textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
+                    assertThat(versionedSubmission.isPresent());
+                    assertThat(newText).isEqualTo(savedTextSubmission.getText());
+                    assertThat(newText).isEqualTo(versionedSubmission.get().getContent());
                 }
                 else if (exercise instanceof QuizExercise) {
                     // TODO: Change submission.submittedAnswers and invoke the corresponding REST Call
@@ -431,19 +449,65 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // TODO: add some new programming submissions to check if the call below includes them
         List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
-        for (var studentExam : studentExamsAfterStart) {
-            database.changeUser(studentExam.getUser().getLogin());
-            var studentExamResponse = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam,
+        for (var studentExamAfterStart : studentExamsAfterStart) {
+            database.changeUser(studentExamAfterStart.getUser().getLogin());
+            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExamAfterStart,
                     StudentExam.class, HttpStatus.OK);
-            // TODO check that all text/quiz/modeling submissions were saved and that submitted versions were created
-            studentExamsAfterFinish.add(studentExamResponse);
+            // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
+            for (var exercise : studentExamFinished.getExercises()) {
+                var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
+                var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-            assertThat(studentExamResponse.isSubmitted()).isTrue();
-            assertThat(studentExamResponse.getSubmissionDate()).isNotNull();
+                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
+                var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
-            // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
+                if (exercise instanceof ModelingExercise) {
+                    var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
+                    var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
+                    assertThat(versionedSubmission.isPresent());
+                    assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
+                    assertThat(modelingSubmissionAfterFinish.getModel()).isEqualTo(versionedSubmission.get().getContent());
+                    assertThat(submissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
+                }
+                else if (exercise instanceof TextExercise) {
+                    var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
+                    var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
+                    assertThat(versionedSubmission.isPresent());
+                    assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
+                    assertThat(textSubmissionAfterFinish.getText()).isEqualTo(versionedSubmission.get().getContent());
+                    assertThat(textSubmissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
+                }
+                else if (exercise instanceof QuizExercise) {
+                    var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
+                    var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
+                    assertThat(versionedSubmission.isPresent());
+                    assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
+                    String submittedAnswersAsString;
+                    // Use the same strategy to create the quiz version content as in SubmissionVersionService
+                    try {
+                        submittedAnswersAsString = objectMapper.writeValueAsString(quizSubmissionAfterFinish.getSubmittedAnswers());
+                    }
+                    catch (Exception e) {
+                        submittedAnswersAsString = quizSubmissionAfterFinish.toString();
+                    }
 
+                    assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
+                    assertThat(quizSubmissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
+                }
+            }
+
+            studentExamsAfterFinish.add(studentExamFinished);
+
+            assertThat(studentExamFinished.isSubmitted()).isTrue();
+            assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
-
+        // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
+        // The method lockStudentRepository will only be called if the student hands in early. Make a separate test for this
+        verify(programmingExerciseParticipationServiceSpy, never()).lockStudentRepository(any(), any());
+        assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
     }
 }
