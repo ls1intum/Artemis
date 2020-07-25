@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -7,6 +8,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -47,6 +50,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -447,7 +453,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             for (var exercise : studentExamResponse.getExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise) {
-                    // TODO: also add some programming submissions here
+                    doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+                    bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+                    request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                    Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
+                            .findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                    assertThat(programmingSubmission.isPresent());
+                    participation.getSubmissions().add(programmingSubmission.get());
                     continue;
                 }
                 var submission = participation.getSubmissions().iterator().next();
@@ -561,7 +573,23 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam2 = examRepository.save(exam2);
 
-        // TODO: add some new programming submissions to check if the call below includes them
+        // reset to exchange expectation for newCommitHash
+        bambooRequestMockProvider.reset();
+        final ObjectId newCommitHash = ObjectId.fromString("2ec6050142b9c187909abede819c083c8745c19b");
+
+        for (var studentExam : studentExamsAfterStart) {
+            for (var exercise : studentExam.getExercises()) {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                if (exercise instanceof ProgrammingExercise) {
+                    // do another programming submission to check if the StudentExam after submit contains the new commit hash
+                    doReturn(newCommitHash).when(gitService).getLastCommitHash(any());
+                    bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+                    request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                    // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
+                }
+            }
+        }
+
         List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
         for (var studentExamAfterStart : studentExamsAfterStart) {
             database.changeUser(studentExamAfterStart.getUser().getLogin());
@@ -611,6 +639,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
                     assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
                     assertThat(quizSubmissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
+                }
+                else if (exercise instanceof ProgrammingExercise) {
+                    var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
+                    var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
+                    // assert that we did not update the submission prematurely
+                    assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID);
+                    // assert that we get the correct commit hash after submit
+                    assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
                 }
             }
 
