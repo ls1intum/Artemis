@@ -90,7 +90,7 @@
                 "saveFailedInternetDisconnected": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
                 "commitFailedInternetDisconnected": "Commit ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
                 "refreshFailedInternetDisconnected": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
-                "resetFailed": "Deine Repository konnte nicht zurückgesetzt werden."
+                "resetFailed": "Dein Repository konnte nicht zurückgesetzt werden."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
