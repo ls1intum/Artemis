@@ -443,6 +443,17 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitExamOtherUser_forbidden() throws Exception {
+        List<StudentExam> studentExams = prepareStudentExamsForConduction();
+        database.changeUser(studentExams.get(0).getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+        studentExamResponse.setExercises(null);
+        database.changeUser("student2");
+        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitExamWithNoExercise_badRequest() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
         database.changeUser(studentExams.get(0).getUser().getLogin());
