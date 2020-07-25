@@ -77,13 +77,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private StudentExam studentExam1;
 
-    LocalRepository exerciseRepo = new LocalRepository();
+    private LocalRepository exerciseRepo = new LocalRepository();
 
-    LocalRepository testRepo = new LocalRepository();
+    private LocalRepository testRepo = new LocalRepository();
 
-    LocalRepository solutionRepo = new LocalRepository();
+    private LocalRepository solutionRepo = new LocalRepository();
 
-    LocalRepository studentRepo = new LocalRepository();
+    private List<LocalRepository> studentRepos = new ArrayList<>();
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -115,7 +115,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
-        studentRepo.resetLocalRepo();
+        for (var repo : studentRepos) {
+            repo.resetLocalRepo();
+        }
     }
 
     @Test
@@ -164,9 +166,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // register user
         var student1 = database.getUserByLogin("student1");
-        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
-        // exam2.setRegisteredUsers(new HashSet<>(users));
-        exam2.setRegisteredUsers(Set.of(student1));
+        exam2.setRegisteredUsers(new HashSet<>(users));
         exam2.setRandomizeExerciseOrder(false);
         exam2 = examRepository.save(exam2);
 
@@ -174,24 +174,25 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
-
-        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
-        // assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3);
-        assertThat(studentExamRepository.findAll()).hasSize(1 + 3); // we generate three additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3); // we generate three additional student exams in the @Before method
 
         // start exercises
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
-        studentRepo.configureRepos("studentRepo", "studentOriginRepo");
 
-        List<ProgrammingExercise> programmingExercises = new ArrayList<ProgrammingExercise>();
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
         for (var exercise : exam2.getExerciseGroups().get(4).getExercises()) {
-            var programmingExercse = (ProgrammingExercise) exercise;
-            programmingExercises.add(programmingExercse);
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercise);
 
-            setupRepositoryMocks(programmingExercse, exerciseRepo, solutionRepo, testRepo);
-            setupRepositoryMocksParticipant(programmingExercse, "student1", studentRepo);
+            setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+            for (var user : exam2.getRegisteredUsers()) {
+                var repo = new LocalRepository();
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+                studentRepos.add(repo);
+            }
         }
 
         for (var programmingExercise : programmingExercises) {
@@ -203,9 +204,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 
-        // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
-        // assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
-        assertThat(noGeneratedParticipations).isEqualTo(1 * exam2.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
 
         // simulate "wait" for exam to start
         exam2.setStartDate(ZonedDateTime.now());
@@ -256,7 +255,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
             assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
             assertThat(quizExercise.getQuizQuestions().size()).isEqualTo(3);
-            // TODO: check that other parts of the solution for quiz questions are not available
+
             for (QuizQuestion question : quizExercise.getQuizQuestions()) {
                 if (question instanceof MultipleChoiceQuestion) {
                     assertThat(((MultipleChoiceQuestion) question).getAnswerOptions()).hasSize(2);
@@ -285,8 +284,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
             assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
             assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0." + studentExam.getId() + ".1");
-
-            // TODO: add other exercises, programming, modeling and file upload
         }
 
         // change back to instructor user
@@ -540,6 +537,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise) {
                     doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+                    bambooRequestMockProvider.reset();
+                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
@@ -667,6 +666,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ProgrammingExercise) {
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
                     doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
+                    bambooRequestMockProvider.reset();
+                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
