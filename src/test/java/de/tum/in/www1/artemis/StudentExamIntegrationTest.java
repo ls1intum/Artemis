@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -438,6 +439,39 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
         // Ensure that student exam has been set
         assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitStudentExamEarly() throws Exception {
+        List<StudentExam> studentExams = prepareStudentExamsForConduction();
+        database.changeUser(studentExams.get(0).getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+        final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
+        final List<ProgrammingExerciseStudentParticipation> studentProgrammingParticipations = new ArrayList<>();
+
+        for (var exercise : studentExamResponse.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            if (exercise instanceof ProgrammingExercise) {
+                studentProgrammingParticipations.add((ProgrammingExerciseStudentParticipation) participation);
+                exercisesToBeLocked.add((ProgrammingExercise) exercise);
+            }
+        }
+
+        // submit early
+        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.OK);
+        var submittedStudentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/" + studentExamResponse.getId(), HttpStatus.OK,
+                StudentExam.class);
+        assertThat(submittedStudentExam.isSubmitted()).isTrue();
+
+        // assert that the user cannot submit again
+        request.post("/api/courses/" + course2.getId() + "exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.CONFLICT);
+
+        // assert that all repositories of programming exercises have been locked
+        assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
+        for (int i = 0; i < exercisesToBeLocked.size(); i++) {
+            verify(programmingExerciseParticipationServiceSpy, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
+        }
     }
 
     @Test
