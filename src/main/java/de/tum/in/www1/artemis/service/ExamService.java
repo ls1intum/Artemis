@@ -582,7 +582,8 @@ public class ExamService {
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {
-                        log.warn("Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                        log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(),
+                                student.getId(), ex.getMessage(), ex);
                     }
                 }
             }

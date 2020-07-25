@@ -604,8 +604,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
 
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(2),
-                DiagramType.ActivityDiagram, exerciseGroup);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);
         modelingExercise = exerciseRepo.save(modelingExercise);
