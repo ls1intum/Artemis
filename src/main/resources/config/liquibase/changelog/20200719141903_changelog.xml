@@ -39,9 +39,9 @@
             </column>
             <column name="exercise_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="canarisan (generated)" id="1595161157595-37">
-        <addUniqueConstraint columnNames="block_i, block_j" constraintName="UK_bb0tq4qi707duccplqwy994ud" tableName="pairwise_distance"/>
+        <addColumn tableName="text_block">
+            <column name="tree_id" type="integer"/>
+        </addColumn>
         <addUniqueConstraint columnNames="child" constraintName="UK_fyfypxkg8lye4rktl4qdxos4c" tableName="tree_node"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="tree_node" constraintName="FKbe1y8e79ekof4dw17godufhgc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="pairwise_distance" constraintName="FKh30sknaj0ukms6xpnwgbw6dra" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>

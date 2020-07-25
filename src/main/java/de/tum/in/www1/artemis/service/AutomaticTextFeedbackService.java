@@ -65,7 +65,7 @@ public class AutomaticTextFeedbackService {
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
-            final TextExercise exercise = cluster.getExercise();
+            final TextExercise exercise = (TextExercise) block.getSubmission().getParticipation().getExercise();
             final TreeNode[] clusterTree = fetchClusterTreeForExercise(exercise);
 
             // if TextBlock is part of a cluster, we try to find an existing Feedback Element
