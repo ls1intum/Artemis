@@ -78,7 +78,7 @@
                 "exerciseNotFound": "The exercise could not be found.",
                 "saveFailed": "One or more files could not be updated.",
                 "commitFailed": "One or more files could not be commited.",
-                "refreshFailed": "Could not pull from repository",
+                "refreshFailed": "Refresh has failed",
                 "noPermissions": "You don't have the necessary permissions.",
                 "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",

@@ -74,7 +74,7 @@
                 "exerciseNotFound": "Die Übung konnte nicht gefunden werden.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
                 "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
-                "refreshFailed": "Der Stand konnte nicht von der Repository bezogen werden",
+                "refreshFailed": "Die Aktualisierung ist fehlgeschlagen",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
                 "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
