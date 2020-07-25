@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -571,14 +572,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // reset to exchange expectation for newCommitHash
         bambooRequestMockProvider.reset();
-        final ObjectId newCommitHash = ObjectId.fromString("2ec6050142b9c187909abede819c083c8745c19b");
+        final String newCommitHash = "2ec6050142b9c187909abede819c083c8745c19b";
+        final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
 
         for (var studentExam : studentExamsAfterStart) {
             for (var exercise : studentExam.getExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise) {
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
-                    doReturn(newCommitHash).when(gitService).getLastCommitHash(any());
+                    doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
@@ -622,15 +624,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                         assertVersionedSubmission(quizSubmissionAfterStart);
                         assertVersionedSubmission(quizSubmissionAfterFinish);
                     }
+                    else if (exercise instanceof ProgrammingExercise) {
+                        var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
+                        var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
+                        // assert that we did not update the submission prematurely
+                        assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
+                        // assert that we get the correct commit hash after submit
+                        assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
+                    }
                 }
-                else if (exercise instanceof ProgrammingExercise) {
-                    var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
-                    var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
-                    // assert that we did not update the submission prematurely
-                    assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID);
-                    // assert that we get the correct commit hash after submit
-                    assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
-                }
+
             }
 
             studentExamsAfterFinish.add(studentExamFinished);
