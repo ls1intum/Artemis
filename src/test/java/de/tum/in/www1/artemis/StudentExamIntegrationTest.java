@@ -461,9 +461,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     String newModel = "This is a new model";
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
-                    request.put("api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                    var savedModelingSubmission = request.get("api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
-                            HttpStatus.OK, ModelingSubmission.class);
+                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                    var savedModelingSubmission = request.get(
+                            "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                            ModelingSubmission.class);
+                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
                     var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
                     assertThat(versionedSubmission.isPresent());
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
