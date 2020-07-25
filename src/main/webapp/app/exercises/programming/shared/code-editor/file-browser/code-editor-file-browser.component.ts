@@ -147,7 +147,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     ngOnChanges(changes: SimpleChanges): void {
         if (
             (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
-            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState !== EditorState.REFRESHING)
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
