@@ -669,6 +669,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     bambooRequestMockProvider.reset();
                     bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+                    database.changeUser(studentExam.getUser().getLogin());
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
                 }
