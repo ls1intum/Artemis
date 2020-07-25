@@ -53,8 +53,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
-    List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
-
     @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 

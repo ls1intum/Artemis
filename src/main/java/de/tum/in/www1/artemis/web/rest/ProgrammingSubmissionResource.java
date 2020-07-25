@@ -358,7 +358,7 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId());
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);

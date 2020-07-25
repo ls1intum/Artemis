@@ -35,7 +35,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
     editorState: EditorState;
     commitState: CommitState;
 
-    constructor(
+    protected constructor(
         protected participationService: ParticipationService | null,
         private translateService: TranslateService,
         protected route: ActivatedRoute | null,

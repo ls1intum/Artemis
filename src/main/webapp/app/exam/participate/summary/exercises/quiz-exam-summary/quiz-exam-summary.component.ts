@@ -127,7 +127,7 @@ export class QuizExamSummaryComponent implements OnInit {
     /**
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
-    showMissingResultsNotice(): boolean {
+    get showMissingResultsNotice(): boolean {
         if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             return (
                 moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&

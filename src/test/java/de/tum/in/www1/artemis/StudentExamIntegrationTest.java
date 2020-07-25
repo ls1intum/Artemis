@@ -359,4 +359,29 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // Ensure that student exam has been set
         assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSubmitRealisticStudentExam() throws Exception {
+
+        // TODO: get a realistic student exam (with exercises (quiz, programming, text, modeling), participations and submissions) using the conduction call to cover more code on
+        // the server
+
+        // TODO: Change some submission objects (quiz, modeling, text)
+
+        // TODO: submit and check that the submitted version gets created
+
+        // TODO: Change some submission objects (quiz, modeling, text)
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExam1, HttpStatus.OK, null);
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
+        // Ensure that student exam has been marked as submitted
+        assertThat(submittedStudentExam.isSubmitted()).isTrue();
+        // Ensure that student exam has been set
+        assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
+
+        // TODO: check that the REST Call to studentExams/submit has stored the latest submissions and has created another submitted version
+
+        // TODO the REST Call to studentExams/submit should also invoke lockStudentRepositories: review if we can check easily that this invoked correctly (e.g. using a mock)
+    }
 }

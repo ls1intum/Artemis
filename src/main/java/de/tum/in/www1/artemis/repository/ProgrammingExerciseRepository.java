@@ -92,6 +92,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
+     * Returns the programming exercises that have manual assessment enabled and a due date higher than the provided date.
+     *
+     * @param dateTime ZonedDateTime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
      * Returns the programming exercises that are part of an exam with an end date after than the provided date.
      * This method also fetches the exercise group and exam.
      *
