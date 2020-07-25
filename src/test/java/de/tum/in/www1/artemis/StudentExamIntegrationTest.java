@@ -454,6 +454,38 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitExamWithSubmissionResult_forbidden() throws Exception {
+        List<StudentExam> studentExams = prepareStudentExamsForConduction();
+        database.changeUser(studentExams.get(0).getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+        for (var exercise : studentExamResponse.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            Submission submission = null;
+            if (exercise instanceof ProgrammingExercise) {
+                submission = new ProgrammingSubmission();
+            }
+            else if (exercise instanceof TextExercise) {
+                submission = new TextSubmission();
+            }
+            else if (exercise instanceof ModelingExercise) {
+                submission = new ModelingSubmission();
+            }
+            else if (exercise instanceof QuizExercise) {
+                submission = new QuizSubmission();
+            }
+            if (submission != null) {
+                submission.setResult(new Result());
+                Set<Submission> submissions = new HashSet<>();
+                submissions.add(submission);
+                participation.setSubmissions(submissions);
+            }
+
+        }
+        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitExamWithNoExercise_badRequest() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
         database.changeUser(studentExams.get(0).getUser().getLogin());
