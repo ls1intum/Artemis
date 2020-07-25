@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -146,7 +149,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private List<StudentExam> prepareStudentExamsForConduction() throws Exception {
 
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
-        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusSeconds(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -200,6 +203,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // TODO: due to the mocks for programming exercises, this is currently limited to 1 user
         // assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
         assertThat(noGeneratedParticipations).isEqualTo(1 * exam2.getExerciseGroups().size());
+
+        // wait for exam to start
+        TimeUnit.SECONDS.sleep(5);
 
         return studentExams;
     }
@@ -463,16 +469,19 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     assertThat(newModel).isEqualTo(versionedSubmission.get().getContent());
                 }
                 else if (exercise instanceof TextExercise) {
-                    // check that the submission was saved and that a submitted version was created
-                    String newText = "New Text";
                     var textSubmission = (TextSubmission) submission;
-                    String newText = "This is a new text";
+                    final var newText = "New Text";
                     textSubmission.setText(newText);
-                    request.put("api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                    var savedTextSubmission = request.get("api/text-submissions/" + textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
-                    assertThat(versionedSubmission.isPresent());
+                    request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+
+                    var savedTextSubmission = request.get("/api/text-submissions/" + textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
+                    // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
+
+                    // check that a submitted version was created
+                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+                    var versionedSubmission = submissionVersionRepository.findLatestVersion(textSubmission.getId());
+                    assert versionedSubmission.isPresent();
                     assertThat(newText).isEqualTo(versionedSubmission.get().getContent());
                 }
                 else if (exercise instanceof QuizExercise) {
