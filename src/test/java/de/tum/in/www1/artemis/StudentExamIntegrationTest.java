@@ -541,8 +541,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                             assertThat(dragAndDropSubmittedAnswer.getMappings()).isNotNull();
                             assertThat(dragAndDropSubmittedAnswer.getMappings().size()).isGreaterThan(0);
                             assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next()).isNotNull();
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDragItemIndex()).isEqualTo(dragAndDropDragItemIndex);
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocationIndex()).isEqualTo(dragAndDropLocationIndex);
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDragItem())
+                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dragAndDropDragItemIndex));
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocation())
+                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex));
                         }
                     });
                 }
