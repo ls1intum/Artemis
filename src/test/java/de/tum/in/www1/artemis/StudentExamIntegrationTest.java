@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -394,7 +391,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 }
                 var submission = participation.getSubmissions().iterator().next();
                 if (exercise instanceof ModelingExercise) {
-                    // TODO: Change submission.model and invoke the corresponding REST Call
                     // check that the submission was saved and that a submitted version was created
                     String newModel = "This is a new model";
                     var modelingSubmission = (ModelingSubmission) submission;
@@ -408,16 +404,80 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     assertThat(newModel).isEqualTo(versionedSubmission.get().getContent());
                 }
                 else if (exercise instanceof TextExercise) {
-                    // TODO: Change submission.text and invoke the corresponding REST Call
                     // check that the submission was saved and that a submitted version was created
+                    String newText = "New Text";
                     var textSubmission = (TextSubmission) submission;
-                    textSubmission.setText("New Text");
+                    textSubmission.setText(newText);
+                    request.put("api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                    List<TextSubmission> savedTextSubmissions = request.get("api/exercises/" + exercise.getId() + "/text-submissions", HttpStatus.OK, List.class);
+                    assertThat(savedTextSubmissions).isNotNull();
+                    assertThat(savedTextSubmissions.size()).isEqualTo(1);
+                    assertThat(newText).isEqualTo(savedTextSubmissions.get(0).getText());
                 }
                 else if (exercise instanceof QuizExercise) {
-                    // TODO: Change submission.submittedAnswers and invoke the corresponding REST Call
                     // check that the submission was saved and that a submitted version was created
                     var quizSubmission = (QuizSubmission) submission;
-                    // quizSubmission.setSubmittedAnswers();
+                    int dragAndDropDragItemIndex = 1;
+                    int dragAndDropLocationIndex = 2;
+                    String shortAnswerText = "New Short Answer Text";
+                    int shortAnswerSpotIndex = 1;
+                    int multipleChoiceSelectedOptionIndex = 0;
+                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
+                        if (quizQuestion instanceof DragAndDropQuestion) {
+                            DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
+                            DragAndDropMapping dndMapping = new DragAndDropMapping();
+                            dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
+                            dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
+                            dndSubmittedAnswer.getMappings().add(dndMapping);
+                            quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
+                        }
+                        else if (quizQuestion instanceof ShortAnswerQuestion) {
+                            ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+                            ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+                            shortAnswerSubmittedText.setText(shortAnswerText);
+                            shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
+                            shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
+                            quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
+                        }
+                        else if (quizQuestion instanceof MultipleChoiceQuestion) {
+                            var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+                            MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+                            multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
+                            quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
+                        }
+                    });
+                    QuizSubmission savedQuizSubmission = request.putWithResponseBody("api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission,
+                            QuizSubmission.class, HttpStatus.OK);
+                    // check the submission
+                    assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
+                    assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
+                    savedQuizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                            var multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions()).isNotNull();
+                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().size()).isGreaterThan(0);
+                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next()).isNotNull();
+                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next())
+                                    .isEqualTo(((MultipleChoiceQuestion) submittedAnswer.getQuizQuestion()).getAnswerOptions().get(multipleChoiceSelectedOptionIndex));
+                        }
+                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                            var shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
+                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts()).isNotNull();
+                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().size()).isGreaterThan(0);
+                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next()).isNotNull();
+                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
+                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getSpot())
+                                    .isEqualTo(((ShortAnswerQuestion) submittedAnswer.getQuizQuestion()).getSpots().get(shortAnswerSpotIndex));
+                        }
+                        else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                            var dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
+                            assertThat(dragAndDropSubmittedAnswer.getMappings()).isNotNull();
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().size()).isGreaterThan(0);
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next()).isNotNull();
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDragItemIndex()).isEqualTo(dragAndDropDragItemIndex);
+                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocationIndex()).isEqualTo(dragAndDropLocationIndex);
+                        }
+                    });
                 }
             }
 
