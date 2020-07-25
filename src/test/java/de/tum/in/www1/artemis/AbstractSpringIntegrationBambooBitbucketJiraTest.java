@@ -92,6 +92,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
     @SpyBean
     protected ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
+    @SpyBean
+    protected ProgrammingExerciseParticipationService programmingExerciseParticipationServiceSpy;
+
     @Autowired
     protected BambooRequestMockProvider bambooRequestMockProvider;
 
@@ -101,7 +104,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
     @AfterEach
     public void resetSpyBeans() {
         Mockito.reset(ltiService, continuousIntegrationService, versionControlService, bambooServer, gitService, groupNotificationService, websocketMessagingService,
-                plantUmlService, messagingTemplate, programmingSubmissionService, examAccessService, instanceMessageSendService, programmingExerciseScheduleService);
+                plantUmlService, messagingTemplate, programmingSubmissionService, examAccessService, instanceMessageSendService, programmingExerciseScheduleService,
+                programmingExerciseParticipationServiceSpy);
     }
 
     protected List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws Exception {
