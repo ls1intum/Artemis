@@ -460,11 +460,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     var savedModelingSubmission = request.get(
                             "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
                             ModelingSubmission.class);
-                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
-                    assertThat(versionedSubmission.isPresent());
+                    // check that the submission was saved
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
-                    assertThat(newModel).isEqualTo(versionedSubmission.get().getContent());
+                    // check that a submitted version was created
+                    assertVersionedSubmission(modelingSubmission);
                 }
                 else if (exercise instanceof TextExercise) {
                     var textSubmission = (TextSubmission) submission;
@@ -475,12 +474,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     var savedTextSubmission = request.get("/api/text-submissions/" + textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
-
                     // check that a submitted version was created
-                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(textSubmission.getId());
-                    assert versionedSubmission.isPresent();
-                    assertThat(newText).isEqualTo(versionedSubmission.get().getContent());
+                    assertVersionedSubmission(textSubmission);
                 }
                 else if (exercise instanceof QuizExercise) {
                     // check that the submission was saved and that a submitted version was created
@@ -547,6 +542,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                             assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocationIndex()).isEqualTo(dragAndDropLocationIndex);
                         }
                     });
+                    assertVersionedSubmission(quizSubmission);
                 }
             }
 
@@ -568,47 +564,34 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
             for (var exercise : studentExamFinished.getExercises()) {
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
-                var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
+                if (participationAfterFinish.getSubmissions().size() > 0) {
+                    var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
-                var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
-                var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
+                    var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                    var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
+                    var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
-                if (exercise instanceof ModelingExercise) {
-                    var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
-                    var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
-                    assertThat(versionedSubmission.isPresent());
-                    assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
-                    assertThat(modelingSubmissionAfterFinish.getModel()).isEqualTo(versionedSubmission.get().getContent());
-                    assertThat(submissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
-                }
-                else if (exercise instanceof TextExercise) {
-                    var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
-                    var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
-                    assertThat(versionedSubmission.isPresent());
-                    assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
-                    assertThat(textSubmissionAfterFinish.getText()).isEqualTo(versionedSubmission.get().getContent());
-                    assertThat(textSubmissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
-                }
-                else if (exercise instanceof QuizExercise) {
-                    var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
-                    var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
-                    var versionedSubmission = submissionVersionRepository.findLatestVersion(submissionAfterFinish.getId());
-                    assertThat(versionedSubmission.isPresent());
-                    assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
-                    String submittedAnswersAsString;
-                    // Use the same strategy to create the quiz version content as in SubmissionVersionService
-                    try {
-                        submittedAnswersAsString = objectMapper.writeValueAsString(quizSubmissionAfterFinish.getSubmittedAnswers());
+                    if (exercise instanceof ModelingExercise) {
+                        var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
+                        var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
+                        assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
+                        assertVersionedSubmission(modelingSubmissionAfterStart);
+                        assertVersionedSubmission(modelingSubmissionAfterFinish);
                     }
-                    catch (Exception e) {
-                        submittedAnswersAsString = quizSubmissionAfterFinish.toString();
+                    else if (exercise instanceof TextExercise) {
+                        var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
+                        var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
+                        assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
+                        assertVersionedSubmission(textSubmissionAfterStart);
+                        assertVersionedSubmission(textSubmissionAfterFinish);
                     }
-
-                    assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
-                    assertThat(quizSubmissionAfterFinish).isEqualTo(versionedSubmission.get().getSubmission());
+                    else if (exercise instanceof QuizExercise) {
+                        var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
+                        var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
+                        assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
+                        assertVersionedSubmission(quizSubmissionAfterStart);
+                        assertVersionedSubmission(quizSubmissionAfterFinish);
+                    }
                 }
             }
 
@@ -621,5 +604,32 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // The method lockStudentRepository will only be called if the student hands in early. Make a separate test for this
         verify(programmingExerciseParticipationServiceSpy, never()).lockStudentRepository(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
+    }
+
+    private void assertVersionedSubmission(Submission submission) {
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
+        assert versionedSubmission.isPresent();
+        if (submission instanceof TextSubmission) {
+            assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
+        }
+        else if (submission instanceof ModelingSubmission) {
+            assertThat(((ModelingSubmission) submission).getModel()).isEqualTo(versionedSubmission.get().getContent());
+        }
+        else if (submission instanceof FileUploadSubmission) {
+            assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
+        }
+        else {
+            assert submission instanceof QuizSubmission;
+            String submittedAnswersAsString;
+            try {
+                submittedAnswersAsString = objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());
+            }
+            catch (Exception e) {
+                submittedAnswersAsString = submission.toString();
+            }
+            assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
+            assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
+        }
     }
 }
