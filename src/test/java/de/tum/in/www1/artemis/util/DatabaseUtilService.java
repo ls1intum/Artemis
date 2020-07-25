@@ -411,7 +411,7 @@ public class DatabaseUtilService {
         Course course = createCourse();
         Exam exam = addExam(course, user, visible, start, end);
         course.addExam(exam);
-        addExerciseGroupsAndExercisesToExam(exam, start, end);
+        addExerciseGroupsAndExercisesToExam(exam, start, end, false);
         return courseRepo.save(course);
     }
 
@@ -419,7 +419,7 @@ public class DatabaseUtilService {
         Course course = createCourse();
         Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
-        addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1));
+        addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1), false);
         return courseRepo.save(course);
     }
 
@@ -686,20 +686,18 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime examStartDate, ZonedDateTime examEndDate) {
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime examStartDate, ZonedDateTime examEndDate, boolean withProgrammingExercise) {
         ModelFactory.generateExerciseGroup(true, exam); // text
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
         ModelFactory.generateExerciseGroup(true, exam); // modeling
-        ModelFactory.generateExerciseGroup(true, exam); // programming
-        exam.setNumberOfExercisesInExam(5);
+        exam.setNumberOfExercisesInExam(4);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
         var exerciseGroup2 = exam.getExerciseGroups().get(2);
         var exerciseGroup3 = exam.getExerciseGroups().get(3);
-        var exerciseGroup4 = exam.getExerciseGroups().get(4);
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
@@ -725,13 +723,19 @@ public class DatabaseUtilService {
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
-        // Programming exercises need a proper setup for 'prepare exam start' to work
-        ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
-        exerciseRepo.save(programmingExercise1);
-        addTemplateParticipationForProgrammingExercise(programmingExercise1);
-        addSolutionParticipationForProgrammingExercise(programmingExercise1);
+        if (withProgrammingExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // programming
+            exam.setNumberOfExercisesInExam(5);
+            exam = examRepository.save(exam);
+            var exerciseGroup4 = exam.getExerciseGroups().get(4);
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+            exerciseRepo.save(programmingExercise1);
+            addTemplateParticipationForProgrammingExercise(programmingExercise1);
+            addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
-        exerciseGroup4.setExercises(Set.of(programmingExercise1));
+            exerciseGroup4.setExercises(Set.of(programmingExercise1));
+        }
 
         return exam;
     }

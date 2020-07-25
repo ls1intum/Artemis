@@ -999,11 +999,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+
+        // TODO: it would be nice if we can support programming exercises here as well
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, false);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(4);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
         exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
@@ -1013,7 +1015,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size()); // we generate two additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(users.size());
 
         // start exercises
 
