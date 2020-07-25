@@ -1424,14 +1424,19 @@ public class DatabaseUtilService {
         return fileUploadSubmission;
     }
 
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
-        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
-        result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
         result.setFeedbacks(feedbacks);
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
@@ -1465,7 +1470,12 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
-        result.setCompletionDate(exercise.getReleaseDate());
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
