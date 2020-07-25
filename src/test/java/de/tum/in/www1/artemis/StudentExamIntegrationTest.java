@@ -516,19 +516,20 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                             quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
                         }
                     });
-                    QuizSubmission savedQuizSubmission = request.putWithResponseBody("api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission,
+                    QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission,
                             QuizSubmission.class, HttpStatus.OK);
                     // check the submission
                     assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
                     assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
-                    savedQuizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
+                        SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
                         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
                             var multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
                             assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions()).isNotNull();
                             assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().size()).isGreaterThan(0);
                             assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next()).isNotNull();
                             assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next())
-                                    .isEqualTo(((MultipleChoiceQuestion) submittedAnswer.getQuizQuestion()).getAnswerOptions().get(multipleChoiceSelectedOptionIndex));
+                                    .isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(multipleChoiceSelectedOptionIndex));
                         }
                         else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             var shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
@@ -537,7 +538,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                             assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next()).isNotNull();
                             assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
                             assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getSpot())
-                                    .isEqualTo(((ShortAnswerQuestion) submittedAnswer.getQuizQuestion()).getSpots().get(shortAnswerSpotIndex));
+                                    .isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
                         }
                         else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
                             var dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
