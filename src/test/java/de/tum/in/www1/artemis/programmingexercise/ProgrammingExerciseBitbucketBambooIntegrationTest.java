@@ -136,6 +136,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseForExam_validExercise_created() throws Exception {
+        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
+
         mockConnectorRequestsForSetup(examExercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 

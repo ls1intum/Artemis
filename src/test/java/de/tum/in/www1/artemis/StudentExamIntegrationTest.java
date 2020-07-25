@@ -6,13 +6,11 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +27,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -59,9 +56,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @SpyBean
-    ProgrammingExerciseParticipationService programmingExerciseParticipationServiceSpy;
 
     private List<User> users;
 
@@ -157,7 +151,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate);
+        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate, true);
 
         // register user
         var student1 = database.getUserByLogin("student1");
@@ -204,8 +198,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
         assertThat(noGeneratedParticipations).isEqualTo(1 * exam2.getExerciseGroups().size());
 
-        // wait for exam to start
-        TimeUnit.SECONDS.sleep(5);
+        // simulate "wait" for exam to start
+        exam2.setStartDate(ZonedDateTime.now());
+        examRepository.save(exam2);
 
         return studentExams;
     }
@@ -299,7 +294,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
@@ -324,7 +319,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
@@ -440,7 +435,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitStudentExam_Realistic() throws Exception {
 
-        // TODO: add a programming exercise
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
 
         List<StudentExam> studentExamsAfterStart = new ArrayList<>();
@@ -460,9 +454,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     String newModel = "This is a new model";
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
-                    request.put("api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                    var savedModelingSubmission = request.get("api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission",
-                            HttpStatus.OK, ModelingSubmission.class);
+                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                    var savedModelingSubmission = request.get(
+                            "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                            ModelingSubmission.class);
+                    SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
                     var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
                     assertThat(versionedSubmission.isPresent());
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
@@ -564,7 +560,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
         for (var studentExamAfterStart : studentExamsAfterStart) {
             database.changeUser(studentExamAfterStart.getUser().getLogin());
-            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/studentExams/submit", studentExamAfterStart,
+            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamAfterStart,
                     StudentExam.class, HttpStatus.OK);
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
             for (var exercise : studentExamFinished.getExercises()) {
