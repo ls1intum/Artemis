@@ -136,6 +136,13 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
     }
 
     /**
+     * On successful pull, we remove all unsaved Files.
+     */
+    onRefreshFiles() {
+        this.unsavedFiles = {};
+    }
+
+    /**
      * When the content of a file changes, set it as unsaved.
      */
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
