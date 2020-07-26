@@ -50,6 +50,9 @@ public class TextCluster implements Serializable {
     @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();
 
+    @Column(name = "tree_Id")
+    private Long treeId;
+
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
@@ -126,6 +129,14 @@ public class TextCluster implements Serializable {
     public void setBlocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
         updatePositions();
+    }
+
+    public long getTreeId() {
+        return treeId;
+    }
+
+    public void setTreeId(long treeId) {
+        this.treeId = treeId;
     }
 
     public TextExercise getExercise() {

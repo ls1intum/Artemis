@@ -16,6 +16,5 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 @Repository
 public interface PairwiseDistanceRepository extends JpaRepository<PairwiseDistance, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = "exercise")
     List<PairwiseDistance> findAllByExercise(TextExercise exercise);
 }

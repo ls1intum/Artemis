@@ -16,6 +16,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 @Repository
 public interface TreeNodeRepository extends JpaRepository<TreeNode, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = "exercise")
     List<TreeNode> findAllByExercise(TextExercise exercise);
+
+    List<TreeNode> findAllByParentAndExercise(long parent, TextExercise exercise);
 }

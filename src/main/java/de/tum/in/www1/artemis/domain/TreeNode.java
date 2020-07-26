@@ -52,7 +52,9 @@ public class TreeNode implements Serializable {
 
     public void setChild(long child) { this.child = child; }
 
-    public double getLambda_val() { return lambda_val; }
+    public double getLambda_val() {
+        return lambda_val == -1 ? Double.POSITIVE_INFINITY : lambda_val;
+    }
 
     public void setLambda_val(double lambda_val) { this.lambda_val = lambda_val; }
 
