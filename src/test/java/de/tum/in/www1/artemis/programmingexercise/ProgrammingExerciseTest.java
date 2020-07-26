@@ -11,8 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -29,12 +27,6 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     Long programmingExerciseId;
 
