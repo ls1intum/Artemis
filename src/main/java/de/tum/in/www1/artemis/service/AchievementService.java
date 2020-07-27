@@ -19,7 +19,7 @@ public class AchievementService {
     }
 
     @Transactional
-    public User assignPointBasedAchievmentIfEarned(Result result) {
+    public void assignPointBasedAchievementIfEarned(Result result) {
         var score = result.getScore();
         // TODO: add actually required score for achievements
         var gold = 0.9;
@@ -36,18 +36,16 @@ public class AchievementService {
 
             if (score >= gold && !user.getAchievements().contains(achievement)) {
                 user.addAchievement(achievement);
-                return userRepository.save(user);
+                userRepository.save(user);
             }
             else if (score >= silver && !user.getAchievements().contains(achievement)) {
                 user.addAchievement(achievement);
-                return userRepository.save(user);
+                userRepository.save(user);
             }
             else if (score >= bronze && !user.getAchievements().contains(achievement)) {
                 user.addAchievement(achievement);
-                return userRepository.save(user);
+                userRepository.save(user);
             }
         }
-
-        return null;
     }
 }

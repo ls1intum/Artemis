@@ -101,7 +101,7 @@ public class TextAssessmentService extends AssessmentService {
         result.setHasFeedback(false);
         result.determineAssessmentType();
 
-        achievementService.assignPointBasedAchievmentIfEarned(result);
+        achievementService.assignPointBasedAchievementIfEarned(result);
 
         return resultRepository.save(result);
     }
