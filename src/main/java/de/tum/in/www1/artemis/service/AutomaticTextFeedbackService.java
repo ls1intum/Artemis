@@ -94,9 +94,15 @@ public class AutomaticTextFeedbackService {
                                 .type(FeedbackType.AUTOMATIC);
                     }
                 }
-                findFeedbackForBlockInClusterWithoutFeedback(clusterTree, block, cluster, exercise);
+                final Optional<String> feedbackId = findFeedbackForBlockInClusterWithoutFeedback(clusterTree, block, cluster, exercise);
+                if(feedbackId.isPresent()) {
+                    // TODO: Return new feedback
+                }
             } else {
-                findFeedbackForBlockWithoutCluster(clusterTree, block, exercise);
+                final Optional<String> feedbackId = findFeedbackForBlockWithoutCluster(clusterTree, block, exercise);
+                if(feedbackId.isPresent()) {
+                    // TODO: Return new feedback
+                }
             }
 
             return null;
@@ -111,8 +117,9 @@ public class AutomaticTextFeedbackService {
      * @param block - Text block
      * @param cluster - Text cluster which contains the text block and lacks feedback
      * @param exercise - Text exercise of the text block
+     * @return The id of the text block, of which the feedback will be inherited, if such a TextBlock is found
      */
-    private void findFeedbackForBlockInClusterWithoutFeedback(TreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
+    private Optional<String> findFeedbackForBlockInClusterWithoutFeedback(TreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
         boolean feedbackFound = false;
         TreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
         // Starting with lambda = (lambda between block and cluster) + (lambda between cluster and parent)
@@ -145,6 +152,7 @@ public class AutomaticTextFeedbackService {
             currentNode = clusterTree[(int) parentId];
             currentLambdaVal = addLambdaValues(currentLambdaVal, currentNode.getLambda_val());
         }
+        return Optional.empty();
     }
 
     /**
@@ -152,9 +160,32 @@ public class AutomaticTextFeedbackService {
      * @param clusterTree - Tree structure of the cluster hierarchy
      * @param block - Text block which lacks feedback
      * @param exercise - text exercise of the text block
+     * @return The id of the text block, of which the feedback will be inherited, if such a TextBlock is found
      */
-    private void findFeedbackForBlockWithoutCluster(TreeNode[] clusterTree, TextBlock block, TextExercise exercise){
-        //TODO: Implement
+    private Optional<String> findFeedbackForBlockWithoutCluster(TreeNode[] clusterTree, TextBlock block, TextExercise exercise){
+        TreeNode currentNode = clusterTree[(int) block.getTreeId()];
+        Optional<TextCluster> clusterOptional = clusterRepository.findByTreeIdAndExercise(currentNode.getParent(), exercise);
+        // There is an existing cluster one level above in tree
+        if(clusterOptional.isPresent()) {
+            TextCluster cluster = clusterOptional.get();
+            final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
+            // If no feedback in cluster -> call findFeedbackForBlockInClusterWithoutFeedback for that cluster
+            if(feedbackForTextExerciseInCluster.size() == 0) {
+                return findFeedbackForBlockInClusterWithoutFeedback(clusterTree, block, cluster, exercise);
+            } else {
+                // Copied from method suggestFeedback()
+                final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
+                final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
+                    .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
+                    .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
+                if (mostSimilarBlockInClusterWithFeedback.isPresent()
+                    && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
+                    return Optional.of(mostSimilarBlockInClusterWithFeedback.get().getId());
+                }
+            }
+        }
+        // If no cluster one level above, return empty optional
+        return Optional.empty();
     }
 
     /**

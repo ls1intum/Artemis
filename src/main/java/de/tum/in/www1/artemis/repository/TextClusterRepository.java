@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.*;
@@ -24,5 +25,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
+
+    Optional<TextCluster> findByTreeIdAndExercise(long treeId, TextExercise exercise);
 
 }
