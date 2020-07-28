@@ -145,6 +145,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/lti/launch/*").permitAll()
             .antMatchers("/api/files/attachments/**").permitAll()
             .antMatchers("/api/files/file-upload-submission/**").permitAll()
+            .antMatchers("/api/files/markdown/**").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/websocket/**").permitAll()

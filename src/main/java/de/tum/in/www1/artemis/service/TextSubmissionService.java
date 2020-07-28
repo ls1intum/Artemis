@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -54,11 +50,13 @@ public class TextSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ExamService examService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
-            CourseService courseService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository);
+            CourseService courseService, ExamService examService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -66,6 +64,7 @@ public class TextSubmissionService extends SubmissionService {
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
+        this.examService = examService;
     }
 
     /**
@@ -121,7 +120,10 @@ public class TextSubmissionService extends SubmissionService {
         // versioning of submission
         try {
             if (textExercise.isTeamMode()) {
-                submissionVersionService.save(textSubmission, principal.getName());
+                submissionVersionService.saveVersionForTeam(textSubmission, principal.getName());
+            }
+            else {
+                submissionVersionService.saveVersionForIndividual(textSubmission, principal.getName());
             }
         }
         catch (Exception ex) {
@@ -232,28 +234,15 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
-     * @param tutorId    - the id of the tutor we are interested in
+     * @param tutor - the tutor we are interested in
      * @return a list of text Submissions
      */
-    @Transactional(readOnly = true)
-    public List<TextSubmission> getAllTextSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
-
-        // TODO: properly load the submissions with all required data from the database without using @Transactional
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            TextSubmission textSubmission = new TextSubmission();
-
-            result.setSubmission(null);
-            textSubmission.setLanguage(submission.getLanguage());
-            textSubmission.setResult(result);
-            textSubmission.setParticipation(submission.getParticipation());
-            textSubmission.setId(submission.getId());
-            textSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return textSubmission;
-        }).collect(toList());
+    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor) {
+        List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        return submissions.stream().map(submission -> {
+            submission.getResult().setSubmission(null);
+            return (TextSubmission) submission;
+        }).collect(Collectors.toList());
     }
 
     /**

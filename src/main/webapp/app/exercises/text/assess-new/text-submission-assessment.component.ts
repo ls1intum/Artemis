@@ -53,7 +53,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
     isAtLeastInstructor: boolean;
-    canOverride: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
 
@@ -124,7 +123,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.nextSubmissionBusy = false;
         this.isAssessor = false;
         this.isAtLeastInstructor = false;
-        this.canOverride = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
     }
@@ -157,9 +155,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
 
-        // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
-
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
@@ -167,6 +162,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.checkPermissions();
         this.computeTotalScore();
         this.isLoading = false;
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -192,6 +190,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
+
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -211,6 +212,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -417,11 +421,42 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = moment().isBefore(this.exercise?.assessmentDueDate!);
-        // tutors are allowed to override one of their assessments before the assessment due date. instructors can override any assessment at any time.
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        // case distinction for exam mode
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     private handleError(error: HttpErrorResponse): void {

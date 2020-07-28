@@ -170,7 +170,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
@@ -246,9 +246,11 @@ public class QuizExercise extends Exercise implements Serializable {
             return false;
         }
 
-        // check duration
-        if (getDuration() == null || getDuration() < 0) {
-            return false;
+        // check duration (only for course exercises)
+        if (hasCourse()) {
+            if (getDuration() == null || getDuration() < 0) {
+                return false;
+            }
         }
 
         // check quizQuestions

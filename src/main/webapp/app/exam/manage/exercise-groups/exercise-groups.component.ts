@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, of, forkJoin } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -18,6 +19,8 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -27,10 +30,12 @@ export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
     course: Course;
     examId: number;
+    exam: Exam;
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+    latestIndividualEndDate: Moment | null;
 
     constructor(
         private route: ActivatedRoute,
@@ -49,21 +54,38 @@ export class ExerciseGroupsComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.loadExerciseGroups();
+        // Only take action when a response was received for both requests
+        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
+            ([examRes, examInfoDTO]) => {
+                this.exam = examRes.body!;
+                this.exerciseGroups = examRes.body!.exerciseGroups;
+                this.course = examRes.body!.course;
+                this.courseManagementService.checkAndSetCourseRights(this.course);
+                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+            },
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
+    }
+
+    /**
+     * Load the latest individual end date of the exam. If this the HTTP response is erroneous, an observables emitting
+     * null will be returned
+     */
+    loadLatestIndividualEndDateOfExam() {
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+            // When the exam start date was not set properly an error will be thrown.
+            // Catch this in the inner observable otherwise forkJoin won't return data
+            catchError(() => {
+                return of(null);
+            }),
+        );
     }
 
     /**
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
-            (res) => {
-                this.exerciseGroups = res.body!.exerciseGroups;
-                this.course = res.body!.course;
-                this.courseManagementService.checkAndSetCourseRights(this.course);
-            },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+        return this.examManagementService.find(this.courseId, this.examId, false, true);
     }
 
     /**

@@ -750,7 +750,8 @@ public class ProgrammingExerciseService {
 
     /**
      * Check if the repository of the given participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed, 
+     * or if manual correction is involved and the due date has passed.
      *
      * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
      *
@@ -760,7 +761,11 @@ public class ProgrammingExerciseService {
     public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+            // Editing is allowed if build and test after due date is not set and no manual correction is involved
+            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
+            boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
+                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
         }
         return false;
     }

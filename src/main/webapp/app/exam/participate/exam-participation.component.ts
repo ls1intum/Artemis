@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -18,18 +18,17 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { catchError, map, throttleTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
-import { Subject } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { cloneDeep } from 'lodash';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -64,6 +63,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     unsavedChanges = false;
     disconnected = false;
 
+    handInEarly = false;
+    handInPossible = true;
+
+    exerciseIndex = 0;
+
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
     }
@@ -90,6 +94,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     autoSaveInterval: number;
 
     private synchronizationAlert$ = new Subject();
+
+    private programmingSubmissionSubscriptions: Subscription[] = [];
 
     loadingExam: boolean;
 
@@ -166,7 +172,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
-        return this.currentSubmissionComponents.find((submissionComponent, index) => index === this.activeExerciseIndex);
+        // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
+        const currentComponent = this.currentSubmissionComponents.find((submissionComponent) => submissionComponent.getExercise().id === this.activeExercise.id);
+        if (currentComponent) {
+            console.log(
+                'activeSubmissionComponent: Found component for ' +
+                    (this.activeExerciseIndex + 1) +
+                    '. exercise with id ' +
+                    this.activeExercise.id +
+                    ' with component.submission.id ' +
+                    currentComponent.getSubmission()?.id +
+                    ' in ' +
+                    this.currentSubmissionComponents.length +
+                    ' components',
+            );
+        } else {
+            console.log('activeSubmissionComponent: Component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
+        }
+        return currentComponent;
     }
 
     /**
@@ -192,7 +215,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             submission.submitted = false;
                         });
                     } else if (exercise.type === ExerciseType.PROGRAMMING) {
-                        participation.submissions.push(new ProgrammingSubmission());
+                        // We need to provide a submission to update the navigation bar status indicator
+                        if (participation.submissions && participation.submissions.length === 0) {
+                            participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
+                        }
+                    }
+
+                    // setup subscription for programming exercises
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
                     }
                 });
             });
@@ -235,10 +267,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        // temporary lock the submit button in order to protect against spam
+        this.handInPossible = false;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
+            (studentExam) => (this.studentExam = studentExam),
+            (error: Error) => {
+                this.alertService.error(error.message);
+                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
+                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+            },
+        );
     }
 
     /**
@@ -249,7 +290,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             window.clearInterval(this.autoSaveInterval);
         }
         // update local studentExam for later sync with server
-        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.updateLocalStudentExam();
+    }
+
+    /**
+     * Called when a user wants to hand in early or decides to continue.
+     */
+    toggleHandInEarly() {
+        this.handInEarly = !this.handInEarly;
+        if (this.handInEarly) {
+            // update local studentExam for later sync with server if the student wants to hand in early
+            this.updateLocalStudentExam();
+        } else if (this.studentExam?.exercises && this.activeExercise) {
+            const index = this.studentExam.exercises.findIndex((exercise) => exercise.id === this.activeExercise.id);
+            this.exerciseIndex = index ? index : 0;
+        }
     }
 
     /**
@@ -258,6 +313,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     isOver(): boolean {
         if (this.studentExam && this.studentExam.ended) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
+            return true;
+        }
+        if (this.handInEarly || this.studentExam?.submitted) {
+            // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }
         return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
@@ -284,6 +343,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     ngOnDestroy(): void {
+        this.programmingSubmissionSubscriptions.forEach((subscription) => {
+            subscription.unsubscribe();
+        });
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -326,28 +388,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 if (participation !== null) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        this.programmingSubmissionService.getLatestPendingSubmissionByParticipationId(participation.id, exercise.id, true).subscribe((programmingSubmissionObj) => {
-                            if (programmingSubmissionObj.submission) {
-                                participation.submissions = [programmingSubmissionObj.submission];
-                            }
-                            this.submissionComponentVisited[this.activeExerciseIndex] = true;
-                            if (this.activeSubmissionComponent) {
-                                this.activeSubmissionComponent.onActivate();
-                            }
-                        });
-                    } else {
-                        this.submissionComponentVisited[this.activeExerciseIndex] = true;
-                        if (this.activeSubmissionComponent) {
-                            this.activeSubmissionComponent.onActivate();
-                        }
+                        const subscription = this.createProgrammingExerciseSubmission(exercise.id, participation.id);
+                        participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
+                        this.programmingSubmissionSubscriptions.push(subscription);
                     }
+                    this.activateActiveComponent();
                 }
             });
         } else {
-            this.submissionComponentVisited[this.activeExerciseIndex] = true;
-            if (this.activeSubmissionComponent) {
-                this.activeSubmissionComponent.onActivate();
-            }
+            this.activateActiveComponent();
+        }
+    }
+
+    private activateActiveComponent() {
+        this.submissionComponentVisited[this.activeExerciseIndex] = true;
+        console.log('submissionComponentVisited for ' + (this.activeExerciseIndex + 1) + '. exercise = true');
+        const activeComponent = this.activeSubmissionComponent;
+        if (activeComponent) {
+            console.log('activateActiveComponent: Found active component.submission.id: ' + activeComponent?.getSubmission()?.id);
+            activeComponent.onActivate();
+        } else {
+            console.log('activateActiveComponent: component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
         }
     }
 
@@ -359,14 +420,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(this.exam.course.id, exercise.id).pipe(
             map((createdParticipation: StudentParticipation) => {
-                // if the same participations is not yet present in the exercise -> add it
-                if (exercise.studentParticipations.findIndex((existingParticipation) => existingParticipation.id === createdParticipation.id) < 0) {
-                    // remove because of circular dependency when converting to JSON
-                    delete createdParticipation.exercise;
-                    exercise.studentParticipations.push(createdParticipation);
-                    if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
-                        createdParticipation.submissions[0].isSynced = true;
-                    }
+                // remove because of circular dependency when converting to JSON
+                delete createdParticipation.exercise;
+                exercise.studentParticipations.push(createdParticipation);
+                if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
+                    createdParticipation.submissions[0].isSynced = true;
                 }
                 this.generateParticipationStatus.next('success');
                 return createdParticipation;
@@ -393,12 +451,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        if ((this.activeSubmissionComponent && force) || this.activeSubmissionComponent?.hasUnsavedChanges()) {
-            // this will lead to a save below, because isSynced will be set to false
-            this.activeSubmissionComponent.updateSubmissionFromView();
+        const activeComponent = this.activeSubmissionComponent;
+
+        if ((activeComponent && force) || activeComponent?.hasUnsavedChanges()) {
+            const activeSubmission = activeComponent?.getSubmission();
+            if (activeSubmission) {
+                // this will lead to a save below, because isSynced will be set to false
+                activeSubmission.isSynced = false;
+            }
+            activeComponent.updateSubmissionFromView();
         }
 
-        // goes through all exercises and checks if there are unsynched submissions
+        // goes through all exercises and checks if there are unsynced submissions
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam.exercises.forEach((exercise: Exercise) => {
             exercise.studentParticipations.forEach((participation) => {
@@ -412,7 +476,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             });
         });
 
-        // if no connection available -> don't try to sync
+        // if no connection available -> don't try to sync, except it is forced
         if (force || !this.disconnected) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
@@ -448,6 +512,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
     }
 
+    private updateLocalStudentExam() {
+        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+    }
+
     private onSaveSubmissionSuccess(submission: Submission) {
         submission.isSynced = true;
         submission.submitted = true;
@@ -457,5 +525,43 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // show an only one error for 5s - see constructor
         this.synchronizationAlert$.next();
         console.error(error);
+    }
+
+    /**
+     * Creates a subscription for the latest programming exercise submission for a given exerciseId and participationId
+     * This is done here, because this component exists throughout the whole lifecycle of an exam
+     * (e.g. programming-exam-submission exists only while the exam is not over)
+     * @param exerciseId id of the exercise we want to subscribe to
+     * @param participationId id of the participation we want to subscribe to
+     */
+    private createProgrammingExerciseSubmission(exerciseId: number, participationId: number): Subscription {
+        return this.programmingSubmissionService
+            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
+            .pipe(
+                filter((submissionStateObj) => submissionStateObj !== null),
+                distinctUntilChanged(),
+            )
+            .subscribe((programmingSubmissionObj) => {
+                const exerciseForSubmission = this.studentExam.exercises.find((programmingExercise) =>
+                    programmingExercise.studentParticipations.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                );
+                if (
+                    exerciseForSubmission &&
+                    exerciseForSubmission.studentParticipations &&
+                    exerciseForSubmission.studentParticipations.length > 0 &&
+                    exerciseForSubmission.studentParticipations[0] &&
+                    exerciseForSubmission.studentParticipations[0].submissions &&
+                    exerciseForSubmission.studentParticipations[0].submissions.length > 0
+                ) {
+                    if (programmingSubmissionObj.submission) {
+                        // delete backwards reference so that it is still serializable
+                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
+                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
+                        delete submissionCopy.participation;
+                        exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                    }
+                }
+            });
     }
 }

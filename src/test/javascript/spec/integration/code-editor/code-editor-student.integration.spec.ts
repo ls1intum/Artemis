@@ -401,7 +401,7 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // init saving
-        container.actions.saveChangedFilesWithTimeout().subscribe();
+        container.actions.saveChangedFiles().subscribe();
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.editorState).to.equal(EditorState.SAVING);
 

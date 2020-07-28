@@ -8,18 +8,24 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseParticipationService {
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
     private final ParticipationService participationService;
 
@@ -281,5 +287,37 @@ public class ProgrammingExerciseParticipationService {
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
+    }
+
+    /**
+     * Lock the repository associated with a programming participation
+     * 
+     * @param programmingExercise the programming exercise
+     * @param participation the programming exercise student participation whose repository should be locked
+     * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
+     */
+    public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+        }
+        else {
+            log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
+    }
+
+    /**
+     * Unlock the repository associated with a programming participation
+     * 
+     * @param programmingExercise the programming exercise
+     * @param participation the programming exercise student participation whose repository should be unlocked
+     * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
+     */
+    public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
+        }
+        else {
+            log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
     }
 }

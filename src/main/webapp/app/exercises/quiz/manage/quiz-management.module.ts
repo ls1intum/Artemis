@@ -25,6 +25,7 @@ import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-eva
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
+import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -46,6 +47,7 @@ const ENTITY_STATES = [...quizManagementRoute];
     ],
     declarations: [
         QuizExerciseComponent,
+        QuizConfirmImportInvalidQuestionsModalComponent,
         QuizExerciseDetailComponent,
         MultipleChoiceQuestionEditComponent,
         DragAndDropQuestionEditComponent,

@@ -10,13 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -34,14 +34,18 @@ public class QuizSubmissionService {
 
     private QuizExerciseService quizExerciseService;
 
-    private QuizScheduleService quizScheduleService;
+    private final QuizScheduleService quizScheduleService;
 
     private ParticipationService participationService;
 
-    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository) {
+    private final SubmissionVersionService submissionVersionService;
+
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
+            SubmissionVersionService submissionVersionService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
+        this.submissionVersionService = submissionVersionService;
     }
 
     @Autowired
@@ -201,6 +205,15 @@ public class QuizSubmissionService {
         StudentParticipation studentParticipation = optionalParticipation.get();
         quizSubmission.setParticipation(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
+
+        // versioning of submission
+        try {
+            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
+        }
+        catch (Exception ex) {
+            log.error("Quiz submission version could not be saved: " + ex);
+        }
+
         log.debug("submit exam quiz finished: " + quizSubmission);
         return quizSubmission;
     }

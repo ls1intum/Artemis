@@ -26,8 +26,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() startView: boolean;
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() handInEarly = false;
+    @Input() handInPossible = true;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
+    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
     course: Course | null;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -174,8 +177,15 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         //         console.log('Something went wrong');
         //         // error message
         //     }
-        // });
+        // })
         this.onExamEnded.emit();
+    }
+
+    /**
+     * Notify the parent component that the user wants to continue after hand in early
+     */
+    continueAfterHandInEarly() {
+        this.onExamContinueAfterHandInEarly.emit();
     }
 
     get startButtonEnabled(): boolean {
@@ -184,7 +194,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get endButtonEnabled(): boolean {
         // TODO: add logic when confirm can be clicked
-        return !!(this.nameIsCorrect && this.confirmed && this.exam);
+        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 
     get nameIsCorrect(): boolean {
@@ -193,5 +203,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        const individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        return individualStudentEndDate.add(this.exam.gracePeriod, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

@@ -19,6 +19,7 @@ import { Exercise } from 'app/entities/exercise.model';
 export class ComplaintsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
+    @Input() examId: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
@@ -64,12 +65,15 @@ export class ComplaintsComponent implements OnInit {
         complaint.result.id = this.resultId;
         complaint.complaintType = this.complaintType;
 
-        this.complaintService.create(complaint).subscribe(
+        this.complaintService.create(complaint, this.examId).subscribe(
             (res) => {
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
                 if (complaint.complaintType === ComplaintType.COMPLAINT) {
-                    this.allowedComplaints--;
+                    // we do not track the number of complaints for exams
+                    if (!this.examId) {
+                        this.allowedComplaints--;
+                    }
                 }
                 this.loaded = true;
                 this.submit.emit();

@@ -19,6 +19,7 @@ module.exports = {
         '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
         '<rootDir>/src/test/javascript/spec/pipe/**/*.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/util/**/*.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

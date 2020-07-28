@@ -4,6 +4,9 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,8 +32,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -241,7 +246,7 @@ public class ExamService {
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
-                    studentResult.overallPointsAchieved += achievedPoints;
+                    studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                             new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
 
@@ -273,7 +278,7 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        Double sumOverallPoints = scores.studentResults.stream().map(studentResult -> studentResult.overallPointsAchieved).reduce(0.0, Double::sum);
+        Double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
 
         int numberOfStudentResults = scores.studentResults.size();
 
@@ -293,13 +298,17 @@ public class ExamService {
     public List<StudentExam> generateStudentExams(Long examId) {
         // Delete all existing student exams via orphan removal
         Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        studentExamRepository.deleteInBatch(examWithExistingStudentExams.getStudentExams());
 
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
         // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (exam.getNumberOfExercisesInExam() == null) {
+        if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
             throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
         }
+
+        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
+
+        // now fetch the exam with additional information
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
 
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
@@ -321,22 +330,27 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Long examId) {
-        Exam exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId).get();
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
+
+        // TODO: the validation checks should happen in the resource, before this method is even being called!
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
+        }
+
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Validate settings of the exam
         validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Get all users who already have an individual exam
-        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
-        Set<User> usersWithExam = examWithExistingStudentExams.getStudentExams().stream().map(studentExam -> studentExam.getUser()).collect(Collectors.toSet());
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
 
         // Get all registered users
         Set<User> allRegisteredUsers = exam.getRegisteredUsers();
 
         // Get all students who don't have an exam yet
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
-        missingUsers.removeAll(usersWithExam);
+        missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
         List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
@@ -547,9 +561,9 @@ public class ExamService {
 
         var studentExams = exam.getStudentExams();
 
-        List<Participation> generatedParticipations = new ArrayList<>();
+        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        for (StudentExam studentExam : studentExams) {
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
             User student = studentExam.getUser();
             for (Exercise exercise : studentExam.getExercises()) {
                 // we start the exercise if no participation was found that was already fully initialized
@@ -557,6 +571,7 @@ public class ExamService {
                         .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
                                 && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                     try {
+                        SecurityUtils.setAuthorizationObject();
                         if (exercise instanceof ProgrammingExercise) {
                             // Load lazy property
                             final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
@@ -567,13 +582,33 @@ public class ExamService {
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {
-                        log.warn("Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                        log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(),
+                                student.getId(), ex.getMessage(), ex);
                     }
                 }
             }
-        }
+        }));
 
         return generatedParticipations.size();
+    }
+
+    private void executeInParallel(Runnable task) {
+        final int numberOfParallelThreads = 10;
+        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
+        Future<?> future = forkJoinPool.submit(task);
+        // Wait for the operation to complete
+        try {
+            future.get();
+        }
+        catch (InterruptedException e) {
+            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
+        }
+        catch (ExecutionException e) {
+            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        }
+        finally {
+            forkJoinPool.shutdown();
+        }
     }
 
     /**
@@ -583,8 +618,7 @@ public class ExamService {
      * @return number of evaluated exercises
      */
     public Integer evaluateQuizExercises(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -596,8 +630,13 @@ public class ExamService {
             }
         }
 
+        long start = System.nanoTime();
+        log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        quizExercises.forEach(quiz -> {
+            examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId());
+        });
+        log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
     }
@@ -609,8 +648,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are unlocked
      */
     public Integer unlockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
@@ -637,8 +675,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are locked
      */
     public Integer lockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExercisesRegisteredUsersStudentExamsById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
@@ -680,8 +717,9 @@ public class ExamService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
     public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
     }
@@ -708,8 +746,9 @@ public class ExamService {
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
     public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null)
+        if (exam.getStartDate() == null) {
             return null;
+        }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
