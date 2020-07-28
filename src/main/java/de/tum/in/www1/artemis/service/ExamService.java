@@ -201,8 +201,7 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
     public ExamScoresDTO getExamScore(Long examId) {
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
 
         List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
 
@@ -227,8 +226,10 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        for (User user : exam.getRegisteredUsers()) {
-            scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
+        for (StudentExam studentExam : exam.getStudentExams()) {
+            User user = studentExam.getUser();
+            scores.studentResults
+                    .add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted()));
         }
 
         // Adding student results information to DTO
