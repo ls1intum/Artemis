@@ -217,6 +217,7 @@ public class ProgrammingExerciseTestCaseService {
      * @param testCasesForCurrentDate of the given programming exercise.
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
+        // TODO: do not remove static code analysis feedback
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
                 .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);

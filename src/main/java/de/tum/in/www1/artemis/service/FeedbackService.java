@@ -25,6 +25,8 @@ public class FeedbackService {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
+    private final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "StaticCodeAnalysisFeedback:";
+
     private final FeedbackRepository feedbackRepository;
 
     // need bamboo service and resultrepository to create and store from old feedbacks
@@ -45,7 +47,6 @@ public class FeedbackService {
                 .collect(toMap(Feedback::getReference, feedback -> feedback));
     }
 
-    // TODO: Move this to a StaticAssessmentService, implement it as a Helper Entity or directly in Feedback?
     /**
      * Transforms static assessment reports to feedback objects.
      * As we reuse the Feedback entity to store static code analysis issues, a mapping to those attributes
@@ -61,10 +62,10 @@ public class FeedbackService {
 
             for (final var issue : report.getIssues()) {
                 Feedback feedback = new Feedback();
-                feedback.setText(tool.name());
+                feedback.setText(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name());
                 feedback.setDetailText(issue.getMessage());
                 feedback.setReference(issue.getClassname() + ':' + issue.getLine());
-                feedback.setType(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT);
+                feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setPositive(false);
                 feedbackList.add(feedback);
             }
