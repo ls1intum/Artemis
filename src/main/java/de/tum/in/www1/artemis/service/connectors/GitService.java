@@ -436,6 +436,10 @@ public class GitService {
             git.close();
 
             reset(repository, commitHash);
+
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.warn("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
@@ -695,7 +699,7 @@ public class GitService {
     public Path zipRepository(Repository repo, String targetPath) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
-        String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
         // take the last component
         String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
 

@@ -149,57 +149,59 @@
         <div class="dnd-instructions" *ngIf="question.backgroundFilePath && !reEvaluationInProgress">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
         </div>
-        <div class="background-area">
-            <jhi-secured-image
-                *ngIf="question.backgroundFilePath"
-                [src]="question.backgroundFilePath"
-                [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate"
-                (endLoadingProcess)="(this.resizeImage)"
-            >
-            </jhi-secured-image>
-            <div
-                #clickLayer
-                class="click-layer click-layer-question-{{ questionIndex }}"
-                (mousedown)="backgroundMouseDown()"
-                [ngClass]="{ disabled: !question.backgroundFilePath }"
-            >
+        <div class="row">
+            <div class="background-area">
+                <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+                </jhi-secured-image>
                 <div
-                    class="drop-location"
-                    *ngFor="let dropLocation of question.dropLocations"
-                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    [ngStyle]="{ top: dropLocation.posY / 2 + '%', left: dropLocation.posX / 2 + '%', width: dropLocation.width / 2 + '%', height: dropLocation.height / 2 + '%' }"
-                    (mousedown)="dropLocationMouseDown(dropLocation)"
-                    (onDropSuccess)="onDragDrop(dropLocation, $event)"
-                    dnd-droppable
+                    #clickLayer
+                    class="click-layer click-layer-question-{{ questionIndex }}"
+                    (mousedown)="backgroundMouseDown()"
+                    [ngClass]="{ disabled: !question.backgroundFilePath }"
                 >
-                    <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
-                    <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
-                        <fa-icon [icon]="'ban'" size="lg"></fa-icon>
-                    </div>
-                    <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
-                        <fa-icon [icon]="'undo'" size="lg"></fa-icon>
-                    </div>
-                    <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
-                        <fa-icon [icon]="'copy'" size="lg"></fa-icon>
-                    </div>
-                    <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
-                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
-                    </div>
-                    <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
-                    <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
-                    <div class="resize top right" (mousedown)="resizeMouseDown(dropLocation, 'top', 'right')"></div>
-                    <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
-                    <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
-                    <div class="resize bottom left" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
-                    <div class="resize bottom center" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
-                    <div class="resize bottom right" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
                     <div
-                        [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)"
-                        *ngIf="getMappingsForDropLocation(dropLocation).length"
+                        class="drop-location"
+                        *ngFor="let dropLocation of question.dropLocations"
+                        [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                        [ngStyle]="{
+                            top: dropLocation.posY / 2 + '%',
+                            left: dropLocation.posX / 2 + '%',
+                            width: dropLocation.width / 2 + '%',
+                            height: dropLocation.height / 2 + '%'
+                        }"
+                        (mousedown)="dropLocationMouseDown(dropLocation)"
+                        (onDropSuccess)="onDragDrop(dropLocation, $event)"
+                        dnd-droppable
                     >
-                        {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
-                        <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
-                            <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                        <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
+                        <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
+                            <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                        </div>
+                        <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
+                            <fa-icon [icon]="'undo'" size="lg"></fa-icon>
+                        </div>
+                        <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
+                            <fa-icon [icon]="'copy'" size="lg"></fa-icon>
+                        </div>
+                        <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
+                            <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                        </div>
+                        <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                        <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                        <div class="resize top right" (mousedown)="resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                        <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                        <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                        <div class="resize bottom left" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                        <div class="resize bottom center" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                        <div class="resize bottom right" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
+                        <div
+                            [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)"
+                            *ngIf="getMappingsForDropLocation(dropLocation).length"
+                        >
+                            {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
+                            <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
+                                <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                            </div>
                         </div>
                     </div>
                 </div>

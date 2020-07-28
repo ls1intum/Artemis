@@ -297,7 +297,7 @@ public class ResultService {
         savedResult = savedResultOpt.get();
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
-        if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
+        if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());

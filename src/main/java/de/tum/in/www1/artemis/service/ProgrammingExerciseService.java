@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -66,18 +66,18 @@ public class ProgrammingExerciseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final ResourceLoader resourceLoader;
+
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -90,8 +90,8 @@ public class ProgrammingExerciseService {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.groupNotificationService = groupNotificationService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -143,16 +143,24 @@ public class ProgrammingExerciseService {
         setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        scheduleOperations(programmingExercise.getId());
+
+        // Notify tutors only if this a course exercise
+        if (programmingExercise.hasCourse()) {
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+        }
 
         return programmingExercise;
+    }
+
+    public void scheduleOperations(Long programmingExerciseId) {
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
 
     private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
@@ -249,9 +257,10 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
-        if (notificationText != null) {
+        scheduleOperations(programmingExercise.getId());
+
+        // Only send notification for course exercises
+        if (notificationText != null && programmingExercise.hasCourse()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
 
@@ -499,7 +508,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise findWithTestCasesById(Long exerciseId) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
+            Course course = programmingExercise.get().getCourseViaExerciseGroupOrCourseMember();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
@@ -540,7 +549,9 @@ public class ProgrammingExerciseService {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
@@ -707,9 +718,9 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        var sorting = Sort.by(Exercise.ExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin()
@@ -725,8 +736,10 @@ public class ProgrammingExerciseService {
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        final var instructorGroup = exercise.getCourse().getInstructorGroupName();
-        final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        final var instructorGroup = course.getInstructorGroupName();
+        final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
@@ -737,7 +750,8 @@ public class ProgrammingExerciseService {
 
     /**
      * Check if the repository of the given participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed, 
+     * or if manual correction is involved and the due date has passed.
      *
      * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
      *
@@ -747,7 +761,11 @@ public class ProgrammingExerciseService {
     public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+            // Editing is allowed if build and test after due date is not set and no manual correction is involved
+            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
+            boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
+                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
         }
         return false;
     }

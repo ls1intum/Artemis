@@ -4,12 +4,15 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute } from '@angular/router';
-import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -23,6 +26,9 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
+        private sortService: SortService,
+        private modalService: NgbModal,
+        private router: Router,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -78,8 +84,22 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         return 'modelingExerciseListModification';
     }
 
+    sortRows() {
+        this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+    }
+
     /**
      * Used in the template for jhiSort
      */
     callback() {}
+
+    openImportModal() {
+        const modalRef = this.modalService.open(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: ModelingExercise) => {
+                this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
+            },
+            () => {},
+        );
+    }
 }

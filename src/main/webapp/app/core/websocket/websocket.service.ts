@@ -89,6 +89,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
     private logTimers: Subscription[] = [];
 
+    private socket: any = undefined;
+    private subscriptionCounter = 0;
+
     constructor(private router: Router, private authServerProvider: AuthServerProvider, private $window: WindowRef, private csrfService: CSRFService) {
         this.connection = this.createConnection();
     }
@@ -154,13 +157,13 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
-        const socket = new SockJS(url, undefined, { transports: 'websocket' });
+        this.socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
-            heartbeat: { outgoing: 10000, incoming: 20000 },
+            heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
-        this.stompClient = over(socket, options);
+        this.stompClient = over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
@@ -181,11 +184,17 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                         this.myListeners.forEach((listener, channel) => {
                             this.subscribers.set(
                                 channel,
-                                this.stompClient!.subscribe(channel, (data) => {
-                                    if (this.listenerObservers.has(channel)) {
-                                        this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
-                                    }
-                                }),
+                                this.stompClient!.subscribe(
+                                    channel,
+                                    (data) => {
+                                        if (this.listenerObservers.has(channel)) {
+                                            this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
+                                        }
+                                    },
+                                    {
+                                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
+                                    },
+                                ),
                             );
                         });
                     }
@@ -204,13 +213,11 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
                     timer(0, 60000).subscribe(() => {
-                        console.log('\n\n');
-                        console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
+                        // console.log('\n\n');
+                        // console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));
-
                         // console.log(`Listeners (${this.myListeners.size}): `, this.myListeners.values());
                         // this.myListeners.forEach((sub, topic) => console.log(topic));
-
                         // console.log(`Observers (${this.listenerObservers.size}): `, this.listenerObservers.values());
                         // this.listenerObservers.forEach((sub, topic) => console.log(topic));
                     }),
@@ -285,11 +292,17 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             }
             this.subscribers.set(
                 channel,
-                this.stompClient!.subscribe(channel, (data) => {
-                    if (this.listenerObservers.has(channel)) {
-                        this.listenerObservers.get(channel)!.next(this.parseJSON(data.body));
-                    }
-                }),
+                this.stompClient!.subscribe(
+                    channel,
+                    (data) => {
+                        if (this.listenerObservers.has(channel)) {
+                            this.listenerObservers.get(channel)!.next(this.parseJSON(data.body));
+                        }
+                    },
+                    {
+                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
+                    },
+                ),
             );
         });
     }
@@ -393,6 +406,15 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             return JSON.parse(response);
         } catch {
             return response;
+        }
+    }
+
+    // https://stackoverflow.com/a/35651029/3802758
+    private getSessionId(): string {
+        if (this.socket && this.socket._transport && this.socket._transport.url) {
+            return this.socket._transport.url.match('.*\\/websocket\\/tracker\\/\\d*\\/(.*)\\/websocket.*')[1];
+        } else {
+            return 'unsubscribed';
         }
     }
 }

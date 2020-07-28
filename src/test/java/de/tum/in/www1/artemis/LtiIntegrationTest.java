@@ -62,10 +62,10 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void init() {
         /* We mock the following methods because we don't have the OAuth secret for edx */
-        doReturn(true).when(ltiService).verifyRequest(any());
+        doReturn(null).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
-        database.addUsers(1, 1, 0);
+        database.addUsers(1, 1, 1);
 
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
@@ -80,7 +80,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithAnonymousUser
     void launchAsAnonymousUser() throws Exception {
         Long exerciseId = programmingExercise.getId();
-        Long courseId = programmingExercise.getCourse().getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?login&jwt="));
@@ -93,7 +93,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(value = "student1", roles = "USER")
     void launchAsNewStudent() throws Exception {
         Long exerciseId = programmingExercise.getId();
-        Long courseId = programmingExercise.getCourse().getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?welcome&jwt="));
@@ -108,15 +108,15 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders());
 
-        doReturn(false).when(ltiService).verifyRequest(any());
+        doReturn("error").when(ltiService).verifyRequest(any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.UNAUTHORIZED, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "TA")
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
-        request.get("/api/lti/configuration/" + programmingExercise.getId() + 1, HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+        request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
     }
 
     @Test

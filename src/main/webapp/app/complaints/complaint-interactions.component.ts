@@ -5,7 +5,10 @@ import { ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -15,6 +18,11 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() result: Result;
+    @Input() exam: Exam;
+
+    get isExamMode() {
+        return this.exam != null;
+    }
 
     showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
@@ -26,33 +34,43 @@ export class ComplaintInteractionsComponent implements OnInit {
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService) {}
+    constructor(private complaintService: ComplaintService, private activatedRoute: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
-        if (this.course) {
-            if (this.course!.complaintsEnabled) {
-                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                    this.numberOfAllowedComplaints = allowedComplaints;
-                });
-            } else {
-                this.numberOfAllowedComplaints = 0;
-            }
-
-            if (this.participation.submissions && this.participation.submissions.length > 0) {
-                if (this.result && this.result.completionDate) {
-                    this.complaintService.findByResultId(this.result.id).subscribe((res) => {
-                        if (res.body) {
-                            if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
-                                this.hasComplaint = true;
-                            } else {
-                                this.hasRequestMoreFeedback = true;
-                            }
-                        }
-                    });
+        if (this.isExamMode) {
+            if (this.participation && this.participation.id && this.exercise) {
+                if (this.participation.results && this.participation.results.length > 0) {
+                    // Make sure result and participation are connected
+                    this.result = this.participation.results[0];
+                    this.result.participation = this.participation;
                 }
+            }
+        } else {
+            if (this.course) {
+                // for normal exercises we track the number of allowed complaints
+                if (this.course.complaintsEnabled) {
+                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                        this.numberOfAllowedComplaints = allowedComplaints;
+                    });
+                } else {
+                    this.numberOfAllowedComplaints = 0;
+                }
+            }
+        }
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            if (this.result && this.result.completionDate) {
+                this.complaintService.findByResultId(this.result.id).subscribe((res) => {
+                    if (res.body) {
+                        if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                            this.hasComplaint = true;
+                        } else {
+                            this.hasRequestMoreFeedback = true;
+                        }
+                    }
+                });
             }
         }
     }
@@ -62,12 +80,24 @@ export class ComplaintInteractionsComponent implements OnInit {
     }
 
     /**
-     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * We disable the component, if no complaint or feedback request has been made by the user during the Student Review period, for exam exercises.
+     */
+    get noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
+        return !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
+    }
+
+    /**
+     * This function is used to check whether the student is allowed to submit a complaint or not.
+     * For exams, submitting a complaint is allowed within the Student Review Period, see {@link isWithinStudentReviewPeriod}.
+     *
+     * For normal course exercises, submitting a complaint is allowed within one week after the student received the
      * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     get isTimeOfComplaintValid(): boolean {
-        if (this.result && this.result.completionDate) {
+        if (this.isExamMode) {
+            return this.isWithinStudentReviewPeriod() && !!this.result && !!this.result.completionDate;
+        } else if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
             if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
                 return resultCompletionDate.isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
@@ -77,6 +107,19 @@ export class ComplaintInteractionsComponent implements OnInit {
             return false;
         }
     }
+
+    /**
+     * A guard function used to indicate whether complaint submissions are valid.
+     * These are only allowed if they are submitted within the student review period.
+     */
+    private isWithinStudentReviewPeriod(): boolean {
+        if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd);
+        } else {
+            return false;
+        }
+    }
+
     /**
      * toggles between showing the complaint form
      */
@@ -84,11 +127,24 @@ export class ComplaintInteractionsComponent implements OnInit {
         this.showRequestMoreFeedbackForm = false;
         this.showComplaintForm = !this.showComplaintForm;
     }
+
     /**
      * toggles between showing the feedback request form
      */
     toggleRequestMoreFeedbackForm() {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
+    }
+
+    /**
+     * Calculates the maximum number of complaints allowed for the exercise.
+     * In case of exams, it returns an arbitrary number > 0, as we do not limit the number of complaints for exams
+     */
+    calculateMaxComplaints() {
+        if (this.course) {
+            return this.exercise.teamMode ? this.course.maxTeamComplaints : this.course.maxComplaints;
+        } else {
+            return 1;
+        }
     }
 }

@@ -13,6 +13,7 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
 import { StaticAssessmentDetailTextPipe } from 'app/shared/pipes/static-assessment-detail-text.pipe';
+import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
 @NgModule({
     declarations: [
@@ -20,6 +21,7 @@ import { StaticAssessmentDetailTextPipe } from 'app/shared/pipes/static-assessme
         SafeUrlPipe,
         SafeResourceUrlPipe,
         RemoveKeysPipe,
+        ExerciseCourseTitlePipe,
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
@@ -35,6 +37,7 @@ import { StaticAssessmentDetailTextPipe } from 'app/shared/pipes/static-assessme
         SafeHtmlPipe,
         SafeUrlPipe,
         RemoveKeysPipe,
+        ExerciseCourseTitlePipe,
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,

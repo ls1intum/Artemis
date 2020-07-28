@@ -201,6 +201,18 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
+    @WithMockUser(value = "student11", roles = "USER")
+    public void testGetExamExercise_asStudent_forbidden() throws Exception {
+        getExamExercise();
+    }
+
+    private void getExamExercise() throws Exception {
+        TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        request.get("/api/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);

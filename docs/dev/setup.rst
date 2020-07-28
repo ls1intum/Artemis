@@ -111,18 +111,19 @@ have to configure the file ``application-artemis.yml`` in the folder
            id: artemis_lti
            oauth-key: artemis_lti_key
            oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-           user-prefix_edx: edx_
-           user-prefix_u4i: u4i_
-           user-group-name_edx: edx
-           user-group-name_u4i: u4i
+           user-prefix-edx: edx_
+           user-prefix-u4i: u4i_
+           user-group-name-edx: edx
+           user-group-name-u4i: u4i
        git:
            name: Artemis
            email: artemis@in.tum.de
        automatic-text:
-           embedding-url: http://localhost:8000/embed
+           segmentation-url: http://localhost:8000/segment
+           material-upload-url: http://localhost:8001/upload
+           embedding-url: http://localhost:8001/embed
            embedding-chunk-size: 50
-           clustering-url: http://localhost:8000/cluster
-           segmentation-url: http://localhost:8080/segment
+           clustering-url: http://localhost:8002/cluster
            secret: null
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
@@ -334,7 +335,7 @@ Other useful commands:
 Text Assessment Clustering Service
 ----------------------------------
 
-The semi-automatic text assessment relies on the Athene_ service.  
+The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
 Enable the ``automaticText`` Spring profile:
@@ -347,7 +348,7 @@ Enable the ``automaticText`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The TAC service is running on a dedicated machine and is adressed via
+The Athene service is running on a dedicated machine and is adressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -356,9 +357,11 @@ HTTP. We need to extend the configuration in the file
    artemis:
      # ...
      automatic-text:
-       embedding-url: http://localhost:8000/embed
+       segmentation-url: http://localhost:8000/segment
+       material-upload-url: http://localhost:8001/upload
+       embedding-url: http://localhost:8001/embed
        embedding-chunk-size: 50
-       clustering-url: http://localhost:8000/cluster
+       clustering-url: http://localhost:8002/cluster
        secret: null
 
 .. _Athene: https://github.com/ls1intum/Athene

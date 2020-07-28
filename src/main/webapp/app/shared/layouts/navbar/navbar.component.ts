@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
+import { tap, map, switchMap, filter } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -15,6 +15,10 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
+import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/router';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { Exam } from 'app/entities/exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -33,6 +37,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     currAccount: User | null;
 
     private authStateSubscription: Subscription;
+    private routerEventSubscription: Subscription;
+    private exam: Exam | undefined;
+    private examId: number | undefined;
 
     constructor(
         private loginService: LoginService,
@@ -43,9 +50,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
+        private router: Router,
+        private route: ActivatedRoute,
+        private examParticipationService: ExamParticipationService,
+        private serverDateService: ArtemisServerDateService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
+
+        this.getExamId();
     }
 
     ngOnInit() {
@@ -64,11 +77,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
+
+        this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
+            this.exam = studentExam.exam;
+        });
     }
 
     ngOnDestroy(): void {
         if (this.authStateSubscription) {
             this.authStateSubscription.unsubscribe();
+        }
+        if (this.routerEventSubscription) {
+            this.routerEventSubscription.unsubscribe();
         }
     }
 
@@ -125,5 +145,41 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 return 'global.menu.continueTutorial';
             }
         }
+    }
+
+    /**
+     * get exam id from current route
+     */
+    getExamId() {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event) => {
+            const examId = of(event).pipe(
+                map(() => this.route.root),
+                map((root) => root.firstChild),
+                switchMap((firstChild) => {
+                    if (firstChild) {
+                        return firstChild?.paramMap.pipe(map((paramMap) => paramMap.get('examId')));
+                    } else {
+                        return of(null);
+                    }
+                }),
+            );
+            examId.subscribe((id) => {
+                if (id !== null && !event.url.includes('management')) {
+                    this.examId = +id;
+                } else {
+                    this.examId = undefined;
+                }
+            });
+        });
+    }
+
+    /**
+     * check if exam mode is active
+     */
+    examModeActive(): boolean {
+        if (this.exam && this.exam.id === this.examId && this.exam.startDate && this.exam.endDate) {
+            return this.serverDateService.now().isBetween(this.exam.startDate, this.exam.endDate);
+        }
+        return false;
     }
 }

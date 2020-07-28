@@ -8,7 +8,7 @@ export abstract class SubmittedAnswer implements BaseEntity {
     public quizQuestion: QuizQuestion;
     public submission: QuizSubmission;
 
-    private type: QuizQuestionType;
+    public type: QuizQuestionType;
 
     protected constructor(type: QuizQuestionType) {
         this.type = type;

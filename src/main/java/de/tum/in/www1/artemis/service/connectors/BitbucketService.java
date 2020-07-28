@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.time.Instant;
 import java.util.*;
 
@@ -27,10 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
@@ -60,11 +54,11 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.version-control.password}")
     private String BITBUCKET_PASSWORD;
 
-    @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> USER_PREFIX_EDX;
 
-    @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> USER_PREFIX_U4I;
 
     @Value("${artemis.git.name}")
     private String ARTEMIS_GIT_NAME;
@@ -79,11 +73,11 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, Set<User> users) {
+    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
-            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
+            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
                 // It is an automatically created user
 
                 if (!userExists(username)) {
@@ -105,10 +99,13 @@ public class BitbucketService extends AbstractVersionControlService {
                 else {
                     log.debug("Bitbucket user {} already exists", username);
                 }
-
             }
 
-            addMemberToRepository(repositoryUrl, user);
+            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+                // only add access to the repository if the offline IDE usage is NOT disallowed
+                // NOTE: null values are interpreted as offline IDE is allowed
+                addMemberToRepository(repositoryUrl, user);
+            }
         }
 
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
@@ -536,7 +533,7 @@ public class BitbucketService extends AbstractVersionControlService {
                         new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
                         });
 
-                if (response.getBody().getSize() > 0) {
+                if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
                     if (exists) {
                         log.warn("Bitbucket project with name" + projectName + " already exists");
@@ -571,15 +568,18 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
         try {
+            // Get course over exerciseGroup in exam mode
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
             grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions
 
-            if (programmingExercise.getCourse().getInstructorGroupName() != null && !programmingExercise.getCourse().getInstructorGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
+            if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
             }
 
-            if (programmingExercise.getCourse().getTeachingAssistantGroupName() != null && !programmingExercise.getCourse().getTeachingAssistantGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
+            if (course.getTeachingAssistantGroupName() != null && !course.getTeachingAssistantGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
                 // write-permissions
             }
         }

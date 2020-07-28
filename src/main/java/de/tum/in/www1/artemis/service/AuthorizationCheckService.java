@@ -8,7 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -42,17 +47,19 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is at least a teaching assistant in the course of the given exercise.
+     * Checks if the currently logged in user is at least a teaching assistant in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @return true if the currently logged in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise) {
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), null);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
     /**
      * checks if the passed user is at least a teaching assistant in the course of the given exercise
+     * The course is identified from either {@link Exercise#getCourse()} or {@link Exam#getCourse()}
      *
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
@@ -63,7 +70,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), user);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
@@ -88,7 +95,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return isStudentInCourse(exercise.getCourse(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -123,14 +130,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is at least an instructor in the course of the given exercise.
+     * Checks if the currently logged in user is at least an instructor in the course of the given exercise.
+     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
      * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(Exercise exercise, User user) {
-        return isAtLeastInstructorInCourse(exercise.getCourse(), user);
+        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
@@ -301,7 +309,7 @@ public class AuthorizationCheckService {
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        Course course = exercise.getCourse();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
@@ -328,5 +336,23 @@ public class AuthorizationCheckService {
         return isAtLeastStudentForExercise(exercise) && isOwnerOfParticipation(participation)
                 && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
                 && result.getCompletionDate() != null;
+    }
+
+    /**
+     * Checks if the user is allowed to see the exam result. Returns true if
+     *
+     * - the current user is at least teaching assistant in the course
+     * - OR if the exercise is not part of an exam
+     * - OR if the exam has not ended
+     * - OR if the exam has already ended and the results were published
+     *
+     * @param exercise - Exercise that the result is requested for
+     * @param user - User that requests the result
+     * @return true if user is allowed to see the result, false otherwise
+     */
+    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
+        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
+                || (exercise.hasCourse() || (exercise.hasExerciseGroup() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
+                        || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 }

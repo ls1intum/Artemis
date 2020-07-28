@@ -24,7 +24,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
     }
 
     get changeExerciseModeDisabled(): boolean {
-        return Boolean(this.exercise.id);
+        return Boolean(this.exercise.id) || !!this.exercise.exerciseGroup;
     }
 
     /**

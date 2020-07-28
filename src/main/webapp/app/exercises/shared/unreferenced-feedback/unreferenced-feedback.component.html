@@ -1,4 +1,4 @@
-<button class="btn btn-success mt-4" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+<button class="btn btn-success mt-4" (click)="addReferencedFeedback()" [disabled]="readOnly">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
 <ng-container *ngIf="!busy">
     <div class="row mt-4">
         <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
@@ -13,6 +13,7 @@
                 [(assessment)]="unreferencedFeedback[i]"
                 (assessmentChange)="updateAssessment(assessment)"
                 (deleteAssessment)="deleteAssessment($event)"
+                [readOnly]="readOnly"
             ></jhi-assessment-detail>
         </div>
     </div>

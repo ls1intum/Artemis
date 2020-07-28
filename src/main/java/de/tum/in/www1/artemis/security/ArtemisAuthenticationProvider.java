@@ -14,7 +14,8 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
 
     /**
-     * Gets or creates the user object for the specified authentication.
+     * Gets the user object for the specified authentication or creates one in Artemis based on the passed information (possibly asking an external authentication source).
+     * Note: This method does not create a new user in the external authentication source.
      *
      * @param authentication the Spring authentication object which includes the username and password
      * @param firstName The first name of the user that should get created if not present
@@ -32,6 +33,13 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      * @param group The group the user should get added to
      */
     void addUserToGroup(User user, String group);
+
+    /**
+     * creates the given user in the external user management (in case it is used)
+     *
+     * @param user the user that should be created
+     */
+    void createUserInExternalUserManagement(User user);
 
     /**
      * Adds a user to the specified set of groups.

@@ -8,7 +8,12 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,13 +27,27 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -37,9 +56,22 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExamService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.NotificationService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TutorDashboardService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -75,6 +107,8 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExamService examService;
+
     private final ExerciseService exerciseService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
@@ -99,7 +133,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final TutorDashboardService tutorDashboardService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -108,15 +142,16 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
+            ExamService examService, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, SubmissionService submissionService,
+            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
+            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService, TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
+        this.examService = examService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
@@ -130,10 +165,10 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
+        this.tutorDashboardService = tutorDashboardService;
     }
 
     /**
@@ -355,7 +390,7 @@ public class CourseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
                     .body(null);
         }
-        if (course.isRegistrationEnabled() != Boolean.TRUE) {
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
@@ -467,7 +502,7 @@ public class CourseResource {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
+                exerciseService.filterForCourseDashboard(exercise, participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -508,47 +543,16 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise : interestingExercises) {
-
-            DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
-
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
-            }
-            else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            }
-
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-
-            exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-                        return emptyTutorParticipation;
-                    });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-        }
+        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -567,7 +571,7 @@ public class CourseResource {
 
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
@@ -606,7 +610,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -625,7 +629,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
@@ -650,7 +654,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
+        Set<Exercise> interestingExercises = courseService.getInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
@@ -727,7 +731,7 @@ public class CourseResource {
         final long start = System.currentTimeMillis();
         final Course course = courseService.findOne(courseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -767,10 +771,6 @@ public class CourseResource {
         return ResponseEntity.ok(stats);
     }
 
-    private boolean userHasPermission(Course course, User user) {
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
-    }
-
     /**
      * DELETE /courses/:courseId : delete the "id" course.
      *
@@ -786,13 +786,14 @@ public class CourseResource {
         if (course == null) {
             return notFound();
         }
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
-        }
 
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
+
+        for (Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId(), false, false);
+        }
 
         for (Lecture lecture : course.getLectures()) {
             lectureService.delete(lecture);
@@ -813,6 +814,18 @@ public class CourseResource {
         }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        }
+
+        // delete the Exams
+        List<Exam> exams = examService.findAllByCourseId(courseId);
+        for (Exam exam : exams) {
+            exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(exam.getId());
+            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.delete(exercise.getId(), false, false);
+                }
+            }
+            examService.delete(exam.getId());
         }
 
         courseService.delete(courseId);

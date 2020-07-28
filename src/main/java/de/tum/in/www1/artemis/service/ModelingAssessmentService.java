@@ -36,8 +36,9 @@ public class ModelingAssessmentService extends AssessmentService {
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository);
+            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository, ExamService examService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
+                examService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -60,9 +61,9 @@ public class ModelingAssessmentService extends AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
-        // feedback credits)
-        return resultRepository.save(result);
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, exercise, calculatedScore);
+        // return resultRepository.save(result);
     }
 
     /**

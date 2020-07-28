@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,9 +54,13 @@ public class FileUploadSubmissionResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final ExamSubmissionService examSubmissionService;
+
+    private final AssessmentService assessmentService;
+
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, AssessmentService assessmentService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -66,6 +69,8 @@ public class FileUploadSubmissionResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
+        this.examSubmissionService = examSubmissionService;
+        this.assessmentService = assessmentService;
     }
 
     /**
@@ -83,6 +88,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
+        long start = System.currentTimeMillis();
 
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -90,13 +96,25 @@ public class FileUploadSubmissionResource {
             return forbidden();
         }
 
-        // TODO: add one additional check: fetch fileUploadSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // Make sure that the exercise exists
+        if (exercise == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
 
-        // Check if the course hasn't been changed
-        final var validityExceptionResponse = this.checkExerciseValidity(exercise);
-        if (validityExceptionResponse != null) {
-            return validityExceptionResponse;
+        // Apply further checks if it is an exam submission
+        Optional<ResponseEntity<FileUploadSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(exercise, user);
+        if (examSubmissionAllowanceFailure.isPresent()) {
+            return examSubmissionAllowanceFailure.get();
+        }
+
+        // Prevent multiple submissions (currently only for exam submissions)
+        fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+
+        // Check if the user is allowed to submit
+        Optional<ResponseEntity<FileUploadSubmission>> submissionAllowanceFailure = fileUploadSubmissionService.checkSubmissionAllowance(exercise, fileUploadSubmission, user);
+        if (submissionAllowanceFailure.isPresent()) {
+            return submissionAllowanceFailure.get();
         }
 
         // Check the file size
@@ -130,6 +148,8 @@ public class FileUploadSubmissionResource {
         }
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
+        long end = System.currentTimeMillis();
+        log.info("submitFileUploadExercise took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
         return ResponseEntity.ok(submission);
     }
 
@@ -189,7 +209,7 @@ public class FileUploadSubmissionResource {
 
         final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user);
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
@@ -233,13 +253,14 @@ public class FileUploadSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
+        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
@@ -327,20 +348,5 @@ public class FileUploadSubmissionResource {
         }
 
         return ResponseEntity.ok(fileUploadSubmission);
-    }
-
-    private ResponseEntity<FileUploadSubmission> checkExerciseValidity(FileUploadExercise fileUploadExercise) {
-        if (fileUploadExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 }

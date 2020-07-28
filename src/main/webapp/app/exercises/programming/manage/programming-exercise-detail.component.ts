@@ -30,6 +30,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
+    isExamExercise: boolean;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
@@ -51,9 +52,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
-            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
-            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
+
+            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(
+                this.programmingExercise.course || this.programmingExercise.exerciseGroup!.exam!.course,
+            );
+            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(
+                this.programmingExercise.course || this.programmingExercise.exerciseGroup!.exam!.course,
+            );
 
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
@@ -93,6 +100,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     previousState() {
         window.history.back();
+    }
+
+    /**
+     * Returns the route for editing the exercise. Exam and course exercises have different routes.
+     */
+    getEditRoute() {
+        if (this.isExamExercise) {
+            return [
+                '/course-management',
+                this.programmingExercise.exerciseGroup?.exam?.course?.id,
+                'exams',
+                this.programmingExercise.exerciseGroup?.exam?.id,
+                'exercise-groups',
+                this.programmingExercise.exerciseGroup?.id,
+                'programming-exercises',
+                this.programmingExercise.id,
+                'edit',
+            ];
+        } else {
+            return ['/course-management', this.programmingExercise.course?.id, 'programming-exercises', this.programmingExercise.id, 'edit'];
+        }
     }
 
     combineTemplateCommits() {

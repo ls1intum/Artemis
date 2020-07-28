@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Routes, Resolve, ActivatedRouteSnapshot } from '@angular/router';
-import { Location } from '@angular/common';
 import { Observable } from 'rxjs';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -29,7 +28,7 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | null> {
-    constructor(private textSubmissionService: TextSubmissionService, private location: Location) {}
+    constructor(private textSubmissionService: TextSubmissionService) {}
 
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.

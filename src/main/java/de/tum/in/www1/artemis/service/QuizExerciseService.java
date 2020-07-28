@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 
 @Service
 public class QuizExerciseService {
@@ -202,7 +202,10 @@ public class QuizExerciseService {
             }
         }
 
-        quizScheduleService.scheduleQuizStart(quizExercise.getId());
+        if (quizExercise.hasCourse()) {
+            // only schedule quizzes for course exercises, not for exam exercises
+            quizScheduleService.scheduleQuizStart(quizExercise.getId());
+        }
         return quizExercise;
     }
 
@@ -216,7 +219,7 @@ public class QuizExerciseService {
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
         User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
-            Course course = exercise.getCourse();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
         });
         return authorizedExercises.collect(Collectors.toList());
@@ -280,7 +283,7 @@ public class QuizExerciseService {
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
-            Course course = quizExercises.get(0).getCourse();
+            Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return new LinkedList<>();
             }
@@ -347,8 +350,9 @@ public class QuizExerciseService {
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
-            if (quizExercise.isVisibleToStudents()) {
-                messagingTemplate.send("/topic/courses/" + quizExercise.getCourse().getId() + "/quizExercises", MessageBuilder.withPayload(payload).build());
+            if (quizExercise.isVisibleToStudents() && quizExercise.hasCourse()) {
+                messagingTemplate.send("/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises",
+                        MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
         }
@@ -364,7 +368,7 @@ public class QuizExerciseService {
      * @return true, if the user has the required permissions, false otherwise
      */
     public boolean userHasTAPermissions(QuizExercise quizExercise) {
-        Course course = quizExercise.getCourse();
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
     }

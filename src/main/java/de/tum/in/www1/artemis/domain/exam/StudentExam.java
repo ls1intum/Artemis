@@ -1,25 +1,15 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.time.ZonedDateTime;
+import java.util.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OrderColumn;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -36,6 +26,21 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "submitted")
+    private Boolean submitted;
+
+    /**
+     * The working time in seconds
+     */
+    @Column(name = "working_time")
+    private Integer workingTime;
+
+    @Column(name = "started")
+    private Boolean started;
+
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
+
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -50,12 +55,49 @@ public class StudentExam implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
 
+    @OneToMany(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("studentExam")
+    private Set<ExamSession> examSessions = new HashSet<>();
+
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Boolean isSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
+    }
+
+    public Integer getWorkingTime() {
+        return workingTime;
+    }
+
+    public void setWorkingTime(Integer workingTime) {
+        this.workingTime = workingTime;
+    }
+
+    public Boolean isStarted() {
+        return started;
+    }
+
+    public void setStarted(Boolean started) {
+        this.started = started;
+    }
+
+    public ZonedDateTime getSubmissionDate() {
+        return submissionDate;
+    }
+
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
     }
 
     public Exam getExam() {
@@ -92,6 +134,37 @@ public class StudentExam implements Serializable {
         return this;
     }
 
+    public Set<ExamSession> getExamSessions() {
+        return examSessions;
+    }
+
+    public void setExamSessions(Set<ExamSession> examSessions) {
+        this.examSessions = examSessions;
+    }
+
+    public StudentExam addExercise(ExamSession examSession) {
+        this.examSessions.add(examSession);
+        return this;
+    }
+
+    public StudentExam removeExercise(ExamSession examSession) {
+        this.examSessions.remove(examSession);
+        return this;
+    }
+
+    /**
+     * check if the individual student exam has ended (based on the working time)
+     *
+     * @return true if the exam has finished, otherwise false, null if this cannot be determined
+     */
+    public Boolean isEnded() {
+        if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
+            return null;
+        }
+        var individualEndDate = this.getExam().getStartDate().plusSeconds(this.getWorkingTime());
+        return ZonedDateTime.now().isAfter(individualEndDate);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -106,5 +179,4 @@ public class StudentExam implements Serializable {
     public int hashCode() {
         return Objects.hashCode(getId());
     }
-
 }

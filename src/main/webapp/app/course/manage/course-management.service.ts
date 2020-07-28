@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map, filter, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -159,9 +159,10 @@ export class CourseManagementService {
      * returns the course with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
      */
-    getForTutors(courseId: number): Observable<EntityResponseType> {
+    getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
+            .get<Course>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -292,6 +293,11 @@ export class CourseManagementService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
     }
 
+    checkAndSetCourseRights(course: Course) {
+        course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+    }
+
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
             startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
@@ -338,8 +344,7 @@ export class CourseManagementService {
 
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
-            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body);
+            this.checkAndSetCourseRights(res.body);
         }
         return res;
     }
@@ -347,8 +352,7 @@ export class CourseManagementService {
     private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-                course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.checkAndSetCourseRights(course);
             });
         }
         return res;
@@ -446,7 +450,7 @@ export class CourseExerciseService {
     }
 
     /**
-     * handle the given student participaion by adding in the participationWebsocketService
+     * handle the given student participaon by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
     handleParticipation(participation: StudentParticipation) {

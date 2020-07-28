@@ -5,7 +5,7 @@
                 "title": "Programming Exercises",
                 "createLabel": "Create new Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
-                "importLabel": "Import new Programming Exercise",
+                "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
@@ -40,6 +40,10 @@
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
+            "onlineEditor": "Online Editor",
+            "allowOfflineIde": "Allow Offline IDE",
+            "offlineIde": "Offline IDE",
+            "participationMode": "Participation Mode",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
@@ -153,18 +157,9 @@
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The after due date has been set to the release date!",
+                "assessmentDueDate": "Assessment Due Date",
+                "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set"
-            },
-            "import": {
-                "attention": "Attention! ",
-                "markdownWarning": "You can edit the problem statement after importing the exercise.",
-                "loading": "Loading...",
-                "table": {
-                    "title": "Title",
-                    "language": "Programming Language",
-                    "course": "Course",
-                    "doImport": "Import"
-                }
             },
             "repositoryIsLocked": {
                 "title": "Your Repository is locked.",

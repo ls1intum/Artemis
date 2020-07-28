@@ -7,7 +7,6 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { textExerciseRoute } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
@@ -18,6 +17,8 @@ import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -25,7 +26,6 @@ const ENTITY_STATES = [...textExerciseRoute];
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
@@ -36,8 +36,9 @@ const ENTITY_STATES = [...textExerciseRoute];
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
+        ArtemisSharedComponentModule,
     ],
-    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
+    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],
     entryComponents: [ExternalSubmissionDialogComponent],
 })

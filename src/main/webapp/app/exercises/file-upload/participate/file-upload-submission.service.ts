@@ -97,7 +97,8 @@ export class FileUploadSubmissionService {
      * Convert a returned JSON object to FileUploadSubmission.
      */
     private convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        return Object.assign({}, fileUploadSubmission);
+        const convertedFileUploadSubmission = Object.assign({}, fileUploadSubmission);
+        return convertedFileUploadSubmission;
     }
 
     /**

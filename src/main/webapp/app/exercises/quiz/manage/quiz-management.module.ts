@@ -14,7 +14,6 @@ import { quizManagementRoute } from 'app/exercises/quiz/manage/quiz-management.r
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { RouterModule } from '@angular/router';
-import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
@@ -26,6 +25,7 @@ import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-eva
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
+import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -34,7 +34,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         DndModule.forRoot(),
-        SortByModule,
         AngularFittextModule,
         AceEditorModule,
         FormDateTimePickerModule,
@@ -48,6 +47,7 @@ const ENTITY_STATES = [...quizManagementRoute];
     ],
     declarations: [
         QuizExerciseComponent,
+        QuizConfirmImportInvalidQuestionsModalComponent,
         QuizExerciseDetailComponent,
         MultipleChoiceQuestionEditComponent,
         DragAndDropQuestionEditComponent,

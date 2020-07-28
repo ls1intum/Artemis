@@ -12,6 +12,8 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import * as moment from 'moment';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -40,6 +42,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     async ngOnInit() {
@@ -116,6 +119,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     showShortDescription() {
         this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;
+    }
+
+    /**
+     * check if there is at least one exam which should be shown
+     */
+    hasVisibleExams(): boolean {
+        for (const exam of this.course?.exams!) {
+            if (moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

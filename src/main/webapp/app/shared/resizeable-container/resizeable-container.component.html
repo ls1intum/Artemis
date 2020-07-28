@@ -1,11 +1,11 @@
 <!--region LEFT SIDE-->
-<div class="left card">
-    <div class="card-header bg-primary text-white">
+<div class="left card" [class.border-0]="isExerciseParticipation">
+    <div class="card-header bg-primary text-white" *ngIf="!isExerciseParticipation">
         <ng-content select="span[left-header]"></ng-content>
         <span class="flex-fill"></span>
         <ng-content select="jhi-score-display[left-header]"></ng-content>
     </div>
-    <div class="left-body card-body">
+    <div class="left-body card-body" [class.p-0]="isExerciseParticipation">
         <ng-content select="[left-body]"></ng-content>
     </div>
 </div>
@@ -27,7 +27,7 @@
                     </div>
                     <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
                 </h3>
-                <fa-icon [icon]="'chevron-right'"></fa-icon>
+                <fa-icon id="right-header-icon" [icon]="'chevron-right'"></fa-icon>
             </div>
             <div class="card-body">
                 <ng-content select="[right-body]"></ng-content>

@@ -12,8 +12,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -61,7 +59,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
 
     /**
      * Check if the given answer option is selected in this submitted answer
-     * 
+     *
      * @param answerOption the answer option to check for
      * @return true if the answer option is selected, false otherwise
      */
@@ -79,7 +77,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
 
     /**
      * Check if answerOptions were deleted and delete reference to in selectedOptions
-     * 
+     *
      * @param question the changed question with the answerOptions
      */
     private void checkAndDeleteSelectedOptions(MultipleChoiceQuestion question) {
