@@ -9,6 +9,12 @@ on:
   schedule:
     - cron: '0 16 * * 0'
 
+# Keep in sync with build.yml
+env:
+    CI: true
+    node: 14.x
+    java: 14
+
 jobs:
   analyse:
     name: Analyse
@@ -16,10 +22,14 @@ jobs:
 
     steps:
     # Install Java 14
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '${{ env.node }}'
     - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '14'
+        java-version: '${{ env.java }}'
 
     - name: Checkout repository
       uses: actions/checkout@v2
