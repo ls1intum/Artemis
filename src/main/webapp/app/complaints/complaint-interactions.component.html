@@ -1,5 +1,5 @@
 <div *ngIf="(isExamMode && !noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
-    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
+    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && isCurrentUserSubmissionAuthor && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
             [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
@@ -31,6 +31,7 @@
             [allowedComplaints]="numberOfAllowedComplaints"
             [maxComplaintsPerCourse]="calculateMaxComplaints()"
             [complaintType]="ComplaintType.COMPLAINT"
+            [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
             (submit)="hasComplaint = true"
         ></jhi-complaint-form>
     </div>
@@ -40,6 +41,7 @@
             [exercise]="exercise"
             [resultId]="result?.id"
             [complaintType]="ComplaintType.MORE_FEEDBACK"
+            [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
             (submit)="hasRequestMoreFeedback = true"
         ></jhi-complaint-form>
     </div>
