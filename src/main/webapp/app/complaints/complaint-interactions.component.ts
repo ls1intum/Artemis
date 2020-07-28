@@ -19,6 +19,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() participation: StudentParticipation;
     @Input() result: Result;
     @Input() exam: Exam;
+    @Input() readOnly = false;
 
     get isExamMode() {
         return this.exam != null;

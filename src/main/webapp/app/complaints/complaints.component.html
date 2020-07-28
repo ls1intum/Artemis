@@ -19,7 +19,7 @@
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
-                    <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+                    <span *ngIf="examId && !readOnly" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
                     <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
                 </p>
             </ng-template>
@@ -28,7 +28,7 @@
 
     <div class="row" *ngIf="loaded">
         <div class="col-12 col-md-6">
-            <p *ngIf="!alreadySubmitted">
+            <p *ngIf="!alreadySubmitted && !readOnly">
                 <span *ngIf="!exercise.teamMode">
                     {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.beDescriptive' | translate) : ('artemisApp.complaint.beDescriptive' | translate) }}
                 </span>
@@ -60,11 +60,11 @@
                 rows="4"
                 maxLength="2000"
                 [(ngModel)]="complaintText"
-                [readOnly]="alreadySubmitted"
-                [disabled]="alreadySubmitted"
+                [readOnly]="alreadySubmitted || readOnly"
+                [disabled]="alreadySubmitted || readOnly"
             ></textarea>
 
-            <div class="row" *ngIf="!alreadySubmitted">
+            <div class="row" *ngIf="!alreadySubmitted && !readOnly">
                 <div class="col-6">
                     <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">
                         {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.button' | translate) : ('artemisApp.complaint.submit' | translate) }}

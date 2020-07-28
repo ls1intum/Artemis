@@ -82,13 +82,13 @@
                             exercise.type !== QUIZ &&
                             studentExam.exam.examStudentReviewStart &&
                             studentExam.exam.examStudentReviewEnd &&
-                            isAfterStudentReviewStart() &&
-                            isUserStudentExamParticipant
+                            isAfterStudentReviewStart()
                         "
                         class="mb-2 mt-2 ml-3"
                         [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                        [readOnly]="!isUserStudentExamParticipant"
                     >
                     </jhi-complaint-interactions>
                 </ng-container>
@@ -105,13 +105,14 @@
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="
-                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && isUserStudentExamParticipant;
+                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC;
                         getSubmissionForExercise: exercise && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd && isAfterStudentReviewStart()
                     "
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                    [readOnly]="!isUserStudentExamParticipant"
                 >
                 </jhi-complaint-interactions>
             </ng-container>
