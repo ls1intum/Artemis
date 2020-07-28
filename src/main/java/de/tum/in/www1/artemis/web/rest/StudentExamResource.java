@@ -205,24 +205,10 @@ public class StudentExamResource {
         studentExam.setStarted(true);
         studentExamRepository.save(studentExam);
 
-        // 3rd: fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
-        // fetching all participations at once is more effective
-        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
-                studentExam.getExercises());
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
 
-        // 4th: connect the exercises and student participations correctly and make sure all relevant associations are available
-        for (Exercise exercise : studentExam.getExercises()) {
-            // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations);
-
-            // Filter attributes of exercises that should not be visible to the student
-            // Note: sensitive information for quizzes was already removed in the for loop above
-            if (!(exercise instanceof QuizExercise)) {
-                // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
-                exercise.filterSensitiveInformation();
-            }
-        }
-
+        // 4th create new exam session
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
         final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
         final String userAgent = request.getHeader("User-Agent");
@@ -237,6 +223,78 @@ public class StudentExamResource {
         log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());
         return ResponseEntity.ok(studentExam);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/studentExams/summary : Find a student exam for the summary.
+     * This will be used to display the summary of the exam. The student exam will be returned with the exercises
+     * and with the student participation and with the submissions.
+     *
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
+     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/studentExams/summary")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        // 1st: load the studentExam with all associated exercises
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(currentUser.getId(), examId);
+        if (optionalStudentExam.isEmpty()) {
+            return notFound();
+        }
+        var studentExam = optionalStudentExam.get();
+
+        // check that the studentExam is over, otherwise /studentExams/conduction should be used
+        if (!studentExam.isSubmitted() && !studentExam.isEnded()) {
+            return forbidden();
+        }
+
+        loadExercisesForStudentExam(studentExam);
+
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
+
+        // not needed
+        studentExam.getExam().setCourse(null);
+
+        log.info("getStudentExamForSummary done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
+                + currentUser.getLogin());
+        return ResponseEntity.ok(studentExam);
+    }
+
+    /**
+     * For all exercises from the student exam, fetch participation, submisison & result for the current user.
+     *
+     * @param studentExam the student exam in quesiton
+     * @param currentUser logged in user with groups and authorities
+     */
+    private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
+        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
+                studentExam.getExercises());
+
+        // connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            filterForExam(studentExam, exercise, participations);
+
+            // Filter attributes of exercises that should not be visible to the student
+            // Note: sensitive information for quizzes was already removed in the for loop above
+            if (!(exercise instanceof QuizExercise)) {
+                // TODO: double check if filterSensitiveInformation() is implemented correctly here for all other exercise types
+                exercise.filterSensitiveInformation();
+            }
+        }
     }
 
     /**
