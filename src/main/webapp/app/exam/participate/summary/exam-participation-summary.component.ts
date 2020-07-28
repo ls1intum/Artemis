@@ -8,7 +8,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -36,9 +35,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
-    isUserStudentExamParticipant = false;
-
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private accountService: AccountService) {}
+    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
 
     /**
      * Initialise the courseId from the current url
@@ -47,11 +44,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
-        this.accountService.identity().then((user) => {
-            if (this.studentExam && this.studentExam.user && user && user.id) {
-                this.isUserStudentExamParticipant = this.studentExam.user.id === user.id;
-            }
-        });
     }
 
     getIcon(exerciseType: ExerciseType) {

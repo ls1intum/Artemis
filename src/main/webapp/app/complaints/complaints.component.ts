@@ -23,7 +23,7 @@ export class ComplaintsComponent implements OnInit {
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
-    @Input() readOnly = false;
+    @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText = '';
     alreadySubmitted: boolean;

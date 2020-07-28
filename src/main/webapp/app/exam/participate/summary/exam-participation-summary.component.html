@@ -54,7 +54,6 @@
                 *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
                 [exercise]="exercise"
                 [participation]="exercise.templateParticipation"
-                [personalParticipation]="isUserStudentExamParticipant"
             ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
@@ -94,7 +93,6 @@
                         [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                        [readOnly]="!isUserStudentExamParticipant"
                     >
                     </jhi-complaint-interactions>
                 </ng-container>
@@ -118,7 +116,6 @@
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                    [readOnly]="!isUserStudentExamParticipant"
                 >
                 </jhi-complaint-interactions>
             </ng-container>
