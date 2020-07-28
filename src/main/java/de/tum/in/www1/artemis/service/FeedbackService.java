@@ -23,9 +23,9 @@ import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 @Service
 public class FeedbackService {
 
-    private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
+    public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
-    private final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
+    private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
     private final FeedbackRepository feedbackRepository;
 

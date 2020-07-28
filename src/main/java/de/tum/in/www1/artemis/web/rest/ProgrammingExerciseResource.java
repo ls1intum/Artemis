@@ -360,6 +360,17 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // Check if max score is set
+        if (newExercise.getMaxScore() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        // Check if a participation mode is set
+        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
@@ -385,21 +396,16 @@ public class ProgrammingExerciseResource {
         }
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
 
+        // As the build plans are copied from the original exercise, the static code analysis flag must not change
+        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled()) {
+            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed on import", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        }
+
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         if (!authCheckService.isAtLeastInstructorInCourse(originalCourse, user)) {
             log.debug("User {} is not authorized to import the original exercise in course {}", user.getId(), originalCourse.getId());
             return forbidden();
-        }
-
-        // Check if max score is set
-        if (newExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
         newExercise.generateAndSetProjectKey();
@@ -473,6 +479,9 @@ public class ProgrammingExerciseResource {
         }
         if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
+        }
+        if (existingProgrammingExercise.get().isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
+            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,

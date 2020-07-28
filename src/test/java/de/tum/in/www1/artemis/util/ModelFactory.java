@@ -94,6 +94,7 @@ public class ModelFactory {
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
@@ -486,6 +487,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setStaticCodeAnalysisEnabled(false);
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);

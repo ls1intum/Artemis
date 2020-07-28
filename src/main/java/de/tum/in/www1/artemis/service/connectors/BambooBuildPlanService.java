@@ -94,8 +94,8 @@ public class BambooBuildPlanService {
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isUseStaticCodeAnalysis()));
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName).stages(
+                createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled()));
 
         bambooServer.publish(plan);
 
