@@ -25,7 +25,7 @@ public class FeedbackService {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
-    private final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "StaticCodeAnalysisFeedback:";
+    private final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
     private final FeedbackRepository feedbackRepository;
 
