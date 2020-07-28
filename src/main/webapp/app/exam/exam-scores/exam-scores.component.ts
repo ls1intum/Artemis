@@ -54,6 +54,7 @@ export class ExamScoresComponent implements OnInit {
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
+        headers.push('Submitted');
 
         const data = this.studentResults.map((studentResult) => {
             return this.convertToCSVRow(studentResult);
@@ -112,6 +113,7 @@ export class ExamScoresComponent implements OnInit {
             typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : round(studentResult.overallPointsAchieved, 1);
         csvRow.overAllScore =
             typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : round(studentResult.overallScoreAchieved, 2);
+        csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
         return csvRow;
     }
 }
