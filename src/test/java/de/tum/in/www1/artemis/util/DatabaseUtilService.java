@@ -859,15 +859,8 @@ public class DatabaseUtilService {
     }
 
     public Result addSampleStaticCodeAnalysisFeedbackToResults(Result result) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1").type(FeedbackType.AUTOMATIC));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2").type(FeedbackType.AUTOMATIC));
-        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("scadetail1").type(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT));
-        Feedback feedback4 = feedbackRepo.save(new Feedback().detailText("scadetail2").type(FeedbackType.AUTOMATIC_STATIC_ASSESSMENT));
-        List<Feedback> feedback = new ArrayList<>();
-        feedback.add(feedback1);
-        feedback.add(feedback2);
-        feedback.add(feedback3);
-        feedback.add(feedback4);
+        List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        feedback.addAll(ModelFactory.generateFeedback());
         result.addFeedbacks(feedback);
         return resultRepo.save(result);
     }
@@ -1149,6 +1142,7 @@ public class DatabaseUtilService {
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle("Programming");
         programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
