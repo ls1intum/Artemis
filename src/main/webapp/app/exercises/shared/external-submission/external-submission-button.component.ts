@@ -8,6 +8,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
     selector: 'jhi-external-submission',
     template: `
         <jhi-button
+            *ngIf="!exercise.teamMode"
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
