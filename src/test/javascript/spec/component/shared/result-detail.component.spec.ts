@@ -55,7 +55,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.be.deep.equal(feedbacks);
+        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.be.deep.equal(feedbacks);
         expect(comp.buildLogs).to.be.undefined;
         expect(comp.isLoading).to.be.false;
     });
@@ -70,7 +70,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
         expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.be.deep.equal(feedbacks);
+        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.be.deep.equal(feedbacks);
         expect(comp.buildLogs).to.be.undefined;
         expect(comp.isLoading).to.be.false;
     });

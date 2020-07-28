@@ -13,14 +13,10 @@
     Feedbacks container
 -->
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer">
+        <ng-container *ngIf="!loadingFailed && this.feedbackList && this.feedbackList.length; else buildLogsContainer">
             <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
                     Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
-                    >:
-                </p>
-                <p *ngIf="feedback.type === 'AUTOMATIC_STATIC_ASSESSMENT'">
-                    Static Assessment error found by&nbsp;<span class="code-error">{{ feedback.text }}</span
                     >:
                 </p>
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined && showTestNames">
@@ -32,12 +28,22 @@
                 <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
                     <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
                 </p>
-                <pre *ngIf="feedback.detailText && feedback.type !== 'AUTOMATIC_STATIC_ASSESSMENT'">{{ feedback.detailText }}</pre>
-                <pre *ngIf="feedback.detailText && feedback.type === 'AUTOMATIC_STATIC_ASSESSMENT'">{{ feedback | staticAssessmentDetailText }}</pre>
+                <pre *ngIf="feedback.detailText">{{ feedback.detailText }}</pre>
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
             <div *ngIf="!feedbackList || feedbackList.length == 0"></div>
+        </ng-container>
+        <!-- Static Code Analysis Feedback -->
+        <ng-container *ngIf="!loadingFailed && this.staticCodeAnalysisFeedbackList && this.staticCodeAnalysisFeedbackList.length">
+            <hr />
+            <h6>Static Code Analysis</h6>
+            <hr />
+            <div *ngFor="let feedback of staticCodeAnalysisFeedbackList; last as isLast">
+                <pre>{{ feedback | staticCodeAnalysisDetailText }}</pre>
+                <hr *ngIf="!isLast" />
+            </div>
+            <div *ngIf="!staticCodeAnalysisFeedbackList || staticCodeAnalysisFeedbackList.length == 0"></div>
         </ng-container>
     </ng-template>
     <!--
