@@ -1,0 +1,25 @@
+<form class="conflict-modal" #confirmForm="ngForm" name="confirmForm" (ngSubmit)="importQuestions()">
+    <div class="conflict-modal__header">
+        <h4 jhiTranslate="artemisApp.quizExercise.importWarningShort"></h4>
+    </div>
+    <div class="conflict-modal__body">
+        <jhi-alert-error></jhi-alert-error>
+        <span class="conflict-modal__body__warning">
+            <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+            <div jhiTranslate="artemisApp.quizExercise.importWarningLong"></div>
+            <p></p>
+            <div *ngFor="let reason of invalidFlaggedQuestions">
+                <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
+                <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+            </div>
+        </span>
+    </div>
+    <div class="conflict-modal__footer">
+        <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" class="conflict-modal__footer__submit" [disabled]="!confirmForm.valid">
+            <fa-icon [icon]="'times'"></fa-icon><span jhiTranslate="artemisApp.quizExercise.confirmImport">Continue</span>
+        </button>
+    </div>
+</form>

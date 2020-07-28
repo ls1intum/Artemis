@@ -64,6 +64,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     disconnected = false;
 
     handInEarly = false;
+    handInPossible = true;
+
+    exerciseIndex = 0;
 
     isProgrammingExercise() {
         return this.activeExercise.type === ExerciseType.PROGRAMMING;
@@ -264,10 +267,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        // temporary lock the submit button in order to protect against spam
+        this.handInPossible = false;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
-        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => (this.studentExam.submitted = true));
+        this.examParticipationService.submitStudentExam(this.courseId, this.examId, this.studentExam).subscribe(
+            (studentExam) => (this.studentExam = studentExam),
+            (error: Error) => {
+                this.alertService.error(error.message);
+                // Explicitly check whether the error was caused by the submission not being in-time, in this case, set hand in not possible
+                this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+            },
+        );
     }
 
     /**
@@ -289,6 +301,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
+        } else if (this.studentExam?.exercises && this.activeExercise) {
+            const index = this.studentExam.exercises.findIndex((exercise) => exercise.id === this.activeExercise.id);
+            this.exerciseIndex = index ? index : 0;
         }
     }
 

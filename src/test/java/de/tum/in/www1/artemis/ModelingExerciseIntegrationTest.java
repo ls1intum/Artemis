@@ -301,10 +301,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void importModelingExerciseFromExamToCourse() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                exerciseGroup1);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         Course course1 = database.addEmptyCourse();
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
@@ -316,10 +314,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
     public void importModelingExerciseFromExamToCourse_forbidden() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                exerciseGroup1);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         Course course1 = database.addEmptyCourse();
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
@@ -331,11 +327,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void importModelingExerciseFromExamToExam() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                exerciseGroup1);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setExerciseGroup(exerciseGroup2);
 
@@ -357,10 +351,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExerciseForExam() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                exerciseGroup);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
         String title = "New Exam Modeling Exercise";
         DifficultyLevel difficulty = DifficultyLevel.HARD;
@@ -379,21 +371,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                exerciseGroup);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.setCourse(exerciseGroup.getExam().getCourse());
-
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        var now = ZonedDateTime.now();
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, null);
-
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 }

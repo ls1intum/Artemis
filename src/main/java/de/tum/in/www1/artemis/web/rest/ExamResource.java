@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -183,7 +185,10 @@ public class ExamResource {
 
         Exam result = examService.save(updatedExam);
 
-        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) || !Objects.equals(originalExam.getStartDate(), updatedExam.getStartDate())) {
+        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
+        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
+        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
+                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
             Exam examWithExercises = examService.findOneWithExerciseGroupsAndExercises(result.getId());
             // for all programming exercises in the exam, send their ids for scheduling
@@ -374,6 +379,12 @@ public class ExamResource {
             userService.addUserToGroup(student.get(), course.getStudentGroupName());
         }
         examRepository.save(exam);
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has added user " + studentLogin + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+
         return ResponseEntity.ok().body(null);
     }
 
@@ -450,17 +461,18 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
         Optional<ResponseEntity<Integer>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        Integer noOfgeneratedParticipations = examService.startExercises(examId);
+        Integer numberOfGeneratedParticipations = examService.startExercises(examId);
 
-        log.info("Generated {} participations for student exams of exam {}", noOfgeneratedParticipations, examId);
+        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
 
-        return ResponseEntity.ok().body(noOfgeneratedParticipations);
+        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
     }
 
     /**
@@ -616,6 +628,13 @@ public class ExamResource {
             // Delete the student exam
             studentExamService.deleteStudentExam(studentExam.getId());
         }
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + studentLogin);
+        auditEventRepository.add(auditEvent);
+        log.info("User " + currentUser.getLogin() + " has removed user " + studentLogin + " from the exam " + exam.getTitle() + " with id " + exam.getId()
+                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+
         return ResponseEntity.ok().body(null);
     }
 

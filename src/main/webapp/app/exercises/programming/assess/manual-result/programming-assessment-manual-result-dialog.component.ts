@@ -245,6 +245,18 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     /**
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     */
+    get isAllowedToRespond(): boolean {
+        if (this.complaint.team) {
+            return this.isAssessor;
+        } else {
+            return this.complaint.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
+        }
+    }
+
+    /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *

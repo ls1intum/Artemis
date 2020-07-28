@@ -19,6 +19,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
@@ -84,9 +85,11 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
-                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
+                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
+                        // (this should match ProgrammingExerciseService.isParticipationRepositoryLocked on the server-side)
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
-                        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
+                        const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
+                        this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();

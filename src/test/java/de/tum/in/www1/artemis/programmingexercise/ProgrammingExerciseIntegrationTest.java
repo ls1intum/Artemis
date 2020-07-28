@@ -36,11 +36,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -74,17 +73,15 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
-
-    @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     ProgrammingExercise programmingExercise;
 
     ProgrammingExercise programmingExerciseInExam;
+
+    ProgrammingExerciseParticipation participation1;
+
+    ProgrammingExerciseParticipation participation2;
 
     File downloadedFile;
 
@@ -96,6 +93,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     Git remoteGit;
 
+    File localRepoFile2;
+
+    File originRepoFile2;
+
+    Git localGit2;
+
+    Git remoteGit2;
+
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
@@ -103,20 +108,27 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
 
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
         database.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = Git.init().setDirectory(localRepoFile).call();
-
         originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
         remoteGit = Git.init().setDirectory(originRepoFile).call();
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
+
+        localRepoFile2 = Files.createTempDirectory("repo2").toFile();
+        localGit2 = Git.init().setDirectory(localRepoFile2).call();
+        originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit2 = Git.init().setDirectory(originRepoFile2).call();
+        StoredConfig config2 = localGit2.getRepository().getConfig();
+        config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
+        config2.save();
 
         // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
@@ -202,8 +214,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds() throws Exception {
-        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        var repository1 = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        var repository2 = gitService.getRepositoryByLocalPath(localRepoFile2.toPath());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
@@ -235,8 +249,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
-        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        var repository1 = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        var repository2 = gitService.getRepositoryByLocalPath(localRepoFile2.toPath());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
         final var path = Endpoints.ROOT
                 + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participantIdentifiers}", "student1,student2");
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);

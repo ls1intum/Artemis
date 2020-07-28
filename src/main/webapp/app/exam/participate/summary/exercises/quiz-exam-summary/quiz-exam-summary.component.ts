@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import * as moment from 'moment';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -9,6 +10,8 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { Exam } from 'app/entities/exam.model';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -24,7 +27,6 @@ export class QuizExamSummaryComponent implements OnInit {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     exerciseWithSolution: QuizExercise;
-    examResultsPublished: boolean;
 
     @Input()
     exercise: QuizExercise;
@@ -35,12 +37,15 @@ export class QuizExamSummaryComponent implements OnInit {
     @Input()
     resultsPublished: boolean;
 
-    constructor(private exerciseService: QuizExerciseService) {}
+    @Input()
+    exam: Exam;
+
+    constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
         // get quiz-exercise with solution after result is published
-        if (this.resultsPublished) {
+        if (this.resultsPublished && this.exercise) {
             this.exerciseService.find(this.exercise.id).subscribe((response) => {
                 this.exerciseWithSolution = response.body!;
             });
@@ -64,7 +69,7 @@ export class QuizExamSummaryComponent implements OnInit {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise.quizQuestions && this.submission) {
+        if (this.exercise && this.exercise.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
             this.exercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
@@ -108,8 +113,27 @@ export class QuizExamSummaryComponent implements OnInit {
         }
     }
 
-    getScoreForQuizQuestion(quizQuestionId: number) {
-        const submittedAnswer = this.submission.submittedAnswers.find((answer) => answer.quizQuestion.id === quizQuestionId);
-        return Math.round(submittedAnswer!.scoreInPoints * 100) / 100;
+    getScoreForQuizQuestion(quizQuestionId: number): number | undefined {
+        if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
+            const submittedAnswer = this.submission.submittedAnswers.find((answer) => {
+                return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
+            });
+            if (submittedAnswer && submittedAnswer.scoreInPoints) {
+                return Math.round(submittedAnswer.scoreInPoints * 100) / 100;
+            }
+        }
+    }
+
+    /**
+     * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
+     */
+    get showMissingResultsNotice(): boolean {
+        if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+            return (
+                moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
+                (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
+            );
+        }
+        return false;
     }
 }
