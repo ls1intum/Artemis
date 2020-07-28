@@ -47,7 +47,7 @@
                 </button>
             </div>
             <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
-            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
+            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
@@ -82,7 +82,8 @@
                             exercise.type !== QUIZ &&
                             studentExam.exam.examStudentReviewStart &&
                             studentExam.exam.examStudentReviewEnd &&
-                            isAfterStudentReviewStart()
+                            isAfterStudentReviewStart() &&
+                            isUserStudentExamParticipant
                         "
                         class="mb-2 mt-2 ml-3"
                         [exercise]="exercise"
@@ -104,7 +105,7 @@
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="
-                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC;
+                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && isUserStudentExamParticipant;
                         getSubmissionForExercise: exercise && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd && isAfterStudentReviewStart()
                     "
                     class="mb-2 mt-2 ml-3"
