@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -223,30 +221,16 @@ public class QuizExerciseResource {
 
         if (quizExercise.hasExerciseGroup()) {
             // Get the course over the exercise group
-            Exam exam = quizExercise.getExerciseGroup().getExam();
-            Course course = exam.getCourse();
+            Course course = quizExercise.getExerciseGroup().getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
-                // only allow registered students to see the quiz results after the results are published
-                if (exam.resultsPublished() && examService.isCurrentUserRegisteredForExam(exam.getId())) {
-                    filterForExamReview(quizExercise);
-                }
-                else {
-                    return forbidden();
-                }
+                return forbidden();
             }
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
-    }
-
-    private static void filterForExamReview(QuizExercise quizExercise) {
-        quizExercise.setQuizPointStatistic(null);
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            question.setQuizQuestionStatistic(null);
-        }
     }
 
     /**
