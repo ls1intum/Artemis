@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
+import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
@@ -14,6 +15,7 @@ import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/studen
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -24,6 +26,10 @@ import { MomentModule } from 'ngx-moment';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
 import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
+import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
+import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -32,6 +38,7 @@ const ENTITY_STATES = [...examManagementState];
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
+        ArtemisExamScoresModule,
         ArtemisSharedModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
@@ -41,7 +48,9 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisTextExerciseModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisProgrammingExerciseManagementModule,
+        ArtemisQuizManagementModule,
         MomentModule,
+        ArtemisParticipationSummaryModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -50,12 +59,15 @@ const ENTITY_STATES = [...examManagementState];
         ExerciseGroupsComponent,
         ExerciseGroupUpdateComponent,
         ExerciseGroupDetailComponent,
+        ExamExerciseRowButtonsComponent,
         ExamStudentsComponent,
+        StudentExamStatusComponent,
         StudentExamsComponent,
         StudentsExamImportDialogComponent,
         StudentsExamImportButtonComponent,
         StudentExamDetailComponent,
         DurationPipe,
+        StudentExamSummaryComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

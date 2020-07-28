@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -6,29 +7,44 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { AlertService } from 'app/core/alert/alert.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
+    providers: [ArtemisDurationFromSecondsPipe],
 })
 export class StudentExamDetailComponent implements OnInit {
     courseId: number;
     studentExam: StudentExam;
     course: Course;
     student: User;
+    workingTimeForm: FormGroup;
+    isSavingWorkingTime = false;
 
-    constructor(private route: ActivatedRoute, private studentExamService: StudentExamService, private courseService: CourseManagementService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private studentExamService: StudentExamService,
+        private courseService: CourseManagementService,
+        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
-        this.loadAll();
+        this.loadStudentExam();
     }
 
-    loadAll() {
+    /**
+     * Load the course and the student exam
+     */
+    loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.route.data.subscribe(({ studentExam }) => (this.studentExam = studentExam));
+        this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
@@ -36,6 +52,9 @@ export class StudentExamDetailComponent implements OnInit {
         this.student = this.studentExam.user;
     }
 
+    /**
+     * Link to download the exported PDF of the students participation
+     */
     downloadPdf() {
         // TODO
     }
@@ -57,5 +76,62 @@ export class StudentExamDetailComponent implements OnInit {
             default:
                 return 'font';
         }
+    }
+
+    /**
+     * Save the defined working time
+     */
+    saveWorkingTime() {
+        this.isSavingWorkingTime = true;
+        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam.id, this.studentExam.id, seconds).subscribe(
+            (res) => {
+                if (res.body) {
+                    this.setStudentExam(res.body);
+                }
+                this.isSavingWorkingTime = false;
+                this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
+            },
+            () => {
+                this.alertService.error('artemisApp.studentExamDetail.workingTimeCouldNotBeSaved');
+                this.isSavingWorkingTime = false;
+            },
+        );
+    }
+
+    private setStudentExam(studentExam: StudentExam) {
+        this.studentExam = studentExam;
+        this.initWorkingTimeForm();
+    }
+
+    private initWorkingTimeForm() {
+        const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime);
+        const workingTimeParts = workingTime.split(':');
+        this.workingTimeForm = new FormGroup({
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.required,
+            ]),
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.max(59),
+                Validators.required,
+            ]),
+        });
+    }
+
+    examIsVisible(): boolean {
+        if (this.studentExam.exam) {
+            // Disable the form to edit the working time if the exam is already visible
+            return moment(this.studentExam.exam.visibleDate).isBefore(moment());
+        }
+        // if exam is undefined, the form to edit the working time is disabled
+        return true;
+    }
+
+    getWorkingTimeToolTip(): string {
+        return this.examIsVisible()
+            ? 'You cannot change the individual working time after the exam has become visible.'
+            : 'You can change the individual working time of the student here.';
     }
 }

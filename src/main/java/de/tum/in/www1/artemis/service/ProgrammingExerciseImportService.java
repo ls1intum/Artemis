@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -79,7 +80,6 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        newExercise.generateAndSetProjectKey();
         final var projectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
@@ -93,6 +93,11 @@ public class ProgrammingExerciseImportService {
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         importTestCases(templateExercise, newExercise);
+        // An exam exercise can only be in individual mode
+        if (!newExercise.hasCourse()) {
+            newExercise.setMode(ExerciseMode.INDIVIDUAL);
+            newExercise.setTeamAssignmentConfig(null);
+        }
 
         return newExercise;
     }
@@ -208,7 +213,7 @@ public class ProgrammingExerciseImportService {
      * for which we should create new entities (e.g. test cases) to null. This ensures that we do not copy
      * anything by accident.
      *
-     * @param newExercise
+     * @param newExercise the new exercises that should be created during import
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
         newExercise.setId(null);
@@ -234,8 +239,8 @@ public class ProgrammingExerciseImportService {
      * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
      * repository on the version control server!
      *
-     * @param newExercise
-     * @param projectKey
+     * @param newExercise the new exercises that should be created during import
+     * @param projectKey the unique project key for the exercise
      */
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();

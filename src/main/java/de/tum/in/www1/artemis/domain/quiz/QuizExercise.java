@@ -170,7 +170,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
@@ -246,9 +246,11 @@ public class QuizExercise extends Exercise implements Serializable {
             return false;
         }
 
-        // check duration
-        if (getDuration() == null || getDuration() < 0) {
-            return false;
+        // check duration (only for course exercises)
+        if (hasCourse()) {
+            if (getDuration() == null || getDuration() < 0) {
+                return false;
+            }
         }
 
         // check quizQuestions
@@ -434,7 +436,9 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @Nullable
     public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
-        if (shouldFilterForStudents()) {
+        // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
+        // In exams, all results should be seen as relevant as they will only be created once the exam is over
+        if (shouldFilterForStudents() && !hasExerciseGroup()) {
             // results are never relevant before quiz has ended => return null
             return null;
         }

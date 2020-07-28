@@ -23,8 +23,13 @@ import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exer
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
+import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
+import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
+import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
+import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -100,7 +105,7 @@ export const examManagementRoute: Routes = [
         path: '',
         component: ExamManagementComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN', 'ROLE_TA'],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -224,6 +229,57 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: ':examId/student-exams/:studentExamId/summary',
+        component: StudentExamSummaryComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Modeling Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/modeling-exercises/new',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import Modeling Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/modeling-exercises/import/:exerciseId',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Modeling Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/modeling-exercises/:exerciseId/edit',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Create Text Exercise
     {
         path: ':examId/exercise-groups/:groupId/text-exercises/new',
@@ -289,6 +345,26 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Create Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Create Programming Exercise
     {
         path: ':examId/exercise-groups/:groupId/programming-exercises/new',
@@ -325,6 +401,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/tutor-exam-dashboard',
+        component: TutorCourseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],
     },

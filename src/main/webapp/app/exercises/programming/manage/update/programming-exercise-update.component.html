@@ -57,9 +57,9 @@
                         [readonly]="!isImport && programmingExercise.id"
                         #shortName="ngModel"
                     />
-                    <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                    <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys: ['required']">
                         <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + e.key"></div>
+                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                         </div>
                     </ng-container>
                 </div>
@@ -97,10 +97,11 @@
                         <option value="JAVA">Java</option>
                         <option value="PYTHON">Python</option>
                         <option value="C">C</option>
+                        <option value="HASKELL">Haskell</option>
                     </select>
                 </div>
 
-                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === JAVA">
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
                     <input
                         required
@@ -126,7 +127,7 @@
                         </label>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
                     </div>
-                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise"> </jhi-programming-exercise-lifecycle>
+                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"> </jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -153,8 +154,8 @@
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
                     <ng-container *ngIf="isImport">
                         <ngb-alert [dismissible]="false">
-                            <span class="font-weight-bold">{{ 'artemisApp.programmingExercise.import.attention' | translate }}</span
-                            ><span>{{ 'artemisApp.programmingExercise.import.markdownWarning' | translate }}</span>
+                            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | translate }}</span
+                            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | translate }}</span>
                         </ngb-alert>
                         <jhi-programming-exercise-instructions
                             [exercise]="programmingExercise"

@@ -1,0 +1,35 @@
+@import 'src/main/webapp/content/scss/bootstrap-variables';
+
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/buttons';
+@import 'node_modules/bootstrap/scss/modal';
+
+.conflict-modal__header {
+    @extend .modal-header;
+}
+
+.conflict-modal {
+    &__body {
+        @extend .modal-body;
+        &__warning > fa-icon {
+            @extend .text-warning;
+        }
+    }
+    &__footer {
+        @extend .modal-footer;
+        &__cancel {
+            @extend .btn;
+            @extend .btn-secondary;
+            > *:not(:first-child) {
+                @extend .ml-2;
+            }
+        }
+        &__submit {
+            @extend .btn;
+            @extend .btn-danger;
+            > *:not(:first-child) {
+                @extend .ml-2;
+            }
+        }
+    }
+}

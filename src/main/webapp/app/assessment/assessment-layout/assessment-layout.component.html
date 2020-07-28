@@ -1,5 +1,4 @@
 <jhi-assessment-header
-    [isComplaint]="complaint"
     [hideBackButton]="hideBackButton"
     (navigateBack)="navigateBack.emit()"
     [isLoading]="isLoading"
@@ -20,6 +19,7 @@
     [hasConflict]="conflicts && conflicts.length >= 0"
     (resolveConflict)="resolveConflict.emit()"
     [hasComplaint]="!!complaint"
+    [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
 ></jhi-assessment-header>
 
 <jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>

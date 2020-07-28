@@ -7,7 +7,7 @@ import java.util.Objects;
  * @param <X> first param.
  * @param <Y> second param.
  */
-public class Tuple<X, Y> {
+public final class Tuple<X, Y> {
 
     public final X x;
 
@@ -37,5 +37,13 @@ public class Tuple<X, Y> {
     @Override
     public int hashCode() {
         return Objects.hash(x, y);
+    }
+
+    public X getX() {
+        return x;
+    }
+
+    public Y getY() {
+        return y;
     }
 }

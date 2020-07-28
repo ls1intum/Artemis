@@ -370,11 +370,15 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      */
     async back() {
         // check if exam exercise
-        if (this.exercise.course == null) {
+        if (this.exercise.course == null || !this.exercise.course) {
             const courseId = this.exercise.exerciseGroup?.exam?.course.id;
             const examId = this.exercise.exerciseGroup?.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup?.id;
-            await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
+            if (this.readOnly || this.toComplete) {
+                await this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
+            } else {
+                await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
+            }
         } else {
             const courseId = this.exercise.course!.id;
 

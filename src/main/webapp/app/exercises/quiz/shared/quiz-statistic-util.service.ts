@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { getCourseId } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizStatisticUtil {
@@ -22,7 +23,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = 0
         if (index === 0) {
-            this.router.navigateByUrl('/course-management/' + quizExercise.course?.id + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
+            this.router.navigateByUrl('/course-management/' + getCourseId(quizExercise) + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to previous Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index - 1]);
@@ -43,7 +44,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = last position
         if (index === quizExercise.quizQuestions.length - 1) {
-            this.router.navigateByUrl('/course-management/' + quizExercise.course?.id + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
+            this.router.navigateByUrl('/course-management/' + getCourseId(quizExercise) + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index + 1]);
@@ -57,11 +58,11 @@ export class QuizStatisticUtil {
      */
     navigateToStatisticOf(quizExercise: QuizExercise, question: QuizQuestion) {
         if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/mc-question-statistic/${question.id}`);
+            this.router.navigateByUrl(`/course-management/${getCourseId(quizExercise)}/quiz-exercises/${quizExercise.id}/mc-question-statistic/${question.id}`);
         } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/dnd-question-statistic/${question.id}`);
+            this.router.navigateByUrl(`/course-management/${getCourseId(quizExercise)}/quiz-exercises/${quizExercise.id}/dnd-question-statistic/${question.id}`);
         } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/sa-question-statistic/${question.id}`);
+            this.router.navigateByUrl(`/course-management/${getCourseId(quizExercise)}/quiz-exercises/${quizExercise.id}/sa-question-statistic/${question.id}`);
         }
     }
 }

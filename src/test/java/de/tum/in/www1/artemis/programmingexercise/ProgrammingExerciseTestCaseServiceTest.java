@@ -19,7 +19,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -42,9 +41,6 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
 
     @Autowired
     DatabaseUtilService database;

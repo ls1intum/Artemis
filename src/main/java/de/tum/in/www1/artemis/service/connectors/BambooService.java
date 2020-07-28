@@ -825,7 +825,13 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (response != null) {
             for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
-                String logString = (String) logEntry.get("log");
+                String logString = (String) logEntry.get("unstyledLog");
+                // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
+                // We want to have unescaped characters but fail back to the escaped characters in case no unescaped characters are present
+                if (logString == null) {
+                    logString = (String) logEntry.get("log");
+                }
+
                 boolean compilationErrorFound = false;
 
                 if (logString.contains("COMPILATION ERROR")) {
@@ -883,7 +889,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Queries Bamboo to find out if the project already exists.
+     * Queries Bamboo to find out if the project already exists using the project key and the project name
      *
      * @param projectKey to check if a project with this unique key already exists.
      * @param projectName to check if a project with the same name already exists.
@@ -905,7 +911,7 @@ public class BambooService implements ContinuousIntegrationService {
                 final var response = restTemplate.exchange(
                         BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
                         HttpMethod.GET, entity, BambooProjectSearchDTO.class);
-                if (response.getBody().getSize() > 0) {
+                if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream()
                             .map(BambooProjectSearchDTO.SearchResultDTO::getSearchEntity)
                             .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));

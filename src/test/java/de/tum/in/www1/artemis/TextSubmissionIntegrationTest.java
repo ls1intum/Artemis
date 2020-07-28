@@ -23,8 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.TeamService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -222,7 +221,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getTextSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
         textSubmission = database.addTextSubmission(releasedTextExercise, textSubmission, "student1");
 
-        request.get("/api/exercises/" + releasedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+        request.get("/api/exercises/" + releasedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test

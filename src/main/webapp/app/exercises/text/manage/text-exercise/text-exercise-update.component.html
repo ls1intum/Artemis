@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate #editForm="ngForm">
     <div>
         <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">
             Create a new Text Exercise
@@ -33,7 +33,7 @@
             </div>
         </div>
         <jhi-team-config-form-group [exercise]="textExercise"></jhi-team-config-form-group>
-        <div class="d-flex">
+        <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
@@ -54,7 +54,7 @@
                 <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 name="assessmentDueDate"
                 [error]="textExercise.assessmentDueDateError"
@@ -153,7 +153,7 @@
             <button
                 *ngIf="textExercise.id && !isImport"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
+                [routerLink]="['/course-management', examCourseId, 'text-exercises', textExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
@@ -163,7 +163,7 @@
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
             <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.textExercise.import.exampleSubmissionsRequireExercise">
-                T
+                To create an example submission, you first need to finish importing the text exercise
             </div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">
@@ -176,13 +176,11 @@
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
 
-        <jhi-button
-            id="save-entity"
-            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
-            [isLoading]="isSaving"
-            [icon]="'save'"
-            [title]="submitButtonTitle"
-        >
-        </jhi-button>
+        <button type="submit" (click)="save()" class="btn btn-primary" id="submit-entity">
+            <fa-icon [icon]="'save'"></fa-icon>
+            <span *ngIf="isImport" jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
+            <span *ngIf="!isImport && textExercise.id" jhiTranslate="artemisApp.textExercise.submitButton.save">Save</span>
+            <span *ngIf="!isImport && !textExercise.id" jhiTranslate="artemisApp.textExercise.submitButton.create">Create</span>
+        </button>
     </div>
 </form>

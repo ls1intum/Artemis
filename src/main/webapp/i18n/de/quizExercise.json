@@ -133,6 +133,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "exam": "Dieses Quiz ist eine Klausur Aufgabe. Stellen Sie sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
                     "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
                         "element_invalid": "Alle Teilnehmer erhalten die Punkte für das ungültige Frage-Element",
@@ -167,7 +168,8 @@
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
                 "questionTitleLength": "Frage {{index}}: Die Frage ist länger als 250 Zeichen. Bitte kürzen!",
                 "quizTitleLength": "Quiz: Der Titel ist länger als 250 Zeichen. Bitte kürzen!",
-                "explanationIsMissing": "Frage {{index}}: Nicht jede Antwortmöglichkeit enthält eine Erklärung."
+                "explanationIsMissing": "Frage {{index}}: Nicht jede Antwortmöglichkeit enthält eine Erklärung.",
+                "questionHasInvalidFlaggedElements": "<strong>Frage {{index}} </strong>: Diese Frage wurde zuvor als ungültig markiert oder enthält ungültige Elemente. Diese werden nach dem Speichern zurückgesetzt."
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
@@ -179,6 +181,9 @@
                 "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die gesamt Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 4 richtigen und 1 falschen Auswahlmöglichkeit erhält dann 1,8 Punkte."
             },
             "importJSON": "Fragen importieren (JSON)",
+            "importWarningShort": "Ungültige Fragen gefunden",
+            "importWarningLong": "Bei den folgenden Fragen ist ein ungültiges Flag gesetzt. Bist du sicher, dass du fortfahren möchtest? <strong>In diesem Fall werden die ungültigen Flags zurückgesetzt</ strong>.",
+            "confirmImport": "Weiter",
             "explanationText": {
                 "point": "Punkt",
                 "points": "Punkte",

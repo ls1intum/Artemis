@@ -81,17 +81,23 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course2.getId(), exam2.getId(), studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(forbidden());
+        Optional<ResponseEntity<Void>> accessFailure3 = studentExamAccessService.checkStudentExamAccess(course2.getId(), exam2.getId(), studentExam1.getId(), users.get(0));
+        assertThat(accessFailure3.isPresent()).isTrue();
+        assertThat(accessFailure3.get()).isEqualTo(forbidden());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testExamExists() {
-        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), 55L, users.get(0));
+        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), 1255L, users.get(0));
         assertThat(accessFailure1.isPresent()).isTrue();
         assertThat(accessFailure1.get()).isEqualTo(notFound());
-        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), 55L, studentExam1.getId());
+        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), 1255L, studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(notFound());
+        Optional<ResponseEntity<Void>> accessFailure3 = studentExamAccessService.checkStudentExamAccess(course1.getId(), 1255L, studentExam1.getId(), users.get(0));
+        assertThat(accessFailure3.isPresent()).isTrue();
+        assertThat(accessFailure3.get()).isEqualTo(notFound());
     }
 
     @Test
@@ -103,56 +109,79 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam2.getId(), studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(conflict());
+        Optional<ResponseEntity<Void>> accessFailure3 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam2.getId(), studentExam1.getId(), users.get(0));
+        assertThat(accessFailure3.isPresent()).isTrue();
+        assertThat(accessFailure3.get()).isEqualTo(conflict());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testExamIsLive() {
-        // Exam has not started.
-        Exam examNotStarted = database.addExam(course1, users.get(0), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3));
+        // Exam is not visible.
+        Exam examNotStarted = database.addExam(course1, users.get(0), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
         Optional<ResponseEntity<Void>> accessFailure1_1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examNotStarted.getId(), users.get(0));
         assertThat(accessFailure1_1.isPresent()).isTrue();
         assertThat(accessFailure1_1.get()).isEqualTo(forbidden());
         Optional<ResponseEntity<Void>> accessFailure1_2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotStarted.getId(), studentExam1.getId());
         assertThat(accessFailure1_2.isPresent()).isTrue();
         assertThat(accessFailure1_2.get()).isEqualTo(forbidden());
-        // Exam has ended.
-        Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        Optional<ResponseEntity<Void>> accessFailure1_3 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotStarted.getId(), studentExam1.getId(),
+                users.get(0));
+        assertThat(accessFailure1_3.isPresent()).isTrue();
+        assertThat(accessFailure1_3.get()).isEqualTo(forbidden());
+
+        // Exam has ended. After exam has ended, it should still be retrievable by the students to see their participation
+        Exam examEnded = database.addExam(course1, users.get(0), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        StudentExam studentExamEnded = database.addStudentExam(examEnded);
+        studentExamEnded.setUser(users.get(0));
+        studentExamRepository.save(studentExamEnded);
         Optional<ResponseEntity<Void>> accessFailure2_1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examEnded.getId(), users.get(0));
-        assertThat(accessFailure2_1.isPresent()).isTrue();
-        assertThat(accessFailure2_1.get()).isEqualTo(forbidden());
-        Optional<ResponseEntity<Void>> accessFailure2_2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examEnded.getId(), studentExam1.getId());
-        assertThat(accessFailure2_2.isPresent()).isTrue();
-        assertThat(accessFailure2_2.get()).isEqualTo(forbidden());
+        assertThat(accessFailure2_1.isPresent()).isFalse();
+        Optional<ResponseEntity<Void>> accessFailure2_2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examEnded.getId(), studentExamEnded.getId());
+        assertThat(accessFailure2_2.isPresent()).isFalse();
+        Optional<ResponseEntity<Void>> accessFailure2_3 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examEnded.getId(), studentExamEnded.getId(),
+                users.get(0));
+        assertThat(accessFailure2_3.isPresent()).isFalse();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testUserIsRegisteredForExam() {
-        Exam examNotRegistered = database.addExam(course1, users.get(1), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        Exam examNotRegistered = database.addExam(course1, users.get(1), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
         Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkCourseAndExamAccess(course1.getId(), examNotRegistered.getId(), users.get(0));
         assertThat(accessFailure1.isPresent()).isTrue();
         assertThat(accessFailure1.get()).isEqualTo(forbidden());
         Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotRegistered.getId(), studentExam1.getId());
         assertThat(accessFailure2.isPresent()).isTrue();
         assertThat(accessFailure2.get()).isEqualTo(forbidden());
+        Optional<ResponseEntity<Void>> accessFailure3 = studentExamAccessService.checkStudentExamAccess(course1.getId(), examNotRegistered.getId(), studentExam1.getId(),
+                users.get(0));
+        assertThat(accessFailure3.isPresent()).isTrue();
+        assertThat(accessFailure3.get()).isEqualTo(forbidden());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testUserStudentExamExists() {
-        Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), 55L);
-        assertThat(accessFailure.isPresent()).isTrue();
-        assertThat(accessFailure.get()).isEqualTo(notFound());
+        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), 55L);
+        assertThat(accessFailure1.isPresent()).isTrue();
+        assertThat(accessFailure1.get()).isEqualTo(notFound());
+        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), 55L, users.get(0));
+        assertThat(accessFailure2.isPresent()).isTrue();
+        assertThat(accessFailure2.get()).isEqualTo(notFound());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testExamIdEqualsExamOfStudentExam() {
         StudentExam studentExamNotRelatedToExam1 = database.addStudentExam(exam2);
-        Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId());
-        assertThat(accessFailure.isPresent()).isTrue();
-        assertThat(accessFailure.get()).isEqualTo(conflict());
+        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId());
+        assertThat(accessFailure1.isPresent()).isTrue();
+        assertThat(accessFailure1.get()).isEqualTo(conflict());
+        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId(),
+                users.get(0));
+        assertThat(accessFailure2.isPresent()).isTrue();
+        assertThat(accessFailure2.get()).isEqualTo(conflict());
     }
 
     @Test
@@ -161,8 +190,12 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         StudentExam studentExamWithOtherUser = database.addStudentExam(exam1);
         studentExamWithOtherUser.setUser(users.get(1));
         studentExamRepository.save(studentExamWithOtherUser);
-        Optional<ResponseEntity<Void>> accessFailure = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId());
-        assertThat(accessFailure.isPresent()).isTrue();
-        assertThat(accessFailure.get()).isEqualTo(forbidden());
+        Optional<ResponseEntity<Void>> accessFailure1 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId());
+        assertThat(accessFailure1.isPresent()).isTrue();
+        assertThat(accessFailure1.get()).isEqualTo(forbidden());
+        Optional<ResponseEntity<Void>> accessFailure2 = studentExamAccessService.checkStudentExamAccess(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId(),
+                users.get(0));
+        assertThat(accessFailure2.isPresent()).isTrue();
+        assertThat(accessFailure2.get()).isEqualTo(forbidden());
     }
 }

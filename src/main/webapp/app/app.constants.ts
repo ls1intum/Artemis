@@ -16,4 +16,5 @@ export const MAX_SCORE_PATTERN = '^[0-9]{0,4}$'; // make sure max score is a pos
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
+
 export const ARTEMIS_VERSION_HEADER = 'Content-Version';

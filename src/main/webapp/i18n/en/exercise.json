@@ -141,7 +141,8 @@
                 "maxScore": {
                     "pattern": "The maximum score must be between 1 and 9999!"
                 }
-            }
+            },
+            "exam": "Exam"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

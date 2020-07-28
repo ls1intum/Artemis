@@ -63,10 +63,17 @@ public class RequestUtilService {
     }
 
     public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
+        return post(path, body, expectedStatus, contentType, withLocation, null);
+    }
+
+    public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation, @Nullable HttpHeaders httpHeaders) throws Exception {
         String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
         var requestBuilder = MockMvcRequestBuilders.post(new URI(path)).contentType(contentType);
         if (jsonBody != null) {
             requestBuilder = requestBuilder.content(jsonBody);
+        }
+        if (httpHeaders != null) {
+            requestBuilder = requestBuilder.headers(httpHeaders);
         }
         MvcResult res = mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {
@@ -264,6 +271,10 @@ public class RequestUtilService {
         return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
     }
 
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, HttpHeaders httpHeaders) throws Exception {
+        return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>(), httpHeaders);
+    }
+
     public <T> T getNullable(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
         final var res = get(path, expectedStatus, String.class, new LinkedMultiValueMap<>());
         if (res != null && res.equals("")) {
@@ -273,9 +284,14 @@ public class RequestUtilService {
         return mapper.readValue(res, responseType);
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return get(path, expectedStatus, responseType, params, new HttpHeaders());
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders).with(csrf())).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         final var contentAsString = res.getResponse().getContentAsString();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")
@@ -334,6 +350,20 @@ public class RequestUtilService {
         }
 
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
+    }
+
+    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
+            String[] expectedResponseHeaders) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders).with(csrf())).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+
+        if (expectedResponseHeaders != null) {
+            for (String header : expectedResponseHeaders) {
+                assertThat(res.getResponse().containsHeader(header));
+            }
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {

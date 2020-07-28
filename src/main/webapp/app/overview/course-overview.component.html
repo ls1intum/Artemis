@@ -21,7 +21,7 @@
     </div>
     <jhi-alert></jhi-alert>
     <div class="tab-bar tab-bar-course-overview">
-        <div *ngIf="course.exams && hasVisibleExams" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
+        <div *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
         </div>
         <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
@@ -33,7 +33,7 @@
         <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
         </div>
-        <button class="btn btn-primary btn-md ml-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+        <button class="btn btn-primary btn-md ml-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
             <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
             <span class="d-none d-md-inline ml-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
         </button>

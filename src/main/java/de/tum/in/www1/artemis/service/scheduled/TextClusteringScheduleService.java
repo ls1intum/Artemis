@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.TextExerciseService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("automaticText")
+@Profile("automaticText & scheduling")
 public class TextClusteringScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(TextClusteringScheduleService.class);
@@ -72,9 +72,10 @@ public class TextClusteringScheduleService {
      */
     public void scheduleExerciseForClusteringIfRequired(TextExercise exercise) {
         if (!exercise.isAutomaticAssessmentEnabled()) {
-            cancelScheduledClustering(exercise);
+            cancelScheduledClustering(exercise.getId());
             return;
         }
+        // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
         if (exercise.getDueDate() == null || exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
             return;
         }
@@ -85,7 +86,7 @@ public class TextClusteringScheduleService {
     private void scheduleExerciseForClustering(TextExercise exercise) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled for clustering more than once.
-        cancelScheduledClustering(exercise);
+        cancelScheduledClustering(exercise.getId());
 
         final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
 
@@ -112,13 +113,13 @@ public class TextClusteringScheduleService {
 
     /**
      * Cancel possible schedules clustering tasks for a provided exercise.
-     * @param exercise exercise for which a potential clustering task is canceled
+     * @param exerciseId id of the exercise for which a potential clustering task is canceled
      */
-    public void cancelScheduledClustering(TextExercise exercise) {
-        final ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
+    public void cancelScheduledClustering(Long exerciseId) {
+        final ScheduledFuture future = scheduledClusteringTasks.get(exerciseId);
         if (future != null) {
             future.cancel(false);
-            scheduledClusteringTasks.remove(exercise.getId());
+            scheduledClusteringTasks.remove(exerciseId);
         }
     }
 

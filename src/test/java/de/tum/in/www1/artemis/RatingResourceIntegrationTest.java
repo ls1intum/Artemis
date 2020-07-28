@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,6 +107,15 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testCreateInvalidRating_asUser() throws Exception {
+        rating.setRating(7);
+        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.BAD_REQUEST);
+        final Optional<Rating> optionalRating = ratingService.findRatingByResultId(result.getId());
+        assertThat(optionalRating).isEmpty();
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testCreateRating_asTutor_FORBIDDEN() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
@@ -139,6 +149,16 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
         assertThat(updatedRating.getRating()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testUpdateInvalidRating_asUser() throws Exception {
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        assertThat(updatedRating.getRating()).isNotEqualTo(7);
+        assertThat(updatedRating.getRating()).isEqualTo(2);
     }
 
     @Test

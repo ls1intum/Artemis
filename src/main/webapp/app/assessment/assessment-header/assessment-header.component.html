@@ -8,7 +8,7 @@
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor && !isComplaint"
+            *ngIf="!isAssessor && !hasComplaint"
             class="text-danger ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
@@ -17,7 +17,25 @@
             Assessment locked by: otherUser
         </span>
         <span
-            *ngIf="!isAssessor && isComplaint"
+            id="assessmentReadOnlyUnhandledComplaint"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !complaintHandled"
+            class="ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
+        >
+            There is a complaint for this assessment. Another tutor must respond.
+        </span>
+        <span
+            id="assessmentReadOnlyhandled"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
+            class="ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
+        >
+            The complaint about your assessment has been resolved.
+        </span>
+        <span
+            *ngIf="!isAssessor && hasComplaint"
             class="ml-3"
             style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
@@ -25,7 +43,13 @@
         >
             Original Assessor: otherUser
         </span>
-        <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
+        <span
+            id="assessmentLockedCurrentUser"
+            *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
+            class="text-danger ml-3"
+            style="font-size: 65%;"
+            jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
+        >
             You have the lock for this assessment
         </span>
         <ng-container *ngIf="!result?.completionDate">

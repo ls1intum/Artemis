@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -37,11 +35,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.util.*;
 
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -51,12 +46,6 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     @Autowired
     private RequestUtilService request;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     private Course course;
 
@@ -113,32 +102,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-
-        var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepo.originRepoFile);
-        var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
-        var solutionRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.originRepoFile);
-
-        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
-        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
-        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
-
-        doReturn(gitService.getRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(exerciseRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(solutionRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
-
-        doReturn(exerciseRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(exerciseRepoTestUrl.getURL());
-        doReturn(testRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(testRepoTestUrl.getURL());
-        doReturn(solutionRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(solutionRepoTestUrl.getURL());
-
-        doReturn(exerciseRepoName).when(versionControlService).getRepositorySlugFromUrl(exerciseRepoTestUrl.getURL());
-        doReturn(testRepoName).when(versionControlService).getRepositorySlugFromUrl(testRepoTestUrl.getURL());
-        doReturn(solutionRepoName).when(versionControlService).getRepositorySlugFromUrl(solutionRepoTestUrl.getURL());
-
-        doReturn(projectKey).when(versionControlService).getProjectKeyFromUrl(any());
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
     }
 
     @AfterEach
@@ -224,23 +188,5 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
                 return TestResult.SKIPPED;
             return TestResult.SUCCESSFUL;
         }
-    }
-
-    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
-        bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
-
-        doReturn(null).when(bambooServer).publish(any());
     }
 }

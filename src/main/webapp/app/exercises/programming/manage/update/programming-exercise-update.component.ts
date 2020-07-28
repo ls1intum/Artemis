@@ -27,9 +27,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;
-    readonly JAVA = ProgrammingLanguage.JAVA;
-    readonly PYTHON = ProgrammingLanguage.PYTHON;
-    readonly C = ProgrammingLanguage.C;
+    ProgrammingLanguage = ProgrammingLanguage;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -211,7 +209,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     save() {
         // If no release date is set, we warn the user.
-        if (!this.programmingExercise.releaseDate) {
+        if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;

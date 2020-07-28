@@ -18,32 +18,37 @@ on:
     - 'data/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+  release:
+    types:
+    - created
 
 env:
   CI: true
+  node: 14.x
+  java: 14
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Use Node.js 14
+    - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
-    - name: Use Java 14
+        node-version: '${{ env.node }}'
+    - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '14'
-    - uses: actions/checkout@v1
+        java-version: '${{ env.java }}'
+    - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ~/.gradle/caches
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: Cache node modules
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: node_modules
         key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
@@ -51,24 +56,46 @@ jobs:
           ${{ runner.os }}-node_modules-
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
-    - name: Make .war file accessible
-      run: ln -s `ls build/libs/` ./build/libs/Artemis.war
     - name: Upload Artifact
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v2
       with:
         name: Artemis.war
-        path: build/libs/Artemis.war
+        path: build/libs/Artemis-*.war
+    - name: Upload Release Artifact
+      if: github.event_name == 'release' && github.event.action == 'created'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{  github.event.release.upload_url }}
+        asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
+        asset_name: Artemis.war
+        asset_content_type: application/x-webarchive
 
   server-tests:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
+    services:
+      athene-segmentation:
+        image: ls1intum/athene-segmentation
+        ports:
+          - 8000:8000
+      athene-embedding:
+        image: ls1intum/athene-embedding
+        ports:
+          - 8001:8000
+      athene-clustering:
+        image: ls1intum/athene-clustering
+        ports:
+          - 8002:8000
     steps:
-    - name: Use Java 14
+    - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '14'
-    - uses: actions/checkout@v1
+        java-version: '${{ env.java }}'
+    - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ~/.gradle/caches
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -84,15 +111,16 @@ jobs:
       if: success() || failure()
 
   client-tests:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
-    - name: Use Node.js 13
+    - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
-    - uses: actions/checkout@v1
+        node-version: '${{ env.node }}'
+    - uses: actions/checkout@v2
     - name: Cache node modules
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: node_modules
         key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}

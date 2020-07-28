@@ -88,7 +88,7 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -161,7 +161,7 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllWithExamAndExercises(examId)));
     }
 
@@ -193,7 +193,14 @@ public class ExerciseGroupResource {
             exerciseService.delete(exercise.getId(), false, false);
         }
 
-        exerciseGroupService.delete(exerciseGroupId);
+        // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
+        // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
+        // receive null values for the gaps in exam.getExerciseGroups().
+        Exam exam = examService.findOneWithExerciseGroups(examId);
+        List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
+        filteredExerciseGroups.removeIf(e -> e.getId().equals(exerciseGroupId));
+        exam.setExerciseGroups(filteredExerciseGroups);
+        examService.save(exam);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
     }

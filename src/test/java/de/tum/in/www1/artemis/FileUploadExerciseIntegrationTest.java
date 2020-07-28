@@ -95,10 +95,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExerciseForExam() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), creationFilePattern,
-                exerciseGroup);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
@@ -106,7 +104,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.getId()).isNotNull();
         assertThat(createdFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
-        assertThat(!createdFileUploadExercise.hasCourseDirectly()).as("course was not set for exam exercise");
+        assertThat(!createdFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
         assertThat(createdFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(createdFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
 
@@ -121,10 +119,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), creationFilePattern,
-                exerciseGroup);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
 
         request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
@@ -230,7 +226,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
                 FileUploadExercise.class, HttpStatus.OK);
 
         assertThat(updatedFileUploadExercise.getTitle().equals(newTitle));
-        assertThat(!updatedFileUploadExercise.hasCourseDirectly()).as("course was not set for exam exercise");
+        assertThat(!updatedFileUploadExercise.hasCourse()).as("course was not set for exam exercise");
         assertThat(updatedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(fileUploadExercise.getExerciseGroup().getId());
     }

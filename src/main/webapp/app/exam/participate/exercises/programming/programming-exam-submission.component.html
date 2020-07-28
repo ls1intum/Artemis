@@ -1,0 +1,52 @@
+<!-- ngIf code-editor -->
+<div *ngIf="exercise.allowOnlineEditor && !exercise.allowOfflineIde">
+    <h4 class="mb-1 mr-1">Online Code Editor</h4>
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
+<!-- ngIf code-editor with clone button start -->
+<div *ngIf="exercise.allowOnlineEditor && exercise.allowOfflineIde">
+    <div class="d-flex mb-3">
+        <div class="d-flex flex-wrap flex-column justify-content-center">
+            <h4 class="mb-0 mr-1">Online Code Editor</h4>
+        </div>
+        <jhi-exercise-details-student-actions
+            jhiOrionFilter
+            [examMode]="true"
+            [showInOrionWindow]="false"
+            [exercise]="exercise"
+            [courseId]="courseId"
+            [showResult]="true"
+        ></jhi-exercise-details-student-actions>
+    </div>
+
+    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+</div>
+<!-- ngIf Offline IDE clone button start -->
+<div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
+    <h4 class="mb-1">
+        <span>{{ exercise.title }}</span>
+        <span>&nbsp;[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+    </h4>
+    <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
+    </jhi-exercise-details-student-actions>
+    <div style="display: flex; justify-content: flex-end;">
+        <jhi-updating-result
+            *ngIf="studentParticipation"
+            [exercise]="exercise"
+            [showUngradedResults]="true"
+            [showGradedBadge]="true"
+            [participation]="studentParticipation"
+            [short]="true"
+            [personalParticipation]="true"
+            class="mr-2"
+        ></jhi-updating-result>
+    </div>
+    <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
+    <jhi-programming-exercise-instructions
+        *ngIf="exercise"
+        [exercise]="exercise"
+        [exerciseHints]="exercise.exerciseHints"
+        [participation]="studentParticipation"
+        [personalParticipation]="true"
+    ></jhi-programming-exercise-instructions>
+</div>

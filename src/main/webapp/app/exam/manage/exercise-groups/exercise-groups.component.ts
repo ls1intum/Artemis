@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, of, forkJoin } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -8,11 +9,18 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -20,15 +28,20 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 })
 export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
+    course: Course;
     examId: number;
+    exam: Exam;
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+    latestIndividualEndDate: Moment | null;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
+        private examManagementService: ExamManagementService,
+        private courseManagementService: CourseManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -41,17 +54,38 @@ export class ExerciseGroupsComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.loadExerciseGroups();
+        // Only take action when a response was received for both requests
+        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
+            ([examRes, examInfoDTO]) => {
+                this.exam = examRes.body!;
+                this.exerciseGroups = examRes.body!.exerciseGroups;
+                this.course = examRes.body!.course;
+                this.courseManagementService.checkAndSetCourseRights(this.course);
+                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+            },
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
+    }
+
+    /**
+     * Load the latest individual end date of the exam. If this the HTTP response is erroneous, an observables emitting
+     * null will be returned
+     */
+    loadLatestIndividualEndDateOfExam() {
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+            // When the exam start date was not set properly an error will be thrown.
+            // Catch this in the inner observable otherwise forkJoin won't return data
+            catchError(() => {
+                return of(null);
+            }),
+        );
     }
 
     /**
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.exerciseGroupService.findAllForExam(this.courseId, this.examId).subscribe(
-            (res) => (this.exerciseGroups = res.body),
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+        return this.examManagementService.find(this.courseId, this.examId, false, true);
     }
 
     /**
@@ -97,16 +131,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = [
-            '/course-management',
-            exerciseGroup.exam?.course?.id,
-            'exams',
-            exerciseGroup.exam?.id,
-            'exercise-groups',
-            exerciseGroup.id,
-            `${exerciseType}-exercises`,
-            'import',
-        ];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`, 'import'];
 
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
@@ -135,6 +160,48 @@ export class ExerciseGroupsComponent implements OnInit {
                     () => {},
                 );
                 break;
+            case ExerciseType.MODELING:
+                const modelingImportModalRef = this.modalService.open(ModelingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                modelingImportModalRef.result.then(
+                    (result: ModelingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
         }
+    }
+
+    /**
+     * Move the exercise group up one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveUp(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
+        }
+        this.saveOrder();
+    }
+
+    /**
+     * Move the exercise group down one position in the order
+     * @param index of the exercise group in the exerciseGroups array
+     */
+    moveDown(index: number): void {
+        if (this.exerciseGroups) {
+            [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
+        }
+        this.saveOrder();
+    }
+
+    private saveOrder(): void {
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
+            (res) => (this.exerciseGroups = res.body),
+            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+        );
     }
 }

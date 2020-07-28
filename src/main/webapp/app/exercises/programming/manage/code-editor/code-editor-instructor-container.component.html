@@ -73,7 +73,7 @@
             <!-- action buttons -->
             <div>
                 <button
-                    *ngIf="!exercise.studentParticipations || !exercise.studentParticipations.length"
+                    *ngIf="!isExamMode && (!exercise.studentParticipations || !exercise.studentParticipations.length)"
                     (click)="createAssignmentParticipation()"
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-primary mr-2"
@@ -83,7 +83,7 @@
                     <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
                 </button>
                 <button
-                    *ngIf="exercise.studentParticipations && exercise.studentParticipations.length"
+                    *ngIf="!isExamMode && exercise.studentParticipations && exercise.studentParticipations.length"
                     (click)="resetAssignmentParticipation()"
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-danger"
@@ -122,7 +122,13 @@
                 [participation]="selectedParticipation"
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>
-            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
+            <jhi-exercise-hint-student
+                *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT"
+                [exerciseId]="exercise.id"
+                [exerciseHints]="exercise.exerciseHints"
+                class="mr-2"
+            >
+            </jhi-exercise-hint-student>
             <jhi-code-editor-actions
                 [buildable]="selectedRepository !== REPOSITORY.TEST"
                 [unsavedFiles]="unsavedFiles"
@@ -150,6 +156,7 @@
         [selectedFile]="selectedFile"
         [fileChange]="fileChange"
         [commitState]="commitState"
+        [editorState]="editorState"
         [(buildLogErrors)]="buildLogErrors"
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"

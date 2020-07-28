@@ -4,7 +4,8 @@
             "home": {
                 "title": "Modeling Exercises",
                 "createLabel": "Create new Modeling Exercise",
-                "editLabel": "Edit Modeling Exercise"
+                "editLabel": "Edit Modeling Exercise",
+                "importLabel": "Import Modeling Exercise"
             },
             "created": "A new Modeling Exercise is created with identifier {{ param }}",
             "updated": "A Modeling Exercise is updated with identifier {{ param }}",
@@ -17,7 +18,7 @@
             "exampleSolution": "Example Solution",
             "exampleSolutionExplanation": "Example Solution Explanation",
             "createExampleSolution": "Create Example Solution",
-            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the text exercise.",
+            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the modeling exercise.",
             "exampleSolutionForModelingExercise": "Example Solution for Modeling Exercise {{ exerciseTitle }}",
             "saveExampleSolution": "Save Example Solution",
             "exampleSubmission": "Example Submission {{ number }}",
@@ -28,7 +29,7 @@
             "saveExampleAssessment": "Save Example Assessment",
             "showExampleSubmission": "Show Submission",
             "showExampleAssessment": "Show Assessment",
-            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modeling exercise.",
             "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
             "usedForTutorial": "Used for Tutorial"
         }

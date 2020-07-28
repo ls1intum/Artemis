@@ -4,7 +4,7 @@
 [![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
 [![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
 
-This application was generated using JHipster 6.9.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.9.0))
+This application was generated using JHipster 6.10.1. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.1))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
