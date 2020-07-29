@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -19,6 +20,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() participation: StudentParticipation;
     @Input() result: Result;
     @Input() exam: Exam;
+    isCurrentUserSubmissionAuthor: boolean;
 
     get isExamMode() {
         return this.exam != null;
@@ -34,7 +36,12 @@ export class ComplaintInteractionsComponent implements OnInit {
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService, private activatedRoute: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
+    constructor(
+        private complaintService: ComplaintService,
+        private activatedRoute: ActivatedRoute,
+        private serverDateService: ArtemisServerDateService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Loads the number of allowed complaints and feedback requests
@@ -73,6 +80,11 @@ export class ComplaintInteractionsComponent implements OnInit {
                 });
             }
         }
+        this.accountService.identity().then((user) => {
+            if (this.participation && this.participation.student && user && user.id) {
+                this.isCurrentUserSubmissionAuthor = this.participation.student.id === user.id;
+            }
+        });
     }
 
     get course(): Course | null {

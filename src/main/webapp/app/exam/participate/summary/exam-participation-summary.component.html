@@ -50,6 +50,11 @@
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
+            <jhi-programming-exercise-instructions
+                *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
+                [exercise]="exercise"
+                [participation]="exercise.templateParticipation"
+            ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
                 <ng-container
