@@ -98,10 +98,13 @@ public class StudentExamResource {
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
                 studentExam.getExercises());
 
+        // fetch user here to avoid fetching the user for each exercise individually
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations, null);
+            filterForExam(studentExam, exercise, participations, currentUser);
         }
 
         return ResponseEntity.ok(studentExam);
