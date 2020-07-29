@@ -88,6 +88,8 @@ public class StudentExamResource {
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
+        // the user must be instructor for the exam then ()
+        boolean isAtLeastInstructor = true;
 
         StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
 
@@ -104,7 +106,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations, currentUser);
+            filterForExam(studentExam, exercise, participations, isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -291,10 +293,12 @@ public class StudentExamResource {
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(currentUser.getId(),
                 studentExam.getExercises());
 
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations, currentUser);
+            filterForExam(studentExam, exercise, participations, isAtLeastInstructor);
 
             // Filter attributes of exercises that should not be visible to the student
             // Note: sensitive information for quizzes was already removed in the for loop above
@@ -313,10 +317,7 @@ public class StudentExamResource {
      * @param studentExam    the student exam which is prepared
      * @param currentUser    the user requesting the student exam, may be null
      */
-    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, User currentUser) {
-        // do this before setting the course to null
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorForExercise(exercise, currentUser);
-
+    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
