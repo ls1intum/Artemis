@@ -122,7 +122,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns, Boolean useStaticCodeAnalysis) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
@@ -141,11 +141,9 @@ public class BambooBuildPlanService {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
                 }
 
-                if (useStaticCodeAnalysis) {
-                    defaultJob
-                            .finalTasks(new MavenTask().goal("spotbugs:spotbugs checkstyle:checkstyle").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis"));
-                    defaultJob.artifacts(new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml"),
-                            new Artifact().name("checkstyle").location("target").copyPattern("checkstyle.xml"));
+                if (staticCodeAnalysisEnabled) {
+                    defaultJob.finalTasks(new MavenTask().goal("spotbugs:spotbugs").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+                    defaultJob.artifacts(new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml").shared(false));
                 }
 
                 if (!sequentialBuildRuns) {
