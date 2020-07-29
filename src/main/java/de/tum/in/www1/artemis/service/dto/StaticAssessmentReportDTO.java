@@ -33,7 +33,7 @@ public class StaticAssessmentReportDTO {
 
         private String classname;
 
-        private int line;
+        private Integer line;
 
         private String type;
 
@@ -51,11 +51,11 @@ public class StaticAssessmentReportDTO {
             this.classname = classname;
         }
 
-        public int getLine() {
+        public Integer getLine() {
             return line;
         }
 
-        public void setLine(int line) {
+        public void setLine(Integer line) {
             this.line = line;
         }
 
