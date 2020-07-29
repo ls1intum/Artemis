@@ -55,9 +55,11 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, ExamRepository examRepository) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -67,6 +69,7 @@ public class StudentExamResource {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.examRepository = examRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -98,7 +101,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations);
+            filterForExam(studentExam, exercise, participations, null);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -288,7 +291,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterForExam(studentExam, exercise, participations);
+            filterForExam(studentExam, exercise, participations, currentUser);
 
             // Filter attributes of exercises that should not be visible to the student
             // Note: sensitive information for quizzes was already removed in the for loop above
@@ -304,9 +307,13 @@ public class StudentExamResource {
      *
      * @param exercise       the exercise for which the user participation should be filtered
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param studentExam the student exam which is prepared
+     * @param studentExam    the student exam which is prepared
+     * @param currentUser    the user requesting the student exam, may be null
      */
-    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations) {
+    public void filterForExam(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, User currentUser) {
+        // do this before setting the course to null
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorForExercise(exercise, currentUser);
+
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
@@ -324,15 +331,16 @@ public class StudentExamResource {
             // remove inner exercise from participation
             participation.setExercise(null);
             // only include the latest submission
-            Optional<Submission> latestSubmission = participation.findLatestSubmission();
-            if (latestSubmission.isPresent()) {
-                participation.setSubmissions(Set.of(latestSubmission.get()));
+            Optional<Submission> optionalLatestSubmission = participation.findLatestSubmission();
+            if (optionalLatestSubmission.isPresent()) {
+                Submission latestSubmission = optionalLatestSubmission.get();
+                participation.setSubmissions(Set.of(latestSubmission));
 
-                setResultIfNecessary(studentExam, participation, latestSubmission);
+                setResultIfNecessary(studentExam, participation, latestSubmission, isAtLeastInstructor);
 
                 // for quiz exercises remove correct answer options / mappings from response
                 if (exercise instanceof QuizExercise) {
-                    filterQuizSubmissionIfNecessary(studentExam, latestSubmission);
+                    filterQuizSubmissionIfNecessary(studentExam, latestSubmission, isAtLeastInstructor);
                 }
             }
             // add participation into an array
@@ -340,10 +348,10 @@ public class StudentExamResource {
         }
     }
 
-    private static void filterQuizSubmissionIfNecessary(StudentExam studentExam, Optional<Submission> latestSubmission) {
+    private static void filterQuizSubmissionIfNecessary(StudentExam studentExam, Submission latestSubmission, boolean isAtLeastInstructor) {
         // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-        if (!isReviewActive(studentExam)) {
-            QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
+        if (!isReviewActive(studentExam) || isAtLeastInstructor) {
+            QuizSubmission quizSubmission = (QuizSubmission) latestSubmission;
             quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
                 QuizQuestion question = submittedAnswer.getQuizQuestion();
                 // Dynamic binding will call the right overridden method for different question types
@@ -353,11 +361,12 @@ public class StudentExamResource {
         }
     }
 
-    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, Optional<Submission> latestSubmission) {
+    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, Submission latestSubmission, boolean isAtLeastInstructor) {
         // Only set the result during the exam (direct automatic feedback) or after publishing the results
-        if (ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()) || isReviewActive(studentExam)) {
+        boolean studentAllowedToSeeResult = ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()) || isReviewActive(studentExam);
+        if (studentAllowedToSeeResult || isAtLeastInstructor) {
             // Set the latest result into the participation as the client expects it there for programming exercises
-            Result result = latestSubmission.get().getResult();
+            Result result = latestSubmission.getResult();
             if (result != null) {
                 participation.setResults(Set.of(result));
             }
