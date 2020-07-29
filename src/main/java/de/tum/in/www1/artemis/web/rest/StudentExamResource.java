@@ -301,7 +301,10 @@ public class StudentExamResource {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
-                quizExercise.filterForStudentsDuringQuiz();
+                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
+                if (studentExam.getExam().getPublishResultsDate() == null || ZonedDateTime.now().isBefore(studentExam.getExam().getPublishResultsDate())) {
+                    quizExercise.filterForStudentsDuringQuiz();
+                }
                 studentExam.getExercises().set(i, quizExercise);
             }
         }
