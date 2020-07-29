@@ -633,8 +633,12 @@ public class ModelFactory {
         report.setTool(StaticCodeAnalysisTool.SPOTBUGS);
         issue1.setType("Error1");
         issue1.setMessage("Error1 - Message");
-        issue2.setType("Error1");
-        issue2.setMessage("Error1 - Message");
+        issue1.setClassname("Class1");
+        issue1.setLine(1);
+        issue2.setType("Error2");
+        issue2.setMessage("Error2 - Message");
+        issue1.setClassname("Class2");
+        issue1.setLine(2);
         report.setIssues(List.of(issue1, issue2));
         return report;
     }

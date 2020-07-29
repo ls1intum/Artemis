@@ -861,6 +861,7 @@ public class DatabaseUtilService {
     public Result addSampleStaticCodeAnalysisFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ModelFactory.generateFeedback());
+        feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
         return resultRepo.save(result);
     }
