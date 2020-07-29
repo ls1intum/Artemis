@@ -611,6 +611,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
@@ -690,6 +698,15 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // title will still be the same
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+        var id = programmingExercise.getId();
+        programmingExercise.setId(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", id + ""), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
