@@ -20,7 +20,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -325,26 +327,40 @@ public class StudentExamResource {
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
             if (latestSubmission.isPresent()) {
                 participation.setSubmissions(Set.of(latestSubmission.get()));
-                // Set the latest result into the participation as the client expects it there for programming exercises
-                Result result = latestSubmission.get().getResult();
-                if (result != null) {
-                    participation.setResults(Set.of(result));
-                }
+
+                setResultIfNecessary(studentExam, participation, latestSubmission);
+
                 // for quiz exercises remove correct answer options / mappings from response
                 if (exercise instanceof QuizExercise) {
-                    // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                    if (studentExam.getExam().getPublishResultsDate() == null || ZonedDateTime.now().isBefore(studentExam.getExam().getPublishResultsDate())) {
-                        QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
-                        quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
-                            QuizQuestion question = submittedAnswer.getQuizQuestion();
-                            // Dynamic binding will call the right overridden method for different question types
-                            question.filterForStudentsDuringQuiz();
-                        });
-                    }
+                    filterQuizSubmissionIfNecessary(studentExam, latestSubmission);
                 }
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    private static void filterQuizSubmissionIfNecessary(StudentExam studentExam, Optional<Submission> latestSubmission) {
+        // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
+        if (!isReviewActive(studentExam)) {
+            QuizSubmission quizSubmission = (QuizSubmission) latestSubmission.get();
+            quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                QuizQuestion question = submittedAnswer.getQuizQuestion();
+                // Dynamic binding will call the right overridden method for different question types
+                question.filterForStudentsDuringQuiz();
+                submittedAnswer.setScoreInPoints(null);
+            });
+        }
+    }
+
+    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, Optional<Submission> latestSubmission) {
+        // Only set the result during the exam (direct automatic feedback) or after publishing the results
+        if (ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()) || isReviewActive(studentExam)) {
+            // Set the latest result into the participation as the client expects it there for programming exercises
+            Result result = latestSubmission.get().getResult();
+            if (result != null) {
+                participation.setResults(Set.of(result));
+            }
         }
     }
 
@@ -360,11 +376,15 @@ public class StudentExamResource {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
                 // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (studentExam.getExam().getPublishResultsDate() == null || ZonedDateTime.now().isBefore(studentExam.getExam().getPublishResultsDate())) {
+                if (!isReviewActive(studentExam)) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);
             }
         }
+    }
+
+    private static boolean isReviewActive(StudentExam studentExam) {
+        return studentExam.getExam().getPublishResultsDate() != null && ZonedDateTime.now().isAfter(studentExam.getExam().getPublishResultsDate());
     }
 }
