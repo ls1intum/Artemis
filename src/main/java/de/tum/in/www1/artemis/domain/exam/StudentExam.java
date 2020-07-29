@@ -165,6 +165,25 @@ public class StudentExam implements Serializable {
         return ZonedDateTime.now().isAfter(individualEndDate);
     }
 
+    /**
+     * Returns the individual exam end date taking the working time of this student exam into account
+     *  
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period)
+     */
+    public ZonedDateTime getIndividualEndDate() {
+        return exam.getStartDate().plusSeconds(workingTime);
+    }
+
+    /**
+     * Returns the individual exam end date taking the working time of this student exam into account and the grace period set for this exam
+     *  
+     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period
+     */
+    public ZonedDateTime getIndividualEndDateWithGracePeriod() {
+        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
+        return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
