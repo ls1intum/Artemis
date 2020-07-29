@@ -13,10 +13,6 @@
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spotbugs.xmlOutput>true</spotbugs.xmlOutput>
-        <spotbugs.includeTests>false</spotbugs.includeTests>
-        <checkstyle.output.file>${project.build.directory}/checkstyle.xml</checkstyle.output.file>
-        <checkstyle.includeTestResources>false</checkstyle.includeTestResources>
 	</properties>
     <dependencies>
         <dependency>
@@ -68,12 +64,11 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.0.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>4.0.4</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <includeTests>false</includeTests>
+                </configuration>
             </plugin>
         </plugins>
     </build>
