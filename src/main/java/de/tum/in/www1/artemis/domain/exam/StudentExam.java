@@ -161,8 +161,7 @@ public class StudentExam implements Serializable {
         if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
             return null;
         }
-        var individualEndDate = this.getExam().getStartDate().plusSeconds(this.getWorkingTime());
-        return ZonedDateTime.now().isAfter(individualEndDate);
+        return ZonedDateTime.now().isAfter(getIndividualEndDate());
     }
 
     /**
