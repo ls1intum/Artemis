@@ -183,6 +183,14 @@ public class StudentExam implements Serializable {
         return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
     }
 
+    /**
+     * Calls {@link Exam#resultsPublished()}
+     * @return true the results are published
+     */
+    public boolean areResultsPublishedYet() {
+        return exam.resultsPublished();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
