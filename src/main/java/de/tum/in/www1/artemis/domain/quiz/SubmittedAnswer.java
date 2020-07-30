@@ -126,6 +126,17 @@ public abstract class SubmittedAnswer implements Serializable {
     }
 
     /**
+     * Filter out information about correct answers.
+     * Calls {@link QuizQuestion#filterForStudentsDuringQuiz()} which removes all relevant fields.
+     * Dynamic binding will call the right overridden method for different question types.
+     */
+    public void filterOutCorrectAnswers() {
+        QuizQuestion question = this.getQuizQuestion();
+        question.filterForStudentsDuringQuiz();
+        this.setScoreInPoints(null);
+    };
+
+    /**
      * Delete all references to quizQuestion and quizQuestion-elements if the quiz was changed
      *
      * @param quizExercise the changed quizExercise-object
