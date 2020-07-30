@@ -272,9 +272,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.exercise && this.exercise.teamMode && this.exercise?.course && this.submission) {
+        if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.exercise?.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {

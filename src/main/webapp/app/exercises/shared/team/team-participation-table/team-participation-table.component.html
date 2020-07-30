@@ -86,7 +86,7 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else participationIdUnavailable">
-                        <div *ngIf="exercise.isAtLeastInstructor; else displayId">
+                        <div *ngIf="isTeamOwner || exercise.isAtLeastInstructor; else displayId">
                             <a [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']">
                                 {{ value.participation.id }}
                             </a>
