@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -138,5 +139,4 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     public String toString() {
         return "MultipleChoiceSubmittedAnswer{" + "id=" + getId() + "}";
     }
-
 }

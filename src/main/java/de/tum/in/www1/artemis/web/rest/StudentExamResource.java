@@ -347,12 +347,12 @@ public class StudentExamResource {
 
     /**
      * Helper method which attaches the result to its participation.
-     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise, we need to attach the results.
+     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam. See {@link StudentExamResource#areResultsPublishedYet(StudentExam)}
      * @param studentExam the given studentExam
      * @param participation the given participation of the student
      * @param latestSubmission the latest
-     * @param isAtLeastInstructor
+     * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
         // Only set the result during the exam (direct automatic feedback) or after publishing the results
