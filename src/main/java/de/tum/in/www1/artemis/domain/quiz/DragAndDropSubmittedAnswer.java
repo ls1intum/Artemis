@@ -139,8 +139,4 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
         return "DragAndDropSubmittedAnswer{" + "id=" + getId() + "}";
     }
 
-    @Override
-    public void filterOutCorrectAnswers() {
-        super.filterOutCorrectAnswers();
-    }
 }

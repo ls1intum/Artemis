@@ -139,8 +139,4 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
         return "MultipleChoiceSubmittedAnswer{" + "id=" + getId() + "}";
     }
 
-    @Override
-    public void filterOutCorrectAnswers() {
-        super.filterOutCorrectAnswers();
-    }
 }
