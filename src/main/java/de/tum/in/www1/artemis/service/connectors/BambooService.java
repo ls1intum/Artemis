@@ -433,7 +433,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
                 // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
-                // we can still get the commit has from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
+                // we can still get the commit hash from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
                 String commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
                 log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
@@ -519,7 +519,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
         result.setParticipation((Participation) participation);
 
-        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs());
+        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
     }
 
     /**
@@ -627,7 +627,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return a list of feedback items stored in a result
      */
     @SuppressWarnings("unchecked")
-    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
+    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
         if (jobs == null) {
             return null;
         }
@@ -657,8 +657,10 @@ public class BambooService implements ContinuousIntegrationService {
 
                     createAutomaticFeedback(result, methodName, true, null);
                 }
-                // 3) add static assessment feedback
-                addStaticAssessmentFeedbackToResult(result, job.getStaticAssessmentReports());
+                // 3) process static code analysis feedback
+                if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
+                    addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
+                }
 
                 if (!job.getFailedTests().isEmpty()) {
                     result.setHasFeedback(true);
@@ -673,16 +675,15 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Transforms build result static assessment reports to feedback.
-     * The feedback is stored in a transient attribute of the result object.
+     * Transforms build result static code analysis reports to feedback.
      *
      * @param result The result to which the static assessment feedback will be added
      * @param reports Static assessment reports to be transformed
      */
-    private void addStaticAssessmentFeedbackToResult(Result result, List<StaticAssessmentReportDTO> reports) {
+    private void addStaticCodeAnalysisFeedbackToResult(Result result, List<StaticAssessmentReportDTO> reports) {
         if (reports != null) {
             var feedbackList = feedbackService.createFeedbackFromStaticAssessmentReports(reports);
-            result.addAllStaticAssessmentFeedback(feedbackList);
+            result.addFeedbacks(feedbackList);
         }
     }
 

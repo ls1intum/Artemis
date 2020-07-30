@@ -48,12 +48,12 @@ public class FeedbackService {
     }
 
     /**
-     * Transforms static assessment reports to feedback objects.
-     * As we reuse the Feedback entity to store static code analysis issues, a mapping to those attributes
+     * Transforms static code analysis reports to feedback objects.
+     * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
      *
-     * @param reports Static Assessment reports to be transformed
-     * @return Feedback objects storing the static assessment issues
+     * @param reports Static code analysis reports to be transformed
+     * @return Feedback objects representing the static code analysis findings
      */
     public List<Feedback> createFeedbackFromStaticAssessmentReports(List<StaticAssessmentReportDTO> reports) {
         List<Feedback> feedbackList = new ArrayList<>();
