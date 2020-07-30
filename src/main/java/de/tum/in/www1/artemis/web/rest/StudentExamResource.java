@@ -369,8 +369,8 @@ public class StudentExamResource {
     }
 
     /**
-     * Helper method to load the quiz questions.
-     * It is not possible to load them in a generic way with the entity graph used
+     * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
+     * See {@link ParticipationService#findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
