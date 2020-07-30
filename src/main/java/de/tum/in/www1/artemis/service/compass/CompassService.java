@@ -79,6 +79,12 @@ public class CompassService {
      * @return true if the given diagram type is supported by Compass, false otherwise
      */
     public boolean isSupported(ModelingExercise modelingExercise) {
+
+        // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
+        if (modelingExercise.hasExerciseGroup()) {
+            return false;
+        }
+
         // In case the instructor specifies in the UI whether the semi-automatic assessment is possible or not.
         // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
         DiagramType diagramType = modelingExercise.getDiagramType();

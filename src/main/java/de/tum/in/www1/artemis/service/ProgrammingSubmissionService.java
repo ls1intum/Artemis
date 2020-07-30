@@ -19,7 +19,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -72,8 +71,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
+            CourseService courseService, ExamService examService) {
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -529,13 +529,29 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
-        messagingTemplate.convertAndSend(topic, submission);
+        if (submission.getParticipation() instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+        }
+
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), submission);
+        }
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
-        messagingTemplate.convertAndSend(topic, error);
+        if (submission.getParticipation() instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
+        }
+
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), error);
+        }
+    }
+
+    private String getExerciseTopicForTAAndAbove(long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
@@ -550,7 +566,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());

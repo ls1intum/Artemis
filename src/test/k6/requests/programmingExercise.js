@@ -1,5 +1,5 @@
-import { nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
-import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP } from './endpoints.js';
+import { nextAlphanumeric, nextWSSubscriptionId, extractDestination } from '../util/utils.js';
+import { COMMIT, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, FILES } from './endpoints.js';
 import { fail, sleep } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
@@ -58,7 +58,7 @@ export const TestResult = {
     BUILD_ERROR: 'error',
 };
 
-export function createProgrammingExercise(artemis, courseId, programmingLanguage) {
+export function createProgrammingExercise(artemis, courseId, programmingLanguage, exerciseGroup = null) {
     let res;
 
     let programmingExerciseProblemStatement;
@@ -88,10 +88,16 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         presentationScoreEnabled: false,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
-        course: {
-            id: courseId,
-        },
     };
+
+    if (courseId) {
+        exercise.course = {
+            id: courseId,
+        };
+    }
+    if (exerciseGroup) {
+        exercise.exerciseGroup = exerciseGroup;
+    }
 
     res = artemis.post(PROGRAMMING_EXERCISES_SETUP, exercise);
     if (res[0].status !== 201) {
@@ -145,12 +151,20 @@ export function createNewFile(artemis, participationId, filename) {
     }
 }
 
+export function updateFileContent(artemis, participationId, content) {
+    const res = artemis.put(FILES(participationId), content);
+
+    if (res[0].status !== 200) {
+        fail('ERROR: Unable to update file content for participation' + participationId);
+    }
+}
+
 export function simulateSubmission(artemis, participationSimulation, expectedResult, resultString) {
     // First, we have to create all new files
     participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
 
     artemis.websocket(function (socket) {
-        // Send changes via websocket
+        // Send changes via websocket - DEPRECATED AS OF 2020-07-13, now REST is used (see commit e6038467a8cc5ea29cb0b50b0bb2d2c51c94d348)
         function submitChange(content) {
             const contentString = JSON.stringify(content);
             const changeMessage =
@@ -167,7 +181,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         // Subscribe to new results and participations
         function subscribe(exerciseId, participationId) {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/topic/participation/' + participationId + '/newResults\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/newResults\n\n\u0000');
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
         }
 
@@ -181,7 +195,8 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
         }, 5 * 1000);
 
         socket.setTimeout(function () {
-            submitChange(participationSimulation.content);
+            // submitChange(participationSimulation.content);
+            updateFileContent(artemis, participationSimulation.participationId, participationSimulation.content);
             console.log('SEND file data for test user ' + __VU);
         }, 10 * 1000);
 
@@ -193,7 +208,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationSimulation.participationId + '/newResults')) {
+            if (message.startsWith('MESSAGE\n') && extractDestination(message) === '/user/topic/newResults') {
                 socket.close();
                 const result = participationSimulation.extractResultFromWebSocketMessage(message);
                 participationSimulation.returnsExpectedResult(result, expectedResult, resultString);

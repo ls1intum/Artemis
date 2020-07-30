@@ -12,6 +12,7 @@ import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/browser';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -182,6 +183,20 @@ export class AccountService implements IAccountService {
             // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
             distinctUntilChanged(),
         );
+    }
+
+    /**
+     * Checks whether current user is owner of the participation or whether he is part of the team
+     *
+     * @param participation - Participation that is checked
+     */
+    isOwnerOfParticipation(participation: StudentParticipation): boolean {
+        if (participation.student) {
+            return this.userIdentity?.login === participation.student.login;
+        } else if (participation.team) {
+            return participation.team.students.some((student) => this.userIdentity?.login === student.login);
+        }
+        throw new Error('Participation does not have any owners');
     }
 
     /**

@@ -5,6 +5,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 enum TableColumn {
     ID = 'ID',
@@ -28,14 +29,14 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     content: SearchResult<ProgrammingExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 1,
+        page: 0,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
     };
 
-    constructor(private pagingService: ProgrammingExercisePagingService, private activeModal: NgbActiveModal) {}
+    constructor(private pagingService: ProgrammingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
@@ -59,12 +60,11 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     }
 
     set page(page: number) {
-        page = page - 1;
         this.setSearchParam({ page });
     }
 
     get page(): number {
-        return this.state.page + 1;
+        return this.state.page;
     }
 
     set searchTerm(searchTerm: string) {
@@ -98,10 +98,9 @@ export class ProgrammingExerciseImportComponent implements OnInit {
         this.sort.next();
     }
 
-    /**
-     * Callback after sorting the table. Since no callback is needed atm, this is empty
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
+    }
 
     /**
      * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
@@ -128,5 +127,15 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      */
     openImport(exercise: ProgrammingExercise) {
         this.activeModal.close(exercise);
+    }
+
+    /** Callback function when the user navigates through the page results
+     *
+     * @param pagenumber The current page number
+     */
+    onPageChange(pagenumber: number) {
+        if (pagenumber) {
+            this.page = pagenumber;
+        }
     }
 }

@@ -2,27 +2,62 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -118,6 +153,10 @@ public abstract class Exercise implements Serializable {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
+
+    @ManyToOne
+    @JsonView(QuizView.Before.class)
+    private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
@@ -410,7 +449,14 @@ public abstract class Exercise implements Serializable {
         this.studentParticipations = studentParticipations;
     }
 
-    public Course getCourse() {
+    /**
+     * This method exists for serialization. The utility method getCourseViaExerciseGroupOrCourseMember should be used
+     * to get a course for the exercise.
+     *
+     * @return the course class member
+     */
+    @JsonInclude
+    protected Course getCourse() {
         return course;
     }
 
@@ -421,6 +467,40 @@ public abstract class Exercise implements Serializable {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    @JsonIgnore
+    public boolean hasCourse() {
+        return this.course != null;
+    }
+
+    public ExerciseGroup getExerciseGroup() {
+        return exerciseGroup;
+    }
+
+    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroup = exerciseGroup;
+    }
+
+    @JsonIgnore
+    public boolean hasExerciseGroup() {
+        return this.exerciseGroup != null;
+    }
+
+    /**
+     * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
+     * the course class member
+     *
+     * @return Course of the exercise
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMember() {
+        if (hasExerciseGroup()) {
+            return this.getExerciseGroup().getExam().getCourse();
+        }
+        else {
+            return this.getCourse();
+        }
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {
@@ -592,7 +672,7 @@ public abstract class Exercise implements Serializable {
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
+            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -645,82 +725,6 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
-     * result. Filter everything else that is not relevant
-     *
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
-     * @param isStudent defines if the current user is a student
-     */
-    public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
-        // remove the unnecessary inner course attribute
-        setCourse(null);
-
-        // remove the problem statement, which is loaded in the exercise details call
-        setProblemStatement(null);
-
-        if (this instanceof ProgrammingExercise) {
-            var programmingExercise = (ProgrammingExercise) this;
-            programmingExercise.setTestRepositoryUrl(null);
-        }
-
-        // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
-
-        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
-        // if participation was not found in database
-        if (participation == null && this instanceof QuizExercise) {
-            QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
-            if (submission.getSubmissionDate() != null) {
-                participation = new StudentParticipation().exercise(this);
-                participation.initializationState(InitializationState.INITIALIZED);
-            }
-        }
-
-        // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        if (participation != null) {
-            // find the latest submission with a rated result, otherwise the latest submission with
-            // an unrated result or alternatively the latest submission without a result
-            Set<Submission> submissions = participation.getSubmissions();
-
-            // only transmit the relevant result
-            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
-            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = Set.of();
-
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
-                }
-            }
-
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getResult() != null) {
-                submission.getResult().filterSensitiveInformation();
-            }
-
-            // add submission to participation
-            if (submission != null) {
-                participation.setSubmissions(Set.of(submission));
-            }
-
-            participation.setResults(results);
-
-            // remove inner exercise from participation
-            participation.setExercise(null);
-
-            // add participation into an array
-            setStudentParticipations(Set.of(participation));
-        }
-    }
-
-    /**
      * Filter for appropriate submission. Relevance in the following order:
      * - submission with rated result
      * - submission with unrated result (late submission)
@@ -729,7 +733,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
@@ -737,7 +741,7 @@ public abstract class Exercise implements Serializable {
         for (Submission submission : submissions) {
             Result result = submission.getResult();
             if (result != null) {
-                if (result.isRated() == Boolean.TRUE) {
+                if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);
                 }
                 else {
@@ -863,8 +867,19 @@ public abstract class Exercise implements Serializable {
         this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
     }
 
+    /**
+     * Checks whether the exercise is released
+     * @return boolean
+     */
     public boolean isReleased() {
-        ZonedDateTime releaseDate = getReleaseDate();
+        // Exam
+        ZonedDateTime releaseDate;
+        if (this.hasExerciseGroup()) {
+            releaseDate = this.getExerciseGroup().getExam().getStartDate();
+        }
+        else {
+            releaseDate = getReleaseDate();
+        }
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
@@ -925,4 +940,24 @@ public abstract class Exercise implements Serializable {
             });
         }
     }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum ExerciseSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
+
+        private String mappedColumnName;
+
+        ExerciseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
+    }
+
 }

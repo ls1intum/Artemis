@@ -88,14 +88,42 @@ public class BambooRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        MockitoAnnotations.initMocks(this);
+        enableMockingOfRequests(false);
+    }
+
+    public void enableMockingOfRequests(boolean ignoreExpectOrder) {
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(true);
+        mockServer = builder.build();
+
+        // necessary for injecting bambooClient above
+        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {
-        mockServer.reset();
+        if (mockServer != null) {
+            mockServer.reset();
+        }
     }
 
+    /**
+     * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
+     *
+     * @param exercise the programming exercise that already exists
+     */
+    public void mockProjectKeyExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+        mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + exercise.getProjectKey())).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK));
+    }
+
+    /**
+     * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
+     *
+     * @param exercise the programming exercise that might already exist
+     * @param exists whether the programming exercise with the same title exists
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
@@ -130,12 +158,12 @@ public class BambooRequestMockProvider {
     public void mockGiveProjectPermissions(ProgrammingExercise exercise) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
 
-        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getInstructorGroupName());
+        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName());
         mockServer.expect(ExpectedCount.once(), requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
-        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
-            final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getTeachingAssistantGroupName());
+        if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
+            final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName());
             mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
                     .andRespond(withStatus(HttpStatus.NO_CONTENT));
         }
@@ -152,7 +180,7 @@ public class BambooRequestMockProvider {
         final var targetPlanName = username.toUpperCase();
         final var targetPlanKey = projectKey + "-" + targetPlanName;
         final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
-        final var buildProjectName = exercise.getCourse().getShortName().toUpperCase() + " " + exercise.getTitle();
+        final var buildProjectName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + exercise.getTitle();
 
         when(planHelper.clonePlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean())).thenReturn("success");
         verifications.add((() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));

@@ -25,6 +25,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -52,7 +53,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
-    canOverride = false;
     isLoading = true;
     courseId: number;
 
@@ -81,6 +81,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
         private fileService: FileService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -131,10 +132,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 } else {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
@@ -152,7 +153,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
                 (error: HttpErrorResponse) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.goToExerciseDashboard();
+                        this.navigateBack();
                     } else {
                         this.onError('');
                     }
@@ -345,7 +346,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 .cancelAssessment(this.submission.id)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
-                    this.goToExerciseDashboard();
+                    this.navigateBack();
                 });
         }
     }
@@ -371,8 +372,12 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             },
         );
     }
-    goToExerciseDashboard() {
-        if (this.exercise && this.exercise.course) {
+
+    navigateBack() {
+        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
             this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
@@ -413,8 +418,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
-
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
     }
 
     downloadFile(filePath: string) {
@@ -423,9 +427,37 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        if (this.exercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
+        }
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
     }
 
     toggleCollapse($event: any) {
@@ -483,6 +515,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     private onError(error: string) {

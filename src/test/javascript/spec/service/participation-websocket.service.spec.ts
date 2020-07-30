@@ -24,21 +24,24 @@ describe('ParticipationWebsocketService', () => {
 
     let participationWebsocketService: ParticipationWebsocketService;
 
-    const participation = { id: 1, exercise: { id: 20 } } as Participation;
+    const exerciseId1 = 20;
+    const exerciseId2 = 40;
+
+    const participation = { id: 1, exercise: { id: exerciseId1 } } as Participation;
     const currentResult = { id: 10, participation } as Result;
     participation.results = [currentResult];
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
 
-    const participationResultTopic = `/topic/participation/${participation.id}/newResults`;
-    const participationTopic = `/user/topic/exercise/${participation.exercise.id}/participation`;
+    const participationPersonalResultTopic = `/user/topic/newResults`;
+    const participationTopic = `/user/topic/exercise/${participation.exercise!.id}/participation`;
 
-    const participation2 = { id: 2, exercise: { id: 40 } } as Participation;
+    const participation2 = { id: 2, exercise: { id: exerciseId2 } } as Participation;
     const currentResult2 = { id: 13, participation: participation2 } as Result;
     participation2.results = [currentResult2];
 
-    const participation2ResultTopic = `/topic/participation/${participation2.id}/newResults`;
-    const participation2Topic = `/user/topic/exercise/${participation2.exercise.id}/participation`;
+    const participationInstructorResultTopic = `/topic/exercise/${participation2.exercise!.id}/newResults`;
+    const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
 
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
@@ -52,8 +55,8 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipation2Subject = new Subject();
         receiveParticipationSubject = new Subject();
         receiveParticipation2Subject = new Subject();
-        receiveStub.withArgs(participationResultTopic).returns(receiveResultForParticipationSubject);
-        receiveStub.withArgs(participation2ResultTopic).returns(receiveResultForParticipation2Subject);
+        receiveStub.withArgs(participationPersonalResultTopic).returns(receiveResultForParticipationSubject);
+        receiveStub.withArgs(participationInstructorResultTopic).returns(receiveResultForParticipation2Subject);
         receiveStub.withArgs(participationTopic).returns(receiveParticipationSubject);
         receiveStub.withArgs(participation2Topic).returns(receiveParticipation2Subject);
     }));
@@ -64,18 +67,39 @@ describe('ParticipationWebsocketService', () => {
         receiveStub.restore();
     });
 
-    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, false, exerciseId2);
         expect(subscribeSpy).to.have.been.calledOnce;
         expect(receiveStub).to.have.been.calledOnce;
         expect(unsubscribeSpy).not.to.have.been.called;
 
-        expect(subscribeSpy).to.have.been.calledWithExactly(participationResultTopic);
-        expect(receiveStub).to.have.been.calledWithExactly(participationResultTopic);
+        expect(subscribeSpy).to.have.been.calledWithExactly(participationInstructorResultTopic);
+        expect(receiveStub).to.have.been.calledWithExactly(participationInstructorResultTopic);
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
-        expect(participationWebsocketService.openWebsocketSubscriptions.size).to.equal(1);
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(1);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.be.undefined;
+
+        expect(participationWebsocketService.resultObservables.size).to.equal(1);
+        expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
+
+        expect(participationWebsocketService.participationObservable).to.be.undefined;
+    });
+
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        expect(subscribeSpy).to.have.been.calledOnce;
+        expect(receiveStub).to.have.been.calledOnce;
+        expect(unsubscribeSpy).not.to.have.been.called;
+
+        expect(subscribeSpy).to.have.been.calledWithExactly(participationPersonalResultTopic);
+        expect(receiveStub).to.have.been.calledWithExactly(participationPersonalResultTopic);
+
+        expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
+
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(0);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.equal(participationPersonalResultTopic);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
@@ -84,7 +108,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit rated result when received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -96,7 +120,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit unrated result received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -108,7 +132,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should also emit participation update with new result when new rated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -127,7 +151,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit participation update with new result when unrated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -146,8 +170,8 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to right participation if multiple participations are cached', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.addParticipation(participation2);
         participationWebsocketService.subscribeForParticipationChanges();
@@ -174,7 +198,7 @@ describe('ParticipationWebsocketService', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { results, ...participationWithoutResult } = participation;
 
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id, true);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
@@ -194,4 +218,27 @@ describe('ParticipationWebsocketService', () => {
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participationWithoutResult, results: [newRatedResult] });
     });
     /* eslint-enable no-unused-vars */
+
+    it('should reset the local cache', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id, false, participation2.exercise!.id);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.equal(participationPersonalResultTopic);
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(1);
+
+        participationWebsocketService.resetLocalCache();
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).to.be.null;
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).to.equal(0);
+    });
+
+    it('should return the cached participation after adding it', () => {
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id)).to.be.null;
+
+        participationWebsocketService.addParticipation(participation);
+
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id)).to.deep.equal(participation);
+    });
 });

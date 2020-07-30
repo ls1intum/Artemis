@@ -4,6 +4,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { Exam } from 'app/entities/exam.model';
 
 export class Course implements BaseEntity {
     public id: number;
@@ -33,6 +34,7 @@ export class Course implements BaseEntity {
 
     public exercises: Exercise[];
     public lectures: Lecture[];
+    public exams: Exam[];
     public tutorGroups: TutorGroup[];
 
     // helper attributes
@@ -52,10 +54,12 @@ export class Course implements BaseEntity {
      */
     static from(object: Course): Course {
         const course = Object.assign(new Course(), object);
-        course.exercises.forEach((e) => {
-            e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
-            e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
-        });
+        if (course.exercises) {
+            course.exercises.forEach((e) => {
+                e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
+                e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
+            });
+        }
         return course;
     }
 }

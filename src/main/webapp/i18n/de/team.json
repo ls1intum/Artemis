@@ -25,7 +25,8 @@
                     "title": "Teilnahmen in \"{{ courseTitle }}\" für",
                     "columns": {
                         "assessment": "Bewertung"
-                    }
+                    },
+                    "complaintOrMoreFeedbackRequest": "Beschwerde oder weitere Feedback-Anfrage"
                 }
             },
             "team": "Team",

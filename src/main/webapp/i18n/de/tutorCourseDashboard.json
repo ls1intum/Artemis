@@ -5,6 +5,7 @@
                 "title": "Tutor Kurse Dashboard"
             },
             "pageHeader": "Tutor Kurs Dashboard für den Kurs",
+            "pageHeaderExam": "Tutor Klausur Dashboard für die Klausur",
             "yourAssessments": "Deine Bewertungen",
             "totalAssessments": "Gesamtzahl der Bewertungen",
             "complaintsAboutYourAssessments": "Beschwerden über deine Bewertungen",
@@ -16,8 +17,8 @@
             "exercise": "Übungen",
             "exerciseType": "Aufgabentyp",
             "yourStatus": "Dein Status",
-            "exerciseDueDate": "Fälligkeitsdatum der Übung",
-            "assessmentsDueDate": "Fälligkeitsdatum der Bewertungen",
+            "exerciseDueDate": "Einreichungsfrist der Übung",
+            "assessmentsDueDate": "Einreichungsfrist der Bewertungen",
             "actions": "Aktionen",
             "notReleased": "Nicht freigegeben",
             "readGradingInstructions": "Bewertungsanweisungen lesen",

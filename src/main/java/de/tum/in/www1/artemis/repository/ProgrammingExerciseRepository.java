@@ -61,7 +61,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
 
-    @Query("select pe from ProgrammingExercise pe where pe.course.instructorGroupName in :groups and pe.shortName is not null and (pe.title like %:partialTitle% or pe.course.title like %:partialCourseTitle%)")
+    /**
+     * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
+     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
+     *
+     * @param partialTitle exercise title search term
+     * @param partialCourseTitle course title search term
+     * @param groups user groups
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.shortName is not null and (pe.id in (select coursePe.id from ProgrammingExercise coursePe where coursePe.course.instructorGroupName in :groups and (coursePe.title like %:partialTitle% or coursePe.course.title like %:partialCourseTitle%)) or pe.id in (select examPe.id from ProgrammingExercise examPe where examPe.exerciseGroup.exam.course.instructorGroupName in :groups and (examPe.title like %:partialTitle% or examPe.exerciseGroup.exam.course.title like %:partialCourseTitle%)))")
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
             @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
@@ -82,6 +92,25 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
+     * Returns the programming exercises that have manual assessment enabled and a due date higher than the provided date.
+     *
+     * @param dateTime ZonedDateTime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Returns the programming exercises that are part of an exam with an end date after than the provided date.
+     * This method also fetches the exercise group and exam.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe left join fetch pe.exerciseGroup eg left join fetch eg.exam e where e.endDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllWithEagerExamAllByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
      *
@@ -90,6 +119,16 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE)")
     long countSubmissionsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of distinct submissions belonging to the exercise id that are assessed
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL)")
+    long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -111,5 +150,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse(Course course);
 
-    List<ProgrammingExercise> findAllByShortNameAndCourse(String shortName, Course course);
+    long countByShortNameAndCourse(String shortName, Course course);
+
+    long countByTitleAndCourse(String shortName, Course course);
+
+    long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
+
+    long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 }

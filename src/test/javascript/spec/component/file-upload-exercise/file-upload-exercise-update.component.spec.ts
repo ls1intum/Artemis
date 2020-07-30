@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -9,6 +10,9 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Course } from 'app/entities/course.model';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -23,6 +27,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .overrideTemplate(FileUploadExerciseUpdateComponent, '')
@@ -61,6 +66,42 @@ describe('FileUploadExercise Management Update Component', () => {
             // THEN
             expect(service.create).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
+        }));
+    });
+
+    describe('ngOnInit with given exerciseGroup', () => {
+        const fileUploadExercise = new FileUploadExercise(null, new ExerciseGroup());
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('Should be in exam mode', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isExamMode).toEqual(true);
+            expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
+        }));
+    });
+
+    describe('ngOnInit without given exerciseGroup', () => {
+        const fileUploadExercise = new FileUploadExercise(new Course(), null);
+
+        beforeEach(() => {
+            const route = TestBed.get(ActivatedRoute);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('Should not be in exam mode', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isExamMode).toEqual(false);
+            expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
         }));
     });
 });

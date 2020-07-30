@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -32,6 +32,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Input() public participation: Participation;
     @Input() public exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
+    @Input() personalParticipation: boolean;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
@@ -49,6 +50,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     set latestResult(result: Result | null) {
         this.latestResultValue = result;
+        this.programmingExerciseTaskWrapper.setExercise(this.exercise);
         this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
         this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
     }
@@ -133,10 +135,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                             }),
                         );
                     } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                        // Refreshes the state in the singleton task and uml extension service
+                        this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
                         this.updateMarkdown();
                         return of(null);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
+                        // Refreshes the state in the singleton task and uml extension service
+                        this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
                         return of(null);
                     } else {
@@ -153,7 +159,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
-            catchError(() => []),
+            catchError(() => of([])),
         );
     }
 
@@ -168,12 +174,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.injectableContentFoundSubscription = merge(
             this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
             this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
-        ).subscribe((injectableCallback) => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
+        ).subscribe((injectableCallback) => {
+            this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback];
+        });
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
         }
-        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArray) => {
-            this.tasks = tasks;
+        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArrayWithExercise) => {
+            // Multiple instances of the code editor use the TaskWrapperService. We have to check, that the returned tasks belong to this exercise
+            if (tasks.exerciseId === this.exercise.id) {
+                this.tasks = tasks.tasks;
+            }
         });
     }
 
@@ -186,7 +197,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;

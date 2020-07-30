@@ -11,7 +11,7 @@ export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 export interface IComplaintService {
-    create: (complaint: Complaint) => Observable<EntityResponseType>;
+    create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findByResultId: (resultId: number) => Observable<EntityResponseType>;
     getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
 }
@@ -26,9 +26,15 @@ export class ComplaintService implements IComplaintService {
     /**
      * Create a new complaint.
      * @param complaint
+     * @param examId the Id of the exam
      */
-    create(complaint: Complaint): Observable<EntityResponseType> {
+    create(complaint: Complaint, examId: number): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaint);
+        if (examId) {
+            return this.http
+                .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
+                .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        }
         return this.http
             .post<Complaint>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
@@ -123,13 +129,13 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime != null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,
+            submittedTime: complaint.submittedTime && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,
         });
     }
 
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submittedTime = res.body.submittedTime != null ? moment(res.body.submittedTime) : null;
+            res.body.submittedTime = res.body.submittedTime ? moment(res.body.submittedTime) : null;
         }
         return res;
     }
@@ -137,7 +143,7 @@ export class ComplaintService implements IComplaintService {
     private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
             res.body.forEach((complaint) => {
-                complaint.submittedTime = complaint.submittedTime != null ? moment(complaint.submittedTime) : null;
+                complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : null;
             });
         }
 

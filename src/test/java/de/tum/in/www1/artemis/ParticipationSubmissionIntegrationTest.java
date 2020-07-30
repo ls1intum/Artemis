@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -44,8 +43,8 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
-        Course course = database.addCourseWithOneTextExercise();
-        textExercise = (TextExercise) new ArrayList<>(course.getExercises()).get(0);
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
     }
 
     @AfterEach

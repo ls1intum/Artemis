@@ -12,8 +12,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -83,7 +81,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
 
     /**
      * Check if a spot were deleted and delete reference to in submittedTexts
-     * 
+     *
      * @param question the changed question with the changed spot
      */
     private void checkAndDeleteSubmittedTexts(ShortAnswerQuestion question) {

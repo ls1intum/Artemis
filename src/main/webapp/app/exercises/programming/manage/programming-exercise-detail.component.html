@@ -9,7 +9,7 @@
                 <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <button
                     type="submit"
-                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                 >
@@ -56,6 +56,7 @@
                     <jhi-programming-exercise-instructions
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.templateParticipation"
+                        [personalParticipation]="true"
                     ></jhi-programming-exercise-instructions>
                 </dd>
                 <ng-container *ngIf="programmingExercise.gradingInstructions">
@@ -110,6 +111,10 @@
                 <dd>
                     <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde">Allow Offline IDE</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.allowOfflineIde }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
                 <dd>
                     <span>{{ programmingExercise.allowOnlineEditor }}</span>
@@ -122,10 +127,12 @@
                 <dd>
                     <span>{{ programmingExercise.packageName }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
-                <dd>
-                    <a [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/lti-configuration' } }]">LTI Configuration</a>
-                </dd>
+                <ng-container *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor">
+                    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'lti-configuration']">LTI Configuration</a>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
@@ -135,6 +142,7 @@
                             [participation]="programmingExercise.templateParticipation"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
+                            [personalParticipation]="false"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -160,6 +168,7 @@
                             [participation]="programmingExercise.solutionParticipation"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
+                            [personalParticipation]="false"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -182,11 +191,7 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button
-                type="button"
-                [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'edit']"
-                class="btn btn-primary mr-1"
-            >
+            <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
             <span class="mr-1">

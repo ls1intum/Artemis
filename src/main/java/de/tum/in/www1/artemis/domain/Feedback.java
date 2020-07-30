@@ -49,7 +49,7 @@ public class Feedback implements Serializable {
     /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
      */
-    @Column(name = "credits ")
+    @Column(name = "credits")
     private Double credits;
 
     @Column(name = "positive")
@@ -62,6 +62,9 @@ public class Feedback implements Serializable {
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
     private Result result;
+
+    @ManyToOne
+    private GradingInstruction gradingInstruction;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -196,6 +199,14 @@ public class Feedback implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    public GradingInstruction getGradingInstruction() {
+        return gradingInstruction;
+    }
+
+    public void setGradingInstruction(GradingInstruction gradingInstruction) {
+        this.gradingInstruction = gradingInstruction;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -223,6 +234,6 @@ public class Feedback implements Serializable {
     @Override
     public String toString() {
         return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + "'" + "}";
+                + isPositive() + "'" + ", type='" + getType() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
     }
 }

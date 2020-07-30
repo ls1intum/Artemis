@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -51,7 +53,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ProgrammingExercise. */
 @RestController
@@ -87,14 +88,21 @@ public class ProgrammingExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
+    private final ExerciseGroupService exerciseGroupService;
+
+    /**
+     * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
+     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+     */
+    private final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService) {
+            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
+            ExerciseGroupService exerciseGroupService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -106,6 +114,7 @@ public class ProgrammingExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -137,6 +146,79 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validates the course and programming exercise short name.
+     * 1. Check presence and length of exercise short name
+     * 2. Check presence and length of course short name
+     * 3. Find forbidden patterns in exercise short name
+     * 4. Check that the short name doesn't already exist withing course or exam exercises
+     * @param programmingExercise Programming exercise to be validated
+     * @param course Course of the programming exercise
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
+                    .body(null));
+        }
+
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null));
+        }
+
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null));
+        }
+
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
+                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Validate the programming exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     * @param programmingExercise Programming exercise to be validated
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateTitle(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null));
+        }
+
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null));
+        }
+
+        // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
+        long numberOfProgrammingExercisesWithSameTitle = programmingExerciseRepository.countByTitleAndCourse(programmingExercise.getTitle(), course)
+                + programmingExerciseRepository.countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
+        if (numberOfProgrammingExercisesWithSameTitle > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "A programming exercise with the same title already exists. Please choose a different title.", "titleAlreadyExists"))
+                    .body(null));
+        }
+
+        return Optional.empty();
+    }
+
+    /**
      * POST /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to setup
@@ -151,55 +233,26 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
 
-        if (programmingExercise.getCourse() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The course is not set", "courseNotSet")).body(null);
-        }
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(programmingExercise, ENTITY_NAME);
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+
+        // Check authorization
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
-        // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
-        programmingExercise.setCourse(course);
-
-        // Check if exercise title is set
-        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
+        // Validate exercise title
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError.get();
         }
 
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
-        if (!titleMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
-        }
-
-        // Check if exercise shortname is set
-        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
-                    .body(null);
-        }
-
-        // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
-                    .body(null);
-        }
-
-        // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
-
-        List<ProgrammingExercise> programmingExercisesWithSameShortName = programmingExerciseRepository.findAllByShortNameAndCourse(programmingExercise.getShortName(), course);
-        if (programmingExercisesWithSameShortName.size() > 0) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
+        // Validate course and exercise short name
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError.get();
         }
 
         // Check if programming language is set
@@ -210,7 +263,7 @@ public class ProgrammingExerciseResource {
         // Check if package name is set
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             // only Java needs a valid package name at the moment
-            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            if (programmingExercise.getPackageName() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
 
@@ -226,23 +279,20 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
-        programmingExercise.generateAndSetProjectKey();
-        String projectKey = programmingExercise.getProjectKey();
-        String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-        if (projectExists) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
-                    .body(null);
+        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
-        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageCI != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
+        programmingExercise.generateAndSetProjectKey();
+        Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(programmingExercise);
+        if (projectExistsError.isPresent()) {
+            return projectExistsError.get();
         }
+
         try {
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            // Setup all repositories etc
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
@@ -251,6 +301,34 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
+    }
+
+    /**
+     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     * This prevents errors then the actual projects will be generated later on.
+     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
+     *
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @return an error response in case the project already exists or an empty optional in case it does not exist yet (which means the setup can continue as usual)
+     */
+    public Optional<ResponseEntity<ProgrammingExercise>> checkIfProjectExists(ProgrammingExercise programmingExercise) {
+        String projectKey = programmingExercise.getProjectKey();
+        String projectName = programmingExercise.getProjectName();
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
+                    .body(null));
+        }
+
+        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if (errorMessageCI != null) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null));
+        }
+        return Optional.empty();
     }
 
     /**
@@ -272,24 +350,64 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
-        if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+        if (sourceExerciseId < 0) {
             return badRequest();
         }
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(newExercise, ENTITY_NAME);
+
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         final var user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
-            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), course.getId());
             return forbidden();
+        }
+
+        // Validate exercise title
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(newExercise, course);
+        if (optionalTitleValidationError.isPresent()) {
+            return optionalTitleValidationError.get();
+        }
+
+        // Validate course and exercise short name
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
+        if (optionalShortNameValidationError.isPresent()) {
+            return optionalShortNameValidationError.get();
         }
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
-
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
+
+        // Check if the user has the rights to access the original programming exercise
+        Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
+        if (!authCheckService.isAtLeastInstructorInCourse(originalCourse, user)) {
+            log.debug("User {} is not authorized to import the original exercise in course {}", user.getId(), originalCourse.getId());
+            return forbidden();
+        }
+
+        // Check if max score is set
+        if (newExercise.getMaxScore() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
+        newExercise.generateAndSetProjectKey();
+        Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(newExercise);
+        if (projectExistsError.isPresent()) {
+            return projectExistsError.get();
+        }
+
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
@@ -303,6 +421,8 @@ public class ProgrammingExerciseResource {
         catch (HttpException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
+
+        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
         // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);
@@ -330,10 +450,15 @@ public class ProgrammingExerciseResource {
         if (updatedProgrammingExercise.getId() == null) {
             return badRequest();
         }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        exerciseService.checkCourseAndExerciseGroupExclusivity(updatedProgrammingExercise, ENTITY_NAME);
+
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(updatedProgrammingExercise.getCourse().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
+
+        // Check authorization
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
@@ -349,6 +474,17 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
+        if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
+        // TODO: if isAllowOfflineIde changes, we might want to change access for all existing student participations
+        // false --> true: add access for students to all existing student participations
+        // true --> false: remove access for students from all existing student participations
+
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise.get(), ENTITY_NAME);
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
@@ -365,7 +501,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping(value = Endpoints.PROBLEM)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
@@ -384,7 +520,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the programming exercises.
+     * GET /courses/:courseId/programming-exercises : get all the programming exercises.
      *
      * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -416,16 +552,31 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        if (programmingExercise.hasExerciseGroup()) {
+            // Get the course over the exercise group
+            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
+            Course course = exerciseGroup.getExam().getCourse();
+
+            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            // Set the exerciseGroup, exam and course so that the client can work with those ids
+            programmingExercise.setExerciseGroup(exerciseGroup);
         }
-        return ResponseUtil.wrapOrNotFound(programmingExercise);
+        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(programmingExercise);
     }
 
     /**
@@ -443,7 +594,7 @@ public class ProgrammingExerciseResource {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-            Course course = programmingExercise.getCourse();
+            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
@@ -473,18 +624,28 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        if (programmingExercise.isEmpty()) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        if (optionalProgrammingExercise.isEmpty()) {
             return notFound();
         }
-        Course course = programmingExercise.get().getCourse();
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
+        Course course;
+        if (programmingExercise.hasExerciseGroup()) {
+            course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
+        }
+        else {
+            course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        exerciseService.logDeletion(programmingExercise.get(), course, user);
+        exerciseService.logDeletion(programmingExercise, course, user);
         exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 
     /**
@@ -508,7 +669,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
 
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -571,7 +732,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     /**
@@ -605,12 +766,14 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
                 .collect(Collectors.toList());
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
-    // TODO: Should not throw the IOException but handle it!
-    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
-            RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+
+        long start = System.nanoTime();
+
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -618,13 +781,17 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
+                programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
+
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
@@ -647,7 +814,7 @@ public class ProgrammingExerciseResource {
         }
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();

@@ -15,18 +15,27 @@
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="user.naame"><span jhiTranslate="instructorDashboard.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                    <th jhiSortBy="user.name">
+                        <span jhiTranslate="instructorDashboard.name">Name</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="user.login">
+                        <span jhiTranslate="instructorDashboard.username">Username</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="numberOfParticipatedExercises">
-                        <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfSuccessfulExercises">
-                        <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="pointsPerExerciseType.{{ exerciseType }}">
-                            <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span><fa-icon [icon]="'sort'"></fa-icon>
+                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
+                            <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span>
+                            <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                     </ng-container>
                     <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="'sort'"></fa-icon></th>
@@ -44,32 +53,66 @@
                 <tr>
                     <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
                     <th></th>
-                    <th>{{ toLocaleString(averageNumberOfParticipatedExercises) }} ({{ toLocaleString((averageNumberOfParticipatedExercises / exercises.length) * 100) }}%)</th>
-                    <th>{{ toLocaleString(averageNumberOfSuccessfulExercises) }} ({{ toLocaleString((averageNumberOfSuccessfulExercises / exercises.length) * 100) }}%)</th>
+                    <th>
+                        {{ getLocaleConversionService().toLocaleString(averageNumberOfParticipatedExercises) }} ({{
+                            getLocaleConversionService().toLocaleString((averageNumberOfParticipatedExercises / exercises.length) * 100)
+                        }}
+                        %)
+                    </th>
+                    <th>
+                        {{ getLocaleConversionService().toLocaleString(averageNumberOfSuccessfulExercises) }} ({{
+                            getLocaleConversionService().toLocaleString((averageNumberOfSuccessfulExercises / exercises.length) * 100)
+                        }}
+                        %)
+                    </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ toLocaleString(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }} ({{
-                                toLocaleString((averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
+                            {{ getLocaleConversionService().toLocaleString(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }}
+                            ({{
+                                getLocaleConversionService().toLocaleString(
+                                    (averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100
+                                )
                             }}%)
                         </th>
                     </ng-container>
-                    <th>{{ toLocaleString(averageNumberOfOverallPoints) }} ({{ toLocaleString((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100) }}%)</th>
+                    <th>
+                        {{ getLocaleConversionService().toLocaleString(averageNumberOfOverallPoints) }} ({{
+                            getLocaleConversionService().toLocaleString((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100)
+                        }}
+                        %)
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let student of students | sortBy: predicate:reverse">
+                <tr *ngFor="let student of students">
                     <td>{{ student.user.name }}</td>
                     <td>{{ student.user.login }}</td>
-                    <td>{{ student.numberOfParticipatedExercises }} ({{ toLocaleString((student.numberOfParticipatedExercises / exercises.length) * 100) }}%)</td>
-                    <td>{{ student.numberOfSuccessfulExercises }} ({{ toLocaleString((student.numberOfSuccessfulExercises / exercises.length) * 100) }}%)</td>
+                    <td>
+                        {{ student.numberOfParticipatedExercises }} ({{
+                            getLocaleConversionService().toLocaleString((student.numberOfParticipatedExercises / exercises.length) * 100)
+                        }}
+                        %)
+                    </td>
+                    <td>
+                        {{ student.numberOfSuccessfulExercises }} ({{ getLocaleConversionService().toLocaleString((student.numberOfSuccessfulExercises / exercises.length) * 100) }}
+                        %)
+                    </td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ toLocaleString(student.sumPointsPerExerciseType.get(exerciseType)!) }} ({{
-                                toLocaleString((student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
+                            {{ getLocaleConversionService().toLocaleString(student.sumPointsPerExerciseType.get(exerciseType)!) }}
+                            ({{
+                                getLocaleConversionService().toLocaleString(
+                                    (student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100
+                                )
                             }}%)
                         </td>
                     </ng-container>
-                    <td>{{ toLocaleString(student.overallPoints) }} ({{ toLocaleString((student.overallPoints / maxNumberOfOverallPoints) * 100) }}%)</td>
+                    <td>
+                        {{ getLocaleConversionService().toLocaleString(student.overallPoints) }} ({{
+                            getLocaleConversionService().toLocaleString((student.overallPoints / maxNumberOfOverallPoints) * 100)
+                        }}
+                        %)
+                    </td>
                 </tr>
             </tbody>
         </table>

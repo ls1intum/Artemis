@@ -1,8 +1,9 @@
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
-import 'brace/mode/javascript';
 import 'brace/mode/markdown';
+import 'brace/mode/haskell';
+import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
@@ -11,7 +12,15 @@ import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as ace from 'brace';
-import { CommitState, CreateFileChange, DeleteFileChange, FileChange, RenameFileChange, ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    CreateFileChange,
+    DeleteFileChange,
+    EditorState,
+    FileChange,
+    RenameFileChange,
+    ResizeType,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -35,6 +44,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileChange: FileChange;
     @Input()
     readonly commitState: CommitState;
+    @Input()
+    readonly editorState: EditorState;
     @Input()
     get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
         return this.buildLogErrorsValue;
@@ -92,7 +103,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+        if (
+            (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
+        ) {
             this.fileSession = {};
             if (this.annotationChange) {
                 this.annotationChange.unsubscribe();
@@ -106,10 +120,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
-        } else if (changes.selectedFile && this.selectedFile) {
+        } else if (
+            (changes.selectedFile && this.selectedFile) ||
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
+        ) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.fileSession[this.selectedFile]) {
+            if (this.selectedFile && !this.fileSession[this.selectedFile]) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
@@ -129,21 +146,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
-        this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-            this.editorChangeLog.push(change);
-        });
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
+            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
+                this.editorChangeLog.push(change);
+            });
 
-        // Restore the previous cursor position
-        this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
-        this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
-        this.editor.setMode(this.editorMode);
-        this.editor.getEditor().resize();
-        this.editor.getEditor().focus();
-        // Reset the undo stack after file change, otherwise the user can undo back to the old file
-        this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
-        if (this.buildLogErrors) {
-            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            // Restore the previous cursor position
+            this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
+            this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
+            this.editor.setMode(this.editorMode);
+            this.editor.getEditor().resize();
+            this.editor.getEditor().focus();
+            // Reset the undo stack after file change, otherwise the user can undo back to the old file
+            this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
+            if (this.buildLogErrors) {
+                this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            }
         }
     }
 
@@ -185,20 +204,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.setReadOnly(true);
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.selectedFile && this.fileSession[this.selectedFile].code !== code) {
-            const cursor = this.editor.getEditor().getCursorPosition();
-            this.fileSession[this.selectedFile] = { code, cursor };
-            if (this.buildLogErrors.errors[this.selectedFile]) {
-                this.buildLogErrors = {
-                    ...this.buildLogErrors,
-                    errors: {
-                        ...this.buildLogErrors.errors,
-                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
-                    },
-                };
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            if (this.fileSession[this.selectedFile].code !== code) {
+                const cursor = this.editor.getEditor().getCursorPosition();
+                this.fileSession[this.selectedFile] = { code, cursor };
+                if (this.buildLogErrors.errors[this.selectedFile]) {
+                    this.buildLogErrors = {
+                        ...this.buildLogErrors,
+                        errors: {
+                            ...this.buildLogErrors.errors,
+                            [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
+                        },
+                    };
+                }
+                this.editorChangeLog = [];
+                this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
-            this.editorChangeLog = [];
-            this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
         }
     }
 

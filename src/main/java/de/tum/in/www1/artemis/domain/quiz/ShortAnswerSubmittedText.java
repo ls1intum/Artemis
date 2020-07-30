@@ -35,7 +35,7 @@ public class ShortAnswerSubmittedText implements Serializable {
 
     @Column(name = "isCorrect")
     @JsonView(QuizView.Before.class)
-    private Boolean isCorrect = false;
+    private Boolean isCorrect;
 
     @OneToOne
     @JoinColumn()

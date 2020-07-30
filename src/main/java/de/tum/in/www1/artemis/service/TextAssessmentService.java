@@ -27,8 +27,9 @@ public class TextAssessmentService extends AssessmentService {
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
-            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository);
+            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
+                examService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
         this.textBlockService = textBlockService;
@@ -47,7 +48,7 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment, textExercise);
+        Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
         return submitResult(result, textExercise, calculatedScore);
     }
@@ -58,12 +59,11 @@ public class TextAssessmentService extends AssessmentService {
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
-     * @param textExercise  the corresponding TextExercise
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
                 .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -91,6 +91,9 @@ public class TextAssessmentService extends AssessmentService {
         // deleted in the database because of the 'orphanRemoval = true' flag.
         result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
+            if (feedback.getCredits() == null) {
+                feedback.setCredits(0.0);
+            }
             feedback.setPositive(feedback.getCredits() >= 0);
             result.addFeedback(feedback);
         }

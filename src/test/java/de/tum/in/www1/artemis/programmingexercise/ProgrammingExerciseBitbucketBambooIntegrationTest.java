@@ -2,16 +2,15 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
@@ -27,12 +26,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -55,12 +52,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
-
-    @Autowired
     private TeamService teamService;
 
     @Autowired
@@ -74,7 +65,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private Course course;
 
+    private ExerciseGroup exerciseGroup;
+
     private ProgrammingExercise exercise;
+
+    private ProgrammingExercise examExercise;
 
     private final static int numberOfStudents = 2;
 
@@ -96,6 +91,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void setup() throws Exception {
         database.addUsers(numberOfStudents, 1, 1);
         course = database.addEmptyCourse();
+        exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        examExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -106,51 +103,14 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         studentRepo.configureRepos("studentRepo", "studentOriginRepo");
         studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        String studentRepoName = projectKey.toLowerCase() + "-" + studentLogin;
-        String studentTeamRepoName = projectKey.toLowerCase() + "-" + teamShortName;
-
-        var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepo.originRepoFile);
-        var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
-        var solutionRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.originRepoFile);
-        var studentRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(studentRepo.originRepoFile);
-        var studentTeamRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(studentTeamRepo.originRepoFile);
-
-        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
-        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
-        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
-        doReturn(studentRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, studentRepoName);
-        doReturn(studentTeamRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, studentTeamRepoName);
-
-        doReturn(gitService.getRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(exerciseRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(solutionRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(studentRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(studentRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(studentTeamRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(studentTeamRepoTestUrl.getURL(), true);
-
-        doReturn(exerciseRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(exerciseRepoTestUrl.getURL());
-        doReturn(testRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(testRepoTestUrl.getURL());
-        doReturn(solutionRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(solutionRepoTestUrl.getURL());
-        doReturn(studentRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(studentRepoTestUrl.getURL());
-        doReturn(studentTeamRepoName).when(continuousIntegrationService).getRepositorySlugFromUrl(studentTeamRepoTestUrl.getURL());
-
-        doReturn(exerciseRepoName).when(versionControlService).getRepositorySlugFromUrl(exerciseRepoTestUrl.getURL());
-        doReturn(testRepoName).when(versionControlService).getRepositorySlugFromUrl(testRepoTestUrl.getURL());
-        doReturn(solutionRepoName).when(versionControlService).getRepositorySlugFromUrl(solutionRepoTestUrl.getURL());
-        doReturn(studentRepoName).when(versionControlService).getRepositorySlugFromUrl(studentRepoTestUrl.getURL());
-        doReturn(studentTeamRepoName).when(versionControlService).getRepositorySlugFromUrl(studentTeamRepoTestUrl.getURL());
-
-        doReturn(projectKey).when(versionControlService).getProjectKeyFromUrl(any());
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocksParticipant(exercise, studentLogin, studentRepo);
+        setupRepositoryMocksParticipant(exercise, teamShortName, studentTeamRepo);
     }
 
     @AfterEach
     public void tearDown() throws IOException {
         database.resetDatabase();
-        reset(gitService);
-        reset(bambooServer);
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         exerciseRepo.resetLocalRepo();
@@ -175,9 +135,26 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExerciseForExam_validExercise_created() throws Exception {
+        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
+
+        mockConnectorRequestsForSetup(examExercise);
+        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        examExercise.setId(generatedExercise.getId());
+        assertThat(examExercise).isEqualTo(generatedExercise);
+        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_validExercise_structureOracle() throws Exception {
-        mockConnectorRequestsForSetup(exercise);
-        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        structureOracle(exercise);
+    }
+
+    private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {
+        mockConnectorRequestsForSetup(programmingExercise);
+        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
         String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", generatedExercise.getId() + ""), generatedExercise, String.class,
                 HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
@@ -216,7 +193,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_student_correctInitializationState() throws Exception {
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
@@ -237,7 +214,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_team_correctInitializationState() throws Exception {
-        final var course = exercise.getCourse();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -290,7 +267,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin());
 
         // Start participation with original team
-        participationService.startExercise(exercise, team);
+        participationService.startExercise(exercise, team, false);
 
         // Update team with new student after participation has already started
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
@@ -328,7 +305,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, exercise.getProjectKey(), firstStudent);
 
         // Start participation with original team
-        participationService.startExercise(exercise, team);
+        participationService.startExercise(exercise, team, false);
 
         // Update team with removed student
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
@@ -337,35 +314,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         for (final var verification : verifications) {
             verification.performVerification();
         }
-    }
-
-    private List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws Exception {
-        final var verifications = new LinkedList<Verifiable>();
-        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users);
-        verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
-        verifications.addAll(bambooRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username));
-        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        return verifications;
-    }
-
-    private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException, GitAPIException, InterruptedException {
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
-        bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
-
-        // TODO: check the actual plan and plan permissions that get passed here
-        doReturn(null).when(bambooServer).publish(any());
     }
 
     public List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {

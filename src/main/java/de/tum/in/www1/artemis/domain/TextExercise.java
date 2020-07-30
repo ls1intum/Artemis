@@ -74,4 +74,5 @@ public class TextExercise extends Exercise implements Serializable {
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
     }
+
 }

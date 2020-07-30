@@ -23,6 +23,7 @@
             [showGradedBadge]="true"
             [participation]="participation"
             [short]="true"
+            [personalParticipation]="true"
             class="mr-2"
         ></jhi-updating-result>
         <jhi-programming-exercise-student-trigger-build-button
@@ -31,7 +32,7 @@
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
+        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         <jhi-code-editor-actions
             [disableActions]="repositoryIsLocked"
             [unsavedFiles]="unsavedFiles"
@@ -59,6 +60,7 @@
         [selectedFile]="selectedFile"
         [fileChange]="fileChange"
         [commitState]="commitState"
+        [editorState]="editorState"
         [(buildLogErrors)]="buildLogErrors"
         [isTutorAssessment]="false"
         (onFileContentChange)="onFileContentChange($event)"

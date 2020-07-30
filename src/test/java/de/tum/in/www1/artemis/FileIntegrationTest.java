@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,12 +14,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -104,7 +103,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String iconPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.COURSE_ICON_FILEPATH, course.getId());
+        String iconPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getCourseIconFilepath(), course.getId());
 
         course.setCourseIcon(iconPath);
         courseRepo.save(course);
@@ -124,7 +123,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String backgroundPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, dragAndDropQuestion.getId());
+        String backgroundPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragAndDropBackgroundFilepath(), dragAndDropQuestion.getId());
 
         dragAndDropQuestion.setBackgroundFilePath(backgroundPath);
         courseRepo.save(course);
@@ -146,7 +145,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.DRAG_ITEM_FILEPATH, dragItem.getId());
+        String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilepath(), dragItem.getId());
 
         dragItem.setPictureFilePath(dragItemPath);
         courseRepo.save(course);
@@ -160,7 +159,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetFileUploadSubmission() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = (FileUploadExercise) new ArrayList<>(course.getExercises()).get(0);
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
@@ -233,7 +232,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/', lecture.getId(), true);
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getLectureAttachmentFilepath() + lecture.getId() + '/',
+                lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
         lecture.addAttachments(attachment);
@@ -241,5 +241,64 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
         return attachmentPath;
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void uploadImageMarkdownAsStudent_forbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadImageMarkdownAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        assertThat(responsePath.contains("markdown")).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void uploadFileAsStudentForbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "TA")
+    public void uploadFileAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        assertThat(responsePath.contains("temp")).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "TA")
+    public void uploadFileUnsupportedFileExtension() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
 }

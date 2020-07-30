@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -62,6 +64,8 @@ public class ExerciseResource {
 
     private final SubmissionService submissionService;
 
+    private final ExamService examService;
+
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final ResultService resultService;
@@ -75,7 +79,8 @@ public class ExerciseResource {
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService,
+            ExamService examService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -89,6 +94,7 @@ public class ExerciseResource {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
         this.gradingCriterionService = gradingCriterionService;
+        this.examService = examService;
     }
 
     /**
@@ -100,20 +106,44 @@ public class ExerciseResource {
     @GetMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+
+        // Exam exercise
+        if (exercise.hasExerciseGroup()) {
+            Exam exam = exercise.getExerciseGroup().getExam();
+            if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                // instructors and admins should always be able to see exam exercises
+                // continue
+            }
+            else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                // tutors should only be able to see exam exercises when the exercise has finished
+                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+                if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
+                    // When there is no due date or the due date is in the future, we return forbidden here
+                    return forbidden();
+                }
+            }
+            else {
+                // Students should never access exercises
+                return forbidden();
+            }
+        }
+        // Normal exercise
+        else {
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                return forbidden();
+            }
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                exercise.filterSensitiveInformation();
+            }
+        }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            exercise.filterSensitiveInformation();
-        }
-
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
@@ -189,17 +219,18 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         DueDateStat numberOfSubmissions;
+        DueDateStat numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
+            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-
-        final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
@@ -306,6 +337,13 @@ public class ExerciseResource {
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+
+        // TODO: Create alternative route so that instructors and admins can access the exercise details
+        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
+        if (exercise.hasExerciseGroup()) {
+            return forbidden();
+        }
+
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();

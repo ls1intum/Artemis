@@ -697,6 +697,10 @@ Course Info Bar
         color: #6a737d;
         border-left: 0.25em solid #dfe2e5;
     }
+
+    img {
+        max-width: 100%;
+    }
 }
 
 ngb-tooltip-window {
@@ -730,5 +734,14 @@ ngb-tooltip-window {
         font-size: 0.8em;
         vertical-align: 10%;
         margin-right: 2px;
+    }
+}
+
+@media print {
+    .container {
+        min-width: 0 !important;
+    }
+    .card {
+        display: block !important;
     }
 }

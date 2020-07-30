@@ -69,6 +69,13 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
+    findExamExercise(exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/examExercise/${exerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.checkPermission(res));
+    }
+
     /**
      * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      * @param { number } exerciseId - programming exercise for which build plans in respective student participations are deleted
@@ -157,9 +164,9 @@ export class ExerciseService {
      * @returns { Exercise } - Exercise with adjusted times
      */
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
-        exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-        exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
+        exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+        exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+        exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
         exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
         return exercise;
     }
@@ -185,9 +192,9 @@ export class ExerciseService {
      */
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : null,
-            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : null,
+            releaseDate: exercise.releaseDate && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : null,
+            dueDate: exercise.dueDate && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : null,
+            assessmentDueDate: exercise.assessmentDueDate && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : null,
         });
     }
 
@@ -197,9 +204,9 @@ export class ExerciseService {
      */
     convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-            res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
-            res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
+            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : null;
+            res.body.dueDate = res.body.dueDate ? moment(res.body.dueDate) : null;
+            res.body.assessmentDueDate = res.body.assessmentDueDate ? moment(res.body.assessmentDueDate) : null;
             res.body.studentParticipations = this.participationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;

@@ -1,0 +1,9 @@
+<h6>
+    <span>Repository Link:</span>
+    <span>
+        <a href="{{ participation?.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ participation?.repositoryUrl }}</a>
+    </span>
+    <br />
+    <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | translate }}:</span>
+    <span [title]="submission?.commitHash">{{ (submission?.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | translate) }}</span>
+</h6>

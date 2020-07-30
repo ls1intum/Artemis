@@ -11,7 +11,7 @@
         <ace-editor
             #editor
             id="ace-code-editor"
-            [mode]="editorMode"
+            [mode]="editorMode ? editorMode : 'java'"
             [readOnly]="isLoading"
             [hidden]="!selectedFile || isLoading"
             [autoUpdateContent]="true"

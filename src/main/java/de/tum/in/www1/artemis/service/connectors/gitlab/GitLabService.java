@@ -4,10 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -51,14 +48,11 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL GITLAB_SERVER_URL;
 
-    @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> USER_PREFIX_EDX;
 
-    @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
-
-    @Value("${artemis.version-control.secret}")
-    private String GITLAB_PRIVATE_TOKEN;
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> USER_PREFIX_U4I;
 
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
@@ -73,31 +67,35 @@ public class GitLabService extends AbstractVersionControlService {
 
     private GitLabApi gitlab;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabUserManagementService gitLabUserManagementService) {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
+            GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
     }
 
     @PostConstruct
     public void init() {
         this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
-        this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, Set<User> users) {
+    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
             // Automatically created users
-            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
+            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
                 if (!userExists(username)) {
                     gitLabUserManagementService.importUser(user);
                 }
             }
-
-            addMemberToRepository(repositoryUrl, user);
+            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+                // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
+                // NOTE: null values are interpreted as offline IDE is allowed
+                addMemberToRepository(repositoryUrl, user);
+            }
         }
 
         try {
@@ -279,8 +277,8 @@ public class GitLabService extends AbstractVersionControlService {
         try {
             gitlab.getGroupApi().addGroup(group);
 
-            final var instructors = userService.getInstructors(programmingExercise.getCourse());
-            final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
+            final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+            final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
             for (final var instructor : instructors) {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
                 gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);

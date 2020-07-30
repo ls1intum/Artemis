@@ -6,6 +6,7 @@ import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apo
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -22,6 +23,7 @@ export class ApollonDiagramListComponent implements OnInit {
         private apollonDiagramsService: ApollonDiagramService,
         private jhiAlertService: AlertService,
         private modalService: NgbModal,
+        private sortService: SortService,
         private route: ActivatedRoute,
         private router: Router,
     ) {
@@ -89,10 +91,9 @@ export class ApollonDiagramListComponent implements OnInit {
         return item.id;
     }
 
-    /**
-     * Used in the template for jhiSort
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.apollonDiagrams, this.predicate, this.reverse);
+    }
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser

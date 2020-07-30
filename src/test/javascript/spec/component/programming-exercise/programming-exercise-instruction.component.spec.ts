@@ -98,6 +98,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 getFileStub = stub(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+
+                comp.personalParticipation = true;
             });
     });
 
@@ -122,7 +124,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.to.equal(oldSubscription);
         expect(comp.isInitial).to.be.true;
         expect(getHintsForExerciseStub).to.have.been.calledOnceWithExactly(exercise.id);
@@ -298,12 +300,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
@@ -334,7 +338,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
-
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
@@ -346,12 +349,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.tasks).to.have.lengthOf(2);
         expect(comp.tasks[0]).to.deep.equal({
+            id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
+            id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -57,7 +59,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void submitEnglishTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
@@ -72,7 +74,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
@@ -85,8 +87,17 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExamTextExercise() throws Exception {
+        TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        assertThat(exerciseRepository.findAll().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         String title = "New Text Exercise";
@@ -100,12 +111,53 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
+        assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExerciseForExam() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+
+        String title = "New Exam Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
+        assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(!newTextExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(newTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExercise.setCourse(exerciseGroup.getExam().getCourse());
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(null);
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         textExercise = (TextExercise) exerciseRepository.findByIdWithEagerExampleSubmissions(textExercise.getId()).get();
 
@@ -128,12 +180,176 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
+        assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
+        assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
+        assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExerciseForExam() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        // Update certain attributes of text exercise
+        String updateTitle = "After";
+        DifficultyLevel updateDifficulty = DifficultyLevel.HARD;
+        textExercise.setTitle(updateTitle);
+        textExercise.setDifficulty(updateDifficulty);
+
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
+
+        assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
+        assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
+        assertThat(!updatedTextExercise.hasCourse()).as("course was not set for exam exercise");
+        assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setExerciseGroup(exerciseGroup);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setCourse(null);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+
+        textExercise.setCourse(null);
+        textExercise.setExerciseGroup(exerciseGroup);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
+        Course course = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        textExercise.setExerciseGroup(null);
+        textExercise.setCourse(course);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course2);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToExam() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(null);
+        textExercise.setExerciseGroup(exerciseGroup1);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void importTextExerciseFromCourseToExam_forbidden() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(null);
+        textExercise.setExerciseGroup(exerciseGroup1);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromExamToCourse() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course1);
+        textExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void importTextExerciseFromExamToCourse_forbidden() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course1);
+        textExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromExamToExam() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setExerciseGroup(exerciseGroup2);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToCourse_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(null);
+
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextExercisesForCourse() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
 
         List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
 
@@ -143,7 +359,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextExerciseAsTutor() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
@@ -152,9 +368,31 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExamTextExerciseAsTutor_forbidden() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getExamTextExerciseAsInstructor() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+
+        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+        assertThat(textExercise.getId()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getTextExerciseAsStudent() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
@@ -162,7 +400,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testTriggerAutomaticAssessment() throws Exception {
-        final Course course = database.addCourseWithOneTextExercise();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithoutLocation("/api/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
     }

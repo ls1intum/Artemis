@@ -15,7 +15,7 @@
     </button>
     <div *ngIf="selectedDate">
         {{ selectedDate | artemisDate: 'long-date' }}<br />
-        {{ selectedDate | artemisDate: 'short-time' }}
+        {{ selectedDate | artemisDate: 'time' }}
     </div>
     <div *ngIf="!selectedDate" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">
         not set

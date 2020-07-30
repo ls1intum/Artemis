@@ -18,6 +18,24 @@
 </div>
 <ng-template #standardActions>
     <button
+        id="refresh_button"
+        type="button"
+        class="btn btn-primary navbar-btn mr-3"
+        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+        (click)="onRefresh()"
+        data-toggle="tooltip"
+        data-placement="left"
+        title="Refresh all files. This will overwrite all uncommitted changes."
+    >
+        <span *ngIf="editorState === EditorState.REFRESHING">
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
+        </span>
+        <span *ngIf="editorState !== EditorState.REFRESHING"
+            ><fa-icon [icon]="['fas', 'sync']"></fa-icon> <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span></span
+        >
+    </button>
+    <button
         id="save_button"
         type="button"
         class="guided-tour-save-button btn btn-primary navbar-btn mr-3"
@@ -34,9 +52,9 @@
         data-placement="left"
         title="Save all unsaved changes in your files."
     >
-        <span *ngIf="editorState === EditorState.SAVING"
-            ><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span
-        >
+        <span *ngIf="editorState === EditorState.SAVING">
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span>
+        </span>
         <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
     </button>
     <button
@@ -45,7 +63,10 @@
         class="guided-tour-submit-button btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
-            disableActions || editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
+            disableActions ||
+            editorState === EditorState.REFRESHING ||
+            editorState === EditorState.SAVING ||
+            (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
         "
         (click)="commit()"
         data-toggle="tooltip"

@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -35,6 +35,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { Exam } from 'app/entities/exam.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -51,6 +52,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+    exam: Exam | null = null;
+    // TODO fix tutorLeaderboard and side panel for exam exercises
+    isExamMode = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -191,10 +195,17 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
                 }
 
-                this.getSubmissions();
+                // exercise belongs to an exam
+                if (this.exercise?.exerciseGroup) {
+                    this.isExamMode = true;
+                    this.exam = this.exercise?.exerciseGroup?.exam;
+                }
 
-                // We don't want to assess submissions before the exercise due date
-                if (!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) {
+                this.getTutorAssessedSubmissions();
+
+                // 1. We don't want to assess submissions before the exercise due date
+                // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
+                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode) {
                     this.getSubmissionWithoutAssessment();
                 }
             },
@@ -254,7 +265,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getSubmissions(): void {
+    private getTutorAssessedSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
@@ -448,9 +459,13 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Navigates back to the tutor dashboard
+     * Navigates back to the tutor (exam) dashboard
      */
     back() {
-        this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        if (this.exercise?.course) {
+            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+        } else {
+            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+        }
     }
 }

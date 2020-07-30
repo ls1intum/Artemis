@@ -3,6 +3,7 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
@@ -18,7 +19,7 @@ export class TutorLeaderboardComponent implements OnInit {
     sortPredicate = 'points';
     reverseOrder = false;
 
-    constructor(private accountService: AccountService) {}
+    constructor(private accountService: AccountService, private sortService: SortService) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -32,8 +33,7 @@ export class TutorLeaderboardComponent implements OnInit {
         }
     }
 
-    /**
-     * @callback empty callback
-     */
-    callback() {}
+    sortRows() {
+        this.sortService.sortByProperty(this.tutorsData, this.sortPredicate, this.reverseOrder);
+    }
 }
