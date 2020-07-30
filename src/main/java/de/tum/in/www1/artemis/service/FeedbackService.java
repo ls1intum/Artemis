@@ -23,8 +23,6 @@ import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 @Service
 public class FeedbackService {
 
-    public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
-
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
     private final FeedbackRepository feedbackRepository;
@@ -62,7 +60,7 @@ public class FeedbackService {
 
             for (final var issue : report.getIssues()) {
                 Feedback feedback = new Feedback();
-                feedback.setText(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name());
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name());
                 feedback.setDetailText(issue.getMessage());
                 feedback.setReference(issue.getClassname() + ':' + issue.getLine());
                 feedback.setType(FeedbackType.AUTOMATIC);

@@ -176,6 +176,7 @@ public class ProgrammingExerciseTestCaseService {
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
+            // TODO: This will also remove all static code analysis feedback if no test cases for the current date exist. Should we keep the feedback or add an option for this?
             removeAllFeedbackAndSetScoreToZero(result);
         }
         // Case 3: If there are no feedbacks, the build has failed. In this case we just return the original result without changing it.
@@ -217,9 +218,10 @@ public class ProgrammingExerciseTestCaseService {
      * @param testCasesForCurrentDate of the given programming exercise.
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
-        // TODO: do not remove static code analysis feedback
-        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
-                .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
+        // Find feedback not associated with relevant test cases for the current date. Does not remove static code analysis feedback
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(
+                feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+                .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive()
