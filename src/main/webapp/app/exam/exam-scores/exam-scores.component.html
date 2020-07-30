@@ -11,7 +11,7 @@
             {{ examScoreDTO.title }}
         </h3>
         <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
-            {{ examScoreDTO.maxPoints }} Points achievable
+            {{ getLocaleConversionService().toLocaleString(examScoreDTO.maxPoints) }} Points achievable
         </h4>
         <h4 *ngIf="exerciseGroups && studentResults">
             <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
@@ -52,8 +52,10 @@
                                 </li>
                             </ul>
                         </td>
-                        <td>{{ exerciseGroup.averagePointsAchieved == null ? '-' : round(exerciseGroup.averagePointsAchieved, 2) }}</td>
-                        <td>{{ exerciseGroup.maxPoints == null ? '-' : exerciseGroup.maxPoints }}</td>
+                        <td>
+                            {{ exerciseGroup.averagePointsAchieved == null ? '-' : getLocaleConversionService().toLocaleString(round(exerciseGroup.averagePointsAchieved, 2), 2) }}
+                        </td>
+                        <td>{{ exerciseGroup.maxPoints == null ? '-' : getLocaleConversionService().toLocaleString(exerciseGroup.maxPoints) }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -107,9 +109,10 @@
                             <td *ngIf="studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
                                 {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
                                 :
-                                {{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}
+                                {{ getLocaleConversionService().toLocaleString(round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1)) }}
 
-                                ({{ round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2) }}
+                                (
+                                {{ getLocaleConversionService().toLocaleString(round(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore, 2), 2) }}
                                 %)
                             </td>
                             <ng-template #empty>
@@ -118,8 +121,8 @@
                                 </td>
                             </ng-template>
                         </ng-container>
-                        <td>{{ round(studentResult.overallPointsAchieved, 1) }}</td>
-                        <td>{{ round(studentResult.overallScoreAchieved, 2) }}</td>
+                        <td>{{ getLocaleConversionService().toLocaleString(round(studentResult.overallPointsAchieved, 1)) }}</td>
+                        <td>{{ getLocaleConversionService().toLocaleString(round(studentResult.overallScoreAchieved, 2), 2) }}</td>
                     </tr>
                 </tbody>
             </table>

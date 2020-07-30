@@ -19,6 +19,7 @@ import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/rou
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -45,6 +46,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private loginService: LoginService,
         private languageService: JhiLanguageService,
         private languageHelper: JhiLanguageHelper,
+        private localeConversionService: LocaleConversionService,
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
@@ -106,6 +108,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
         moment.locale(languageKey);
+        this.localeConversionService.locale = languageKey;
     }
 
     collapseNavbar() {
