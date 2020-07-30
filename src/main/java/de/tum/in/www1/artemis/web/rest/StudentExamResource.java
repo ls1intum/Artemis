@@ -98,9 +98,6 @@ public class StudentExamResource {
         List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(),
                 studentExam.getExercises());
 
-        // fetch user here to avoid fetching the user for each exercise individually
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
@@ -261,8 +258,8 @@ public class StudentExamResource {
         }
         var studentExam = optionalStudentExam.get();
 
-        // check that the studentExam is over, otherwise /studentExams/conduction should be used
-        if (!studentExam.isSubmitted() && !studentExam.isEnded()) {
+        // check that the studentExam is over and that it has been submitted, otherwise /studentExams/conduction should be used
+        if (!studentExam.isSubmitted() || !studentExam.isEnded()) {
             return forbidden();
         }
 

@@ -71,7 +71,7 @@ public class QuizSubmission extends Submission implements Serializable {
 
     /**
      * Filters the sensitive quiz submission information for exams, if the results are not published or the user is not an instructor
-     * It sets the {@link QuizSubmission#setScoreInPoints(Double)} & {SubmittedAnswer#setScoreInPoints(Double)} to null for every submitted answer.
+     * It sets the {@link QuizSubmission#setScoreInPoints(Double)} & {@link SubmittedAnswer#setScoreInPoints(Double)} to null for every submitted answer.
      * Additionally it calls {@link SubmittedAnswer#filterOutCorrectAnswers()} dynamically for the correct question type.
      * @param examResultsPublished flag indicating if the results are published, see {@link Exam#resultsPublished()}
      * @param isAtLeastInstructor flag indicating if the user has instructor privileges
