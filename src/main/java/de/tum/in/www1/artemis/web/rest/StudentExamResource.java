@@ -258,8 +258,8 @@ public class StudentExamResource {
         }
         var studentExam = optionalStudentExam.get();
 
-        // check that the studentExam is over and that it has been submitted, otherwise /studentExams/conduction should be used
-        if (!studentExam.isSubmitted() || !studentExam.isEnded()) {
+        // check that the studentExam has been submitted, otherwise /studentExams/conduction should be used
+        if (!studentExam.isSubmitted()) {
             return forbidden();
         }
 
@@ -348,10 +348,9 @@ public class StudentExamResource {
     /**
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam. See {@link StudentExamResource#areResultsPublishedYet(StudentExam)}
+     * We also attach the result if the results are already published for the exam. See {@link StudentExam#areResultsPublishedYet}
      * @param studentExam the given studentExam
      * @param participation the given participation of the student
-     * @param latestSubmission the latest
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {

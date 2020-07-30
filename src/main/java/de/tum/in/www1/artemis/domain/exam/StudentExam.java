@@ -190,6 +190,7 @@ public class StudentExam implements Serializable {
      * Calls {@link Exam#resultsPublished()}
      * @return true the results are published
      */
+    @JsonIgnore
     public boolean areResultsPublishedYet() {
         return exam.resultsPublished();
     }
