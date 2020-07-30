@@ -864,6 +864,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             participation.setResults(Set.of(result));
             resultRepository.save(result);
         }
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
 
         // user tries to access exam summary
         database.changeUser(studentExam.getUser().getLogin());
