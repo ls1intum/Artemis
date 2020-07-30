@@ -359,7 +359,7 @@ public class StudentExamResource {
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
         // Only set the result during the exam (direct automatic feedback) or after publishing the results
-        boolean studentAllowedToSeeResult = (studentExam.isStarted() && !studentExam.isEnded()) || studentExam.areResultsPublishedYet();
+        boolean studentAllowedToSeeResult = (studentExam.getExam().isStarted() && !studentExam.isEnded()) || studentExam.areResultsPublishedYet();
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
         if ((studentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {

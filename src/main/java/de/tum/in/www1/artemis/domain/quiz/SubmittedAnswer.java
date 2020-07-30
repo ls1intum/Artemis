@@ -132,7 +132,9 @@ public abstract class SubmittedAnswer implements Serializable {
      */
     public void filterOutCorrectAnswers() {
         QuizQuestion question = this.getQuizQuestion();
-        question.filterForStudentsDuringQuiz();
+        if (question != null) {
+            question.filterForStudentsDuringQuiz();
+        }
         this.setScoreInPoints(null);
     };
 
