@@ -79,6 +79,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
+        // If we switch to another language which does not support static code analysis we need to reset the option
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.programmingExercise.staticCodeAnalysisEnabled = false;
+        }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language);
