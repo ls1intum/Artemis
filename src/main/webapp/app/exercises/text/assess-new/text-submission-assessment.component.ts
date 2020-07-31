@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/entities/course.model';
+import { Team } from 'app/entities/team.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -276,7 +277,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             // const teamId = (this.submission.participation as StudentParticipation).team.id;
             const teamId1 = this.submission.participation;
             const teamId2 = teamId1 as StudentParticipation;
-            const teamId3 = teamId2.team;
+            const teamId3 = teamId2.team as Team;
             const teamId4 = teamId3.id;
             console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId3 + ',four:' + teamId4);
             this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId4}`);
