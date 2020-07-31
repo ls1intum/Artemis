@@ -170,7 +170,7 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
-                        (hasUnsavedChanges)="hashUnsavedChanges = $event"
+                        (hasUnsavedChanges)="hasUnsavedChanges = $event"
                         [forceRender]="rerenderSubject.asObservable()"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
@@ -265,7 +265,8 @@
                         </label>
                     </div>
                 </div>
-                <div class="form-group-narrow">
+                <!-- Static code analysis is only supported for JAVA at the moment -->
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
                     <div class="form-check">
                         <label class="form-check-label" for="field_staticCodeAnalysisEnabled">
                             <input

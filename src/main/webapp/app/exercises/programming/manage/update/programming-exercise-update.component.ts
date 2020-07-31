@@ -34,7 +34,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
     isImport: boolean;
     isExamMode: boolean;
-    hashUnsavedChanges = false;
+    hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
@@ -266,7 +266,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
-        if (this.hashUnsavedChanges) {
+        if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
             if (!window.confirm(confirmLanguageChangeText)) {
                 return this.selectedProgrammingLanguage;
@@ -284,7 +284,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
-        this.hashUnsavedChanges = false;
+        this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
