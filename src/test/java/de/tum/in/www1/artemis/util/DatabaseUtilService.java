@@ -945,6 +945,14 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
+        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setParticipation(participation);
+        return submissionRepository.save(programmingSubmission);
+    }
+
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);

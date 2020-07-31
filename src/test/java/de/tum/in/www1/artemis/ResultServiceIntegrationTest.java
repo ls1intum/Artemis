@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.TestConstants;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -132,13 +131,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws Exception {
-        // TODO: This should be refactoring into the ModelUtilService.
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()).setParticipation(programmingExerciseStudentParticipation);
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
-        programmingSubmission.setParticipation(programmingExercise.getSolutionParticipation());
-        submissionRepository.save(programmingSubmission);
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1).id(1L));
@@ -156,13 +150,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() throws Exception {
-        // TODO: This should be refactoring into the ModelUtilService.
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
-        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
-        submissionRepository.save(programmingSubmission);
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
 
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
