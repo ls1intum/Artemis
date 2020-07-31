@@ -157,8 +157,21 @@ public class ProgrammingExerciseTestCaseService {
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
                 .collect(Collectors.toSet());
-        // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
-        if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
+        // Distinguish between static code analysis feedback and test case feedback
+        // TODO: For now we are only concerned with not breaking existing functionality and not losing static code analysis feedback.
+        // This method has to be extended/refactored when a grading concept for static code analysis has been created
+        List<Feedback> testCaseFeedback = new ArrayList<>();
+        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
+        for (var feedback : result.getFeedbacks()) {
+            if (feedback.isStaticCodeAnalysisFeedback()) {
+                staticCodeAnalysisFeedback.add(feedback);
+            }
+            else {
+                testCaseFeedback.add(feedback);
+            }
+        }
+        // Case 1: There are tests and test case feedbacks, find out which tests were not executed or should only count to the score after the due date.
+        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
             removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
 
@@ -175,11 +188,10 @@ public class ProgrammingExerciseTestCaseService {
             updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
-            // TODO: This will also remove all static code analysis feedback if no test cases for the current date exist. Should we keep the feedback or add an option for this?
-            removeAllFeedbackAndSetScoreToZero(result);
+        else if (testCases.size() > 0 && testCaseFeedback.size() > 0) {
+            removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
         }
-        // Case 3: If there are no feedbacks, the build has failed. In this case we just return the original result without changing it.
+        // Case 3: If there is no test case feedback, the build has failed. In this case we just return the original result without changing it.
         return result;
     }
 
@@ -257,12 +269,12 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Remove all feedback information from a result and treat it as if it has a score of 0.
+     * Remove all test case feedback information from a result and treat it as if it has a score of 0.
      * @param result
      */
-    private void removeAllFeedbackAndSetScoreToZero(Result result) {
-        result.setFeedbacks(new ArrayList<>());
-        result.hasFeedback(false);
+    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
+        result.setFeedbacks(staticCodeAnalysisFeedback);
+        result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
         result.setScore(0L);
         result.setResultString("0 of 0 passed");
     }
