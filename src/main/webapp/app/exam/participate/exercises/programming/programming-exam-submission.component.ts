@@ -49,7 +49,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     onActivate(): void {
-        console.log('ProgrammingExamSubmissionComponent.onActivate() for exercise ' + this.exercise.id);
         if (this.codeEditorComponent) {
             this.codeEditorComponent.reload();
         }

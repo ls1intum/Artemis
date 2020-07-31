@@ -296,10 +296,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            (err) => {
+            () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
-                console.log('Error while getting template instruction file!', err);
             },
         );
     }
