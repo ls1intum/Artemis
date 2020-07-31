@@ -35,11 +35,11 @@ export class Feedback implements BaseEntity {
     public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId: string | null;
 
-    public isStaticCodeAnalysisFeedback(): boolean {
-        if (!this.text) {
+    public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
+        if (!that.text) {
             return false;
         }
-        return this.type === FeedbackType.AUTOMATIC && this.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
     }
 
     public static hasDetailText(that: Feedback): boolean {
