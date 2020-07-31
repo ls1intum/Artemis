@@ -27,6 +27,7 @@ export class AssessmentLayoutComponent {
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
 
+    @Input() teamId: number;
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;

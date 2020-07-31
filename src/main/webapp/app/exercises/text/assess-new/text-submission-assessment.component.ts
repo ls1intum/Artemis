@@ -65,6 +65,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private cancelConfirmationText: string;
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
+    team: Team;
+    teamId: number;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -278,8 +280,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             const teamId1 = this.submission.participation;
             const teamId2 = teamId1 as StudentParticipation;
             const teamId3 = teamId2.team as Team;
+            console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId3);
             const teamId4 = teamId3.id;
-            console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId3 + ',four:' + teamId4);
             this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId4}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
