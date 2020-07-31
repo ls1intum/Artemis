@@ -202,6 +202,24 @@
                         </label>
                     </div>
                 </div>
+                <!-- Static code analysis is only supported for JAVA at the moment.
+                Also this option can't be changed on edit or import because the build plans and the test repo are already set up-->
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_staticCodeAnalysisEnabled">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="staticCodeAnalysisEnabled"
+                                id="field_staticCodeAnalysisEnabled"
+                                [disabled]="!!programmingExercise.id"
+                                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
+                                checked
+                            />
+                            <span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis">Enable Static Code Analysis</span>
+                        </label>
+                    </div>
+                </div>
                 <div class="form-group-narrow">
                     <div class="form-check">
                         <label class="form-check-label" for="field_allowOfflineIde">
@@ -262,23 +280,6 @@
                                 checked
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
-                        </label>
-                    </div>
-                </div>
-                <!-- Static code analysis is only supported for JAVA at the moment -->
-                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
-                    <div class="form-check">
-                        <label class="form-check-label" for="field_staticCodeAnalysisEnabled">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="staticCodeAnalysisEnabled"
-                                id="field_staticCodeAnalysisEnabled"
-                                [disabled]="!!programmingExercise.id"
-                                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
-                                checked
-                            />
-                            <span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis">Enable Static Code Analysis</span>
                         </label>
                     </div>
                 </div>
