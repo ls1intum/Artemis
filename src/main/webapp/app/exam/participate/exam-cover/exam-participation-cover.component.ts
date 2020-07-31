@@ -163,21 +163,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Submits the exam if user has valid token
+     * Submits the exam
      */
     submitExam() {
-        // TODO: refactor following code
-        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
-        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-        //     const validSessionToken = response.body?.sessionToken ?? '';
-        //     if (validSessionToken && localSessionToken === validSessionToken) {
-        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
-        //         // TODO: submit exam
-        //     } else {
-        //         console.log('Something went wrong');
-        //         // error message
-        //     }
-        // })
         this.onExamEnded.emit();
     }
 
