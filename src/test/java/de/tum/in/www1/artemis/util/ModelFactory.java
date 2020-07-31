@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
 
@@ -437,7 +436,7 @@ public class ModelFactory {
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setType(FeedbackType.AUTOMATIC);
-        feedback.setText(FeedbackService.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
         feedback.setReference("Class:Line" + index);
         feedback.setDetailText("This is a DetailText " + index);
         return feedback;
