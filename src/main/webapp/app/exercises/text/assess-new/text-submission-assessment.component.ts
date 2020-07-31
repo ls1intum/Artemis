@@ -273,10 +273,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     navigateBack() {
         if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            // const teamId = (this.submission.participation as StudentParticipation).team.id;
             const teamId2 = this.submission.participation as StudentParticipation;
             const teamId3 = teamId2.team.id;
-            console.error('one:' + teamId + ',two:' + teamId2 + ',three:' + teamId3);
+            console.error(',two:' + teamId2 + ',three:' + teamId3);
             this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId3}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
