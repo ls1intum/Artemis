@@ -99,7 +99,7 @@ export class ResultDetailComponent implements OnInit {
         const testCaseFeedback: Feedback[] = [];
         const staticCodeAnalysisFeedback: Feedback[] = [];
         feedbackList.forEach((feedback) => {
-            if (feedback.isStaticCodeAnalysisFeedback()) {
+            if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 staticCodeAnalysisFeedback.push(feedback);
             } else {
                 testCaseFeedback.push(feedback);
