@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
+import { Team } from 'app/entities/team.model';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -27,6 +28,7 @@ export class AssessmentLayoutComponent {
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
 
+    @Input() team: Team;
     @Input() teamId: number;
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;

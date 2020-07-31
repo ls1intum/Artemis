@@ -56,6 +56,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     isAtLeastInstructor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    team: Team | null;
+    teamId: number;
 
     /*
      * Non-resetted properties:
@@ -65,8 +67,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private cancelConfirmationText: string;
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
-    team: Team;
-    teamId: number;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -118,6 +118,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.unusedTextBlockRefs = [];
         this.complaint = null;
         this.totalScore = 0;
+        this.team = null;
+        this.teamId = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -157,6 +159,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
+        this.team = (this.submission.participation as StudentParticipation).team;
+        this.teamId = (this.submission.participation as StudentParticipation).team.id;
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -281,8 +285,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             const teamId2 = teamId1 as StudentParticipation;
             const teamId3 = teamId2.team as Team;
             console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId3);
-            const teamId4 = teamId3.id;
-            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId4}`);
+            // const teamId4 = teamId3.id;
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${this.teamId}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
