@@ -17,9 +17,7 @@ import {
     REACHABLE_SCORE,
     CURRENT_RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -417,31 +415,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         }
     }
-
-    /*// TODO: document the implementation of this method --> it is not really obvious
-    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
-    absoluteResult(result: Result): number | null {
-        if (!result.resultString) {
-            return 0;
-        }
-        if (result.resultString && result.resultString.indexOf('failed') !== -1) {
-            return null;
-        }
-        if (result.resultString && result.resultString.indexOf('passed') !== -1) {
-            return null;
-        }
-        if (result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed) {
-            return null;
-        }
-        const replaced = result.resultString.replace(',', '.');
-        if (result.resultString.indexOf('of') === -1) {
-            if (result.resultString.indexOf('points') === -1) {
-                return 0;
-            }
-        }
-
-        return parseFloat(replaced.split(' ')[0]);
-    }*/
 
     calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
