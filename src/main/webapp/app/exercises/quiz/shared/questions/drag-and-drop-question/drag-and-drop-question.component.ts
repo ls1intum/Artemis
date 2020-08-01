@@ -15,6 +15,12 @@ polyfill({
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
+// Drag-enter listener for mobile devices: without this code, mobile drag and drop will not work correctly!
+/* eslint-disable */
+(event: any) => {
+    event.preventDefault();
+};
+/* eslint-enable */
 window.addEventListener('touchmove', function () {}, { passive: false });
 
 @Component({

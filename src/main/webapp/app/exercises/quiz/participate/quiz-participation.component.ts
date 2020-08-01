@@ -32,6 +32,7 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-quiz',
@@ -715,7 +716,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
-                    console.log('Unknown question type ' + clientQuestion);
+                    Sentry.captureException(new Error('Unknown question type: ' + clientQuestion));
                 }
             }
         }, this);

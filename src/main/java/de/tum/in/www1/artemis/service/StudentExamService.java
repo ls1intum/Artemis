@@ -117,6 +117,7 @@ public class StudentExamService {
         // checks if student exam is already marked as submitted
         StudentExam existingStudentExam = findOneWithExercises(studentExam.getId());
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
             return conflict(ENTITY_NAME, "alreadySubmitted", "You have already submitted.");
         }
 

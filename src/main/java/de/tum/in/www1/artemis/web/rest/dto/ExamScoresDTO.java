@@ -76,18 +76,21 @@ public class ExamScoresDTO {
 
         public Double overallScoreAchieved = null;
 
+        public Boolean submitted = false;
+
         public Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
 
         public StudentResult() {
             // default constructor for our beloved Jackson :-*
         }
 
-        public StudentResult(Long id, String name, String eMail, String login, String registrationNumber) {
+        public StudentResult(Long id, String name, String eMail, String login, String registrationNumber, Boolean submitted) {
             this.id = id;
             this.eMail = eMail;
             this.name = name;
             this.login = login;
             this.registrationNumber = registrationNumber;
+            this.submitted = submitted;
         }
     }
 

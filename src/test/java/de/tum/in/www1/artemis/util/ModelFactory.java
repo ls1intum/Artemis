@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 
@@ -71,6 +71,18 @@ public class ModelFactory {
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
+        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                question.setQuizQuestionStatistic(new DragAndDropQuestionStatistic());
+            }
+            else if (question instanceof MultipleChoiceQuestion) {
+                question.setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
+            }
+            else {
+                question.setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
+            }
+        }
         quizExercise.setRandomizeQuestionOrder(true);
         return quizExercise;
     }
@@ -167,6 +179,10 @@ public class ModelFactory {
         exercise.getCategories().add("Category");
         exercise.setExerciseGroup(exerciseGroup);
         exercise.setCourse(null);
+        if (!(exercise instanceof QuizExercise)) {
+            exercise.setGradingInstructions("Grading instructions");
+            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+        }
         return exercise;
     }
 

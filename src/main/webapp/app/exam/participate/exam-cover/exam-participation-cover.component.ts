@@ -114,7 +114,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * displays popup or start exam participation immediately
      */
     startExam() {
-        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+        this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
             this.studentExam = studentExam;
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
             if (this.hasStarted()) {
@@ -163,21 +163,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Submits the exam if user has valid token
+     * Submits the exam
      */
     submitExam() {
-        // TODO: refactor following code
-        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
-        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-        //     const validSessionToken = response.body?.sessionToken ?? '';
-        //     if (validSessionToken && localSessionToken === validSessionToken) {
-        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
-        //         // TODO: submit exam
-        //     } else {
-        //         console.log('Something went wrong');
-        //         // error message
-        //     }
-        // })
         this.onExamEnded.emit();
     }
 
