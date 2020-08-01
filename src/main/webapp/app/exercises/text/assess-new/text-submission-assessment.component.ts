@@ -140,7 +140,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const identity = await this.accountService.identity();
         this.userId = identity ? identity.id : null;
 
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
@@ -159,8 +159,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        // this.team = (this.submission.participation as StudentParticipation).team;
-        // this.teamId = (this.submission.participation as StudentParticipation).team.id;
+        this.team = (this.submission.participation as StudentParticipation).team;
+        this.teamId = this.team.id;
+        console.error('tiff1:' + this.team + ',tiff2: ' + this.teamId);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -280,13 +281,15 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     navigateBack() {
         if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
-            const teamId1 = this.submission.participation;
-            const teamId2 = teamId1 as StudentParticipation;
+            // const teamId = (this.submission.participation as StudentParticipation).team.id;
+            // const teamId1 = this.submission.participation;
+            // const teamId2 = teamId1 as StudentParticipation;
             // const teamId3 = teamId2.team as Team;
-            console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId);
+            // console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId);
             // const teamId4 = teamId3.id;
-            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+            const teamId1 = (this.submission.participation as StudentParticipation).team.id;
+            console.error('tiff3: ' + teamId1);
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${this.teamId}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
