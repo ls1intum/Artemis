@@ -54,6 +54,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
     isAtLeastInstructor: boolean;
+    isAtLeastTutorInThisCourse: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     team: Team | null;
@@ -141,7 +142,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.userId = identity ? identity.id : null;
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
-
+        this.isAtLeastTutorInThisCourse = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_TA']);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -159,9 +160,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        this.team = (this.submission.participation as StudentParticipation).team;
+        console.error('t1:' + this.participation);
+        this.team = studentParticipation.team;
+        const team1 = studentParticipation.team;
         this.teamId = this.team.id;
-        console.error('tiff1:' + this.team + ',tiff2: ' + this.teamId);
+        console.error('tiff1:' + this.team + ',tiff2: ' + this.teamId + 't3' + team1);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -445,7 +448,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.isAtLeastInstructor || this.isAtLeastTutorInThisCourse) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -459,7 +462,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return this.isAssessor && isBeforeAssessmentDueDate && this.isAtLeastTutorInThisCourse;
         }
         return false;
     }
@@ -471,7 +474,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
         // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!) || this.accountService.isAtLeastTutorInCourse(this.course!);
+        this.isAtLeastTutorInThisCourse = this.accountService.isAtLeastTutorInCourse(this.course!);
         console.error('tiff4' + this.isAssessor + 't5' + this.isAtLeastInstructor);
     }
 
