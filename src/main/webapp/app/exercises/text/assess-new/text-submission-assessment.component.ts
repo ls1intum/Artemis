@@ -140,7 +140,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const identity = await this.accountService.identity();
         this.userId = identity ? identity.id : null;
 
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
 
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
@@ -472,6 +472,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
         // case distinction for exam mode
         this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
+        console.error('tiff4' + this.isAssessor + 't5' + this.isAtLeastInstructor);
     }
 
     private handleError(error: HttpErrorResponse): void {
