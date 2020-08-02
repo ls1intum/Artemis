@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Enumeration for supported static code analysis tools
@@ -70,14 +71,11 @@ public enum StaticCodeAnalysisTool {
      * @return the command used to run static code analysis for a specific language
      */
     public static String createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage language) {
-        StringBuilder commandBuilder = new StringBuilder();
-        String separator = "";
+        StringJoiner commandBuilder = new StringJoiner(" ");
         for (var tool : StaticCodeAnalysisTool.values()) {
             if (tool.language == language) {
-                commandBuilder.append(separator);
-                commandBuilder.append(tool.command);
+                commandBuilder.add(tool.command);
             }
-            separator = " ";
         }
         return commandBuilder.toString();
     }
