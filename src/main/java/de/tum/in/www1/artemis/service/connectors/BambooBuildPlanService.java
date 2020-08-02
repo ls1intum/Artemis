@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -142,8 +143,13 @@ public class BambooBuildPlanService {
                 }
 
                 if (staticCodeAnalysisEnabled) {
-                    defaultJob.finalTasks(new MavenTask().goal("spotbugs:spotbugs").jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
-                    defaultJob.artifacts(new Artifact().name("spotbugs").location("target").copyPattern("spotbugs.xml").shared(false));
+                    // Create artifacts and a final task for the execution of static code analysis
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
+                    String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                    defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+                    defaultJob.artifacts(artifacts);
                 }
 
                 if (!sequentialBuildRuns) {
