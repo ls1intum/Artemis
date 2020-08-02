@@ -6,11 +6,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StaticAssessmentReportDTO {
+public class StaticCodeAnalysisReportDTO {
 
     private StaticCodeAnalysisTool tool;
 
-    private List<BambooStaticAssessmentIssue> issues;
+    private List<StaticCodeAnalysisIssue> issues;
 
     public StaticCodeAnalysisTool getTool() {
         return tool;
@@ -20,16 +20,16 @@ public class StaticAssessmentReportDTO {
         this.tool = tool;
     }
 
-    public List<BambooStaticAssessmentIssue> getIssues() {
+    public List<StaticCodeAnalysisIssue> getIssues() {
         return issues;
     }
 
-    public void setIssues(List<BambooStaticAssessmentIssue> issues) {
+    public void setIssues(List<StaticCodeAnalysisIssue> issues) {
         this.issues = issues;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class BambooStaticAssessmentIssue {
+    public static final class StaticCodeAnalysisIssue {
 
         private String classname;
 

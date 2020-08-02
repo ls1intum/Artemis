@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
@@ -641,11 +641,11 @@ public class ModelFactory {
         return notification;
     }
 
-    private static StaticAssessmentReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
-        final var report = new StaticAssessmentReportDTO();
-        final var issue1 = new StaticAssessmentReportDTO.BambooStaticAssessmentIssue();
-        final var issue2 = new StaticAssessmentReportDTO.BambooStaticAssessmentIssue();
-        report.setTool(StaticCodeAnalysisTool.SPOTBUGS);
+    private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
+        final var report = new StaticCodeAnalysisReportDTO();
+        final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        report.setTool(tool);
         issue1.setType("Error1");
         issue1.setMessage("Error1 - Message");
         issue1.setClassname("Class1");

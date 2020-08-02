@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @Service
 public class FeedbackService {
@@ -53,7 +53,7 @@ public class FeedbackService {
      * @param reports Static code analysis reports to be transformed
      * @return Feedback objects representing the static code analysis findings
      */
-    public List<Feedback> createFeedbackFromStaticAssessmentReports(List<StaticAssessmentReportDTO> reports) {
+    public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (final var report : reports) {
             StaticCodeAnalysisTool tool = report.getTool();

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
-import de.tum.in.www1.artemis.service.dto.StaticAssessmentReportDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -658,11 +658,13 @@ public class BambooService implements ContinuousIntegrationService {
                     createAutomaticFeedback(result, methodName, true, null);
                 }
                 // 3) process static code analysis feedback
+                boolean hasStaticCodeAnalysisFeedback = false;
                 if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
-                    addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
+                    hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
                 }
 
-                if (!job.getFailedTests().isEmpty()) {
+                // Relevant feedback exists if tests failed or static code analysis found issues
+                if (!job.getFailedTests().isEmpty() || hasStaticCodeAnalysisFeedback) {
                     result.setHasFeedback(true);
                 }
             }
@@ -679,12 +681,15 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param result The result to which the static assessment feedback will be added
      * @param reports Static assessment reports to be transformed
+     * @return true if static code analysis feedback was created else false
      */
-    private void addStaticCodeAnalysisFeedbackToResult(Result result, List<StaticAssessmentReportDTO> reports) {
-        if (reports != null) {
-            var feedbackList = feedbackService.createFeedbackFromStaticAssessmentReports(reports);
-            result.addFeedbacks(feedbackList);
+    private boolean addStaticCodeAnalysisFeedbackToResult(Result result, List<StaticCodeAnalysisReportDTO> reports) {
+        if (reports == null) {
+            return false;
         }
+        var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
+        result.addFeedbacks(feedbackList);
+        return feedbackList.size() > 0;
     }
 
     /**
