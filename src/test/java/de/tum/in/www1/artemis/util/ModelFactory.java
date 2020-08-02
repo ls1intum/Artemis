@@ -637,7 +637,7 @@ public class ModelFactory {
             List<String> failedTestNames) {
         final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
         final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport));
         return notification;
     }
 
