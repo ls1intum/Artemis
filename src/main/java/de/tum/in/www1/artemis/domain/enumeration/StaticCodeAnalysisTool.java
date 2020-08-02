@@ -71,12 +71,14 @@ public enum StaticCodeAnalysisTool {
      */
     public static String createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage language) {
         StringBuilder commandBuilder = new StringBuilder();
+        String separator = "";
         for (var tool : StaticCodeAnalysisTool.values()) {
             if (tool.language == language) {
+                commandBuilder.append(separator);
                 commandBuilder.append(tool.command);
-                commandBuilder.append(" ");
             }
+            separator = " ";
         }
-        return commandBuilder.deleteCharAt(commandBuilder.length() - 1).toString();
+        return commandBuilder.toString();
     }
 }
