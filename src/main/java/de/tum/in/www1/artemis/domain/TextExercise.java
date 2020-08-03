@@ -20,7 +20,7 @@ public class TextExercise extends Exercise implements Serializable {
     @Lob
     private String sampleSolution;
 
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
 
