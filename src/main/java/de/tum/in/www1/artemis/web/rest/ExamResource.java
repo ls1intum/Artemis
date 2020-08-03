@@ -338,7 +338,7 @@ public class ExamResource {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseService.delete(exercise.getId(), false, false);
+                    exerciseService.delete(exercise.getId(), true, true);
                 }
             }
         }
