@@ -39,15 +39,15 @@ export class CourseScoreCalculationService {
                             score = 0;
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
-                        reachableScore = reachableScore + exercise.maxScore;
+                        reachableScore += exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
 
                     if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
-                        reachableScore = reachableScore + exercise.maxScore;
+                        reachableScore += exercise.maxScore;
                     }
                 } else {
-                    reachableScore = reachableScore + exercise.maxScore;
+                    reachableScore += exercise.maxScore;
                 }
             }
         }

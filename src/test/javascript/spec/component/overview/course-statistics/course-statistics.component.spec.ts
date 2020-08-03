@@ -15,11 +15,8 @@ import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { Result } from 'app/entities/result.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
