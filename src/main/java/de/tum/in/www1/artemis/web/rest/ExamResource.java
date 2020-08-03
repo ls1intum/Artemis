@@ -336,8 +336,10 @@ public class ExamResource {
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                exerciseService.delete(exercise.getId(), false, false);
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.delete(exercise.getId(), false, false);
+                }
             }
         }
 
