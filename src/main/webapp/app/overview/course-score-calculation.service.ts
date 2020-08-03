@@ -43,6 +43,7 @@ export class CourseScoreCalculationService {
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
 
+                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
                     if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
                         reachableScore += exercise.maxScore;
                     }

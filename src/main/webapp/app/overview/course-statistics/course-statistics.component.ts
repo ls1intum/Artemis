@@ -363,6 +363,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const replaced = result.resultString.replace(',', '.');
         const split = replaced.split(' ');
 
+        // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
             if (result.score >= 50) {
                 groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
@@ -375,6 +376,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // exercise results strings are mostly 'x points' or 'x of y points'
         if (replaced.includes('points')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(
@@ -408,6 +410,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         }
 
+        // programming exercise result strings are mostly 'x passed' or 'x of y passed'
         if (replaced.includes('passed')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
