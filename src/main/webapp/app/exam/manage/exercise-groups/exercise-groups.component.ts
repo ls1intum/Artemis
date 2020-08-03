@@ -91,9 +91,10 @@ export class ExerciseGroupsComponent implements OnInit {
     /**
      * Delete the exercise group with the given id.
      * @param exerciseGroupId {number}
+     * @param $event representation of users choices to delete the student repositories and base repositories
      */
-    deleteExerciseGroup(exerciseGroupId: number) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId).subscribe(
+    deleteExerciseGroup(exerciseGroupId: number, $event: { [key: string]: boolean }) {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.jhiEventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
@@ -203,5 +204,32 @@ export class ExerciseGroupsComponent implements OnInit {
             (res) => (this.exerciseGroups = res.body),
             () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
+    }
+
+    /**
+     * Returns a dictionary that maps the exercise group id to whether the said exercise group contains programming exercises.
+     * Used to show the correct modal for deleting exercises.
+     * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     */
+    get programmingExercisePresentDictionary(): { [id: number]: boolean } {
+        let exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
+        if (this.exerciseGroups == null) {
+            return {};
+        }
+        for (let exerciseGroup of this.exerciseGroups) {
+            if (exerciseGroup.exercises == null) {
+                return {};
+            }
+            for (let exercise of exerciseGroup.exercises) {
+                if (exercise.type === ExerciseType.PROGRAMMING) {
+                    exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
+                    break;
+                }
+            }
+            if (!(exerciseGroup.id in exerciseGroupContainsProgrammingExerciseDict)) {
+                exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+            }
+        }
+        return exerciseGroupContainsProgrammingExerciseDict;
     }
 }
