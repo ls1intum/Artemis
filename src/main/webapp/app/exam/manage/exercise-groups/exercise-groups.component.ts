@@ -227,15 +227,15 @@ export class ExerciseGroupsComponent implements OnInit {
      * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
     get programmingExercisePresentDictionary(): { [id: number]: boolean } {
-        let exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
+        const exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
         if (this.exerciseGroups == null) {
             return {};
         }
-        for (let exerciseGroup of this.exerciseGroups) {
+        for (const exerciseGroup of this.exerciseGroups) {
             if (exerciseGroup.exercises == null) {
                 return {};
             }
-            for (let exercise of exerciseGroup.exercises) {
+            for (const exercise of exerciseGroup.exercises) {
                 if (exercise.type === ExerciseType.PROGRAMMING) {
                     exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
                     break;
