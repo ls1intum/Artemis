@@ -364,8 +364,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const split = replaced.split(' ');
 
         if (!replaced.includes('passed') && !replaced.includes('points')) {
-            groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-            groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score}%)`);
+            if (result.score >= 50) {
+                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`(${100 - result.score}%)`);
+            } else {
+                groupedExercise.scores.tooltips.push(`(${result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score}%)`);
+            }
+
             return;
         }
 
