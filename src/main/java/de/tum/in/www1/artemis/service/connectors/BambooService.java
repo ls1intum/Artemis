@@ -838,7 +838,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=250",
+                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
                     HttpMethod.GET,
                     entity,
                     Map.class);
@@ -875,7 +875,9 @@ public class BambooService implements ContinuousIntegrationService {
                         logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
                         logString.startsWith("[ERROR] Re-run Maven using") ||
                         logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
-                        logString.startsWith("[ERROR] -> [Help 1]")
+                        logString.startsWith("[ERROR] -> [Help 1]") ||
+                        logString.startsWith("Unable to publish artifact") ||
+                        logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                 ) {
                     continue;
                 }
