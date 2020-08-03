@@ -190,7 +190,7 @@ public class ExerciseGroupResource {
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
+            exerciseService.delete(exercise.getId(), true, true);
         }
 
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
