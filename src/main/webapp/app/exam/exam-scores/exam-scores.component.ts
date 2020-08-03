@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
@@ -9,10 +9,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
 import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [],
 })
 export class ExamScoresComponent implements OnInit {
@@ -29,6 +31,8 @@ export class ExamScoresComponent implements OnInit {
         private examService: ExamManagementService,
         private sortService: SortService,
         private jhiAlertService: AlertService,
+        private changeDetector: ChangeDetectorRef,
+        private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
     ) {}
 
@@ -42,14 +46,21 @@ export class ExamScoresComponent implements OnInit {
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
                     }
                     this.isLoading = false;
+                    this.changeDetector.detectChanges();
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
+        });
+
+        // TODO: do we need to keep the subject and destroy it properly in the lifecycle of the component?
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            this.changeDetector.detectChanges();
         });
     }
 
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
+        this.changeDetector.detectChanges();
     }
 
     exportToCsv() {
