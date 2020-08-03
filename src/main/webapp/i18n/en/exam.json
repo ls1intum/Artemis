@@ -71,7 +71,9 @@
             "overallPointsColumn": "Overall Points",
             "overallScoreColumn": "Overall Score (%)",
             "exportCSV": "Export Results as CSV",
-            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students",
+            "filterForSubmittedExams": "Only consider submitted exams",
+            "filterForNonEmptySubmissions": "Only consider exercises with at least on non-empty submission"
         },
         "examParticipation": {
             "timer": "Time left: ",

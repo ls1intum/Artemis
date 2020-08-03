@@ -23,6 +23,21 @@
             </button>
         </h4>
 
+        <div>
+            <div class="form-check">
+                <input id="checkBoxFilterSubmittedExam" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams" for="checkBoxFilterSubmittedExam">
+                    Only consider submitted exams
+                </label>
+            </div>
+            <div class="form-check">
+                <input id="checkBoxFilterForSubmission" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions" for="checkBoxFilterForSubmission">
+                    Only consider exercises with at least on non-empty submission
+                </label>
+            </div>
+        </div>
+
         <!-- Exercise Groups Statistics Table -->
         <div class="table-responsive table-bordered table-hover">
             <table class="table">

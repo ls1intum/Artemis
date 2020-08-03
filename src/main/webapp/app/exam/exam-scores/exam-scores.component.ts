@@ -26,6 +26,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public predicate = 'id';
     public reverse = false;
     public isLoading = true;
+    public filterForSubmittedExams = false;
+    public filterForNonEmptySubmissions = false;
 
     private languageChangeSubscription: Subscription | null;
 
@@ -65,6 +67,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.languageChangeSubscription) {
             this.languageChangeSubscription.unsubscribe();
         }
+    }
+
+    toggleFilterForSubmittedExam() {
+        this.filterForSubmittedExams = !this.filterForSubmittedExams;
+        this.changeDetector.detectChanges();
+    }
+
+    toggleFilterForNonEmptySubmission() {
+        this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
+        this.changeDetector.detectChanges();
     }
 
     sortRows() {

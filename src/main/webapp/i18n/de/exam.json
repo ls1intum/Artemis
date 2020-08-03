@@ -71,7 +71,9 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
+            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten",
+            "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
