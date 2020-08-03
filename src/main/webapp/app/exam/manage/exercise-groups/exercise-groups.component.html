@@ -143,7 +143,7 @@
                                 [exercise]="exercise"
                                 [exerciseGroupId]="exerciseGroup.id"
                                 [latestIndividualEndDate]="latestIndividualEndDate"
-                                (onDeleteExercise)="loadExerciseGroups()"
+                                (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
                             ></jhi-exam-exercise-row-buttons>
                         </td>
                     </tr>
