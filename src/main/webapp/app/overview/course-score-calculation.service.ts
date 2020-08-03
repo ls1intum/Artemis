@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -43,7 +43,7 @@ export class CourseScoreCalculationService {
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
 
-                    if (participation.initializationState === InitializationState.INITIALIZED) {
+                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
                         reachableScore = reachableScore + exercise.maxScore;
                     }
                 } else {
