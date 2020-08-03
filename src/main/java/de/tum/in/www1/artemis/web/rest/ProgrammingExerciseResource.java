@@ -265,7 +265,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
 
-        // Static code analysis is only supported for JAVA at the moment
+        // Static code analysis is only supported for Java at the moment
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava")).body(null);
@@ -395,7 +395,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
 
-        // Static code analysis is only supported for JAVA at the moment
+        // Static code analysis is only supported for Java at the moment
         if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && newExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava")).body(null);

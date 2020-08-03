@@ -13,7 +13,7 @@
     Feedbacks container
 -->
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed && this.feedbackList && this.feedbackList.length; else buildLogsContainer">
+        <ng-container *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer">
             <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
                     Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
@@ -34,7 +34,7 @@
             </div>
         </ng-container>
         <!-- Static Code Analysis Feedback -->
-        <ng-container *ngIf="!loadingFailed && this.staticCodeAnalysisFeedbackList && this.staticCodeAnalysisFeedbackList.length">
+        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisFeedbackList && staticCodeAnalysisFeedbackList.length">
             <hr />
             <h6>Static Code Analysis Issues</h6>
             <hr />
