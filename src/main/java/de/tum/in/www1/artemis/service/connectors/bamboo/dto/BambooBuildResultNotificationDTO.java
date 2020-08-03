@@ -272,7 +272,7 @@ public class BambooBuildResultNotificationDTO {
 
         private List<BambooTestJobDTO> successfulTests;
 
-        private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+        private List<StaticCodeAnalysisReportDTO> staticAssessmentReports;
 
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
@@ -298,12 +298,12 @@ public class BambooBuildResultNotificationDTO {
             this.failedTests = failedTests;
         }
 
-        public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-            return staticCodeAnalysisReports;
+        public List<StaticCodeAnalysisReportDTO> getStaticAssessmentReports() {
+            return staticAssessmentReports;
         }
 
-        public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-            this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+        public void setStaticAssessmentReports(List<StaticCodeAnalysisReportDTO> staticAssessmentReports) {
+            this.staticAssessmentReports = staticAssessmentReports;
         }
     }
 
