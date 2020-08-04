@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -36,6 +39,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -171,8 +175,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate, true);
 
-        // register user
-        var student1 = database.getUserByLogin("student1");
+        // register users
         exam2.setRegisteredUsers(new HashSet<>(users));
         exam2.setRandomizeExerciseOrder(false);
         exam2 = examRepository.save(exam2);
@@ -226,7 +229,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testGetStudentExamForConduction() throws Exception {
 
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
-        // TODO: also write a 2nd test where the submission already contains some content
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
@@ -295,8 +297,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // change back to instructor user
         database.changeUser("instructor1");
-        // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course2.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -770,11 +770,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testStudentExamSummaryAsStudentBeforePublishResults_doFilter() throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction().get(0);
-
-        database.changeUser(studentExam.getUser().getLogin());
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
-
-        createExamSubmissions(studentExamResponse);
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
@@ -783,7 +779,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         // submitExam
-        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamWithSubmissions,
                 StudentExam.class, HttpStatus.OK);
 
         // Add results to all exercise submissions
@@ -852,11 +848,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testStudentExamSummaryAsStudentAfterPublishResults_dontFilter() throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction().get(0);
-
-        database.changeUser(studentExam.getUser().getLogin());
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
-
-        createExamSubmissions(studentExamResponse);
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
@@ -864,7 +856,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         // submitExam
-        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamWithSubmissions,
                 StudentExam.class, HttpStatus.OK);
 
         exam2.setEndDate(ZonedDateTime.now());
@@ -935,8 +927,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
-    private void createExamSubmissions(StudentExam studentExamResponse) throws Exception {
-        for (var exercise : studentExamResponse.getExercises()) {
+    private StudentExam addExamExerciseSubmissionsForUser(Exam exam, String userLogin) throws Exception {
+        if (userLogin != null) {
+            database.changeUser(userLogin);
+        }
+        // start exam conduction for a user
+        var studentExam = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+
+        for (var exercise : studentExam.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
                 doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
@@ -1002,6 +1000,82 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 });
                 request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class, HttpStatus.OK);
             }
+        }
+        return studentExam;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction().get(0);
+
+        final StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2 = examRepository.save(exam2);
+
+        // submitExam
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamWithSubmissions,
+                StudentExam.class, HttpStatus.OK);
+
+        exam2.setEndDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // Add results to all exercise submissions (evaluation)
+        database.changeUser("instructor1");
+        for (var exercise : studentExamFinished.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                continue;
+            }
+
+            Participation participation = exercise.getStudentParticipations().iterator().next();
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+            database.addResultToParticipation(participation, latestSubmission.get());
+        }
+        exam2.setPublishResultsDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
+
+        bitbucketRequestMockProvider.reset();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.reset();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(4).getExercises().iterator().next();
+        final String projectKey = programmingExercise.getProjectKey();
+        setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        final var verifiables = new LinkedList<Verifiable>();
+
+        List<String> studentLogins = new ArrayList<>();
+        for (final User user : exam2.getRegisteredUsers()) {
+            studentLogins.add(user.getLogin());
+        }
+        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        List<String> planNames = new ArrayList<>(studentLogins);
+        planNames.add(TEMPLATE.getName());
+        planNames.add(SOLUTION.getName());
+        for (final String planName : planNames) {
+            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+        }
+        List<String> repoNames = new ArrayList<>(studentLogins);
+        repoNames.add(RepositoryType.TEMPLATE.getName());
+        repoNames.add(RepositoryType.SOLUTION.getName());
+        repoNames.add(RepositoryType.TESTS.getName());
+
+        for (final var repoName : repoNames) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+        request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        for (final var verifiable : verifiables) {
+            verifiable.performVerification();
         }
     }
 }
