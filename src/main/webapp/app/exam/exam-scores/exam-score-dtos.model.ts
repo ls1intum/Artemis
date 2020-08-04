@@ -27,7 +27,7 @@ export class StudentResult {
         public overallPointsAchieved: number,
         public overallScoreAchieved: number,
         public submitted: boolean,
-        public exerciseGroupIdToExerciseResult: Map<number, ExerciseResult>,
+        public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult },
     ) {}
 }
 
