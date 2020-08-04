@@ -19,17 +19,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -203,7 +204,8 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
-        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
+        // TODO: Check that this doesn't break the applications server
+        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId);
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -236,7 +238,6 @@ public class ExamService {
         // Adding student results information to DTO
         for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
 
-            // ToDo Support Team Exercises
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
 
@@ -249,8 +250,11 @@ public class ExamService {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
-                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
+
+                    // Check whether the student attempted to solve the exercise
+                    boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
+                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
+                            exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
 
                 }
 
@@ -289,6 +293,34 @@ public class ExamService {
         }
 
         return scores;
+    }
+
+    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            // TODO: What to do for FileUploadExercises
+        }
+        else if (exercise instanceof TextExercise) {
+            TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
+            // TODO: use blank or empty?
+            return textSubmission.getText() != null && !textSubmission.getText().isEmpty();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
+            // TODO: use blank or empty?
+            return modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty();
+        }
+        else if (exercise instanceof QuizExercise) {
+            QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
+            // TODO: use blank or empty?
+            return quizSubmission != null && !quizSubmission.getSubmittedAnswers().isEmpty();
+        }
+        else {
+            throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
+        }
+        return false;
     }
 
     /**

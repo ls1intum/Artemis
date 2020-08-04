@@ -108,16 +108,20 @@ public class ExamScoresDTO {
 
         public Double achievedPoints;
 
+        // Indicates that the student attempted to solve the exercise
+        public Boolean hasNonEmptySubmission;
+
         public ExerciseResult() {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseResult(Long id, String title, Double maxScore, Long achievedScore, Double achievedPoints) {
+        public ExerciseResult(Long id, String title, Double maxScore, Long achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
             this.id = id;
             this.title = title;
             this.maxScore = maxScore;
             this.achievedScore = achievedScore;
             this.achievedPoints = achievedPoints;
+            this.hasNonEmptySubmission = hasNonEmptySubmission;
         }
     }
 
