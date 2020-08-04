@@ -50,7 +50,8 @@ export class ExerciseGroupsComponent implements OnInit {
     ) {}
 
     /**
-     * Initialize the courseId and examId. Get all exercise groups for the exam.
+     * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
+     * See {@link setupExerciseGroupContainsProgrammingExerciseDict}.
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -91,15 +92,20 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
+     * it calls {@link setupExerciseGroupContainsProgrammingExerciseDict} to update the dictionary
      * @param exerciseId
      * @param exerciseGroupId
+     * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
      */
-    removeExercise(exerciseId: number, exerciseGroupId: number) {
+    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise: boolean = false) {
         if (this.exerciseGroups) {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                    if (programmingExercise) {
+                        this.setupExerciseGroupContainsProgrammingExerciseDict();
+                    }
                 }
             });
         }
@@ -119,6 +125,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                delete this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

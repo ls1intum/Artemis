@@ -162,6 +162,7 @@
                                 [exerciseGroupId]="exerciseGroup.id"
                                 [latestIndividualEndDate]="latestIndividualEndDate"
                                 (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
+                                (onDeleteProgrammingExercise)="removeExercise(exercise.id, exerciseGroup.id, true)"
                             ></jhi-exam-exercise-row-buttons>
                         </td>
                     </tr>
