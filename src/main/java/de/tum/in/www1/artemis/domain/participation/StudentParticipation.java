@@ -73,7 +73,7 @@ public class StudentParticipation extends Participation {
         }
         else if (participant == null) {
             this.student = null;
-            this.team = null;
+            this.team.setStudents(null);
         }
         else {
             throw new Error("Unknown participant type");
