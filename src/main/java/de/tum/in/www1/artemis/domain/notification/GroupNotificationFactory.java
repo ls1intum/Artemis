@@ -85,8 +85,8 @@ public class GroupNotificationFactory {
                 notification.setTarget(notification.getExamProgrammingExerciseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
 
-            // Exercises for courses (not for exams)
         }
+        // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
             notification.setTarget(notification.getExerciseCreatedTarget(exercise));
         }
