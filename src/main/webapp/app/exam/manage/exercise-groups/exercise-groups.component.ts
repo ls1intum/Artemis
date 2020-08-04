@@ -89,6 +89,21 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
+     * @param exerciseId
+     * @param exerciseGroupId
+     */
+    removeExercise(exerciseId: number, exerciseGroupId: number) {
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
+                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                }
+            });
+        }
+    }
+
+    /**
      * Delete the exercise group with the given id.
      * @param exerciseGroupId {number}
      */

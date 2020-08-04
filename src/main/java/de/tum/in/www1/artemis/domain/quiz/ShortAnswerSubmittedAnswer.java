@@ -139,4 +139,10 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     public String toString() {
         return "ShortAnswerSubmittedAnswer{" + "id=" + getId() + "}";
     }
+
+    @Override
+    public void filterOutCorrectAnswers() {
+        super.filterOutCorrectAnswers();
+        this.getSubmittedTexts().forEach(submittedText -> submittedText.setIsCorrect(null));
+    }
 }

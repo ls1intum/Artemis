@@ -38,6 +38,7 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
+import * as Sentry from '@sentry/browser';
 
 export interface Reason {
     translateKey: string;
@@ -432,8 +433,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                                     question.exercise = quizExercise;
                                     this.allExistingQuestions.push(question);
                                 }
-                            } else {
-                                console.log('The quiz ' + quizExerciseResponse.title + ' does not contain questions!');
                             }
                             this.applyFilter();
                         });
@@ -463,10 +462,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 if (this.mcqFilterEnabled && question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     this.existingQuestions.push(question);
                 }
-                if (this.dndFilterEnabled === true && question.type === QuizQuestionType.DRAG_AND_DROP) {
+                if (this.dndFilterEnabled && question.type === QuizQuestionType.DRAG_AND_DROP) {
                     this.existingQuestions.push(question);
                 }
-                if (this.shortAnswerFilterEnabled === true && question.type === QuizQuestionType.SHORT_ANSWER) {
+                if (this.shortAnswerFilterEnabled && question.type === QuizQuestionType.SHORT_ANSWER) {
                     this.existingQuestions.push(question);
                 }
             }
@@ -650,7 +649,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                 );
             } else {
-                console.log('Unknown question type: ' + question);
+                Sentry.captureException(new Error('Unknown question type: ' + question));
                 return question.title && question.title !== '';
             }
         }, this);
@@ -822,13 +821,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions!.some((answeroption) => answeroption.isCorrect)) {
+                if (!mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!mcQuestion.answerOptions!.every((answeroption) => answeroption.explanation !== '')) {
+                if (!mcQuestion.answerOptions!.every((answerOption) => answerOption.explanation !== '')) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 },

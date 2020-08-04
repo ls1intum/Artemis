@@ -181,8 +181,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                         this.initEditorAfterFileChange();
                     }
                 }),
-                catchError((err) => {
-                    console.log('There was an error while getting file', this.selectedFile, err);
+                catchError(() => {
                     return of(null);
                 }),
             )

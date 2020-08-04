@@ -1,4 +1,3 @@
-import { JhiLanguageService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
@@ -6,11 +5,11 @@ import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -59,22 +58,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
-    options: Intl.NumberFormatOptions = { maximumFractionDigits: 1 }; // TODO: allow user to customize
-    locale = getLang(); // default value, will be overridden by the current language of Artemis
-
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
-        private languageHelper: JhiLanguageHelper,
-        private languageService: JhiLanguageService,
         private sortService: SortService,
+        private localeConversionService: LocaleConversionService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
-        this.locale = this.languageService.currentLang;
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            this.locale = languageKey;
-        });
     }
 
     /**
@@ -287,18 +278,18 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.toLocaleString(exercisePointValues[index]);
+                            rowData[title] = this.localeConversionService.toLocaleString(exercisePointValues[index]);
                         });
-                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(exercisePointsPerType);
-                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(exerciseScoresPerType);
+                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
+                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
                     }
                 }
 
                 const overallScore = (student.overallPoints / this.maxNumberOfOverallPoints) * 100;
-                rowData[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(student.overallPoints);
-                rowData[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(overallScore);
+                rowData[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
+                rowData[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
-                    rowData[PRESENTATION_SCORE_KEY] = this.toLocaleString(student.presentationScore);
+                    rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
                 }
                 rows.push(rowData);
             }
@@ -314,14 +305,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataMax[title] = this.toLocaleString(exerciseMaxPoints[index]);
+                        rowDataMax[title] = this.localeConversionService.toLocaleString(exerciseMaxPoints[index]);
                     });
-                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
-                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(100);
+                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
+                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
                 }
             }
-            rowDataMax[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(this.maxNumberOfOverallPoints);
-            rowDataMax[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(100);
+            rowDataMax[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
+            rowDataMax[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
             }
@@ -336,19 +327,21 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.toLocaleString(exerciseAveragePoints[index]);
+                        rowDataAverage[title] = this.localeConversionService.toLocaleString(exerciseAveragePoints[index]);
                     });
 
                     const averageScore = (this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
 
-                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!);
-                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(averageScore);
+                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
+                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
+                    );
+                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageScore);
                 }
             }
 
             const averageOverallScore = (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100;
-            rowDataAverage[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(this.averageNumberOfOverallPoints);
-            rowDataAverage[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(averageOverallScore);
+            rowDataAverage[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
+            rowDataAverage[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
                 rowDataAverage[PRESENTATION_SCORE_KEY] = '';
             }
@@ -363,7 +356,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipation[title] = this.toLocaleString(exerciseParticipations[index]);
+                        rowDataParticipation[title] = this.localeConversionService.toLocaleString(exerciseParticipations[index]);
                     });
                     rowDataParticipation[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipation[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -380,7 +373,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipationSuccuessful[title] = this.toLocaleString(exerciseParticipationsSuccessful[index]);
+                        rowDataParticipationSuccuessful[title] = this.localeConversionService.toLocaleString(exerciseParticipationsSuccessful[index]);
                     });
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -442,35 +435,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.sortService.sortByProperty(this.students, this.predicate, this.reverse);
     }
 
+    getLocaleConversionService() {
+        return this.localeConversionService;
+    }
+
     /**
      * On destroy unsubscribe.
      */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-    }
-
-    /**
-     * Convert a number value to a locale string.
-     * @param value
-     */
-    toLocaleString(value: number) {
-        if (isNaN(value)) {
-            return '-';
-        } else {
-            return value.toLocaleString(this.locale, this.options);
-        }
-    }
-
-    /**
-     * Convert a number value to a locale string with a % added at the end.
-     * @param value
-     */
-    toLocalePercentageString(value: number) {
-        if (isNaN(value)) {
-            return '-';
-        } else {
-            return value.toLocaleString(this.locale, this.options) + '%';
-        }
     }
 }
 
@@ -503,15 +476,4 @@ class Student {
  */
 function capitalizeFirstLetter(string: String) {
     return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-/**
- * Get the language set by the user.
- */
-function getLang() {
-    if (navigator.languages !== undefined) {
-        return navigator.languages[0];
-    } else {
-        return navigator.language;
-    }
 }
