@@ -90,8 +90,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         for (const exerciseGroup of this.exerciseGroups) {
             const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
-            exerciseGroup.containedExerciseIds.forEach((exId) => {
-                groupResult.exerciseResults.push(new AggregatedExerciseResult(exId, 'TODO'));
+            exerciseGroup.containedExercises.forEach((exerciseInfo) => {
+                groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title));
             });
             groupIdToGroupResults.set(exerciseGroup.id, groupResult);
         }

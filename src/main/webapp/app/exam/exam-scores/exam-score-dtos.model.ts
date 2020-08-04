@@ -10,14 +10,11 @@ export class ExamScoreDTO {
 }
 
 export class ExerciseGroup {
-    constructor(
-        public id: number,
-        public title: string,
-        public maxPoints: number,
-        public averagePointsAchieved: number,
-        public containedExercises: string[],
-        public containedExerciseIds: number[],
-    ) {}
+    constructor(public id: number, public title: string, public maxPoints: number, public averagePointsAchieved: number, public containedExercises: ExerciseInfo[]) {}
+}
+
+export class ExerciseInfo {
+    constructor(public exerciseId: number, public title: string, public totalParticipants: number) {}
 }
 
 export class StudentResult {

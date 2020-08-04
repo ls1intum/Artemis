@@ -44,20 +44,30 @@ public class ExamScoresDTO {
 
         public Double averagePointsAchieved = null;
 
-        public List<String> containedExercises;
-
-        public List<Long> containedExerciseIds;
+        public List<ExerciseInfo> containedExercises = new ArrayList<>();
 
         public ExerciseGroup() {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseGroup(Long id, String title, Double maxPoints, List<String> containedExercises, List<Long> containedExerciseIds) {
+        public ExerciseGroup(Long id, String title, Double maxPoints) {
             this.id = id;
             this.title = title;
             this.maxPoints = maxPoints;
-            this.containedExercises = containedExercises;
-            this.containedExerciseIds = containedExerciseIds;
+        }
+
+        public static class ExerciseInfo {
+
+            public Long exerciseId;
+
+            public String title;
+
+            public Integer totalParticipants;
+
+            public ExerciseInfo(Long exerciseId, String title) {
+                this.exerciseId = exerciseId;
+                this.title = title;
+            }
         }
     }
 

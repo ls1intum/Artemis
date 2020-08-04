@@ -218,16 +218,12 @@ public class ExamService {
                 maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
             }
 
-            List<String> containedExercises = new ArrayList<>();
-            List<Long> containedExerciseIds = new ArrayList<>();
-
+            // Add information about exercise groups and exercises
+            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints);
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                containedExercises.add(exercise.getTitle().trim());
-                containedExerciseIds.add(exercise.getId());
+                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle()));
             }
-
-            scores.exerciseGroups
-                    .add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises, containedExerciseIds));
+            scores.exerciseGroups.add(exerciseGroupDTO);
         }
 
         // Adding registered student information to DTO
