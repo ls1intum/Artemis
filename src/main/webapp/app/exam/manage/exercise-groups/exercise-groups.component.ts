@@ -36,6 +36,7 @@ export class ExerciseGroupsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate: Moment | null;
+    exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
 
     constructor(
         private route: ActivatedRoute,
@@ -62,6 +63,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.course = examRes.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+                this.setupExerciseGroupContainsProgrammingExerciseDict();
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
@@ -116,7 +118,7 @@ export class ExerciseGroupsComponent implements OnInit {
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.loadExerciseGroups();
+                this.exerciseGroups?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -222,29 +224,28 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Returns a dictionary that maps the exercise group id to whether the said exercise group contains programming exercises.
+     * sets up {@link exerciseGroupContainsProgrammingExerciseDict} that maps the exercise group id to whether the said exercise group contains programming exercises.
      * Used to show the correct modal for deleting exercises.
      * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
-    get programmingExercisePresentDictionary(): { [id: number]: boolean } {
+    setupExerciseGroupContainsProgrammingExerciseDict() {
         const exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
         if (this.exerciseGroups == null) {
-            return {};
-        }
-        for (const exerciseGroup of this.exerciseGroups) {
-            if (exerciseGroup.exercises == null) {
-                return {};
-            }
-            for (const exercise of exerciseGroup.exercises) {
-                if (exercise.type === ExerciseType.PROGRAMMING) {
-                    exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
-                    break;
+            this.exerciseGroupContainsProgrammingExerciseDict = {};
+        } else {
+            for (const exerciseGroup of this.exerciseGroups) {
+                if (exerciseGroup.exercises != null) {
+                    for (const exercise of exerciseGroup.exercises) {
+                        if (exercise.type === ExerciseType.PROGRAMMING) {
+                            exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
+                            break;
+                        }
+                    }
+                    if (!(exerciseGroup.id in exerciseGroupContainsProgrammingExerciseDict)) {
+                        exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+                    }
                 }
             }
-            if (!(exerciseGroup.id in exerciseGroupContainsProgrammingExerciseDict)) {
-                exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
-            }
         }
-        return exerciseGroupContainsProgrammingExerciseDict;
     }
 }
