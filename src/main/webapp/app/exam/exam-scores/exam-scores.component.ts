@@ -51,7 +51,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        this.calculateAverageScoresForExerciseGroups();
+                        this.calculateAveragePoints();
                     }
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
@@ -74,17 +74,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
-        this.calculateAverageScoresForExerciseGroups();
+        this.calculateAveragePoints();
         this.changeDetector.detectChanges();
     }
 
     toggleFilterForNonEmptySubmission() {
         this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
-        this.calculateAverageScoresForExerciseGroups();
+        this.calculateAveragePoints();
         this.changeDetector.detectChanges();
     }
 
-    calculateAverageScoresForExerciseGroups() {
+    calculateAveragePoints() {
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
         // Create data structures for all exercise groups
         for (const exerciseGroup of this.exerciseGroups) {
