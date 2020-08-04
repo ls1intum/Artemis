@@ -31,13 +31,37 @@ export class ExamParticipationService {
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage
+     * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
-    public loadStudentExamWithExercises(courseId: number, examId: number): Observable<StudentExam> {
-        // download student exam from server
-        return this.getStudentExamFromServer(courseId, examId).pipe(
+    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
+        return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/studentExams/summary';
+        return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from server or localstorage.
+     */
+    private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam> {
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                if (studentExam.examSessions) {
+                    this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
+                }
+
+                return this.convertStudentExamFromServer(studentExam);
+            }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
                 return Observable.of(localStoredExam);
@@ -99,22 +123,6 @@ export class ExamParticipationService {
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
         this.sessionStorage.store('ExamSessionToken', examSessionToken);
-    }
-
-    /**
-     * Retrieves a {@link StudentExam} from server. Will also mark the student exam as started
-     */
-    private getStudentExamFromServer(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/studentExams/conduction';
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
-                if (studentExam.examSessions) {
-                    this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
-                }
-
-                return this.convertStudentExamFromServer(studentExam);
-            }),
-        );
     }
 
     /**

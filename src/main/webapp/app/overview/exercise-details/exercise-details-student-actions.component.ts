@@ -144,9 +144,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     /**
      * console log if copy fails
      */
-    onCopyFailure() {
-        console.log('copy fail!');
-    }
+    onCopyFailure() {}
 
     /**
      * set wasCopied for 3 seconds on success
@@ -185,8 +183,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         }
                     }
                 },
-                (error) => {
-                    console.log('Error: ' + error);
+                () => {
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
@@ -219,7 +216,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                 },
                 (error) => {
-                    console.log('Error: ' + error.status + ' ' + error.message);
                     this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );

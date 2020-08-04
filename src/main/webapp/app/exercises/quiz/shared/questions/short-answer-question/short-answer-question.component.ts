@@ -41,7 +41,6 @@ export class ShortAnswerQuestionComponent {
     set forceSampleSolution(forceSampleSolution) {
         this._forceSampleSolution = forceSampleSolution;
         if (this.forceSampleSolution) {
-            console.log('ForceSampleSolution activated');
             this.showSampleSolution();
         }
     }
