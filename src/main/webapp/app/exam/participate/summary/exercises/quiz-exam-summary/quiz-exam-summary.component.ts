@@ -26,7 +26,6 @@ export class QuizExamSummaryComponent implements OnInit {
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-    exerciseWithSolution: QuizExercise;
 
     @Input()
     exercise: QuizExercise;
@@ -44,16 +43,6 @@ export class QuizExamSummaryComponent implements OnInit {
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
-        // get quiz-exercise with solution after result is published
-        if (this.resultsPublished && this.exercise) {
-            this.exerciseService.find(this.exercise.id).subscribe((response) => {
-                this.exerciseWithSolution = response.body!;
-            });
-        }
-    }
-
-    get quizQuestions() {
-        return this.resultsPublished && this.exerciseWithSolution ? this.exerciseWithSolution.quizQuestions : this.exercise.quizQuestions;
     }
 
     /**

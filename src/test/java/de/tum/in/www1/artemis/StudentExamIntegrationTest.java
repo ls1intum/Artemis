@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
+import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -46,6 +47,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ExamRepository examRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
 
     @Autowired
     StudentExamRepository studentExamRepository;
@@ -543,7 +550,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
                             .findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
-                    assertThat(programmingSubmission.isPresent());
+                    assertThat(programmingSubmission).isPresent();
                     participation.getSubmissions().add(programmingSubmission.get());
                     continue;
                 }
@@ -756,6 +763,245 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             }
             assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
             assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStudentExamSummaryAsStudentBeforePublishResults_doFilter() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction().get(0);
+
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+
+        createExamSubmissions(studentExamResponse);
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+
+        // submitExam
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+                StudentExam.class, HttpStatus.OK);
+
+        // Add results to all exercise submissions
+        database.changeUser("instructor1");
+        for (var exercise : studentExamFinished.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                continue;
+            }
+
+            Participation participation = exercise.getStudentParticipations().iterator().next();
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+            database.addResultToParticipation(participation, latestSubmission.get());
+        }
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
+
+        // user tries to access exam summary
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/summary", HttpStatus.OK, StudentExam.class);
+
+        // check that no results or other sensitive information is visible for the student
+        for (final var exercise : studentExamSummary.getExercises()) {
+            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+            assertThat(exercise.getGradingInstructions()).isNull();
+            assertThat(exercise.getGradingCriteria()).isEmpty();
+
+            if (exercise instanceof QuizExercise) {
+                QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+                assertThat(submission.getScoreInPoints()).isNull();
+                submission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                    assertThat(submittedAnswer.getScoreInPoints()).isNull();
+                    QuizQuestion question = submittedAnswer.getQuizQuestion();
+                    if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                        ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
+                    }
+                    if (question != null) {
+                        assertThat(question.getExplanation()).isNull();
+                        assertThat(question.getQuizQuestionStatistic()).isNull();
+                        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                            ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
+                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getSolutions()).isEmpty();
+                        }
+                        if (question instanceof DragAndDropQuestion) {
+                            assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
+                        }
+                        if (question instanceof ShortAnswerQuestion) {
+                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getSolutions()).isEmpty();
+                        }
+                        if (question instanceof MultipleChoiceQuestion) {
+                            ((MultipleChoiceQuestion) question).getAnswerOptions().forEach(answerOption -> {
+                                assertThat(answerOption.isIsCorrect()).isNull();
+                                assertThat(answerOption.getExplanation()).isNull();
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testStudentExamSummaryAsStudentAfterPublishResults_dontFilter() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction().get(0);
+
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+
+        createExamSubmissions(studentExamResponse);
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2 = examRepository.save(exam2);
+
+        // submitExam
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+                StudentExam.class, HttpStatus.OK);
+
+        exam2.setEndDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // Add results to all exercise submissions
+        database.changeUser("instructor1");
+        for (var exercise : studentExamFinished.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                continue;
+            }
+
+            Participation participation = exercise.getStudentParticipations().iterator().next();
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+            database.addResultToParticipation(participation, latestSubmission.get());
+        }
+        exam2.setPublishResultsDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
+
+        // users tries to access exam summary after results are published
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/summary", HttpStatus.OK, StudentExam.class);
+
+        // check that all relevant information is visible to the student
+        for (final var exercise : studentExamSummary.getExercises()) {
+            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
+            assertThat(exercise.getGradingInstructions()).isNull();
+            assertThat(exercise.getGradingCriteria()).isEmpty();
+
+            if (exercise instanceof QuizExercise) {
+                QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+                assertThat(submission.getScoreInPoints()).isNotNull();
+                submission.getSubmittedAnswers().forEach(submittedAnswer -> {
+                    assertThat(submittedAnswer.getScoreInPoints()).isNotNull();
+                    if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                        ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
+                    }
+                    QuizQuestion question = submittedAnswer.getQuizQuestion();
+                    if (question != null) {
+                        assertThat(question.getExplanation()).isNotNull();
+                        assertThat(question.getQuizQuestionStatistic()).isNull();
+                        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                            ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
+                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getSolutions()).isNotEmpty();
+                        }
+                        if (question instanceof DragAndDropQuestion) {
+                            assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isNotEmpty();
+                        }
+                        if (question instanceof ShortAnswerQuestion) {
+                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getSolutions()).isNotEmpty();
+                        }
+                        if (question instanceof MultipleChoiceQuestion) {
+                            ((MultipleChoiceQuestion) question).getAnswerOptions().forEach(answerOption -> {
+                                assertThat(answerOption.isIsCorrect()).isNotNull();
+                                assertThat(answerOption.getExplanation()).isNotNull();
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private void createExamSubmissions(StudentExam studentExamResponse) throws Exception {
+        for (var exercise : studentExamResponse.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            if (exercise instanceof ProgrammingExercise) {
+                doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+                bambooRequestMockProvider.reset();
+                bambooRequestMockProvider.enableMockingOfRequests(true);
+                bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+                request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
+                continue;
+            }
+            var submission = participation.getSubmissions().iterator().next();
+            if (exercise instanceof ModelingExercise) {
+                // check that the submission was saved and that a submitted version was created
+                String newModel = "This is a new model";
+                var modelingSubmission = (ModelingSubmission) submission;
+                modelingSubmission.setModel(newModel);
+                request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+            }
+            else if (exercise instanceof TextExercise) {
+                var textSubmission = (TextSubmission) submission;
+                final var newText = "New Text";
+                textSubmission.setText(newText);
+                request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+            }
+            else if (exercise instanceof QuizExercise) {
+                // check that the submission was saved and that a submitted version was created
+                var quizSubmission = (QuizSubmission) submission;
+                int dragAndDropDragItemIndex = 1;
+                int dragAndDropLocationIndex = 2;
+                String shortAnswerText = "New Short Answer Text";
+                int shortAnswerSpotIndex = 1;
+                int multipleChoiceSelectedOptionIndex = 0;
+                ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
+                    if (quizQuestion instanceof DragAndDropQuestion) {
+                        DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
+                        DragAndDropMapping dndMapping = new DragAndDropMapping();
+                        dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
+                        dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
+                        dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex - 1));
+                        dndSubmittedAnswer.getMappings().add(dndMapping);
+                        dndSubmittedAnswer.setQuizQuestion(quizQuestion);
+                        quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
+                    }
+                    else if (quizQuestion instanceof ShortAnswerQuestion) {
+                        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+                        ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+                        shortAnswerSubmittedText.setText(shortAnswerText);
+                        shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
+                        shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
+                        shortAnswerSubmittedAnswer.setQuizQuestion(quizQuestion);
+                        quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
+                    }
+                    else if (quizQuestion instanceof MultipleChoiceQuestion) {
+                        var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+                        MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+                        multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
+                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
+                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
+                        quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
+                    }
+
+                });
+                request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+            }
         }
     }
 }

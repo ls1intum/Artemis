@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
 import { round } from 'app/shared/util/utils';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -23,7 +24,13 @@ export class ExamScoresComponent implements OnInit {
     public reverse = false;
     public isLoading = true;
 
-    constructor(private route: ActivatedRoute, private examService: ExamManagementService, private sortService: SortService, private jhiAlertService: AlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private examService: ExamManagementService,
+        private sortService: SortService,
+        private jhiAlertService: AlertService,
+        private localeConversionService: LocaleConversionService,
+    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -54,15 +61,16 @@ export class ExamScoresComponent implements OnInit {
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
+        headers.push('Submitted');
 
         const data = this.studentResults.map((studentResult) => {
             return this.convertToCSVRow(studentResult);
         });
 
         const options = {
-            fieldSeparator: ',',
+            fieldSeparator: ';',
             quoteStrings: '"',
-            decimalSeparator: '.',
+            decimalSeparator: 'locale',
             showLabels: true,
             title: this.examScoreDTO.title,
             filename: this.examScoreDTO.title + 'Results',
@@ -98,9 +106,13 @@ export class ExamScoresComponent implements OnInit {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] =
-                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null ? '' : round(exerciseResult.achievedPoints, 1);
+                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null
+                        ? ''
+                        : this.localeConversionService.toLocaleString(round(exerciseResult.achievedPoints, 1));
                 csvRow[exerciseGroup.title + 'AchievedScore(%)'] =
-                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null ? '' : round(exerciseResult.achievedScore, 2);
+                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null
+                        ? ''
+                        : this.localeConversionService.toLocaleString(round(exerciseResult.achievedScore, 2), 2);
             } else {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
@@ -109,9 +121,18 @@ export class ExamScoresComponent implements OnInit {
         });
 
         csvRow.overAllPoints =
-            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null ? '' : round(studentResult.overallPointsAchieved, 1);
+            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null
+                ? ''
+                : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
         csvRow.overAllScore =
-            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null ? '' : round(studentResult.overallScoreAchieved, 2);
+            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null
+                ? ''
+                : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
         return csvRow;
+    }
+
+    getLocaleConversionService() {
+        return this.localeConversionService;
     }
 }

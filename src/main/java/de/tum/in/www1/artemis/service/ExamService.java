@@ -201,8 +201,7 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
     public ExamScoresDTO getExamScore(Long examId) {
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
         List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
 
@@ -227,8 +226,11 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        for (User user : exam.getRegisteredUsers()) {
-            scores.studentResults.add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber()));
+        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        for (StudentExam studentExam : studentExams) {
+            User user = studentExam.getUser();
+            scores.studentResults
+                    .add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted()));
         }
 
         // Adding student results information to DTO
@@ -751,5 +753,26 @@ public class ExamService {
         }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns <code>true</code> if the current user is registered for the exam
+     *
+     * @param examId the id of the exam
+     * @return <code>true</code> if the user if registered for the exam, false if this is not the case or the exam does not exist
+     */
+    public boolean isCurrentUserRegisteredForExam(Long examId) {
+        return isUserRegisteredForExam(examId, userService.getUser().getId());
+    }
+
+    /**
+     * Returns <code>true</code> if the user with the given id is registered for the exam
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the user to check
+     * @return <code>true</code> if the user if registered for the exam, false if this is not the case or the exam does not exist
+     */
+    public boolean isUserRegisteredForExam(Long examId, Long userId) {
+        return examRepository.isUserRegisteredForExam(examId, userId);
     }
 }
