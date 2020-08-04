@@ -153,8 +153,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        console.log('setPropertiesFromServer: StudentParticipation ');
-        console.log(studentParticipation);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
