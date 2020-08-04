@@ -10,6 +10,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -176,7 +177,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate, true);
 
         // register users
-        exam2.setRegisteredUsers(new HashSet<>(users));
+        Set<User> registeredStudents = new HashSet<>(users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toCollection(ArrayList::new)));
+        exam2.setRegisteredUsers(registeredStudents);
         exam2.setRandomizeExerciseOrder(false);
         exam2 = examRepository.save(exam2);
 
@@ -184,7 +186,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
-        assertThat(studentExamRepository.findAll()).hasSize(users.size() + 3); // we generate three additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 3); // we generate three additional student exams in the @Before method
 
         // start exercises
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -214,7 +216,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 
-        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam2.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam2.getExerciseGroups().size());
 
         // simulate "wait" for exam to start
         exam2.setStartDate(ZonedDateTime.now());
