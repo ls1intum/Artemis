@@ -4,7 +4,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
-import { AggregatedExerciseGroupResult, AggregatedExerciseResult, ExamScoreDTO, ExerciseGroup, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { AggregatedExerciseGroupResult, AggregatedExerciseResult, ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -232,7 +232,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(points);
     }
 
-    roundAndPerformLocalConversion(points: number, exp: number, fractions: number = 1) {
+    roundAndPerformLocalConversion(points: number, exp: number, fractions = 1) {
         return this.localeConversionService.toLocaleString(round(points, exp), fractions);
     }
 }

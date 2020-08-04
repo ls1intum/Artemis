@@ -49,10 +49,10 @@ export class AggregatedExerciseGroupResult {
     public exerciseGroupId: number;
     public title: string;
     public maxPoints: number;
-    public noOfParticipantsWithFilter: number = 0;
-    public totalParticipants: number = 0;
-    public totalPoints: number = 0;
-    public averagePoints: number = 0;
+    public noOfParticipantsWithFilter = 0;
+    public totalParticipants = 0;
+    public totalPoints = 0;
+    public averagePoints = 0;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
     constructor(exerciseGroupId: number, title: string, maxPoints: number) {
@@ -65,10 +65,10 @@ export class AggregatedExerciseGroupResult {
 export class AggregatedExerciseResult {
     public exerciseId: number;
     public title: string;
-    public noOfParticipantsWithFilter: number = 0;
-    public totalParticipants: number = 0;
-    public totalPoints: number = 0;
-    public averagePoints: number = 0;
+    public noOfParticipantsWithFilter = 0;
+    public totalParticipants = 0;
+    public totalPoints = 0;
+    public averagePoints = 0;
 
     constructor(exerciseId: number, title: string) {
         this.exerciseId = exerciseId;
