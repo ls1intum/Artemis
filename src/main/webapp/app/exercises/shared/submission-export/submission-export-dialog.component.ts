@@ -8,6 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
@@ -72,15 +73,6 @@ export class SubmissionExportDialogComponent implements OnInit {
         this.jhiAlertService.success('instructorDashboard.exportSubmissions.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
-        if (response.body) {
-            const zipFile = new Blob([response.body], { type: 'application/zip' });
-            const url = this.$window.nativeWindow.URL.createObjectURL(zipFile);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', response.headers.get('filename')!);
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            window.URL.revokeObjectURL(url);
-        }
+        downloadZipFileFromResponse(response, this.$window);
     };
 }

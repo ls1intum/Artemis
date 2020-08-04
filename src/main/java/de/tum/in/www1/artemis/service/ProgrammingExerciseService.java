@@ -17,6 +17,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -71,6 +72,10 @@ public class ProgrammingExerciseService {
     private final ResourceLoader resourceLoader;
 
     private final InstanceMessageSendService instanceMessageSendService;
+
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    @Value("${artemis.repo-download-clone-path}")
+    private String REPO_DOWNLOAD_CLONE_PATH;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -481,6 +486,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations, template and solution participation
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    public ProgrammingExercise findByIdWithAllParticipations(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId);
+        if (programmingExercise.isPresent()) {
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
+    }
+
+    /**
      * Find a programming exercise by its id, with eagerly loaded studentParticipations and submissions
      *
      * @param programmingExerciseId of the programming exercise.
@@ -750,7 +772,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Check if the repository of the given participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed, 
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
      * or if manual correction is involved and the due date has passed.
      *
      * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
