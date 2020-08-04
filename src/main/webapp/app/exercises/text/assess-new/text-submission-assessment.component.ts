@@ -22,7 +22,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/entities/course.model';
-import { Team } from 'app/entities/team.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -54,11 +53,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     nextSubmissionBusy: boolean;
     isAssessor: boolean;
     isAtLeastInstructor: boolean;
-    isAtLeastTutorInThisCourse: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
-    team: Team | null;
-    teamId: number;
 
     /*
      * Non-resetted properties:
@@ -119,8 +115,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.unusedTextBlockRefs = [];
         this.complaint = null;
         this.totalScore = 0;
-        this.team = null;
-        this.teamId = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -141,8 +135,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const identity = await this.accountService.identity();
         this.userId = identity ? identity.id : null;
 
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
-        this.isAtLeastTutorInThisCourse = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_TA']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -160,11 +153,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
-        console.error('t1:' + this.participation);
-        this.team = studentParticipation.team;
-        const team1 = studentParticipation.team;
-        this.teamId = this.team.id;
-        console.error('tiff1:' + this.team + ',tiff2: ' + this.teamId + 't3' + team1);
+        console.log('setPropertiesFromServer: StudentParticipation ');
+        console.log(studentParticipation);
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -284,15 +274,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     navigateBack() {
         if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
-            // const teamId = (this.submission.participation as StudentParticipation).team.id;
-            // const teamId1 = this.submission.participation;
-            // const teamId2 = teamId1 as StudentParticipation;
-            // const teamId3 = teamId2.team as Team;
-            // console.error('one:' + teamId1 + ',two:' + teamId2 + ',three:' + teamId);
-            // const teamId4 = teamId3.id;
-            const teamId1 = (this.submission.participation as StudentParticipation).team.id;
-            console.error('tiff3: ' + teamId1);
-            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${this.teamId}`);
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            console.log('participation: ');
+            console.log(this.submission.participation);
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
         } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
             this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
@@ -448,7 +433,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor || this.isAtLeastTutorInThisCourse) {
+            if (this.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -462,7 +447,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate && this.isAtLeastTutorInThisCourse;
+            return this.isAssessor && isBeforeAssessmentDueDate;
         }
         return false;
     }
@@ -474,9 +459,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private checkPermissions(): void {
         this.isAssessor = this.result !== null && this.result.assessor && this.result.assessor.id === this.userId;
         // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!) || this.accountService.isAtLeastTutorInCourse(this.course!);
-        this.isAtLeastTutorInThisCourse = this.accountService.isAtLeastTutorInCourse(this.course!);
-        console.error('tiff4' + this.isAssessor + 't5' + this.isAtLeastInstructor);
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     private handleError(error: HttpErrorResponse): void {
