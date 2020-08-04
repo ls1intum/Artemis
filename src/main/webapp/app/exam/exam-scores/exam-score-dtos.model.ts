@@ -10,7 +10,14 @@ export class ExamScoreDTO {
 }
 
 export class ExerciseGroup {
-    constructor(public id: number, public title: string, public maxPoints: number, public averagePointsAchieved: number, public containedExercises: string[]) {}
+    constructor(
+        public id: number,
+        public title: string,
+        public maxPoints: number,
+        public averagePointsAchieved: number,
+        public containedExercises: string[],
+        public containedExerciseIds: number[],
+    ) {}
 }
 
 export class StudentResult {
@@ -23,14 +30,48 @@ export class StudentResult {
         public overallPointsAchieved: number,
         public overallScoreAchieved: number,
         public submitted: boolean,
-        public exerciseGroupIdToExerciseResult: MapToExerciseResult,
+        public exerciseGroupIdToExerciseResult: Map<number, ExerciseResult>,
     ) {}
 }
 
-export interface MapToExerciseResult {
-    [key: number]: ExerciseResult;
+export class ExerciseResult {
+    constructor(
+        public id: number,
+        public title: string,
+        public maxScore: number,
+        public achievedScore: number,
+        public achievedPoints: number,
+        public hasNonEmptySubmission: boolean,
+    ) {}
 }
 
-export class ExerciseResult {
-    constructor(public id: number, public title: string, public maxScore: number, public achievedScore: number, public achievedPoints: number) {}
+export class AggregatedExerciseGroupResult {
+    public exerciseGroupId: number;
+    public title: string;
+    public maxPoints: number;
+    public noOfParticipantsWithFilter: number = 0;
+    public totalParticipants: number = 0;
+    public totalPoints: number = 0;
+    public averagePoints: number = 0;
+    public exerciseResults: AggregatedExerciseResult[] = [];
+
+    constructor(exerciseGroupId: number, title: string, maxPoints: number) {
+        this.exerciseGroupId = exerciseGroupId;
+        this.title = title;
+        this.maxPoints = maxPoints;
+    }
+}
+
+export class AggregatedExerciseResult {
+    public exerciseId: number;
+    public title: string;
+    public noOfParticipantsWithFilter: number = 0;
+    public totalParticipants: number = 0;
+    public totalPoints: number = 0;
+    public averagePoints: number = 0;
+
+    constructor(exerciseId: number, title: string) {
+        this.exerciseId = exerciseId;
+        this.title = title;
+    }
 }
