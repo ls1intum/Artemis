@@ -98,7 +98,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseGroupId
      * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
      */
-    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise: boolean = false) {
+    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise = false) {
         if (this.exerciseGroups) {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
@@ -124,7 +124,7 @@ export class ExerciseGroupsComponent implements OnInit {
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.exerciseGroups?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
                 delete this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
