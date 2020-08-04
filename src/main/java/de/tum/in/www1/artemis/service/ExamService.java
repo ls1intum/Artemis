@@ -230,13 +230,10 @@ public class ExamService {
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         for (StudentExam studentExam : studentExams) {
             User user = studentExam.getUser();
-            scores.studentResults
-                    .add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted()));
-        }
+            var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
+                    studentExam.isSubmitted());
 
-        // Adding student results information to DTO
-        for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
-
+            // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
 
@@ -262,6 +259,7 @@ public class ExamService {
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
             }
+            scores.studentResults.add(studentResult);
         }
 
         // Updating exam information in DTO
