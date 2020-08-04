@@ -69,9 +69,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     QuizSubmissionRepository quizSubmissionRepository;
 
-    @Autowired
-    ExerciseRepository exerciseRepository;
-
     private QuizExercise quizExercise;
 
     @BeforeEach
