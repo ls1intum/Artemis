@@ -54,8 +54,10 @@ export class ExerciseGroupService {
      */
     delete(courseId: number, examId: number, exerciseGroupId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
         let params = new HttpParams();
-        params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
-        params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        if (deleteBaseReposBuildPlans != null && deleteStudentReposBuildPlans != null) {
+            params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+            params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        }
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { params, observe: 'response' });
     }
 
