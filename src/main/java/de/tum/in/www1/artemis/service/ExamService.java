@@ -219,12 +219,15 @@ public class ExamService {
             }
 
             List<String> containedExercises = new ArrayList<>();
+            List<Long> containedExerciseIds = new ArrayList<>();
 
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 containedExercises.add(exercise.getTitle().trim());
+                containedExerciseIds.add(exercise.getId());
             }
 
-            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises));
+            scores.exerciseGroups
+                    .add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises, containedExerciseIds));
         }
 
         // Adding registered student information to DTO
@@ -295,6 +298,13 @@ public class ExamService {
         return scores;
     }
 
+    /**
+     * Checks whether the submission is not empty
+     *
+     * @param submissions Submissions to check
+     * @param exercise Exercise of the submissions
+     * @return true if at least one submission is not empty else false
+     */
     private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
         if (exercise instanceof ProgrammingExercise) {
             return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);

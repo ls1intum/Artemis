@@ -46,15 +46,18 @@ public class ExamScoresDTO {
 
         public List<String> containedExercises;
 
+        public List<Long> containedExerciseIds;
+
         public ExerciseGroup() {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseGroup(Long id, String title, Double maxPoints, List<String> containedExercises) {
+        public ExerciseGroup(Long id, String title, Double maxPoints, List<String> containedExercises, List<Long> containedExerciseIds) {
             this.id = id;
             this.title = title;
             this.maxPoints = maxPoints;
             this.containedExercises = containedExercises;
+            this.containedExerciseIds = containedExerciseIds;
         }
     }
 
