@@ -1,6 +1,6 @@
 export class ExamScoreDTO {
     constructor(
-        public id: number,
+        public examId: number,
         public title: string,
         public maxPoints: number,
         public averagePointsAchieved: number,
@@ -10,7 +10,7 @@ export class ExamScoreDTO {
 }
 
 export class ExerciseGroup {
-    constructor(public id: number, public title: string, public maxPoints: number, public averagePointsAchieved: number, public containedExercises: ExerciseInfo[]) {}
+    constructor(public exerciseGroupId: number, public title: string, public maxPoints: number, public containedExercises: ExerciseInfo[]) {}
 }
 
 export class ExerciseInfo {
@@ -19,7 +19,7 @@ export class ExerciseInfo {
 
 export class StudentResult {
     constructor(
-        public id: number,
+        public userId: number,
         public name: string,
         public login: string,
         public eMail: string,
@@ -33,7 +33,7 @@ export class StudentResult {
 
 export class ExerciseResult {
     constructor(
-        public id: number,
+        public exerciseId: number,
         public title: string,
         public maxScore: number,
         public achievedScore: number,

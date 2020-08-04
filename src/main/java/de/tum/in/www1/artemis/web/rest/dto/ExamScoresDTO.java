@@ -10,8 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamScoresDTO {
 
-    // examId
-    public Long id;
+    public Long examId;
 
     public String title;
 
@@ -23,8 +22,8 @@ public class ExamScoresDTO {
         // default constructor for our beloved Jackson :-*
     }
 
-    public ExamScoresDTO(Long id, String title, Integer maxPoints) {
-        this.id = id;
+    public ExamScoresDTO(Long examId, String title, Integer maxPoints) {
+        this.examId = examId;
         this.title = title;
         this.maxPoints = maxPoints;
     }
@@ -36,7 +35,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class ExerciseGroup {
 
-        public Long id;
+        public Long exerciseGroupId;
 
         public String title;
 
@@ -48,8 +47,8 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseGroup(Long id, String title, Double maxPoints) {
-            this.id = id;
+        public ExerciseGroup(Long exerciseGroupId, String title, Double maxPoints) {
+            this.exerciseGroupId = exerciseGroupId;
             this.title = title;
             this.maxPoints = maxPoints;
         }
@@ -76,8 +75,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class StudentResult {
 
-        // userId
-        public Long id;
+        public Long userId;
 
         public String name;
 
@@ -99,8 +97,8 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public StudentResult(Long id, String name, String eMail, String login, String registrationNumber, Boolean submitted) {
-            this.id = id;
+        public StudentResult(Long userId, String name, String eMail, String login, String registrationNumber, Boolean submitted) {
+            this.userId = userId;
             this.eMail = eMail;
             this.name = name;
             this.login = login;
@@ -112,8 +110,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class ExerciseResult {
 
-        // exerciseId
-        public Long id;
+        public Long exerciseId;
 
         public String title;
 
@@ -130,8 +127,8 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseResult(Long id, String title, Double maxScore, Long achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
-            this.id = id;
+        public ExerciseResult(Long exerciseId, String title, Double maxScore, Long achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
+            this.exerciseId = exerciseId;
             this.title = title;
             this.maxScore = maxScore;
             this.achievedScore = achievedScore;

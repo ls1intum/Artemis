@@ -235,7 +235,7 @@ public class ExamService {
 
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).collect(Collectors.toList());
 
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {

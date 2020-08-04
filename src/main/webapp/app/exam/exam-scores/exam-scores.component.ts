@@ -88,12 +88,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
         // Create data structures for all exercise groups
         for (const exerciseGroup of this.exerciseGroups) {
-            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints);
+            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.exerciseGroupId, exerciseGroup.title, exerciseGroup.maxPoints);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
                 groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title));
             });
-            groupIdToGroupResults.set(exerciseGroup.id, groupResult);
+            groupIdToGroupResults.set(exerciseGroup.exerciseGroupId, groupResult);
         }
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
@@ -117,7 +117,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 exGroupResult.totalPoints += studentExerciseResult.achievedPoints;
 
                 // Update the specific exercise statistic
-                const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.id);
+                const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
                     // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error('TODO');
@@ -198,7 +198,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         };
 
         this.exerciseGroups.forEach((exerciseGroup) => {
-            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
+            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.exerciseGroupId];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] =
