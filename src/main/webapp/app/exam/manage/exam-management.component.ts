@@ -115,8 +115,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     deleteExam(examId: number) {
         this.examManagementService.delete(this.course.id, examId).subscribe(
             () => {
-                this.eventManager.broadcast(this.examListModificationDeleteEvent);
                 this.dialogErrorSource.next('');
+                this.exams = this.exams.filter((exam) => exam.id !== examId);
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
