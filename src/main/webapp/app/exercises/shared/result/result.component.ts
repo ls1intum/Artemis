@@ -55,6 +55,8 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showGradedBadge = false;
     @Input() showTestNames = false;
 
+    ParticipationType = ParticipationType;
+
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];
@@ -290,13 +292,6 @@ export class ResultComponent implements OnInit, OnChanges {
             return submission.buildArtifact;
         }
         return false;
-    }
-
-    /**
-     * Checks whether the participation is a student programming participation
-     */
-    isStudentProgrammingParticipation() {
-        return this.participation.type === ParticipationType.PROGRAMMING;
     }
 
     /**
