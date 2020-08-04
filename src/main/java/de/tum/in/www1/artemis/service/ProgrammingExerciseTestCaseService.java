@@ -271,7 +271,8 @@ public class ProgrammingExerciseTestCaseService {
 
     /**
      * Remove all test case feedback information from a result and treat it as if it has a score of 0.
-     * @param result
+     * @param result Result containing all feedback
+     * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);

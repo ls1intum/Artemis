@@ -215,7 +215,7 @@ public class Feedback implements Serializable {
      */
     @JsonIgnore
     public boolean isStaticCodeAnalysisFeedback() {
-        return this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+        return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
     @Override
