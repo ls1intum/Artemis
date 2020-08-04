@@ -264,24 +264,6 @@ public class ExamService {
             }
         }
 
-        // Updating exerciseGroup information in DTO
-        for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
-            int noOfFoundResults = 0;
-            double sumOfPoints = 0.0;
-
-            for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
-                if (studentResult.exerciseGroupIdToExerciseResult.containsKey(exerciseGroup.id)) {
-                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult.get(exerciseGroup.id);
-                    noOfFoundResults++;
-                    sumOfPoints = sumOfPoints + exerciseResult.achievedPoints;
-                }
-            }
-
-            if (noOfFoundResults != 0) {
-                exerciseGroup.averagePointsAchieved = sumOfPoints / noOfFoundResults;
-            }
-        }
-
         // Updating exam information in DTO
         Double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
 
