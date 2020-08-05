@@ -38,8 +38,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     @ViewChild('treeview', { static: false }) treeview: TreeviewComponent;
 
     @Input()
-    exerciseTitle: string;
-    @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }

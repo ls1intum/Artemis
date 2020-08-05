@@ -141,7 +141,6 @@
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft
-        [exerciseTitle]="exercise?.title"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"

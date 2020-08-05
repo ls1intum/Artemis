@@ -30,7 +30,6 @@
     <jhi-code-editor-file-browser
         editorSidebarLeft
         [disableActions]="repositoryIsLocked"
-        [exerciseTitle]="exercise?.title"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
