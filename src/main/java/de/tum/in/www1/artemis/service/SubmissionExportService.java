@@ -14,8 +14,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
 
@@ -38,15 +36,18 @@ public abstract class SubmissionExportService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public SubmissionExportService(ExerciseRepository exerciseRepository) {
+    private final ZipUtilService zipUtilService;
+
+    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipUtilService zipUtilService) {
         this.exerciseRepository = exerciseRepository;
+        this.zipUtilService = zipUtilService;
     }
 
     @Value("${artemis.submission-export-path}")
     private String SUBMISSION_EXPORT_PATH;
 
     /**
-     * Exports student submissions to a zip file for an exercise
+     * Exports student submissions to a createZipFileWithFolderContent file for an exercise
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the expot
      * @return a reference to the zipped file
@@ -94,7 +95,7 @@ public abstract class SubmissionExportService {
     }
 
     /**
-     * Creates a zip file from a list of participations for an exercise
+     * Creates a createZipFileWithFolderContent file from a list of participations for an exercise
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
@@ -107,7 +108,7 @@ public abstract class SubmissionExportService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
-        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".zip";
+        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".createZipFileWithFolderContent";
 
         Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);
@@ -156,7 +157,7 @@ public abstract class SubmissionExportService {
         }
 
         try {
-            createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
+            zipUtilService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
             deleteTempFiles(submissionFilePaths);
@@ -170,30 +171,6 @@ public abstract class SubmissionExportService {
     protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;
 
     protected abstract String getFileEndingForSubmission(Submission submission);
-
-    /**
-     * Create a zipfile of the given paths and save it in the zipFilePath
-     *
-     * @param zipFilePath path where the zip file should be saved
-     * @param paths the paths that should be zipped
-     * @param pathsRoot the root path relative to <code>paths</code>
-     * @throws IOException if an error occurred while zipping
-     */
-    private void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
-                try {
-                    zipOutputStream.putNextEntry(zipEntry);
-                    Files.copy(path, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-    }
 
     /**
      * Delete all temporary files created during export

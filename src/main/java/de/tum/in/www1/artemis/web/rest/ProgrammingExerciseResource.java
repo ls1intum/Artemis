@@ -688,13 +688,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as createZipFileWithFolderContent
      *
      * @param exerciseId the id of the exercise to get the repos from
-     * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
+     * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to createZipFileWithFolderContent the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
-     * @throws IOException if something during the zip process went wrong
+     * @throws IOException if something during the createZipFileWithFolderContent process went wrong
      */
     @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -738,7 +738,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as createZipFileWithFolderContent
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
@@ -785,7 +785,7 @@ public class ProgrammingExerciseResource {
         File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+                    "There was an error on the server and the createZipFileWithFolderContent file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
@@ -894,7 +894,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as createZipFileWithFolderContent file
      *
      * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
@@ -922,7 +922,7 @@ public class ProgrammingExerciseResource {
         File zipFile = programmingExerciseExportService.checkPlagiarism(exerciseId);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+                    "There was an error on the server and the createZipFileWithFolderContent file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));

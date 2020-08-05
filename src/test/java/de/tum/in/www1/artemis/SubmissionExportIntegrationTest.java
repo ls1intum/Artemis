@@ -198,7 +198,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
             }
         }
         catch (IOException e) {
-            fail("Could not read zip file.");
+            fail("Could not read createZipFileWithFolderContent file.");
         }
     }
 

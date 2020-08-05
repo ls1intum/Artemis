@@ -61,7 +61,7 @@ public class FileResource {
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
-    private List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+    private List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "createZipFileWithFolderContent"));
 
     public void addAllowedFileExtension(String fileExtension) {
         this.allowedFileExtensions.add(fileExtension);
