@@ -6,9 +6,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
@@ -39,20 +38,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardAssessmentViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintResponsesViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintsViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardMoreFeedbackRequestsViewRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -72,6 +58,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     ExerciseRepository exerciseRepo;
+
+    @Autowired
+    LectureRepository lectureRepo;
 
     @Autowired
     ParticipationRepository participationRepo;
@@ -113,7 +102,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
 
     @Autowired
-    ExamRepository examRepository;
+    ExamRepository examRepo;
 
     private final int numberOfStudents = 4;
 
@@ -278,8 +267,11 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
-        // mock certain requests to JIRA
+        database.addExamWithExerciseGroup(courses.get(0), true);
+        // mock certain requests to JIRA Bitbucket and Bamboo
         for (Course course : courses) {
             if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
@@ -290,7 +282,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
             }
+            for (Exercise exercise : course.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
+                    bambooRequestMockProvider.mockDeleteProject(projectKey);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+                }
+            }
         }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
@@ -299,6 +302,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
         assertThat(courseRepo.findAll()).as("All courses deleted").hasSize(0);
         assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
+        assertThat(examRepo.findAll()).as("All exams are deleted").isEmpty();
+        assertThat(exerciseRepo.findAll()).as("All Exercises are deleted").isEmpty();
+        assertThat(lectureRepo.findAll()).as("All Lectures are deleted").isEmpty();
     }
 
     @Test
