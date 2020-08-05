@@ -17,7 +17,6 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
-                    <th class="d-none d-md-table-cell"></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -62,9 +61,6 @@
             </thead>
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
-                    <td class="d-none d-md-table-cell">
-                        <div [ngStyle]="{ backgroundColor: ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
-                    </td>
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="[exam.id, 'view']">{{ exam.id }}</a>
                     </td>
