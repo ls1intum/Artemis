@@ -1,7 +1,7 @@
 <jhi-code-editor-grid #grid>
     <ng-content select="[editorTitle]" editorTitle></ng-content>
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <ng-content select="[editorNavbar]"></ng-content>
+        <ng-content select="[editorToolbar]"></ng-content>
         <jhi-code-editor-actions
             [disableActions]="!editable"
             [unsavedFiles]="unsavedFiles"

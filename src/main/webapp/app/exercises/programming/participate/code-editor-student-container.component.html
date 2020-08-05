@@ -15,7 +15,7 @@
 </nav>
 <jhi-code-editor-container *ngIf="!loadingParticipation && !participationCouldNotBeFetched" [editable]="!repositoryIsLocked" [participation]="participation">
     <span editorTitle>{{ exercise.title }}</span>
-    <ng-template editorNavbar>
+    <ng-template editorToolbar>
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
