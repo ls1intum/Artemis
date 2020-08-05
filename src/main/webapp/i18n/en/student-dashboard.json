@@ -36,7 +36,7 @@
                 "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
-                "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
+                "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
                 "newFirst": "Newest",
@@ -87,9 +87,9 @@
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
-                "absoluteScore": "Absolute score: {{ number }} Pts",
-                "maxScore": "Total max score: {{ number }} Pts",
-                "relativeScore": "Relative score: {{ number }}%",
+                "yourPoints": "Your points: {{ number }}",
+                "reachablePoints": "Reachable points: {{ number }} ({{ relative }}%)",
+                "totalPoints": "Total points: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course.",
                 "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
@@ -98,7 +98,9 @@
                 "exerciseNotParticipated": "You have not participated in {{ exercise }}.",
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
                 "noPointsForExercise": "You can't receive points for this exercise.",
-                "description": "Here you see all results that influence your score of the course, where the assessment due date is over."
+                "description": "Here you see all results that influence your score of the course, where the assessment due date is over.",
+                "reachableHelp": "Reachable points are the sum of the maximum points of all exercises that have been assessed, weren't participated in or were participated in too late.",
+                "totalHelp": "Total points are the sum of the maximum points of all exercises of this type."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
