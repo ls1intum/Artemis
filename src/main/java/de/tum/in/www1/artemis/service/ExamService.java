@@ -298,8 +298,12 @@ public class ExamService {
      * @return true if at least one submission is not empty else false
      */
     private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise, ObjectMapper jacksonObjectMapper) {
-        if (exercise instanceof ProgrammingExercise || exercise instanceof FileUploadExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
+            return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
         }
         else if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
@@ -311,6 +315,7 @@ public class ExamService {
                 return !jacksonObjectMapper.readTree(modelingSubmission.getModel()).get("elements").isEmpty();
             }
             catch (Exception e) {
+                // Then the student most likely submitted something which breaks the model, if parsing fails
                 return true;
             }
         }
