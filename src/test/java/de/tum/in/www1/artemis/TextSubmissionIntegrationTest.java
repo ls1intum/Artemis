@@ -378,4 +378,19 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         }
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testPlagiarismCheck() throws Exception {
+        final TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        final TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("example test", Language.ENGLISH, true);
+        final TextSubmission textSubmission3 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+
+
+        database.addTextSubmission(finishedTextExercise, textSubmission1, "student1");
+        database.addTextSubmission(finishedTextExercise, textSubmission2, "student2");
+        database.addTextSubmission(finishedTextExercise, textSubmission3, "tutor1");
+
+        request.get("/api/text-exercises/" + finishedTextExercise.getId() + "/plagiarism-checks", HttpStatus.OK, List.class);
+    }
 }

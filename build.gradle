@@ -248,6 +248,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.25.2"
     implementation "com.ibm.icu:icu4j:67.1"
     implementation 'com.github.seancfoley:ipaddress:5.3.1'
+    compile group: 'info.debatty', name: 'java-string-similarity', version: '2.0.0'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
