@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -229,6 +231,7 @@ public class ExamService {
             scores.exerciseGroups.add(exerciseGroupDTO);
         }
 
+        ObjectMapper objectMapper = new ObjectMapper();
         // Adding registered student information to DTO
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         for (StudentExam studentExam : studentExams) {
@@ -251,7 +254,7 @@ public class ExamService {
                     studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
 
                     // Check whether the student attempted to solve the exercise
-                    boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
+                    boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                             exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
 
@@ -282,14 +285,12 @@ public class ExamService {
      *
      * @param submissions Submissions to check
      * @param exercise Exercise of the submissions
+     * @param jacksonObjectMapper Mapper to parse a modeling exercise model string to JSON
      * @return true if at least one submission is not empty else false
      */
-    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise) {
+    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise, ObjectMapper jacksonObjectMapper) {
+        if (exercise instanceof ProgrammingExercise || exercise instanceof FileUploadExercise) {
             return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            // TODO: What to do for FileUploadExercises
         }
         else if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
@@ -298,8 +299,12 @@ public class ExamService {
         }
         else if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
-            // TODO: use blank or empty?
-            return modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty();
+            try {
+                return !jacksonObjectMapper.readTree(modelingSubmission.getModel()).get("elements").isEmpty();
+            }
+            catch (Exception e) {
+                return true;
+            }
         }
         else if (exercise instanceof QuizExercise) {
             QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
@@ -309,7 +314,6 @@ public class ExamService {
         else {
             throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
-        return false;
     }
 
     /**
