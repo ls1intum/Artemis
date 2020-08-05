@@ -1,4 +1,4 @@
-<jhi-code-editor-grid #grid>
+<jhi-code-editor-grid #grid (onResize)="onGridResize($event)">
     <ng-content select="[editorTitle]" editorTitle></ng-content>
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <ng-content select="[editorToolbar]"></ng-content>

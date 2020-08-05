@@ -1,4 +1,4 @@
-import { HostListener, ViewChild, Component, Input } from '@angular/core';
+import { Component, HostListener, Input, ViewChild, EventEmitter, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -17,6 +17,7 @@ import {
     FileChange,
     FileType,
     RenameFileChange,
+    ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -42,6 +43,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     editable: boolean;
     @Input()
     showEditorInstructions = true;
+    @Output()
+    onResizeEditorInstructions = new EventEmitter<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -220,5 +223,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         resizableMinHeight?: number;
     }) {
         this.grid.toggleCollapse(event, horizontal, interactable, resizableMinWidth, resizableMinHeight);
+    }
+
+    onGridResize(type: ResizeType) {
+        if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+            this.onResizeEditorInstructions.emit();
+        }
     }
 }
