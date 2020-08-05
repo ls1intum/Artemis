@@ -353,7 +353,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * POST /modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as createZipFileWithFolderContent
+     * POST /modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
@@ -394,7 +394,7 @@ public class ModelingExerciseResource {
         }
         catch (IOException e) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the createZipFileWithFolderContent file could not be created.")).body(null);
+                    "There was an error on the server and the zip file could not be created.")).body(null);
         }
     }
 }

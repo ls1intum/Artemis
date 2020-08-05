@@ -80,12 +80,12 @@ public class ProgrammingExerciseExportService {
     private String REPO_DOWNLOAD_CLONE_PATH;
 
     /**
-     * Get participations of programming exercises of a requested list of students packed together in one createZipFileWithFolderContent file.
+     * Get participations of programming exercises of a requested list of students packed together in one zip file.
      *
      * @param programmingExerciseId the id of the exercise entity
      * @param participations participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
-     * @return a createZipFileWithFolderContent file containing all requested participations
+     * @return a zip file containing all requested participations
      */
     public File exportStudentRepositories(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
@@ -120,12 +120,12 @@ public class ProgrammingExerciseExportService {
         });
 
         if (pathsToZippedRepoFiles.isEmpty()) {
-            log.warn("The createZipFileWithFolderContent file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
+            log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
             return null;
         }
 
         try {
-            // create a large createZipFileWithFolderContent file with all zipped repos and provide it for download
+            // create a large zip file with all zipped repos and provide it for download
             return createZipWithAllRepositories(programmingExercise, pathsToZippedRepoFiles);
         }
         catch (IOException ex) {
@@ -142,10 +142,10 @@ public class ProgrammingExerciseExportService {
     /**
      * Delete all temporary zipped repositories created during export
      *
-     * @param pathsToZipeedRepos A list of all paths to the createZipFileWithFolderContent files, that should be deleted
+     * @param pathsToZipeedRepos A list of all paths to the zip files, that should be deleted
      */
     private void deleteTempZipRepoFiles(List<Path> pathsToZipeedRepos) {
-        log.debug("Delete all temporary createZipFileWithFolderContent repo files");
+        log.debug("Delete all temporary zip repo files");
         // delete the temporary zipped repo files
         for (Path zippedRepoFile : pathsToZipeedRepos) {
             try {
@@ -274,7 +274,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise The programming exercise for the participation
      * @param participation The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipeed repo
-     * @param pathsToZippedRepos A list of already zipped repos. The path of the newly createZipFileWithFolderContent file will get added to this list
+     * @param pathsToZippedRepos A list of already zipped repos. The path of the newly zip file will get added to this list
      * @return The checked out and zipped repository
      * @throws GitAPIException If something went wrong checking out the repo
      * @throws InterruptedException
@@ -310,7 +310,7 @@ public class ProgrammingExerciseExportService {
             }
         }
 
-        log.debug("Create temporary createZipFileWithFolderContent file for repository " + repository.getLocalPath().toString());
+        log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
         Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH);
         pathsToZippedRepos.add(zippedRepoFile);
 
@@ -321,7 +321,7 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Creates one single createZipFileWithFolderContent archive containing all zipped repositories found under the given paths
+     * Creates one single zip archive containing all zipped repositories found under the given paths
      *
      * @param programmingExercise The programming exercise to which all repos belong to
      * @param pathsToZippedRepos The paths to all zipped repositories
@@ -329,9 +329,9 @@ public class ProgrammingExerciseExportService {
      * @throws IOException
      */
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
-        log.debug("Create createZipFileWithFolderContent file for all repositories");
+        log.debug("Create zip file for all repositories");
         Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".createZipFileWithFolderContent");
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
         zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);
         fileService.scheduleForDeletion(zipFilePath, 5);
         return new File(zipFilePath.toString());

@@ -46,7 +46,7 @@ public abstract class SubmissionExportService {
     private String SUBMISSION_EXPORT_PATH;
 
     /**
-     * Exports student submissions to a createZipFileWithFolderContent file for an exercise
+     * Exports student submissions to a zip file for an exercise
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the expot
      * @return a reference to the zipped file
@@ -94,7 +94,7 @@ public abstract class SubmissionExportService {
     }
 
     /**
-     * Creates a createZipFileWithFolderContent file from a list of participations for an exercise
+     * Creates a zip file from a list of participations for an exercise
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
@@ -107,7 +107,7 @@ public abstract class SubmissionExportService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
-        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".createZipFileWithFolderContent";
+        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".zip";
 
         Path submissionsFolderPath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(SUBMISSION_EXPORT_PATH, "zippedSubmissions", zipFileName);

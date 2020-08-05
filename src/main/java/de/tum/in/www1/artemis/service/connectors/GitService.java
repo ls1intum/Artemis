@@ -684,7 +684,7 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @throws IOException if the zipping process failed.
-     * @return path to createZipFileWithFolderContent file.
+     * @return path to zip file.
      */
     public Path zipRepository(Repository repo) throws IOException {
         return zipRepository(repo, REPO_CLONE_PATH);
@@ -696,14 +696,14 @@ public class GitService {
      * @param repo Local Repository Object.
      * @param targetPath path where the repo is located on disk
      * @throws IOException if the zipping process failed.
-     * @return path to createZipFileWithFolderContent file.
+     * @return path to zip file.
      */
     public Path zipRepository(Repository repo, String targetPath) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
         // take the last component
-        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".createZipFileWithFolderContent";
+        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
 
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);

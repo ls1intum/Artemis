@@ -19,7 +19,7 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
-     * @param zipFilePath path where the createZipFileWithFolderContent file should be saved
+     * @param zipFilePath path where the zip file should be saved
      * @param paths multiple paths that should be zipped
      * @throws IOException if an error occurred while zipping
      */
@@ -35,7 +35,7 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
-     * @param zipFilePath path where the createZipFileWithFolderContent file should be saved
+     * @param zipFilePath path where the zip file should be saved
      * @param paths multiple paths that should be zipped
      * @param pathsRoot the root path relative to <code>paths</code>
      * @throws IOException if an error occurred while zipping
@@ -50,9 +50,9 @@ public class ZipFileService {
     }
 
     /**
-     * Recursively include all files in contentRootPath and create a createZipFileWithFolderContent file 'zipFileName' in the folder 'zipFileFolderName'
+     * Recursively include all files in contentRootPath and create a zip file 'zipFileName' in the folder 'zipFileFolderName'
      *
-     * @param zipFilePath path where the createZipFileWithFolderContent file should be saved
+     * @param zipFilePath path where the zip file should be saved
      * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
      * @return the path of the newly created zip file for further processing
      * @throws IOException if an error occurred while zipping
@@ -74,7 +74,7 @@ public class ZipFileService {
             zipOutputStream.closeEntry();
         }
         catch (Exception e) {
-            log.error("Create createZipFileWithFolderContent file error", e);
+            log.error("Create zip file error", e);
         }
     }
 

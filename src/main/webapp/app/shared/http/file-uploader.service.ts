@@ -13,7 +13,7 @@ type Options = {
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
     // NOTE: this list has to be the same as in FileResource.java
-    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf,createZipFileWithFolderContent';
+    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf,zip';
 
     constructor(private http: HttpClient) {}
 
