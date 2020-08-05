@@ -308,6 +308,7 @@ public class TextSubmissionResource {
         final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+        // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
