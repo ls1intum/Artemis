@@ -13,8 +13,12 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
+<jhi-code-editor-container
+    *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
+    [editable]="!repositoryIsLocked"
+>
+    <span editorTitle>{{ exercise.title }}</span>
+    <ng-template editorNavbar>
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
@@ -33,49 +37,10 @@
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
-        <jhi-code-editor-actions
-            [disableActions]="repositoryIsLocked"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-actions>
-    </div>
-    <jhi-code-editor-file-browser
-        editorSidebarLeft
-        [disableActions]="repositoryIsLocked"
-        [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-        [editorState]="editorState"
-        [(selectedFile)]="selectedFile"
-        [(commitState)]="commitState"
-        (onFileChange)="onFileChange($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
-        [commitState]="commitState"
-        [editorState]="editorState"
-        [(buildLogErrors)]="buildLogErrors"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-ace>
+    </ng-template>s
     <jhi-code-editor-instructions
-        editorSidebarRight
+        editorSidebar
         [participation]="participation"
         [exercise]="exercise"
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
     ></jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
-        [participation]="participation"
-        [(buildLogErrors)]="buildLogErrors"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-build-output>
-</jhi-code-editor-grid>
+</jhi-code-editor-container>
