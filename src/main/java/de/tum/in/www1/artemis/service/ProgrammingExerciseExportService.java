@@ -7,10 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -67,15 +64,15 @@ public class ProgrammingExerciseExportService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ZipUtilService zipUtilService;
+    private final ZipFileService zipFileService;
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, ZipUtilService zipUtilService) {
+            Optional<VersionControlService> versionControlService, ZipFileService zipFileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
-        this.zipUtilService = zipUtilService;
+        this.zipFileService = zipFileService;
     }
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
@@ -160,6 +157,14 @@ public class ProgrammingExerciseExportService {
         }
     }
 
+    /**
+     * downloads all repos of the exercise and runs JPlag
+     *
+     * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @return a zip file that can be returned to the client
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException is thrown for file handling errors
+     */
     public File checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
@@ -200,8 +205,8 @@ public class ProgrammingExerciseExportService {
         }
 
         var projectKey = programmingExercise.getProjectKey();
-        var outputFolder = REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? REPO_DOWNLOAD_CLONE_PATH + projectKey + File.separator + output
-                : REPO_DOWNLOAD_CLONE_PATH + File.separator + projectKey + File.separator + output;
+        var outputFolder = REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? REPO_DOWNLOAD_CLONE_PATH + projectKey + "-" + output
+                : REPO_DOWNLOAD_CLONE_PATH + File.separator + projectKey + "-" + output;
 
         File outputFolderFile = new File(outputFolder);
         outputFolderFile.mkdirs();
@@ -220,23 +225,29 @@ public class ProgrammingExerciseExportService {
         }
 
         var repoFolder = REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? REPO_DOWNLOAD_CLONE_PATH + projectKey : REPO_DOWNLOAD_CLONE_PATH + File.separator + projectKey;
-        String[] args = new String[] { "-l", programmingLanguage, "r", outputFolder, "-s", repoFolder, "-bc", templateRepoName };
+        String[] args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
 
         CommandLineOptions options = new CommandLineOptions(args, null);
         Program program = new Program(options);
         program.run();
 
-        // TODO: the output createZipFileWithFolderContent is currently empty --> FIX
-        Path zipFilePath = Paths.get(outputFolder, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + "-"
-                + System.currentTimeMillis() + "-Jplag-Analysis-Output.createZipFileWithFolderContent");
-        zipUtilService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
-        scheduleForDeletion(zipFilePath, 15);
+        Path zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
+        zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
+        fileService.scheduleForDeletion(zipFilePath, 5);
+
+        if (outputFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(outputFolderFile);
+        }
 
         // cleanup
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
             try {
-                Repository repo = gitService.getOrCheckoutRepository((ProgrammingExerciseParticipation) participation, REPO_DOWNLOAD_CLONE_PATH);
+                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
+                    return;
+                }
+                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 deleteTempLocalRepository(programmingExerciseParticipation, repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
@@ -321,8 +332,8 @@ public class ProgrammingExerciseExportService {
         log.debug("Create createZipFileWithFolderContent file for all repositories");
         Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
                 + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".createZipFileWithFolderContent");
-        zipUtilService.createZipFile(zipFilePath, pathsToZippedRepos);
-        scheduleForDeletion(zipFilePath, 15);
+        zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);
+        fileService.scheduleForDeletion(zipFilePath, 5);
         return new File(zipFilePath.toString());
     }
 
@@ -489,32 +500,5 @@ public class ProgrammingExerciseExportService {
             e.printStackTrace();
         }
         return allRepoFiles;
-    }
-
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
-
-    /**
-     * Schedule the deletion of the given path with a given delay
-     *
-     * @param path The path that should be deleted
-     * @param delayInMinutes The delay in minutes after which the path should be deleted
-     */
-    private void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
-            try {
-                log.info("Delete file " + path);
-                Files.delete(path);
-                futures.remove(path);
-            }
-            catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
-            }
-        }, delayInMinutes, MINUTES);
-
-        futures.put(path, future);
     }
 }

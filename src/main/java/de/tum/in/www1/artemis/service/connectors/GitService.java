@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
-import de.tum.in.www1.artemis.service.ZipUtilService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -69,14 +69,14 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final ZipUtilService zipUtilService;
+    private final ZipFileService zipFileService;
 
-    public GitService(ZipUtilService zipUtilService) {
+    public GitService(ZipFileService zipFileService) {
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset=" + Charset.defaultCharset());
         log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.zipUtilService = zipUtilService;
+        this.zipFileService = zipFileService;
     }
 
     /**
@@ -708,7 +708,7 @@ public class GitService {
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
-        return zipUtilService.createZipFileWithFolderContent(zipFilePath, repoPath);
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
 
     /**

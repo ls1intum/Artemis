@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ZipUtilService {
+public class ZipFileService {
 
-    private final Logger log = LoggerFactory.getLogger(ZipUtilService.class);
+    private final Logger log = LoggerFactory.getLogger(ZipFileService.class);
 
     /**
      * Create a zip file of the given paths and save it in the zipFilePath

@@ -9,10 +9,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -36,11 +32,14 @@ public abstract class SubmissionExportService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ZipUtilService zipUtilService;
+    private final ZipFileService zipFileService;
 
-    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipUtilService zipUtilService) {
+    private final FileService fileService;
+
+    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         this.exerciseRepository = exerciseRepository;
-        this.zipUtilService = zipUtilService;
+        this.zipFileService = zipFileService;
+        this.fileService = fileService;
     }
 
     @Value("${artemis.submission-export-path}")
@@ -157,13 +156,13 @@ public abstract class SubmissionExportService {
         }
 
         try {
-            zipUtilService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
+            zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
             deleteTempFiles(submissionFilePaths);
         }
 
-        scheduleForDeletion(zipFilePath, 15);
+        fileService.scheduleForDeletion(zipFilePath, 5);
 
         return Optional.of(zipFilePath.toFile());
     }
@@ -189,32 +188,4 @@ public abstract class SubmissionExportService {
             }
         }
     }
-
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
-
-    /**
-     * Schedule the deletion of the given path with a given delay
-     *
-     * @param path The path that should be deleted
-     * @param delayInMinutes The delay in minutes after which the path should be deleted
-     */
-    private void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
-            try {
-                log.info("Delete file " + path);
-                Files.delete(path);
-                futures.remove(path);
-            }
-            catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
-            }
-        }, delayInMinutes, MINUTES);
-
-        futures.put(path, future);
-    }
-
 }

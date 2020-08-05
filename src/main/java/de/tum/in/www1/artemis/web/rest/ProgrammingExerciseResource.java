@@ -898,6 +898,8 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException is thrown for file handling errors
      */
     @GetMapping(value = Endpoints.CHECK_PLAGIARISM, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")

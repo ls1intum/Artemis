@@ -10,10 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -618,5 +619,32 @@ public class FileService {
         String charsetName = charsetDetector.detect().getName();
 
         return Charset.forName(charsetName);
+    }
+
+    private Map<Path, ScheduledFuture> futures = new HashMap<>();
+
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
+
+    /**
+     * Schedule the deletion of the given path with a given delay
+     *
+     * @param path The path that should be deleted
+     * @param delayInMinutes The delay in minutes after which the path should be deleted
+     */
+    public void scheduleForDeletion(Path path, long delayInMinutes) {
+        ScheduledFuture future = executor.schedule(() -> {
+            try {
+                log.info("Delete file " + path);
+                Files.delete(path);
+                futures.remove(path);
+            }
+            catch (IOException e) {
+                log.error("Deleting the file " + path + " did not work", e);
+            }
+        }, delayInMinutes, MINUTES);
+
+        futures.put(path, future);
     }
 }
