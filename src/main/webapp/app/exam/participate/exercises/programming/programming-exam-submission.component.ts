@@ -45,7 +45,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
             return false;
         }
-        return this.codeEditorComponent.editorState === EditorState.UNSAVED_CHANGES;
+        return this.codeEditorComponent.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
     }
 
     onActivate(): void {
@@ -56,6 +56,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
-        this.codeEditorComponent.actions.onSave();
+        this.codeEditorComponent.codeEditorContainer.actions.onSave();
     }
 }

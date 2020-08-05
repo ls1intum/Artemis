@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import * as moment from 'moment';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
@@ -14,6 +14,7 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import {CodeEditorContainerComponent} from "app/exercises/programming/shared/code-editor/container/code-editor-container.component";
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
@@ -29,6 +30,8 @@ import {
     ],
 })
 export class ExamCodeEditorStudentContainerComponent implements OnInit {
+    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+
     @Input()
     exercise: ProgrammingExercise;
 
