@@ -132,11 +132,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         for (const groupResult of exerciseGroupResults) {
             if (groupResult.noOfParticipantsWithFilter) {
                 groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+            } else {
+                groupResult.averagePoints = null;
             }
             // Calculate average scores for exercises
             groupResult.exerciseResults.forEach((exResult) => {
                 if (exResult.noOfParticipantsWithFilter) {
                     exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                } else {
+                    exResult.averagePoints = null;
                 }
             });
         }

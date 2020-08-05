@@ -64,10 +64,10 @@
                         <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.title }}</td>
                             <td>{{ exerciseResult.title }}</td>
-                            <td>{{ roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) }}</td>
+                            <td>{{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}</td>
                             <td>{{ exerciseResult.noOfParticipantsWithFilter }}/{{ exerciseResult.totalParticipants }}</td>
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                {{ roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) }}
+                                {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
                             </td>
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ toLocaleString(exerciseGroupResult.maxPoints) }}</td>
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.noOfParticipantsWithFilter }}</td>
