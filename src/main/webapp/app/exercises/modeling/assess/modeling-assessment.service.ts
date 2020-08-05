@@ -9,7 +9,6 @@ import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
-import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -17,32 +16,14 @@ export type EntityResponseType = HttpResponse<Result>;
 export class ModelingAssessmentService {
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
-    private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {
-        this.localSubmissionConflictMap = new Map<number, Conflict[]>();
-    }
+    constructor(private http: HttpClient) {}
 
-    addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
-        return this.localSubmissionConflictMap.set(submissionID, conflicts);
-    }
-
-    getLocalConflicts(submissionID: number) {
-        return this.localSubmissionConflictMap.get(submissionID);
-    }
-
-    escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
-        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
-    }
-
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
         if (submit) {
             url += '?submit=true';
-            if (ignoreConflicts) {
-                url += '&ignoreConflicts=true';
-            }
         }
         return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
     }
