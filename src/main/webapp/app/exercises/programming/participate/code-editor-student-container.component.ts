@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit} from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -25,7 +25,6 @@ import { ActivatedRoute } from '@angular/router';
     templateUrl: './code-editor-student-container.component.html',
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
-
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 

@@ -20,18 +20,17 @@ import {
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import {CodeEditorFileBrowserComponent} from "app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component";
-import {CodeEditorActionsComponent} from "app/exercises/programming/shared/code-editor/actions/code-editor-actions.component";
-import {CodeEditorBuildOutputComponent} from "app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component";
-import {CodeEditorInstructionsComponent} from "app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component";
-import {CodeEditorAceComponent} from "app/exercises/programming/shared/code-editor/ace/code-editor-ace.component";
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
-
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -41,6 +40,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     @Input()
     editable: boolean;
+
+    /** Work in Progress: temporary properties needed to get first prototype working */
+
+    @Input()
+    participation: Participation;
+
+    /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;

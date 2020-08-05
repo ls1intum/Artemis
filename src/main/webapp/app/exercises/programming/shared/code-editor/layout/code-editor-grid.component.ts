@@ -1,5 +1,5 @@
 import * as $ from 'jquery';
-import { AfterViewInit, Component, ContentChild, ElementRef, Input, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation } from '@angular/core';
 
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Interactable } from '@interactjs/core/Interactable';

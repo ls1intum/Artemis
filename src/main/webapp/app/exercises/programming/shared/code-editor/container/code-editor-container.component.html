@@ -33,10 +33,8 @@
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
     ></jhi-code-editor-ace>
-    <ng-content select="[editorSidebar]" editorSidebarRight
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
-    ></ng-content>
+    <!-- toggle / error events not working since ng-content does not emit, only there as a reminder -->
+    <ng-content select="[editorSidebar]" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)"></ng-content>
     <jhi-code-editor-build-output
         editorBottomArea
         [participation]="participation"
