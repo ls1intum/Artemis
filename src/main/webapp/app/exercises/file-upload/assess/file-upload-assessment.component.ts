@@ -53,7 +53,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
-    canOverride = false;
     isLoading = true;
     courseId: number;
 
@@ -428,9 +427,37 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        if (this.exercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
+        }
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
     }
 
     toggleCollapse($event: any) {
@@ -488,6 +515,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     private onError(error: string) {

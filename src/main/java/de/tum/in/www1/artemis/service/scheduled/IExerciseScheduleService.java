@@ -20,5 +20,5 @@ public interface IExerciseScheduleService<T extends Exercise> {
      *
      * @param exercise Exercise
      */
-    void scheduleExerciseIfRequired(T exercise);
+    void updateScheduling(T exercise);
 }

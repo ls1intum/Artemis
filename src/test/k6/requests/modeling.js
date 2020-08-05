@@ -20,6 +20,7 @@ export function submitRandomModelingAnswerExam(artemis, exercise, submissionId) 
         }
         fail('ERROR: Could not submit modeling (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
+    return answer;
 }
 
 export function newModelingExercise(artemis, exerciseGroup) {

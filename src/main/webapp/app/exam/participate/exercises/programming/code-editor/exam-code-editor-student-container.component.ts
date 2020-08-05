@@ -16,10 +16,26 @@ import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitState, DomainType, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
+    providers: [
+        CodeEditorConflictStateService,
+        CodeEditorSessionService,
+        CodeEditorSubmissionService,
+        CodeEditorBuildLogService,
+        CodeEditorRepositoryFileService,
+        CodeEditorRepositoryService,
+        DomainService,
+    ],
 })
 export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -63,21 +79,24 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     }
 
     reload(): void {
-        this.ngOnInit();
-        if (this.instructions) {
-            this.instructions.refreshInstructions();
-        }
+        // this.ngOnInit();
+        // if (this.instructions) {
+        //     this.instructions.refreshInstructions();
+        // }
     }
 
     /**
-     * Update Submission.isSynced based on the CommitState.
+     * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
      *
      * @param commitState current CommitState from CodeEditorActionsComponent
      */
     onCommitStateChange(commitState: CommitState): void {
         if (this.participation.submissions && this.participation.submissions.length > 0) {
-            this.participation.submissions[0].isSynced = commitState === CommitState.CLEAN;
+            if (commitState === CommitState.CLEAN) {
+                this.participation.submissions[0].submitted = true;
+                this.participation.submissions[0].isSynced = true;
+            }
         }
     }
 

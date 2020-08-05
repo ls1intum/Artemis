@@ -11,12 +11,27 @@
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
-                "noCommitHash": "Reload to get the commit hash.",
-                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}"
+                "noCommitHash": "No commit was made",
+                "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
+                "viewResult": " View Result",
+                "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
+                "points": {
+                    "exercise": "Exercise",
+                    "overview": "Overview",
+                    "yourPoints": "Your points",
+                    "maxPoints": "Max. points",
+                    "sum": "Sum"
+                }
             },
             "title": "Exam",
             "startExam": "Start",
             "endExam": "Finish",
+            "date": "Date",
+            "time": "Time",
+            "durationWithFormat": "Duration (mm:ss)",
+            "course": "Course",
+            "exercises": "Exercises",
+            "points": "Points",
             "summary": "Summary",
             "visible": "Visible",
             "startDate": "Start Date",
@@ -31,6 +46,7 @@
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
+            "notConfirmed": "Please tick the checkbox to continue.",
             "falseName": "Entered name is incorrect. Please try again!",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
@@ -58,7 +74,8 @@
             "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
         },
         "examParticipation": {
-            "timer": "Time Left: ",
+            "timer": "Time left: ",
+            "timerEndView": "Time left to submit exam: ",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
@@ -74,8 +91,8 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Hello {{ fullName }}, welcome to {{ title }}",
-            "finish": "Hello {{ fullName }}, this is the end of {{ title }}",
+            "greeting": "Welcome to {{ title }}. Your full name is: ",
+            "finish": "This is the end of {{ title }}. Your full name is:",
             "submitFinalExam": "Please confirm the text below and click on 'Finish' within the time left to hand in your exam.<br />(Note: If you miss this step, your exam will not be graded)",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
@@ -86,7 +103,12 @@
             "submitted": "Exercise submitted",
             "notSubmitted": "Exercise not submitted",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
-            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?"
+            "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
+            "handInEarly": "Hand in early",
+            "continueAfterHandInEarly": "Continue",
+            "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
+            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer.",
+            "namePlaceholder": "Enter your full name here"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -106,6 +128,10 @@
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
             "workingTime": "Working time (mm:ss)",
+            "started": "Started",
+            "submitted": "Submitted",
+            "submissionDate": "Submission date",
+            "participationStatus": "Participation status",
             "summary": "Student Summary",
             "result": "Result",
             "created": "Created",
@@ -141,6 +167,10 @@
             "startDate": "Start of working time",
             "endDate": "End of working time",
             "publishResultsDate": "Release Date of Results",
+            "gracePeriod": "Grace period (seconds)",
+            "examiner": "Examiner",
+            "moduleNumber": "Module number",
+            "courseName": "Course name",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "maxPoints": "Maximum number of points in exam",
@@ -238,6 +268,7 @@
     },
     "studentExam": {
         "alreadySubmitted": "You have already submitted.",
-        "submissionNotInTime": "You can only submit between start and end of the exam."
+        "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
+        "handInFailed": "Submission of your exam failed. Please try again!"
     }
 }

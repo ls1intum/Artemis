@@ -32,7 +32,6 @@ export class LoginService {
             this.authServerProvider.login(credentials).subscribe(
                 (data) => {
                     this.accountService.identity(true).then(() => {
-                        this.websocketService.sendActivity();
                         resolve(data);
                     });
                     return cb();

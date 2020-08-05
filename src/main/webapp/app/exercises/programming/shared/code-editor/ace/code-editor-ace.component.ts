@@ -103,7 +103,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnChanges(changes: SimpleChanges): void {
         if (
             (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
-            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState !== EditorState.REFRESHING)
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
             this.fileSession = {};
             if (this.annotationChange) {
@@ -118,10 +118,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
-        } else if ((changes.selectedFile && this.selectedFile) || (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING)) {
+        } else if (
+            (changes.selectedFile && this.selectedFile) ||
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
+        ) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.fileSession[this.selectedFile]) {
+            if (this.selectedFile && !this.fileSession[this.selectedFile]) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
@@ -141,21 +144,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
-        this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-            this.editorChangeLog.push(change);
-        });
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
+            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
+                this.editorChangeLog.push(change);
+            });
 
-        // Restore the previous cursor position
-        this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
-        this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
-        this.editor.setMode(this.editorMode);
-        this.editor.getEditor().resize();
-        this.editor.getEditor().focus();
-        // Reset the undo stack after file change, otherwise the user can undo back to the old file
-        this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
-        if (this.buildLogErrors) {
-            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            // Restore the previous cursor position
+            this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
+            this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
+            this.editor.setMode(this.editorMode);
+            this.editor.getEditor().resize();
+            this.editor.getEditor().focus();
+            // Reset the undo stack after file change, otherwise the user can undo back to the old file
+            this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
+            if (this.buildLogErrors) {
+                this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            }
         }
     }
 
@@ -176,8 +181,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                         this.initEditorAfterFileChange();
                     }
                 }),
-                catchError((err) => {
-                    console.log('There was an error while getting file', this.selectedFile, err);
+                catchError(() => {
                     return of(null);
                 }),
             )
@@ -194,20 +198,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.selectedFile && this.fileSession[this.selectedFile].code !== code) {
-            const cursor = this.editor.getEditor().getCursorPosition();
-            this.fileSession[this.selectedFile] = { code, cursor };
-            if (this.buildLogErrors.errors[this.selectedFile]) {
-                this.buildLogErrors = {
-                    ...this.buildLogErrors,
-                    errors: {
-                        ...this.buildLogErrors.errors,
-                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
-                    },
-                };
+        if (this.selectedFile && this.fileSession[this.selectedFile]) {
+            if (this.fileSession[this.selectedFile].code !== code) {
+                const cursor = this.editor.getEditor().getCursorPosition();
+                this.fileSession[this.selectedFile] = { code, cursor };
+                if (this.buildLogErrors.errors[this.selectedFile]) {
+                    this.buildLogErrors = {
+                        ...this.buildLogErrors,
+                        errors: {
+                            ...this.buildLogErrors.errors,
+                            [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
+                        },
+                    };
+                }
+                this.editorChangeLog = [];
+                this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
-            this.editorChangeLog = [];
-            this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
         }
     }
 

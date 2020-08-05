@@ -32,6 +32,7 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-quiz',
@@ -94,6 +95,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     quizId: number;
     courseId: number;
     interval: any;
+    quizStarted = false;
 
     /**
      * Websocket channels
@@ -402,6 +404,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                // Check if websocket has updated the quiz exercise and check that following block is only executed once
+                if (!this.quizExercise.started && !this.quizStarted) {
+                    this.quizStarted = true;
+                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                    setTimeout(() => {
+                        // Check again if websocket has updated the quiz exercise within the 5 seconds
+                        if (!this.quizExercise.started) {
+                            this.refreshQuiz(true);
+                        }
+                    }, 5000);
+                }
             }
         } else {
             this.timeUntilStart = '';
@@ -703,7 +716,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
-                    console.log('Unknown question type ' + clientQuestion);
+                    Sentry.captureException(new Error('Unknown question type: ' + clientQuestion));
                 }
             }
         }, this);

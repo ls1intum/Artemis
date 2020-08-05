@@ -35,7 +35,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
     editorState: EditorState;
     commitState: CommitState;
 
-    constructor(
+    protected constructor(
         protected participationService: ParticipationService | null,
         private translateService: TranslateService,
         protected route: ActivatedRoute | null,
@@ -133,6 +133,13 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
             this.onError('saveFailed');
         }
         this.storeSession();
+    }
+
+    /**
+     * On successful pull during a refresh operation, we remove all unsaved files.
+     */
+    onRefreshFiles() {
+        this.unsavedFiles = {};
     }
 
     /**

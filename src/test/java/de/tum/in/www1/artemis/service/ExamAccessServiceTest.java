@@ -33,9 +33,6 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     DatabaseUtilService database;
 
     @Autowired
-    private ExamAccessService examAccessService;
-
-    @Autowired
     private CourseRepository courseRepository;
 
     @Autowired

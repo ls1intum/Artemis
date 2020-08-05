@@ -78,6 +78,7 @@
                 "exerciseNotFound": "The exercise could not be found.",
                 "saveFailed": "One or more files could not be updated.",
                 "commitFailed": "One or more files could not be commited.",
+                "refreshFailed": "Refresh has failed",
                 "noPermissions": "You don't have the necessary permissions.",
                 "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
@@ -90,9 +91,10 @@
                 "failedToLoadBuildLogs": "The build logs could not be retrieved.",
                 "repositoryInConflict": "Your repository has entered a conflict state.",
                 "notAllowedExam": "You must not submit (anymore)",
-                "connectionTimeoutSave": "Saving failed. Please make sure you have a stable internet connection and try again.",
-                "undefined": "Action failed. Please make sure you have a stable internet connection and try again.",
-                "connectionTimeoutRefresh": "Refreshing failed. Please make sure you have a stable internet connection and try again."
+                "saveFailedInternetDisconnected": "Saving failed. Please make sure you have a stable internet connection and try again.",
+                "commitFailedInternetDisconnected": "Commit failed. Please make sure you have a stable internet connection and try again.",
+                "refreshFailedInternetDisconnected": "Refresh failed. Please make sure you have a stable internet connection and try again.",
+                "resetFailed": "Your repository could not be reset."
             },
             "testStatusLabels": {
                 "noResult": "No results",

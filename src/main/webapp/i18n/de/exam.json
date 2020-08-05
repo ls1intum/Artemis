@@ -11,12 +11,27 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
-                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
+                "noCommitHash": "Kein Commit wurde gemacht",
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
+                "viewResult": " Ergebnis ansehen",
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Instruktor.",
+                "points": {
+                    "exercise": "Aufgabe",
+                    "overview": "Übersicht",
+                    "yourPoints": "Deine Punkte",
+                    "maxPoints": "Max. Punkte",
+                    "sum": "Summe"
+                }
             },
             "title": "Klausur",
             "startExam": "Starten",
             "endExam": "Beenden",
+            "date": "Datum",
+            "time": "Zeit",
+            "durationWithFormat": "Dauer (mm:ss)",
+            "course": "Kurs",
+            "exercises": "Aufgaben",
+            "points": "Punkte",
             "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
@@ -31,6 +46,7 @@
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
+            "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
@@ -59,6 +75,7 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
+            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
@@ -74,8 +91,8 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Hallo {{ fullName }}, willkommen zu {{ title }}",
-            "finish": "Hallo {{ fullName }}, das ist das Ende von {{ title }}",
+            "greeting": "Willkommen zu {{ title }}. Ihr voller Name ist: ",
+            "finish": "Das ist das Ende von {{ title }}. Ihr voller Name ist: ",
             "submitFinalExam": "Bitte bestätige den Text unten und klicke innerhalb der verbleibenden Zeit auf 'Beenden', um die Prüfung abzugeben.<br />(Hinweis: Wenn du diesen Schritt versäumst, wird deine Prüfung nicht benotet)",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
@@ -86,7 +103,12 @@
             "submitted": "Aufgabe eingereicht",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
-            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
+            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
+            "handInEarly": "Vorzeitig abgeben",
+            "continueAfterHandInEarly": "Weitermachen",
+            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "namePlaceholder": "Trage deinen vollen Namen hier ein"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -106,6 +128,10 @@
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
             "workingTime": "Bearbeitungszeit (mm:ss)",
+            "started": "Gestartet",
+            "submitted": "Abgegeben",
+            "submissionDate": "Abgabedatum",
+            "participationStatus": "Teilnahme-Status",
             "summary": "Zusammenfassung für den Studierenden",
             "result": "Ergebnis",
             "created": "Erstellt",
@@ -141,6 +167,10 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "gracePeriod": "Karenzzeit (Sekunden)",
+            "examiner": "Prüfer",
+            "moduleNumber": "Modulnummer",
+            "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",
@@ -238,6 +268,7 @@
     },
     "studentExam": {
         "alreadySubmitted": "Du hast bereits abgegeben.",
-        "submissionNotInTime": "Du kannst nur zwischen Start und Ende der Klausur abgeben."
+        "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
+        "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
     }
 }

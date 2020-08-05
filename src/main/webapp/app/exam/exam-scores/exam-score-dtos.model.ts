@@ -22,6 +22,7 @@ export class StudentResult {
         public registrationNumber: string,
         public overallPointsAchieved: number,
         public overallScoreAchieved: number,
+        public submitted: boolean,
         public exerciseGroupIdToExerciseResult: MapToExerciseResult,
     ) {}
 }
