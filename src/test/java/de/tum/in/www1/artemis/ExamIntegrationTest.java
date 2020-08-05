@@ -1092,18 +1092,27 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.exerciseGroupId))
                     .findFirst().get();
-            // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
-            var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
-            assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
 
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
             assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
-            // Collect titles of all exercises in the exam group
-            List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
-            assertThat(exerciseGroupDTO.containedExercises).containsExactlyInAnyOrderElementsOf(exerciseTitlesInGroupFromExam);
+            // Collect titles and ids of all exercises in the exercise group
+            List<String> exerciseTitlesInGroupFromExam = new ArrayList<>();
+            List<Long> exerciseIdsInGroupFromExam = new ArrayList<>();
+            originalExerciseGroup.getExercises().stream().forEach(exercise -> {
+                exerciseTitlesInGroupFromExam.add(exercise.getTitle());
+                exerciseIdsInGroupFromExam.add(exercise.getId());
+            });
+            List<String> exerciseTitlesInDTO = new ArrayList<>();
+            List<Long> exerciseIdsInDTO = new ArrayList<>();
+            exerciseGroupDTO.containedExercises.stream().forEach(exerciseInfo -> {
+                exerciseTitlesInDTO.add(exerciseInfo.title);
+                exerciseIdsInDTO.add(exerciseInfo.exerciseId);
+            });
+            assertThat(exerciseTitlesInGroupFromExam).containsExactlyInAnyOrderElementsOf(exerciseTitlesInDTO);
+            assertThat(exerciseIdsInGroupFromExam).containsExactlyInAnyOrderElementsOf(exerciseIdsInDTO);
         }
 
         // Ensure that all registered students have a StudentResult
