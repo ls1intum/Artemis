@@ -201,6 +201,16 @@ public class CourseService {
     }
 
     /**
+     * Deletes all elements associated with the course including:
+     * <ul>
+     *     <li>The Course</li>
+     *     <li>All Exercises including:
+     *      Submissions, Participations, Results, Repositories and Buildplans, see {@link ExerciseService#delete}</li>
+     *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
+     *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
+     *     <li>All Exams, see {@link ExamService#deleteById}</li>
+     * </ul>
      *
      * @param course the course to be deleted
      */
