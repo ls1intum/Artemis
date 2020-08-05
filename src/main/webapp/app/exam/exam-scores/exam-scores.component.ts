@@ -91,7 +91,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.exerciseGroupId, exerciseGroup.title, exerciseGroup.maxPoints);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
-                groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title));
+                groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.totalParticipants));
             });
             groupIdToGroupResults.set(exerciseGroup.exerciseGroupId, groupResult);
         }
@@ -102,16 +102,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (!studentResult.submitted && this.filterForSubmittedExams) {
                 continue;
             }
-            for (const [exGroupId, studentExerciseResult] of studentResult.exerciseGroupIdToExerciseResult.entries()) {
+            for (const [exGroupId, studentExerciseResult] of Object.entries(studentResult.exerciseGroupIdToExerciseResult)) {
                 // Ignore exercise results with only empty submission if the option was set
                 if (this.filterForNonEmptySubmissions && !studentExerciseResult.hasNonEmptySubmission) {
                     continue;
                 }
                 // Update the exerciseGroup statistic
-                const exGroupResult = groupIdToGroupResults.get(exGroupId);
+                const exGroupResult = groupIdToGroupResults.get(Number(exGroupId));
                 if (!exGroupResult) {
                     // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
-                    throw new Error('TODO');
+                    throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
                 }
                 exGroupResult.noOfParticipantsWithFilter += 1;
                 exGroupResult.totalPoints += studentExerciseResult.achievedPoints;
@@ -120,7 +120,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
                     // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
-                    throw new Error('TODO');
+                    throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
                 } else {
                     exerciseResult.noOfParticipantsWithFilter += 1;
                     exerciseResult.totalPoints += studentExerciseResult.achievedPoints;

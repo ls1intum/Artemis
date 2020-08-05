@@ -1099,20 +1099,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
             // Collect titles and ids of all exercises in the exercise group
-            List<String> exerciseTitlesInGroupFromExam = new ArrayList<>();
-            List<Long> exerciseIdsInGroupFromExam = new ArrayList<>();
-            originalExerciseGroup.getExercises().stream().forEach(exercise -> {
-                exerciseTitlesInGroupFromExam.add(exercise.getTitle());
-                exerciseIdsInGroupFromExam.add(exercise.getId());
-            });
-            List<String> exerciseTitlesInDTO = new ArrayList<>();
-            List<Long> exerciseIdsInDTO = new ArrayList<>();
-            exerciseGroupDTO.containedExercises.stream().forEach(exerciseInfo -> {
-                exerciseTitlesInDTO.add(exerciseInfo.title);
-                exerciseIdsInDTO.add(exerciseInfo.exerciseId);
-            });
-            assertThat(exerciseTitlesInGroupFromExam).containsExactlyInAnyOrderElementsOf(exerciseTitlesInDTO);
-            assertThat(exerciseIdsInGroupFromExam).containsExactlyInAnyOrderElementsOf(exerciseIdsInDTO);
+            for (var originalExercise : originalExerciseGroup.getExercises()) {
+                // Find the corresponding ExerciseInfo object
+                var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
+                assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
+                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.totalParticipants);
+            }
         }
 
         // Ensure that all registered students have a StudentResult

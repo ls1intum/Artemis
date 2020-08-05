@@ -221,7 +221,10 @@ public class ExamService {
             // Add information about exercise groups and exercises
             var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints);
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle()));
+                // Count how many participants each exercise has
+                long participantsForExercise = studentParticipations.stream().filter(studentParticipation -> studentParticipation.getExercise().getId().equals(exercise.getId()))
+                        .count();
+                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), participantsForExercise));
             }
             scores.exerciseGroups.add(exerciseGroupDTO);
         }

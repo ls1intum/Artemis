@@ -62,13 +62,14 @@ export class AggregatedExerciseGroupResult {
 export class AggregatedExerciseResult {
     public exerciseId: number;
     public title: string;
+    public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
-    public totalParticipants = 0;
     public totalPoints = 0;
     public averagePoints = 0;
 
-    constructor(exerciseId: number, title: string) {
+    constructor(exerciseId: number, title: string, totalParticipants: number) {
         this.exerciseId = exerciseId;
         this.title = title;
+        this.totalParticipants = totalParticipants;
     }
 }
