@@ -40,15 +40,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -60,10 +56,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
 import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.service.NotificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -107,21 +100,15 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamService examService;
-
     private final ExerciseService exerciseService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final LectureService lectureService;
-
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final NotificationService notificationService;
 
     private final SubmissionService submissionService;
 
@@ -142,24 +129,21 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExamService examService, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, SubmissionService submissionService,
-            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService, TutorDashboardService tutorDashboardService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+            TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
-        this.examService = examService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.lectureService = lectureService;
-        this.notificationService = notificationService;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
@@ -786,51 +770,11 @@ public class CourseResource {
         if (course == null) {
             return notFound();
         }
-
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
-
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
-        }
-
-        for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
-        }
-
-        List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
-        for (GroupNotification notification : notifications) {
-            notificationService.deleteNotification(notification);
-        }
-        String title = course.getTitle();
-
-        // only delete (default) groups which have been created by Artemis before
-        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
-        }
-        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
-        }
-        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
-        }
-
-        // delete the Exams
-        List<Exam> exams = examService.findAllByCourseId(courseId);
-        for (Exam exam : exams) {
-            exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(exam.getId());
-            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseService.delete(exercise.getId(), false, false);
-                }
-            }
-            examService.delete(exam.getId());
-        }
-
-        courseService.delete(courseId);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
+        courseService.delete(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
 
     /**
