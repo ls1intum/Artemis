@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -9,7 +9,7 @@ import { WindowRef } from 'app/core/websocket/window.service';
     styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
+export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
 
