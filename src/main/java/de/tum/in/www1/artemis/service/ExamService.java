@@ -290,7 +290,7 @@ public class ExamService {
     }
 
     /**
-     * Checks whether the submission is not empty
+     * Checks whether one of the submissions is not empty
      *
      * @param submissions Submissions to check
      * @param exercise Exercise of the submissions
@@ -303,8 +303,7 @@ public class ExamService {
         }
         else if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
-            // TODO: use blank or empty?
-            return textSubmission.getText() != null && !textSubmission.getText().isEmpty();
+            return textSubmission.getText() != null && !textSubmission.getText().isBlank();
         }
         else if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
@@ -317,7 +316,6 @@ public class ExamService {
         }
         else if (exercise instanceof QuizExercise) {
             QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
-            // TODO: use blank or empty?
             return quizSubmission != null && !quizSubmission.getSubmittedAnswers().isEmpty();
         }
         else {

@@ -60,6 +60,8 @@
         "examScores": {
             "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
             "title": "Klausur Ergebnisse",
+            "exerciseStatisticsTitle": "Aufgaben Statistik",
+            "studentResultsTitle": "Studenten Ergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
             "averagePointsExerciseColumn": "Durchschnittliche Punkte (Aufgabe)",

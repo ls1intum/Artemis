@@ -60,6 +60,8 @@
         "examScores": {
             "pointsAchievable": "{{ maxPoints }} Points achievable",
             "title": "Exam Scores",
+            "exerciseStatisticsTitle": "Exercise Statistics",
+            "studentResultsTitle": "Student Results",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
             "averagePointsExerciseColumn": "Average Points (Exercise)",

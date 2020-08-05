@@ -31,7 +31,7 @@
 
         <div class="mb-3">
             <h4>
-                <span>Exercise Statistics</span>
+                <span jhiTranslate="artemisApp.examScores.exerciseStatisticsTitle">Exercise Statistics</span>
             </h4>
             <div class="d-flex align-content-center mb-2">
                 <div class="d-flex align-items-center">
@@ -85,10 +85,10 @@
 
         <!-- Student Result Table -->
         <h4>
-            <span>Student Results</span>
+            <span jhiTranslate="artemisApp.examScores.studentResultsTitle">Student Results</span>
         </h4>
-        <div class="table-responsive table-bordered table-hover">
-            <table class="table table-striped">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th jhiSortBy="name">
