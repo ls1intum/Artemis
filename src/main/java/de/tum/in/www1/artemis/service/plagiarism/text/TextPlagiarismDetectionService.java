@@ -57,15 +57,8 @@ public class TextPlagiarismDetectionService {
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions) {
-        return exerciseWithParticipationsAndSubmissions
-                .getStudentParticipations()
-                .parallelStream()
-                .map(Participation::findLatestSubmission)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(submission -> submission instanceof TextSubmission)
-                .map(submission -> (TextSubmission)submission)
-                .collect(toUnmodifiableList());
+        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission).filter(Optional::isPresent)
+                .map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission).collect(toUnmodifiableList());
     }
 
 }

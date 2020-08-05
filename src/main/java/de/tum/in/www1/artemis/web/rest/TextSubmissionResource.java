@@ -360,26 +360,12 @@ public class TextSubmissionResource {
             s.getParticipation().setSubmissions(null);
         });
 
-        return ResponseEntity.ok(
-            Stream.of(
-                new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"),
-                new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
-                new Tuple<>(nGram(), "nGram"),
-                new Tuple<>(cosine(), "cosine")
-            ).parallel()
-            .flatMap(strategy -> textPlagiarismDetectionService
-                .compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX())
-                .entrySet()
-                .stream()
-                .map(entry -> new SubmissionComparisonDTO()
-                    .addAllSubmissions(entry.getKey())
-                    .putMetric(strategy.getY(), entry.getValue())
-                )
-            )
-            .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge))
-            .values()
-            .stream()
-            .sorted()
-        );
+        return ResponseEntity.ok(Stream
+                .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
+                        new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
+                .parallel()
+                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX()).entrySet().stream()
+                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
+                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
     }
 }
