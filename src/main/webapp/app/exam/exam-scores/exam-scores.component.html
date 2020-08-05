@@ -24,57 +24,62 @@
         </h4>
 
         <div>
-            <div class="form-check">
-                <input id="checkBoxFilterSubmittedExam" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams" for="checkBoxFilterSubmittedExam">
-                    Only consider submitted exams
-                </label>
+            <h4>Exercise Statistics</h4>
+            <div>
+                <div class="form-check">
+                    <input id="checkBoxFilterSubmittedExam" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams" for="checkBoxFilterSubmittedExam">
+                        Only consider submitted exams
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input id="checkBoxFilterForSubmission" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions" for="checkBoxFilterForSubmission">
+                        Only consider exercises with at least on non-empty submission
+                    </label>
+                </div>
             </div>
-            <div class="form-check">
-                <input id="checkBoxFilterForSubmission" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions" for="checkBoxFilterForSubmission">
-                    Only consider exercises with at least on non-empty submission
-                </label>
-            </div>
-        </div>
 
-        <!-- Exercise Groups Statistics Table -->
-        <div class="table-responsive table-bordered table-hover">
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr>
-                        <th jhiTranslate="artemisApp.examScores.titleColumn">
-                            Title
-                        </th>
-                        <th jhiTranslate="artemisApp.examScores.containedExercisesColumn">
-                            Contained exercises
-                        </th>
-                        <th jhiTranslate="artemisApp.examScores.averagePointsColumn">
-                            Average points achieved
-                        </th>
-                        <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">
-                            Maximum points achievable
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
-                        <td>{{ exerciseGroupResult.title }}</td>
-                        <td>
-                            <ul class="list-group list-group-flush">
-                                <li *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults" class="list-group-item">
-                                    Title: {{ exerciseResult.title }} Average points: {{ roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) }} (Participants with
-                                    filter/Total Participants) {{ exerciseResult.noOfParticipantsWithFilter }}/{{ exerciseResult.totalParticipants }}
-                                </li>
-                            </ul>
-                        </td>
-                        <td>
-                            {{ roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) }}
-                        </td>
-                        <td>{{ toLocaleString(exerciseGroupResult.maxPoints) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Exercise Statistics Table -->
+            <div class="table-responsive table-bordered table-hover">
+                <table class="table">
+                    <thead class="thead-dark">
+                        <tr>
+                            <td></td>
+                            <th colspan="4" jhiTranslate="artemisApp.examScores.containedExercisesColumn">Contained exercises</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th jhiTranslate="artemisApp.examScores.titleColumn">Title</th>
+                            <th jhiTranslate="artemisApp.examScores.titleColumn">Title</th>
+                            <th jhiTranslate="artemisApp.examScores.averagePointsColumn">Average points achieved</th>
+                            <th>Participants with filter</th>
+                            <th>Total participants</th>
+                            <th jhiTranslate="artemisApp.examScores.averagePointsColumn">Average points achieved</th>
+                            <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">Maximum points achievable</th>
+                            <th>Participants with filter</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ng-container *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+                            <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.title }}</td>
+                                <td>{{ exerciseResult.title }}</td>
+                                <td>{{ roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) }}</td>
+                                <td>{{ exerciseResult.noOfParticipantsWithFilter }}</td>
+                                <td>{{ exerciseResult.totalParticipants }}</td>
+                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                    {{ roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) }}
+                                </td>
+                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ toLocaleString(exerciseGroupResult.maxPoints) }}</td>
+                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.noOfParticipantsWithFilter }}</td>
+                            </tr>
+                        </ng-container>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Student Result Table -->
