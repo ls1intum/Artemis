@@ -7,82 +7,80 @@
     </div>
 
     <div *ngIf="!isLoading">
-        <h3 *ngIf="examScoreDTO.title">
-            {{ examScoreDTO.title }}
-        </h3>
-        <h4 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
-            {{ toLocaleString(examScoreDTO.maxPoints) }} Points achievable
-        </h4>
-        <h4 *ngIf="exerciseGroups && studentResults">
-            <small jhiTranslate="artemisApp.examScores.examResultSummary" [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }">
-                {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
-            </small>
-            <button (click)="exportToCsv()" class="btn btn-primary btn-sm float-right">
+        <div class="d-flex">
+            <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
+                {{ examScoreDTO.title }}
+            </h2>
+            <button class="ml-auto btn btn-primary btn-sm" (click)="exportToCsv()">
                 <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
-        </h4>
+        </div>
+        <div class="d-flex mb-2">
+            <h6 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
+                {{ toLocaleString(examScoreDTO.maxPoints) }} Points achievable
+            </h6>
+            <h6
+                class="ml-2"
+                jhiTranslate="artemisApp.examScores.examResultSummary"
+                [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }"
+            >
+                {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
+            </h6>
+        </div>
 
-        <div>
-            <h4>Exercise Statistics</h4>
-            <div>
-                <div class="form-check">
-                    <input id="checkBoxFilterSubmittedExam" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams" for="checkBoxFilterSubmittedExam">
-                        Only consider submitted exams
+        <div class="mb-3">
+            <h4>
+                <span>Exercise Statistics</span>
+            </h4>
+            <div class="d-flex align-content-center mb-2">
+                <div class="d-flex align-items-center">
+                    <label class="radio-inline mb-0 d-flex align-items-center">
+                        <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                        <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
                     </label>
-                </div>
-                <div class="form-check">
-                    <input id="checkBoxFilterForSubmission" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions" for="checkBoxFilterForSubmission">
-                        Only consider exercises with at least on non-empty submission
+                    <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                        <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                        <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
                     </label>
                 </div>
             </div>
 
             <!-- Exercise Statistics Table -->
-            <div class="table-responsive table-bordered table-hover">
-                <table class="table">
-                    <thead class="thead-dark">
-                        <tr>
-                            <td></td>
-                            <th colspan="4" jhiTranslate="artemisApp.examScores.containedExercisesColumn">Contained exercises</th>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</th>
+                        <th jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
+                        <th jhiTranslate="artemisApp.examScores.averagePointsExerciseColumn">Average Points (Exercise)</th>
+                        <th jhiTranslate="artemisApp.examScores.noExerciseParticipantsColumn"># Exercise Participants (Filtered/Total)</th>
+                        <th jhiTranslate="artemisApp.examScores.averagePointsGroupColumn">Average Points (Exercise Group)</th>
+                        <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">Maximum Points</th>
+                        <th jhiTranslate="artemisApp.examScores.noExerciseGroupParticipantsFilteredColumn"># Exercise Group Participants Filtered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+                        <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.title }}</td>
+                            <td>{{ exerciseResult.title }}</td>
+                            <td>{{ roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) }}</td>
+                            <td>{{ exerciseResult.noOfParticipantsWithFilter }}/{{ exerciseResult.totalParticipants }}</td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) }}
+                            </td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ toLocaleString(exerciseGroupResult.maxPoints) }}</td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.noOfParticipantsWithFilter }}</td>
                         </tr>
-                        <tr>
-                            <th jhiTranslate="artemisApp.examScores.titleColumn">Title</th>
-                            <th jhiTranslate="artemisApp.examScores.titleColumn">Title</th>
-                            <th jhiTranslate="artemisApp.examScores.averagePointsColumn">Average points achieved</th>
-                            <th>Participants with filter</th>
-                            <th>Total participants</th>
-                            <th jhiTranslate="artemisApp.examScores.averagePointsColumn">Average points achieved</th>
-                            <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">Maximum points achievable</th>
-                            <th>Participants with filter</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <ng-container *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
-                            <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
-                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.title }}</td>
-                                <td>{{ exerciseResult.title }}</td>
-                                <td>{{ roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) }}</td>
-                                <td>{{ exerciseResult.noOfParticipantsWithFilter }}</td>
-                                <td>{{ exerciseResult.totalParticipants }}</td>
-                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                    {{ roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) }}
-                                </td>
-                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ toLocaleString(exerciseGroupResult.maxPoints) }}</td>
-                                <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">{{ exerciseGroupResult.noOfParticipantsWithFilter }}</td>
-                            </tr>
-                        </ng-container>
-                    </tbody>
-                </table>
-            </div>
+                    </ng-container>
+                </tbody>
+            </table>
         </div>
 
         <!-- Student Result Table -->
+        <h4>
+            <span>Student Results</span>
+        </h4>
         <div class="table-responsive table-bordered table-hover">
             <table class="table table-striped">
                 <thead class="thead-dark">
