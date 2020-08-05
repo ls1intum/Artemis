@@ -65,7 +65,7 @@
             "averagePointsExerciseColumn": "Average Points (Exercise)",
             "averagePointsGroupColumn": "Average Points (Exercise Group)",
             "noExerciseParticipantsColumn": "# Exercise Participants (Filtered/Total)",
-            "noExerciseGroupParticipantsFilteredColumn": "# Exercise Group Participants Filtered",
+            "noExerciseGroupParticipantsFilteredColumn": "# Exercise Group Participants (Filtered/Total)",
             "maximumPointsColumn": "Maximum Points",
             "nameColumn": "Name",
             "loginColumn": "Login",

@@ -212,6 +212,10 @@ public class ExamService {
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
+        // Counts how many participants each exercise has
+        Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
+                .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
+
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
@@ -220,20 +224,26 @@ public class ExamService {
                 maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
             }
 
+            // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
+            long numberOfExeciseGroupParticipants = 0;
             // Add information about exercise groups and exercises
             var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints);
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                // Count how many participants each exercise has
-                long participantsForExercise = studentParticipations.stream().filter(studentParticipation -> studentParticipation.getExercise().getId().equals(exercise.getId()))
-                        .count();
+                Long participantsForExercise = exerciseIdToNumberParticipations.get(exercise.getId());
+                // If no participation exists for an exercise then no entry exists in the map
+                if (participantsForExercise == null) {
+                    participantsForExercise = 0L;
+                }
+                numberOfExeciseGroupParticipants += participantsForExercise;
                 exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), participantsForExercise));
             }
+            exerciseGroupDTO.numberOfParticipants = numberOfExeciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
         // Adding registered student information to DTO
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             User user = studentExam.getUser();
             var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
@@ -257,7 +267,6 @@ public class ExamService {
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                             exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
-
                 }
 
             }

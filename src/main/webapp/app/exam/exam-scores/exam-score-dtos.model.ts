@@ -10,11 +10,11 @@ export class ExamScoreDTO {
 }
 
 export class ExerciseGroup {
-    constructor(public exerciseGroupId: number, public title: string, public maxPoints: number, public containedExercises: ExerciseInfo[]) {}
+    constructor(public exerciseGroupId: number, public title: string, public maxPoints: number, public numberOfParticipants: number, public containedExercises: ExerciseInfo[]) {}
 }
 
 export class ExerciseInfo {
-    constructor(public exerciseId: number, public title: string, public totalParticipants: number) {}
+    constructor(public exerciseId: number, public title: string, public numberOfParticipants: number) {}
 }
 
 export class StudentResult {
@@ -46,16 +46,17 @@ export class AggregatedExerciseGroupResult {
     public exerciseGroupId: number;
     public title: string;
     public maxPoints: number;
+    public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
-    public totalParticipants = 0;
     public totalPoints = 0;
     public averagePoints: number | null = 0;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
-    constructor(exerciseGroupId: number, title: string, maxPoints: number) {
+    constructor(exerciseGroupId: number, title: string, maxPoints: number, totalParticipants: number) {
         this.exerciseGroupId = exerciseGroupId;
         this.title = title;
         this.maxPoints = maxPoints;
+        this.totalParticipants = totalParticipants;
     }
 }
 

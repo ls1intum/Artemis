@@ -84,14 +84,18 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
 
+    /**
+     * Calculates the average points and number of participants for each exercise group and exercise while taking the
+     * filter settings into account
+     */
     calculateAveragePoints() {
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
         // Create data structures for all exercise groups
         for (const exerciseGroup of this.exerciseGroups) {
-            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.exerciseGroupId, exerciseGroup.title, exerciseGroup.maxPoints);
+            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.exerciseGroupId, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
-                groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.totalParticipants));
+                groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.numberOfParticipants));
             });
             groupIdToGroupResults.set(exerciseGroup.exerciseGroupId, groupResult);
         }
