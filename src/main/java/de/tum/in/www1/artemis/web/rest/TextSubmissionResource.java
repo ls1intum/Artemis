@@ -354,7 +354,11 @@ public class TextSubmissionResource {
         }
 
         final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
-        textSubmissions.forEach(s -> s.getParticipation().setExercise(null));
+        textSubmissions.forEach(s -> {
+            s.getParticipation().setExercise(null);
+            s.setResult(null);
+            s.getParticipation().setSubmissions(null);
+        });
 
         return ResponseEntity.ok(
             Stream.of(
