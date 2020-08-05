@@ -49,6 +49,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
+    @Output()
+    onFileChanged = new EventEmitter<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -145,6 +147,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.storeSession();
         // Set the fileChange to inform other Components so they can update their references to the files
         this.fileChange = fileChange;
+        this.onFileChanged.emit();
     }
 
     /**
@@ -180,6 +183,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
+        this.onFileChanged.emit();
     }
 
     /**

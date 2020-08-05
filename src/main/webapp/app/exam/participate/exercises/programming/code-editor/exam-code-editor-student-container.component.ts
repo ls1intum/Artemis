@@ -1,20 +1,11 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
-import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CommitState, DomainType, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
@@ -37,13 +28,7 @@ import {
         DomainService,
     ],
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit {
-    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
-
+export class ExamCodeEditorStudentContainerComponent implements OnInit {
     @Input()
     exercise: ProgrammingExercise;
 
@@ -56,15 +41,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     repositoryIsLocked = false;
     showEditorInstructions = true;
 
-    constructor(
-        private domainService: DomainService,
-        translateService: TranslateService,
-        jhiAlertService: AlertService,
-        sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService,
-    ) {
-        super(null, translateService, null, jhiAlertService, sessionService, fileService);
-    }
+    constructor(private domainService: DomainService) {}
 
     /**
      * On init set up the route param subscription.
@@ -101,23 +78,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         }
     }
 
-    /**
-     * Set Submission to unsynced on file changes
-     *
-     * @param $event
-     */
-    onFileChange<F extends FileChange>($event: [string[], F]) {
-        super.onFileChange($event);
-        if (this.participation.submissions && this.participation.submissions.length > 0) {
-            this.participation.submissions[0].isSynced = false;
-        }
-    }
-
-    /**
-     * When the content of a file changes, set the submission status to unsynchronised.
-     */
-    onFileContentChange($event: { file: string; fileContent: string }) {
-        super.onFileContentChange($event);
+    onFileChanged() {
         if (this.participation.submissions && this.participation.submissions.length > 0) {
             this.participation.submissions[0].isSynced = false;
         }
