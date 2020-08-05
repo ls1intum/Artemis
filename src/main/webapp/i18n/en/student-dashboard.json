@@ -36,7 +36,7 @@
                 "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
-                "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
+                "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
                 "newFirst": "Newest",
