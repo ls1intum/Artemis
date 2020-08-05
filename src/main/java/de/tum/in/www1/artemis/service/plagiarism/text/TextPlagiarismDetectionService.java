@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism.text;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.service.util.Tuple;
-import org.springframework.stereotype.Service;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 
 @Service
 public class TextPlagiarismDetectionService {
@@ -24,7 +24,8 @@ public class TextPlagiarismDetectionService {
      * @param comparisionStrategy TextComparisionStrategy
      * @return Map of text submission pairs and distance score
      */
-    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions, TextComparisionStrategy comparisionStrategy) {
+    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions,
+            TextComparisionStrategy comparisionStrategy) {
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(exerciseWithParticipationsAndSubmissions);
         return compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisionStrategy);
     }

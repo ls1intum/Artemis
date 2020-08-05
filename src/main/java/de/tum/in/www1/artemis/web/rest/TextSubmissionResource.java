@@ -16,9 +16,6 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
-import de.tum.in.www1.artemis.service.util.Tuple;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +46,10 @@ import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
+import de.tum.in.www1.artemis.service.util.Tuple;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 

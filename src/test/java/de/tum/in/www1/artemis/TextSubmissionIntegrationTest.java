@@ -386,7 +386,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         final TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("example test", Language.ENGLISH, true);
         final TextSubmission textSubmission3 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
 
-
         database.addTextSubmission(finishedTextExercise, textSubmission1, "student1");
         database.addTextSubmission(finishedTextExercise, textSubmission2, "student2");
         database.addTextSubmission(finishedTextExercise, textSubmission3, "tutor1");

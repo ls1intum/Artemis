@@ -1,16 +1,19 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import de.tum.in.www1.artemis.domain.Submission;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
+import de.tum.in.www1.artemis.domain.Submission;
+
 public class SubmissionComparisonDTO implements Comparable<SubmissionComparisonDTO> {
+
     public final Set<Submission> submissions = new HashSet<>();
+
     public final Map<String, Double> distanceMetrics = new HashMap<>();
 
     public SubmissionComparisonDTO addAllSubmissions(Collection<? extends Submission> submissions) {

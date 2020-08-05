@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service.plagiarism.text;
 
+import org.jetbrains.annotations.NotNull;
+
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import info.debatty.java.stringsimilarity.*;
-import org.jetbrains.annotations.NotNull;
 
 public interface TextComparisionStrategy {
 
