@@ -1,11 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, OnDestroy, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { Subscription } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
-import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -21,9 +18,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     minInstructionsWidth: number;
     interactResizable: Interactable;
 
-    resizeSubscription: Subscription;
-
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -35,20 +30,10 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
         this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
 
-        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
-            //if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
-            //    this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
-            //}
-        });
-    }
-
-    /**
-     * If there is a subscription do unsubscribe.
-     */
-    ngOnDestroy(): void {
-        if (this.resizeSubscription) {
-            this.resizeSubscription.unsubscribe();
-        }
+        // --- on resize event
+        //if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
+        //    this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
+        //}
     }
 
     /**
