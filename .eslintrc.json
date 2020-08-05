@@ -18,12 +18,6 @@
         }
     },
     "rules": {
-        "prettier/prettier": [
-            "error",
-            {
-                "endOfLine":"auto"
-            }
-        ],
         "@typescript-eslint/tslint/config": [
             "error",
             {
