@@ -1099,12 +1099,16 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
             // Compare exercise information
+            long noOfExerciseGroupParticipantions = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
                 // Find the corresponding ExerciseInfo object
                 var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
                 assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
-                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.totalParticipants);
+                var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
+                noOfExerciseGroupParticipantions += noOfExerciseParticipations;
+                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.numberOfParticipants);
             }
+            assertThat(noOfExerciseGroupParticipantions).isEqualTo(exerciseGroupDTO.numberOfParticipants);
         }
 
         // Ensure that all registered students have a StudentResult
