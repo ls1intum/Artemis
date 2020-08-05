@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -54,6 +51,8 @@ public class ExamService {
 
     private final ExamRepository examRepository;
 
+    private final ExerciseService exerciseService;
+
     private final StudentExamRepository studentExamRepository;
 
     private final ParticipationService participationService;
@@ -65,7 +64,8 @@ public class ExamService {
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -73,6 +73,7 @@ public class ExamService {
         this.programmingExerciseService = programmingExerciseService;
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.exerciseService = exerciseService;
     }
 
     @Autowired
@@ -175,13 +176,36 @@ public class ExamService {
     }
 
     /**
-     * Delete the exam by id.
-     *
-     * @param examId the id of the entity
+     * Deletes all elements associated with the exam including:
+     * <ul>
+     *     <li>The Exam</li>
+     *     <li>All ExerciseGroups</li>
+     *     <li>All Exercises including:
+     *     Submissions, Participations, Results, Repositories and Buildplans, see {@link ExerciseService#delete}</li>
+     *     <li>All StudentExams</li>
+     * </ul>
+     * Note: StudentExams and ExerciseGroups are not explicitly deleted as the delete operation of the exam is cascaded by the database.
+     * @param exam the exam to be deleted
      */
-    public void delete(Long examId) {
-        log.debug("Request to delete exam : {}", examId);
-        examRepository.deleteById(examId);
+    public void delete(@NotNull Exam exam) {
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseService.delete(exercise.getId(), true, true);
+                }
+            }
+        }
+        examRepository.deleteById(exam.getId());
+    }
+
+    /**
+     * Fetches the exam using {@link #findOneWithExercisesGroupsAndStudentExamsByExamId} which eagerly loads all required elements and calls {@link #delete}
+     *
+     * @param examId the ID of the exam to be deleted
+     */
+    public void deleteById(Long examId) {
+        Exam exam = this.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
+        this.delete(exam);
     }
 
     /**
