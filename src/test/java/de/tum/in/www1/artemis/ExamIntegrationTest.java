@@ -1098,7 +1098,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
-            // Collect titles and ids of all exercises in the exercise group
+            // Compare exercise information
             for (var originalExercise : originalExerciseGroup.getExercises()) {
                 // Find the corresponding ExerciseInfo object
                 var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
