@@ -45,6 +45,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     showEditorInstructions = true;
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
+    @Output()
+    onCommitStateChange = new EventEmitter<CommitState>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 

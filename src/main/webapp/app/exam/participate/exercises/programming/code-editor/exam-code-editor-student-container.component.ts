@@ -54,6 +54,7 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     repositoryIsLocked = false;
+    showEditorInstructions = true;
 
     constructor(
         private domainService: DomainService,

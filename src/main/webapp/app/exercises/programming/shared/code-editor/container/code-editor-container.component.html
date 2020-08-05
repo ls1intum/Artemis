@@ -8,6 +8,8 @@
             [(editorState)]="editorState"
             [(commitState)]="commitState"
             (onSavedFiles)="onSavedFiles($event)"
+            (onRefreshFiles)="onRefreshFiles()"
+            (commitStateChange)="onCommitStateChange.emit($event)"
             (onError)="onError($event)"
         ></jhi-code-editor-actions>
     </div>

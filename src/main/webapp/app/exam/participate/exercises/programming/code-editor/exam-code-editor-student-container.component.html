@@ -1,9 +1,14 @@
-<jhi-code-editor-grid #grid>
-    <ng-template editorTitle>
+<jhi-code-editor-container
+    [editable]="!repositoryIsLocked"
+    [participation]="participation"
+    [showEditorInstructions]="showEditorInstructions"
+    (onCommitStateChange)="onCommitStateChange($event)"
+>
+    <div editorTitle>
         <span>{{ exercise?.title }}</span>
         <span>&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
-    </ng-template>
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
+    </div>
+    <div editorToolbar>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
@@ -20,51 +25,14 @@
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-code-editor-actions
-            [disableActions]="repositoryIsLocked"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onRefreshFiles)="onRefreshFiles()"
-            (onError)="onError($event)"
-            (commitStateChange)="onCommitStateChange($event)"
-        ></jhi-code-editor-actions>
     </div>
-    <jhi-code-editor-file-browser
-        editorSidebarLeft
-        [disableActions]="repositoryIsLocked"
-        [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-        [editorState]="editorState"
-        [(selectedFile)]="selectedFile"
-        [(commitState)]="commitState"
-        (onFileChange)="onFileChange($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
-        [commitState]="commitState"
-        [editorState]="editorState"
-        [(buildLogErrors)]="buildLogErrors"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        editorSidebarRight
-        [participation]="participation"
+    <jhi-programming-exercise-instructions
+        editorSidebar
+        (onNoInstructionsAvailable)="showEditorInstructions = false"
         [exercise]="exercise"
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
         [participation]="participation"
-        [(buildLogErrors)]="buildLogErrors"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-build-output>
-</jhi-code-editor-grid>
+        [personalParticipation]="true"
+        [exerciseHints]="exercise.exerciseHints"
+        class="instructions-wrapper__content card-body p-0"
+    ></jhi-programming-exercise-instructions>
+</jhi-code-editor-container>
