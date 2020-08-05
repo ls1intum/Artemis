@@ -1,0 +1,47 @@
+<jhi-code-editor-grid #grid>
+    <ng-content select="[editorTitle]" editorTitle></ng-content>
+    <div class="d-flex align-items-center ml-auto" editorNavbar>
+        <ng-content select="[editorNavbar]"></ng-content>
+        <jhi-code-editor-actions
+            [disableActions]="!editable"
+            [unsavedFiles]="unsavedFiles"
+            [(editorState)]="editorState"
+            [(commitState)]="commitState"
+            (onSavedFiles)="onSavedFiles($event)"
+            (onError)="onError($event)"
+        ></jhi-code-editor-actions>
+    </div>
+    <jhi-code-editor-file-browser
+        editorSidebarLeft
+        [disableActions]="!editable"
+        [unsavedFiles]="unsavedFiles | keys"
+        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+        [editorState]="editorState"
+        [(selectedFile)]="selectedFile"
+        [(commitState)]="commitState"
+        (onFileChange)="onFileChange($event)"
+        (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
+    ></jhi-code-editor-file-browser>
+    <jhi-code-editor-ace
+        editorCenter
+        [selectedFile]="selectedFile"
+        [fileChange]="fileChange"
+        [commitState]="commitState"
+        [editorState]="editorState"
+        [(buildLogErrors)]="buildLogErrors"
+        (onFileContentChange)="onFileContentChange($event)"
+        (onError)="onError($event)"
+    ></jhi-code-editor-ace>
+    <ng-content select="[editorSidebar]" editorSidebarRight
+        (onToggleCollapse)="onToggleCollapse($event)"
+        (onError)="onError($event)"
+    ></ng-content>
+    <jhi-code-editor-build-output
+        editorBottomArea
+        [participation]="participation"
+        [(buildLogErrors)]="buildLogErrors"
+        (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
+    ></jhi-code-editor-build-output>
+</jhi-code-editor-grid>
