@@ -1,4 +1,8 @@
-<jhi-code-editor-grid #grid [exerciseTitle]="exercise?.title" [exerciseMaxScore]="exercise?.maxScore">
+<jhi-code-editor-grid #grid>
+    <ng-template editorTitle>
+        <span>{{exercise?.title}}</span>
+        <span>&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+    </ng-template>
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
             *ngIf="participation"

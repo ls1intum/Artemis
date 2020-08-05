@@ -19,11 +19,6 @@ export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
 
-    @Input()
-    exerciseTitle: string;
-    @Input()
-    exerciseMaxScore: number;
-
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
     resizableMaxHeightMain = 1200;
