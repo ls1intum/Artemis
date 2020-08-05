@@ -36,6 +36,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     repositoryIsLocked = false;
+    showEditorInstructions = true;
 
     constructor(
         private resultService: ResultService,

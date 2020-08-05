@@ -34,7 +34,9 @@
         (onError)="onError($event)"
     ></jhi-code-editor-ace>
     <!-- toggle / error events not working since ng-content does not emit, only there as a reminder -->
-    <ng-content select="[editorSidebar]" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)"></ng-content>
+    <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
+        <ng-content select="[editorSidebar]"></ng-content>
+    </jhi-code-editor-instructions>
     <jhi-code-editor-build-output
         editorBottomArea
         [participation]="participation"

@@ -40,6 +40,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     @Input()
     editable: boolean;
+    @Input()
+    showEditorInstructions = true;
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 

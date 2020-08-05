@@ -13,7 +13,12 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-container *ngIf="!loadingParticipation && !participationCouldNotBeFetched" [editable]="!repositoryIsLocked" [participation]="participation">
+<jhi-code-editor-container
+    *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
+    [editable]="!repositoryIsLocked"
+    [participation]="participation"
+    [showEditorInstructions]="showEditorInstructions"
+>
     <span editorTitle>{{ exercise.title }}</span>
     <div editorToolbar>
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
@@ -35,5 +40,13 @@
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
     </div>
-    <jhi-code-editor-instructions editorSidebar [participation]="participation" [exercise]="exercise"></jhi-code-editor-instructions>
+    <jhi-programming-exercise-instructions
+        editorSidebar
+        (onNoInstructionsAvailable)="showEditorInstructions = false"
+        [exercise]="exercise"
+        [participation]="participation"
+        [personalParticipation]="true"
+        [exerciseHints]="exercise.exerciseHints"
+        class="instructions-wrapper__content card-body p-0"
+    ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>
