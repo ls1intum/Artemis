@@ -29,11 +29,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
         this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
-
-        // --- on resize event
-        //if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
-        //    this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
-        //}
     }
 
     /**

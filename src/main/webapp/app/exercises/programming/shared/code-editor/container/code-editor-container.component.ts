@@ -40,7 +40,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
     @Input()
-    editable: boolean;
+    editable = true;
+    @Input()
+    buildable = true;
     @Input()
     showEditorInstructions = true;
     @Output()

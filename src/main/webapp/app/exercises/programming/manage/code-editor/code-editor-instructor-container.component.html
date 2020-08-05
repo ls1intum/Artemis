@@ -13,9 +13,16 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-grid #grid *ngIf="exercise">
+
+<jhi-code-editor-container
+    *ngIf="exercise"
+    [participation]="selectedParticipation"
+    [buildable]="selectedRepository !== REPOSITORY.TEST"
+    (onResizeEditorInstructions)="onResizeEditorInstructions()"
+>
     <span editorTitle>{{ exercise?.title }}</span>
-    <div class="d-flex flex-grow-1 justify-content-between align-items-center" editorNavbar>
+    <!-- class="d-flex flex-grow-1 justify-content-between align-items-center" -->
+    <div editorToolbar>
         <div class="d-flex align-items-center ml-2">
             <jhi-programming-exercise-instructor-exercise-status
                 class="mr-2"
@@ -130,52 +137,15 @@
                 class="mr-2"
             >
             </jhi-exercise-hint-student>
-            <jhi-code-editor-actions
-                [buildable]="selectedRepository !== REPOSITORY.TEST"
-                [unsavedFiles]="unsavedFiles"
-                [(editorState)]="editorState"
-                [(commitState)]="commitState"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onError)="onError($event)"
-            ></jhi-code-editor-actions>
         </div>
     </div>
-    <jhi-code-editor-file-browser
-        editorSidebarLeft
-        [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-        [editorState]="editorState"
-        [(selectedFile)]="selectedFile"
-        [(commitState)]="commitState"
-        (onFileChange)="onFileChange($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
-        [commitState]="commitState"
-        [editorState]="editorState"
-        [(buildLogErrors)]="buildLogErrors"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        editorSidebarRight
-        [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
+    <jhi-programming-exercise-editable-instructions
+        editorSidebar
+        [(exercise)]="exercise"
+        [(participation)]="selectedRepository !== REPOSITORY.TEST ? selectedParticipation : exercise.templateParticipation"
         [templateParticipation]="exercise.templateParticipation"
-        [exercise]="exercise"
-        [editable]="true"
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
-        *ngIf="selectedRepository !== 'TEST'"
-        [participation]="selectedParticipation"
-        [(buildLogErrors)]="buildLogErrors"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-build-output>
-</jhi-code-editor-grid>
+        [enableResize]="false"
+        class="instructions-wrapper__content card-body p-0"
+    >
+    </jhi-programming-exercise-editable-instructions>
+</jhi-code-editor-container>

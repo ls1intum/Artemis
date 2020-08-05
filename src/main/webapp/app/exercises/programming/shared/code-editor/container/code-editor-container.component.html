@@ -3,6 +3,7 @@
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <ng-content select="[editorToolbar]"></ng-content>
         <jhi-code-editor-actions
+            [buildable]="buildable"
             [disableActions]="!editable"
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
@@ -41,6 +42,7 @@
     </jhi-code-editor-instructions>
     <jhi-code-editor-build-output
         editorBottomArea
+        *ngIf="buildable"
         [participation]="participation"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
