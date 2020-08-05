@@ -12,19 +12,10 @@ import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as ace from 'brace';
-import {
-    CommitState,
-    CreateFileChange,
-    DeleteFileChange,
-    EditorState,
-    FileChange,
-    RenameFileChange,
-    ResizeType,
-} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 
@@ -74,7 +65,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
 
     /**
      * @function ngAfterViewInit
@@ -86,9 +77,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             animatedScroll: true,
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
-        });
-        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_LEFT, ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
-            this.editor.getEditor().resize();
         });
     }
 

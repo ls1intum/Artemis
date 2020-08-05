@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, ViewChild, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -228,6 +228,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onGridResize(type: ResizeType) {
         if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
             this.onResizeEditorInstructions.emit();
+        }
+        if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+            this.aceEditor.editor.getEditor().resize();
         }
     }
 }
