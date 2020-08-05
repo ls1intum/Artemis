@@ -236,20 +236,20 @@ export class ExerciseGroupsComponent implements OnInit {
      * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
     setupExerciseGroupContainsProgrammingExerciseDict() {
-        const exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
+        this.exerciseGroupContainsProgrammingExerciseDict = {};
         if (this.exerciseGroups == null) {
-            this.exerciseGroupContainsProgrammingExerciseDict = {};
+            return;
         } else {
             for (const exerciseGroup of this.exerciseGroups) {
                 if (exerciseGroup.exercises != null) {
                     for (const exercise of exerciseGroup.exercises) {
                         if (exercise.type === ExerciseType.PROGRAMMING) {
-                            exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
+                            this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
                             break;
                         }
                     }
-                    if (!(exerciseGroup.id in exerciseGroupContainsProgrammingExerciseDict)) {
-                        exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+                    if (!(exerciseGroup.id in this.exerciseGroupContainsProgrammingExerciseDict)) {
+                        this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
                     }
                 }
             }
