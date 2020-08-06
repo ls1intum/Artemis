@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import * as ace from 'brace';
@@ -38,7 +38,7 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -114,15 +114,15 @@ describe('CodeEditorContainerIntegration', () => {
                 containerDebugElement = containerFixture.debugElement;
                 guidedTourService = TestBed.inject(GuidedTourService);
 
-                let codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                let codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-                let participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                let resultService = containerDebugElement.injector.get(ResultService);
-                let buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                let programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
+                const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
+                const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
+                const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
+                const resultService = containerDebugElement.injector.get(ResultService);
+                const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
+                const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
                 domainService = containerDebugElement.injector.get(DomainService);
-                let submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
+                const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
 
@@ -227,7 +227,6 @@ describe('CodeEditorContainerIntegration', () => {
         // called by build output
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnce;
         expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
-
     };
 
     const loadFile = (fileName: string, fileContent: string) => {

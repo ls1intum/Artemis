@@ -26,7 +26,7 @@ import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/cod
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
-import {CodeEditorInstructionsComponent} from "app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component";
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 
 @Component({
     selector: 'jhi-code-editor-container',

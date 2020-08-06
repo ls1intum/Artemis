@@ -65,7 +65,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let container: CodeEditorInstructorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorContainerComponent>;
     let containerDebugElement: DebugElement;
-    let participationService: ParticipationService;
     let domainService: DomainService;
     let route: ActivatedRoute;
 
@@ -120,17 +119,16 @@ describe('CodeEditorInstructorIntegration', () => {
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
 
-                let codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                let codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-                let participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                let resultService = containerDebugElement.injector.get(ResultService);
-                let buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                participationService = containerDebugElement.injector.get(ParticipationService);
-                let programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-                let programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
+                const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
+                const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
+                const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
+                const resultService = containerDebugElement.injector.get(ResultService);
+                const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
+                const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
+                const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                let exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
+                const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
@@ -191,7 +189,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.codeEditorContainer).to.be.undefined;
         expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
-    }
+    };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
@@ -311,7 +309,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.codeEditorContainer.buildOutput).to.exist;
         expect(container.codeEditorContainer.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
         expect(container.editableInstructions.participation).to.deep.equal(exercise.solutionParticipation);
-    }
+    };
 
     it('should be able to switch between the repos and update the child components accordingly', () => {
         // @ts-ignore
@@ -351,7 +349,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        checkSolutionRepository(exercise)
+        checkSolutionRepository(exercise);
 
         expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(setDomainSpy).to.have.been.calledTwice;

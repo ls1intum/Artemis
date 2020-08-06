@@ -68,11 +68,9 @@ describe('CodeEditorStudentIntegration', () => {
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
     let getStudentParticipationWithLatestResultStub: SinonStub;
-    let guidedTourService: GuidedTourService;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let routeSubject: Subject<Params>;
-    let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
     const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
 
@@ -107,7 +105,6 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
-                guidedTourService = TestBed.inject(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
                 participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
@@ -120,8 +117,6 @@ describe('CodeEditorStudentIntegration', () => {
                 routeSubject = new Subject<Params>();
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
@@ -144,8 +139,6 @@ describe('CodeEditorStudentIntegration', () => {
         routeSubject = new Subject<Params>();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-
-        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
     });
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
@@ -216,5 +209,4 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(container.participation).to.be.undefined;
     });
-
 });
