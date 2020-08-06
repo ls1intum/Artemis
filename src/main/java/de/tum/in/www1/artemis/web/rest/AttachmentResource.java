@@ -94,7 +94,7 @@ public class AttachmentResource {
     private void handleUploadAsEmbeddingTrainingResource(Attachment attachment) {
         final String fileName = attachment.getLink().substring(attachment.getLink().lastIndexOf("/") + 1);
         final String fileExtension = FilenameUtils.getExtension(fileName);
-        if (fileExtension.equals("pdf") && attachment.getUseForEmbeddingTraining()) {
+        if ("pdf".equals(fileExtension) && attachment.getUseForEmbeddingTraining()) {
             embeddingTrainingMaterialScheduleService.ifPresent(service -> service.scheduleMaterialUploadForNow(attachment));
         }
     }

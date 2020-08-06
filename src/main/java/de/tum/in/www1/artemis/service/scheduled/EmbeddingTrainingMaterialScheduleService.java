@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -33,8 +32,7 @@ public class EmbeddingTrainingMaterialScheduleService {
 
     private final TaskScheduler scheduler;
 
-    public EmbeddingTrainingMaterialScheduleService(EmbeddingTrainingMaterialService embeddingTrainingMaterialService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            Environment env) {
+    public EmbeddingTrainingMaterialScheduleService(EmbeddingTrainingMaterialService embeddingTrainingMaterialService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.embeddingTrainingMaterialService = embeddingTrainingMaterialService;
         this.scheduler = scheduler;
     }

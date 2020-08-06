@@ -24,15 +24,15 @@ public class EmbeddingTrainingMaterialService {
     private final Logger log = LoggerFactory.getLogger(EmbeddingTrainingMaterialService.class);
 
     @Value("${artemis.automatic-text.material-upload-url}")
-    private String API_ENDPOINT;
+    private String apiEndpoint;
 
     @Value("${artemis.automatic-text.secret}")
-    private String API_SECRET;
+    private String apiSecret;
 
-    private FileService fileService = new FileService();
+    private final FileService fileService = new FileService();
 
-    private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log,
-            EmbeddingTrainingMaterialService.Response.class);
+    private final RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(
+            log, EmbeddingTrainingMaterialService.Response.class);
 
     // region Request/Response DTOs
     private static class Request {
@@ -70,15 +70,15 @@ public class EmbeddingTrainingMaterialService {
             fileData = fileService.getFileForPath(fileService.actualPathForPublicPath(attachment.getLink()));
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
 
         if (fileData != null) {
             String encodedFileData = Base64.encodeBase64String(fileData);
             final EmbeddingTrainingMaterialService.Request request = new EmbeddingTrainingMaterialService.Request(courseId, fileName, encodedFileData);
-            final HttpHeaders headers = authenticationHeaderForSecret(API_SECRET);
+            final HttpHeaders headers = authenticationHeaderForSecret(apiSecret);
             headers.setContentType(MediaType.APPLICATION_JSON);
-            final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(API_ENDPOINT, request, headers, 2);
+            final EmbeddingTrainingMaterialService.Response response = connector.invokeWithRetry(apiEndpoint, request, headers, 2);
             log.info("File successfully uploaded to " + response.remotePath);
         }
     }
