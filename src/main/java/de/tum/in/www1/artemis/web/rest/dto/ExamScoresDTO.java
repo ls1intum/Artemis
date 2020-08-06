@@ -61,15 +61,18 @@ public class ExamScoresDTO {
 
             public String title;
 
+            public Double maxPoints;
+
             public Long numberOfParticipants;
 
             public ExerciseInfo() {
                 // default constructor for our beloved Jackson :-*
             }
 
-            public ExerciseInfo(Long exerciseId, String title, Long numberOfParticipants) {
+            public ExerciseInfo(Long exerciseId, String title, Double maxPoints, Long numberOfParticipants) {
                 this.exerciseId = exerciseId;
                 this.title = title;
+                this.maxPoints = maxPoints;
                 this.numberOfParticipants = numberOfParticipants;
             }
         }

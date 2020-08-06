@@ -226,16 +226,14 @@ public class ExamService {
 
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
-            Double maximumNumberOfPoints = null;
-            if (!exerciseGroup.getExercises().isEmpty()) {
-                maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
-            }
+            // Find the maximum points for this exercise group
+            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(exercise -> exercise.getMaxScore()).max();
+            Double maxPointsGroup = optionalMaxPointsGroup.orElse(0);
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
             long numberOfExeciseGroupParticipants = 0;
             // Add information about exercise groups and exercises
-            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints);
+            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup);
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 Long participantsForExercise = exerciseIdToNumberParticipations.get(exercise.getId());
                 // If no participation exists for an exercise then no entry exists in the map
@@ -243,7 +241,8 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExeciseGroupParticipants += participantsForExercise;
-                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), participantsForExercise));
+                exerciseGroupDTO.containedExercises
+                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), participantsForExercise));
             }
             exerciseGroupDTO.numberOfParticipants = numberOfExeciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
