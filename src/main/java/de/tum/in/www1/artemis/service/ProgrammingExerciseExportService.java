@@ -216,7 +216,7 @@ public class ProgrammingExerciseExportService {
                 programmingLanguage = "java19";
                 break;
             case C:
-                programmingLanguage = "c";
+                programmingLanguage = "c/c++";
                 break;
             case PYTHON:
                 programmingLanguage = "python3";
