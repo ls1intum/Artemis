@@ -3,6 +3,7 @@
 [![GitHub Actions Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
 [![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7073518c9c63492a9d2f3bd251006b26)](https://www.codacy.com/manual/ls1intum/ArTEMiS?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 
 This application was generated using JHipster 6.10.1. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.1))
 

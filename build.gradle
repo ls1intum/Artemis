@@ -165,6 +165,7 @@ dependencies {
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
     // a dependency. This leads to 2 logging frameworks available at the same time.
     implementation files('libs/acli-9.0.0.jar')
+    implementation files('libs/jplag-2.12.1.jar')
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.8.1.202007141445-r"
@@ -248,6 +249,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.25.2"
     implementation "com.ibm.icu:icu4j:67.1"
     implementation 'com.github.seancfoley:ipaddress:5.3.1'
+    compile group: 'info.debatty', name: 'java-string-similarity', version: '2.0.0'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"

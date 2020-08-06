@@ -32,7 +32,7 @@ class UMLControlFlowTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         umlControlFlow = new UMLControlFlow(sourceElement1, targetElement1, "controlFlowId");
 

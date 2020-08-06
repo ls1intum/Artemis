@@ -2,7 +2,6 @@ import { AfterViewInit, Component, EventEmitter, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -18,7 +17,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     minInstructionsWidth: number;
     interactResizable: Interactable;
 
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService) {}
+    constructor(public artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -26,8 +25,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.initialInstructionsWidth = window.screen.width - 300 / 2;
+        this.minInstructionsWidth = window.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
     }
 

@@ -13,7 +13,6 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
-    styles: [],
 })
 export class ExamScoresComponent implements OnInit {
     public examScoreDTO: ExamScoreDTO;
