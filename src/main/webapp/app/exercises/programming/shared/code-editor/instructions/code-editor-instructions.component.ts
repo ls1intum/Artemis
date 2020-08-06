@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -17,7 +16,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     minInstructionsWidth: number;
     interactResizable: Interactable;
 
-    constructor(public artemisMarkdown: ArtemisMarkdownService) {}
+    constructor() {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
