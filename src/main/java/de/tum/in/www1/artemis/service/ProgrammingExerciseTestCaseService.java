@@ -153,7 +153,7 @@ public class ProgrammingExerciseTestCaseService {
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
-        return updateResultFormTestCases(testCases, testCasesForCurrentDate, result);
+        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
     }
 
     /**
@@ -180,7 +180,7 @@ public class ProgrammingExerciseTestCaseService {
             if (result == null) {
                 continue;
             }
-            updateResultFormTestCases(testCases, testCasesForCurrentDate, result);
+            updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
             updatedResults.add(result);
         }
         return updatedResults;
@@ -196,7 +196,7 @@ public class ProgrammingExerciseTestCaseService {
         return testCasesForCurrentDate;
     }
 
-    private Result updateResultFormTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
+    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
         // Update the completion date
         result.setCompletionDate(ZonedDateTime.now());
 
