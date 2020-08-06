@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -58,6 +59,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ObjectMapper mapper;
+
+    @Autowired
+    AssessmentService assessmentService;
 
     private ModelingExercise modelingExercise;
 
@@ -289,7 +293,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/courses/" + modelingExercise.getCourse().getId() + "/complaints", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK, Complaint.class,
+                params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
@@ -384,7 +389,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
-        String coursesUrl = "/api/courses/" + modelingExercise.getCourse().getId() + "/complaints";
+        String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
         List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
@@ -422,8 +427,15 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
-        storedFeedbackResult.evaluateFeedback(20);
-        sentFeedbackResult.evaluateFeedback(20);
+        Double calculatedScore = assessmentService.calculateTotalScore(storedFeedback);
+        double totalScore = assessmentService.calculateTotalScore(calculatedScore, 20.0);
+        storedFeedbackResult.setScore(totalScore, 20.0);
+        storedFeedbackResult.setResultString(totalScore, 20.0);
+
+        Double calculatedScore2 = assessmentService.calculateTotalScore(sentFeedback);
+        double totalScore2 = assessmentService.calculateTotalScore(calculatedScore2, 20.0);
+        sentFeedbackResult.setScore(totalScore2, 20.0);
+        sentFeedbackResult.setResultString(totalScore2, 20.0);
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> {
             assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(FeedbackType.MANUAL);
@@ -465,7 +477,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(exercise.getNumberOfMoreFeedbackRequests()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfSubmissions()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getProblemStatement()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getCourse()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getAssessmentDueDate()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
@@ -516,7 +528,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getNumberOfAllowedComplaintsInCourse() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints", HttpStatus.OK,
+                Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
         // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }

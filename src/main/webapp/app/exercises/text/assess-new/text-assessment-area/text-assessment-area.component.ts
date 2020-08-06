@@ -1,28 +1,11 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextBlock } from 'app/entities/text-block.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
     selector: 'jhi-text-assessment-area',
-    template: `
-        <div>
-            <span class="badge badge-primary mb-2">
-                {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
-            </span>
-            <span class="badge badge-primary mb-2">
-                {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
-            </span>
-        </div>
-        <jhi-textblock-assessment-card
-            *ngFor="let ref of textBlockRefs"
-            [textBlockRef]="ref"
-            [selected]="selectedRef === ref"
-            (didSelect)="selectedRef = $event"
-            (didChange)="textBlockRefsChangeEmit()"
-        ></jhi-textblock-assessment-card>
-    `,
+    templateUrl: './text-assessment-area.component.html',
     styles: [
         `
             :host {
@@ -35,6 +18,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
+    @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
+    autoTextBlockAssessment = true;
     selectedRef: TextBlockRef | null = null;
     wordCount = 0;
     characterCount = 0;
@@ -54,6 +39,12 @@ export class TextAssessmentAreaComponent implements OnChanges {
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
     }
 
+    @HostListener('document:keydown.alt', ['$event', 'false'])
+    @HostListener('document:keyup.alt', ['$event', 'true'])
+    onAltToggle($event: KeyboardEvent, toggleValue: boolean) {
+        this.autoTextBlockAssessment = toggleValue;
+    }
+
     /**
      * Emit the reference change of text blocks
      */
@@ -61,32 +52,14 @@ export class TextAssessmentAreaComponent implements OnChanges {
         this.textBlockRefsChange.emit(this.textBlockRefs);
     }
 
-    /**
-     * Delete Text Block at index and merge with adjacent blocks without feedback.
-     * @param index of Text Block to be deleted.
-     *
-     * Note: This function is currently unused, but will be used in future versions.
-     */
-    deleteAtIndex(index: number): void {
-        const ref = this.textBlockRefs[index];
-        const prev = index > 0 ? this.textBlockRefs[index - 1] : undefined;
-        const next = index + 1 < this.textBlockRefs.length ? this.textBlockRefs[index + 1] : undefined;
+    addTextBlockRef(ref: TextBlockRef): void {
+        this.textBlockRefs.push(ref);
+        this.textBlockRefsAddedRemoved.emit();
+    }
 
-        const newBlock = new TextBlock();
-        newBlock.startIndex = prev && !prev.feedback ? prev.block.startIndex : ref.block.startIndex;
-        newBlock.endIndex = next && !next.feedback ? next.block.endIndex : ref.block.endIndex;
-        newBlock.submission = this.submission;
-        newBlock.setTextFromSubmission();
-        ref.block = newBlock;
-        ref.feedback = undefined;
-
-        if (next && !next.feedback) {
-            this.textBlockRefs.splice(index + 1, 1);
-        }
-        if (prev && !prev.feedback) {
-            this.textBlockRefs.splice(index - 1, 1);
-        }
-
-        this.textBlockRefsChangeEmit();
+    removeTextBlockRef(ref: TextBlockRef): void {
+        const index = this.textBlockRefs.findIndex((elem) => elem.block.id === ref.block.id);
+        this.textBlockRefs.splice(index, 1);
+        this.textBlockRefsAddedRemoved.emit();
     }
 }

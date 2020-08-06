@@ -93,7 +93,7 @@ public class BambooBuildPlanService {
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName, programmingExercise.getProgrammingLanguage())
                 .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
 
         bambooServer.publish(plan);
@@ -107,7 +107,9 @@ public class BambooBuildPlanService {
      * @param planKey              The name of the source plan
      */
     public void setBuildPlanPermissionsForExercise(ProgrammingExercise programmingExercise, String planKey) {
-        Course course = programmingExercise.getCourse();
+        // Get course over exerciseGroup in exam mode
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
         final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, instructorGroupName,
@@ -159,12 +161,23 @@ public class BambooBuildPlanService {
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
+            case HASKELL: {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("tumfpv/fpv-stack:8.4.4"));
+                }
+                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-reports/*.xml");
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                tasks.add(0, checkoutTask);
+                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+            }
             default:
                 throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
+            ProgrammingLanguage programmingLanguage) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
@@ -172,6 +185,7 @@ public class BambooBuildPlanService {
         if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
             vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
         }
+
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
                 .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),
@@ -183,9 +197,8 @@ public class BambooBuildPlanService {
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
         return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
-                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath) // NOTE: this path needs to be specified in the Maven
-        // pom.xml in the Tests Repo
-        );
+                // NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo for Java programming exercises
+                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));
     }
 
     private PlanBranchManagement createPlanBranchManagement() {

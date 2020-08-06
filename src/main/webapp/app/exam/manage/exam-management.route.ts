@@ -19,6 +19,13 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
+import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
+import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
+import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -32,10 +39,11 @@ export class ExamResolve implements Resolve<Exam> {
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : null;
         const examId = route.params['examId'] ? route.params['examId'] : null;
+        const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId).pipe(
+            return this.examManagementService.find(courseId, examId, withStudents).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
-                map((course: HttpResponse<Exam>) => course.body!),
+                map((exam: HttpResponse<Exam>) => exam.body!),
             );
         }
         return of(new Exam());
@@ -58,10 +66,10 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
-                map((course: HttpResponse<ExerciseGroup>) => course.body!),
+                map((exerciseGroup: HttpResponse<ExerciseGroup>) => exerciseGroup.body!),
             );
         }
-        return of(new ExerciseGroup());
+        return of({ isMandatory: true } as ExerciseGroup);
     }
 }
 
@@ -81,7 +89,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((course: HttpResponse<StudentExam>) => course.body!),
+                map((studentExam: HttpResponse<StudentExam>) => studentExam.body!),
             );
         }
         return of(new StudentExam());
@@ -135,7 +143,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups',
+        path: ':examId/exercise-groups',
         component: ExerciseGroupsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -144,9 +152,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/new',
+        path: ':examId/exercise-groups/new',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
@@ -156,9 +165,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/edit',
         component: ExerciseGroupUpdateComponent,
         resolve: {
+            exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
@@ -168,7 +178,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exerciseGroups/:exerciseGroupId/view',
+        path: ':examId/exercise-groups/:exerciseGroupId/view',
         component: ExerciseGroupDetailComponent,
         resolve: {
             exerciseGroup: ExerciseGroupResolve,
@@ -182,14 +192,20 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/students',
         component: ExamStudentsComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
+            requestOptions: {
+                withStudents: true,
+            },
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams',
+        path: ':examId/student-exams',
         component: StudentExamsComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -198,7 +214,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/studentExams/:studentExamId/view',
+        path: ':examId/student-exams/:studentExamId/view',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,
@@ -206,6 +222,130 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Text Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/text-exercises/new',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import Text Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Text Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create File Upload Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/file-upload-exercises/new',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit File Upload Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/file-upload-exercises/:exerciseId/edit',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Programming Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/new',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import programming exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/import/:id',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Programming Exercise
+    {
+        path: ':examId/exercise-groups/:groupId/programming-exercises/:id/edit',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

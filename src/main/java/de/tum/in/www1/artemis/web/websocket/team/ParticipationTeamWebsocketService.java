@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.websocket.team;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +26,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -48,11 +49,11 @@ public class ParticipationTeamWebsocketService {
 
     private final SimpUserRegistry simpUserRegistry;
 
-    private final Map<String, String> destinationTracker = new HashMap<>();
+    private final Map<String, String> destinationTracker;
 
-    private final Map<Long, Map<String, Instant>> lastTypingTracker = new HashMap<>();
+    private final Map<String, Instant> lastTypingTracker;
 
-    private final Map<Long, Map<String, Instant>> lastActionTracker = new HashMap<>();
+    private final Map<String, Instant> lastActionTracker;
 
     private final UserService userService;
 
@@ -64,9 +65,11 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
+    private final HazelcastInstance hazelcastInstance;
+
     public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
             ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService) {
+            ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
         this.userService = userService;
@@ -74,6 +77,14 @@ public class ParticipationTeamWebsocketService {
         this.exerciseService = exerciseService;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.hazelcastInstance = hazelcastInstance;
+
+        // participationId-username -> timestamp
+        this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
+        // participationId-username -> timestamp
+        this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
+        // sessionId -> destination
+        this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
     }
 
     /**
@@ -111,8 +122,7 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
-        lastTypingTracker.putIfAbsent(participationId, new HashMap<>());
-        lastTypingTracker.get(participationId).put(principal.getName(), Instant.now());
+        updateValue(lastTypingTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
     }
 
@@ -179,8 +189,7 @@ public class ParticipationTeamWebsocketService {
         }
 
         // update the last action date for the user and send out list of team members
-        lastActionTracker.putIfAbsent(participationId, new HashMap<>());
-        lastActionTracker.get(participationId).put(principal.getName(), Instant.now());
+        updateValue(lastActionTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
         SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
@@ -196,11 +205,9 @@ public class ParticipationTeamWebsocketService {
     private void sendOnlineTeamStudents(Long participationId, String exceptSessionID) {
         final String destination = getDestination(participationId);
 
-        Map<String, Instant> lastTypingMap = lastTypingTracker.getOrDefault(participationId, new HashMap<>());
-        Map<String, Instant> lastActionMap = lastActionTracker.getOrDefault(participationId, new HashMap<>());
-
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
-                .map(login -> new OnlineTeamStudentDTO(login, lastTypingMap.get(login), lastActionMap.get(login))).collect(Collectors.toList());
+                .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login)))
+                .collect(Collectors.toList());
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
     }
@@ -303,5 +310,13 @@ public class ParticipationTeamWebsocketService {
 
     public void clearDestinationTracker() {
         this.destinationTracker.clear();
+    }
+
+    private void updateValue(Map<String, Instant> map, long participationId, String username) {
+        map.put(participationId + "-" + username, Instant.now());
+    }
+
+    private Instant getValue(Map<String, Instant> map, long participationId, String username) {
+        return map.get(participationId + "-" + username);
     }
 }

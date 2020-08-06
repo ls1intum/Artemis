@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -13,12 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
@@ -80,11 +82,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(1));
-        quizExercise.setDuration(1);
+        quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
-        quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10 * multiplier;
         QuizSubmission quizSubmission;
@@ -112,8 +113,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // before the quiz submissions are processed, none of them ends up in the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        // wait some time so that the quiz results are also sent to subscribed users
-        Thread.sleep(5000);
+        // End the quiz right now so that results can be processed
+        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        exerciseRepository.saveAndFlush(quizExercise);
 
         quizScheduleService.processCachedQuizSubmissions();
 

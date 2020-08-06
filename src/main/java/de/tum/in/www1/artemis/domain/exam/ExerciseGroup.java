@@ -19,6 +19,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Exercise;
 
@@ -42,12 +43,13 @@ public class ExerciseGroup implements Serializable {
     @Column(name = "is_mandatory", nullable = false)
     private Boolean isMandatory = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("exerciseGroup")
     private Set<Exercise> exercises = new HashSet<>();
 
     public Long getId() {

@@ -3,6 +3,11 @@ logging:
         ROOT: INFO
         de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: INFO
+
+artemis:
+    version: 1.3.3-beta7
+    file-upload-path: uploads
+
 spring:
     application:
         name: Artemis
@@ -39,7 +44,6 @@ spring:
             hibernate.connection.provider_disables_autocommit: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.hazelcast.instance_name: "Artemis"
             hibernate.generate_statistics: false
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25
@@ -47,8 +51,10 @@ spring:
             hibernate.order_updates: true
 #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
-#            hibernate.hbm2ddl.auto: validate       # out commented because it would lead to test execution errors
-            hibernate.javax.cache.missing_cache_strategy: create
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
+            hibernate.cache.use_minimal_puts: true
+            hibernate.cache.hazelcast.instance_name: Artemis
+            hibernate.cache.hazelcast.use_lite_member: true
     liquibase:
         contexts: tests
         enabled: false
@@ -82,6 +88,11 @@ spring:
             discovery:
                 enabled: false
             enabled: false
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: ""
 
 server:
     port: 8080

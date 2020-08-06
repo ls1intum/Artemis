@@ -1,0 +1,57 @@
+<div>
+    <h2>
+        <span jhiTranslate="artemisApp.exam.examSummary.summaryCapital">SUMMARY</span>
+        <button class="btn btn-primary float-right" (click)="printPDF()">
+            <fa-icon [icon]="'print'"></fa-icon>
+            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
+        </button>
+    </h2>
+</div>
+<div *ngFor="let exercise of studentExam.exercises; let i = index">
+    <div class="question card">
+        <div class="question-options card-header question-card-header">
+            <h5>
+                &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
+                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
+            </h5>
+            <button
+                class="btn btn-light question-collapse"
+                (click)="toggleCollapseSubmission(getSubmissionForExercise(exercise).id)"
+                [attr.aria-expanded]="!isCollapsed(getSubmissionForExercise(exercise).id)"
+                [attr.aria-controls]="isCollapsed(getSubmissionForExercise(exercise).id)"
+            >
+                <fa-icon size="2x" [icon]="isCollapsed(getSubmissionForExercise(exercise).id) ? 'angle-right' : 'angle-down'"></fa-icon>
+            </button>
+        </div>
+        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(getSubmissionForExercise(exercise).id)">
+            <h5>{{ exercise.title }}</h5>
+            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
+                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
+            </h6>
+            <!-- Text Exercise -->
+            <ng-container *ngIf="exercise.type === TEXT">
+                <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+            </ng-container>
+            <!-- Modeling Exercise -->
+            <ng-container *ngIf="exercise.type === MODELING">
+                <jhi-modeling-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+            </ng-container>
+            <!-- Quiz Exercise -->
+            <ng-container *ngIf="exercise.type === QUIZ">
+                <jhi-quiz-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-quiz-exam-summary>
+            </ng-container>
+            <!-- Programming Exercise -->
+            <ng-container *ngIf="exercise.type === PROGRAMMING">
+                <jhi-programming-exam-summary
+                    [exercise]="exercise"
+                    [participation]="getParticipationForProgrammingExercise(exercise)"
+                    [submission]="getSubmissionForExercise(exercise)"
+                ></jhi-programming-exam-summary>
+            </ng-container>
+            <!-- File Upload Exercise -->
+            <ng-container *ngIf="exercise.type === FILE_UPLOAD">
+                <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+            </ng-container>
+        </div>
+    </div>
+</div>

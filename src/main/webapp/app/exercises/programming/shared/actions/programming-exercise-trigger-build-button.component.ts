@@ -1,4 +1,4 @@
-import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Input, OnChanges, OnDestroy, SimpleChanges, Component } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
@@ -20,6 +20,7 @@ import { AlertService } from 'app/core/alert/alert.service';
  * The participation given as input needs to have the results attached as this component checks if there is at least one result.
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
+@Component({ template: '' })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;

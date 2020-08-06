@@ -28,7 +28,7 @@ public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthen
 
     @Override
     public void addUserToGroup(User user, String group) {
-        log.info("Add user " + user.getLogin() + " to group " + group);
+        log.debug("Add user " + user.getLogin() + " to group " + group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             final var authorities = userService.buildAuthorities(user);

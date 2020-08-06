@@ -57,9 +57,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -158,6 +156,7 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties(value = "exercises")
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -451,7 +450,14 @@ public abstract class Exercise implements Serializable {
         this.studentParticipations = studentParticipations;
     }
 
-    public Course getCourse() {
+    /**
+     * This method exists for serialization. The utility method getCourseViaExerciseGroupOrCourseMember should be used
+     * to get a course for the exercise.
+     *
+     * @return the course class member
+     */
+    @JsonInclude
+    protected Course getCourse() {
         return course;
     }
 
@@ -462,6 +468,40 @@ public abstract class Exercise implements Serializable {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    @JsonIgnore
+    public boolean hasCourse() {
+        return this.course != null;
+    }
+
+    public ExerciseGroup getExerciseGroup() {
+        return exerciseGroup;
+    }
+
+    public void setExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroup = exerciseGroup;
+    }
+
+    @JsonIgnore
+    public boolean hasExerciseGroup() {
+        return this.exerciseGroup != null;
+    }
+
+    /**
+     * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
+     * the course class member
+     *
+     * @return Course of the exercise
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMember() {
+        if (hasExerciseGroup()) {
+            return this.getExerciseGroup().getExam().getCourse();
+        }
+        else {
+            return this.getCourse();
+        }
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {
@@ -633,7 +673,7 @@ public abstract class Exercise implements Serializable {
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
+            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -686,82 +726,6 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
-     * result. Filter everything else that is not relevant
-     *
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
-     * @param isStudent defines if the current user is a student
-     */
-    public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
-        // remove the unnecessary inner course attribute
-        setCourse(null);
-
-        // remove the problem statement, which is loaded in the exercise details call
-        setProblemStatement(null);
-
-        if (this instanceof ProgrammingExercise) {
-            var programmingExercise = (ProgrammingExercise) this;
-            programmingExercise.setTestRepositoryUrl(null);
-        }
-
-        // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
-
-        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
-        // if participation was not found in database
-        if (participation == null && this instanceof QuizExercise) {
-            QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
-            if (submission.getSubmissionDate() != null) {
-                participation = new StudentParticipation().exercise(this);
-                participation.initializationState(InitializationState.INITIALIZED);
-            }
-        }
-
-        // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        if (participation != null) {
-            // find the latest submission with a rated result, otherwise the latest submission with
-            // an unrated result or alternatively the latest submission without a result
-            Set<Submission> submissions = participation.getSubmissions();
-
-            // only transmit the relevant result
-            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
-            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = Set.of();
-
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
-                }
-            }
-
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getResult() != null) {
-                submission.getResult().filterSensitiveInformation();
-            }
-
-            // add submission to participation
-            if (submission != null) {
-                participation.setSubmissions(Set.of(submission));
-            }
-
-            participation.setResults(results);
-
-            // remove inner exercise from participation
-            participation.setExercise(null);
-
-            // add participation into an array
-            setStudentParticipations(Set.of(participation));
-        }
-    }
-
-    /**
      * Filter for appropriate submission. Relevance in the following order:
      * - submission with rated result
      * - submission with unrated result (late submission)
@@ -770,7 +734,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
@@ -778,7 +742,7 @@ public abstract class Exercise implements Serializable {
         for (Submission submission : submissions) {
             Result result = submission.getResult();
             if (result != null) {
-                if (result.isRated() == Boolean.TRUE) {
+                if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);
                 }
                 else {
