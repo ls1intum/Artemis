@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 public class TextPlagiarismDetectionService {
 
     /**
-     * Convenience method of extract all latest submissions from a TextExercise and compute pair-wise distancse.
+     * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
      *
      * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
      * @param comparisionStrategy TextComparisionStrategy

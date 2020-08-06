@@ -116,7 +116,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.checkPlagiarism((data) => {
             const json = JSON.stringify(data);
             const blob = new Blob([json], { type: 'application/json' });
-            downloadFile(blob, `check-plagiarism-${this.textExercise.id}.json`);
+            downloadFile(blob, `check-plagiarism-textExercise_${this.textExercise.id}.json`);
         });
     }
 
@@ -128,8 +128,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                     quoteStrings: '"',
                     decimalSeparator: 'locale',
                     showLabels: true,
-                    title: `Plagiarism Check for Exercise ${this.textExercise.id}: ${this.textExercise.title}`,
-                    filename: `check-plagiarism-${this.textExercise.id}`,
+                    title: `Plagiarism Check for Text Exercise ${this.textExercise.id}: ${this.textExercise.title}`,
+                    filename: `check-plagiarism-textExercise_${this.textExercise.id}`,
                     useTextFile: false,
                     useBom: true,
                     headers: ['Student A', 'Submission A', 'Student B', 'Submission B', ...Object.keys(data[0].distanceMetrics)],
