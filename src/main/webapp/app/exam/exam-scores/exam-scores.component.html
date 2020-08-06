@@ -47,7 +47,7 @@
             </div>
 
             <!-- Exercise Statistics Table -->
-            <table class="table table-bordered table-sm body-hover">
+            <table class="table table-bordered table-sm body-striped">
                 <thead class="thead-dark">
                     <tr>
                         <th>
@@ -102,7 +102,7 @@
             <span jhiTranslate="artemisApp.examScores.studentResultsTitle">Student Results</span>
         </h4>
         <div class="table-responsive">
-            <table class="table table-sm table-striped table-bordered table-hover">
+            <table class="table table-sm table-striped table-bordered">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th jhiSortBy="name">

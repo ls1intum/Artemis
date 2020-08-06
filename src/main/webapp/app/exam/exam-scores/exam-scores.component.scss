@@ -1,7 +1,7 @@
-.body-hover {
+.body-striped {
     tbody {
-        &:hover {
-            background-color: rgba(0, 0, 0, 0.075);
+        &:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.05);
         }
     }
 }
