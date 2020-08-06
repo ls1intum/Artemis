@@ -10,7 +10,7 @@ export class ExamScoreDTO {
 }
 
 export class ExerciseGroup {
-    constructor(public exerciseGroupId: number, public title: string, public maxPoints: number, public numberOfParticipants: number, public containedExercises: ExerciseInfo[]) {}
+    constructor(public id: number, public title: string, public maxPoints: number, public numberOfParticipants: number, public containedExercises: ExerciseInfo[]) {}
 }
 
 export class ExerciseInfo {

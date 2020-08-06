@@ -90,14 +90,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     calculateAveragePoints() {
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
-        // Create data structures for all exercise groups
+        // Create data structures holding the statistics for all exercise groups and exercises
         for (const exerciseGroup of this.exerciseGroups) {
-            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.exerciseGroupId, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
+            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
                 groupResult.exerciseResults.push(new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.numberOfParticipants));
             });
-            groupIdToGroupResults.set(exerciseGroup.exerciseGroupId, groupResult);
+            groupIdToGroupResults.set(exerciseGroup.id, groupResult);
         }
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
@@ -108,7 +108,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             for (const [exGroupId, studentExerciseResult] of Object.entries(studentResult.exerciseGroupIdToExerciseResult)) {
                 // Ignore exercise results with only empty submission if the option was set
-                if (this.filterForNonEmptySubmissions && !studentExerciseResult.hasNonEmptySubmission) {
+                if (!studentExerciseResult.hasNonEmptySubmission && this.filterForNonEmptySubmissions) {
                     continue;
                 }
                 // Update the exerciseGroup statistic
@@ -206,7 +206,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         };
 
         this.exerciseGroups.forEach((exerciseGroup) => {
-            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.exerciseGroupId];
+            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + 'AchievedPoints'] =

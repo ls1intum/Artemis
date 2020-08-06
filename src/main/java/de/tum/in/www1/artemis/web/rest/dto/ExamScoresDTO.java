@@ -35,7 +35,7 @@ public class ExamScoresDTO {
     // Inner DTO
     public static class ExerciseGroup {
 
-        public Long exerciseGroupId;
+        public Long id;
 
         public String title;
 
@@ -49,8 +49,8 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseGroup(Long exerciseGroupId, String title, Double maxPoints) {
-            this.exerciseGroupId = exerciseGroupId;
+        public ExerciseGroup(Long id, String title, Double maxPoints) {
+            this.id = id;
             this.title = title;
             this.maxPoints = maxPoints;
         }
