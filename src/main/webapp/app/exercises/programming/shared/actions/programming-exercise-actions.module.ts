@@ -30,4 +30,4 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         ProgrammingExerciseReEvaluateButtonComponent,
     ],
 })
-export class ArtemisProgrammingExerciseActionsModule { }
+export class ArtemisProgrammingExerciseActionsModule {}
