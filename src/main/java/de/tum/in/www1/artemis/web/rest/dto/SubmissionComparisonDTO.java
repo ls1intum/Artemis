@@ -38,8 +38,8 @@ public class SubmissionComparisonDTO implements Comparable<SubmissionComparisonD
     }
 
     @Override
-    public int compareTo(@NotNull SubmissionComparisonDTO o) {
-        return Double.compare(minimumDistance(), o.minimumDistance());
+    public int compareTo(@NotNull SubmissionComparisonDTO other) {
+        return Double.compare(minimumDistance(), other.minimumDistance());
     }
 
     @Override
